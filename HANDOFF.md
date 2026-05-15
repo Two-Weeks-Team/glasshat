@@ -1,6 +1,6 @@
 # Glasshat — Session Handoff
 
-> New session: `cd ~/Documents/GitHub/panelyst` then `/handon` (this file is at repo root). For Claude's persistent memory of this project see `/Users/kimsejun/.claude/projects/-Users-kimsejun-Documents-GitHub-hackathon-submissions/memory/` (start at `MEMORY.md`).
+> New session: `cd ~/Documents/GitHub/glasshat` then `/handon` (this file is at repo root). For Claude's persistent memory of this project see `/Users/kimsejun/.claude/projects/-Users-kimsejun-Documents-GitHub-hackathon-submissions/memory/` (start at `MEMORY.md`).
 
 Last updated: 2026-05-14 KST.
 
@@ -12,7 +12,7 @@ Last updated: 2026-05-14 KST.
 
 ## §1 — Repo & lineage
 
-- Repo: `Two-Weeks-Team/panelyst` (public, Apache-2.0). Local clone: `~/Documents/GitHub/panelyst/`. First commit 2026-05-13 — inside the Qdrant hackathon period → compliant with the "all code created during the hackathon period (no previous projects)" rule.
+- Repo: `Two-Weeks-Team/glasshat` (public, Apache-2.0). Local clone: `~/Documents/GitHub/glasshat/`. First commit 2026-05-13 — inside the Qdrant hackathon period → compliant with the "all code created during the hackathon period (no previous projects)" rule.
 - This repo occupies what the umbrella tracker calls the "WhyC fairthon-port" slot. The **prior `Two-Weeks-Team/WhyC` ("While YC hires, we ship") project is archived on GitHub.** Different product, not used here.
 - Concept lineage: methodology (Six Thinking Hats, BMAD 17-item rubric, 75 techniques, 3D graph) derives from **fairthon.com** (same team). Disclosed in README. **No fairthon code reused.** fairthon source (reference only, not copied): `~/Documents/GitHub/fairthon/`.
 
@@ -66,4 +66,4 @@ Claude's memory of this project across sessions: [`/Users/kimsejun/.claude/proje
 
 ## §5 — Resume prompt (copy-paste)
 
-> Working dir: `~/Documents/GitHub/panelyst/` (loaded via `/handon`). GCP setup + Gemini 3 panel verified — see docs/gcp-setup.md. Phase 1 (local E2E) not started. Read PLAN.md + docs/architecture.md + the memory index. Hard rules: non-chatbot; all code authored in the hackathon period (no fairthon code reuse — fairthon is concept lineage, disclosed in README); Qdrant load-bearing; Gemini via Vertex with SA key (not AI Studio, not ADC); Arize is the Rapid Agent partner integration. Build Qdrant-first (deadline 2026-06-01). Next concrete step: pick one of {LLM adapter, Qdrant collections + docker-compose, ingest path, Code Grader, BMAD rubric config, Next.js frontend scaffold, past_evals seed corpus}.
+> Working dir: `~/Documents/GitHub/glasshat/` (loaded via `/handon`). GCP setup + Gemini 3 panel verified — see docs/gcp-setup.md. Phase 1 (local E2E) not started. Read PLAN.md + docs/architecture.md + the memory index. Hard rules: non-chatbot; all code authored in the hackathon period (no fairthon code reuse — fairthon is concept lineage, disclosed in README); Qdrant load-bearing; Gemini via Vertex with SA key (not AI Studio, not ADC); Arize is the Rapid Agent partner integration. Build Qdrant-first (deadline 2026-06-01). Next concrete step: pick one of {LLM adapter, Qdrant collections + docker-compose, ingest path, Code Grader, BMAD rubric config, Next.js frontend scaffold, past_evals seed corpus}.
