@@ -1,4 +1,4 @@
-# GCP Setup — Panelyst
+# GCP Setup — Glasshat
 
 Verified working configuration as of **2026-05-14**. This is the recipe; the `.env` checked into `.env.example` matches it.
 
@@ -53,7 +53,7 @@ BILLING=01B677-A6E5C9-B265AF
 REGION=us-central1
 
 # project
-gcloud projects create "$PROJECT_ID" --name="Panelyst"
+gcloud projects create "$PROJECT_ID" --name="Glasshat"
 gcloud config set project "$PROJECT_ID"
 gcloud billing projects link "$PROJECT_ID" --billing-account="$BILLING"
 
@@ -68,7 +68,7 @@ gcloud services enable \
 # Service account + roles
 SA_NAME=panelyst-dev
 SA_EMAIL="$SA_NAME@$PROJECT_ID.iam.gserviceaccount.com"
-gcloud iam service-accounts create "$SA_NAME" --display-name="Panelyst dev (local + Cloud Run)" --project="$PROJECT_ID"
+gcloud iam service-accounts create "$SA_NAME" --display-name="Glasshat dev (local + Cloud Run)" --project="$PROJECT_ID"
 for role in aiplatform.user datastore.user storage.objectUser \
             secretmanager.secretAccessor run.invoker \
             eventarc.eventReceiver pubsub.subscriber iam.serviceAccountTokenCreator; do

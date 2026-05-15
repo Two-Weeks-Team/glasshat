@@ -1,0 +1,71 @@
+{
+  "spike": "C",
+  "title": "ADK + Phoenix MCPToolset wiring",
+  "tools_discovered": 27,
+  "agent_ran": true,
+  "agent_made_function_call": true,
+  "phoenix_spans_captured": true,
+  "phoenix_span_kinds": {
+    "UNKNOWN": 7
+  },
+  "details": {
+    "phoenix_url": "http://localhost:6006",
+    "tools_discovered": 27,
+    "tool_discovery_sec": 2.311,
+    "tools_sample": [
+      "add-dataset-examples",
+      "add-prompt-version-tag",
+      "get-dataset",
+      "get-dataset-examples",
+      "get-dataset-experiments",
+      "get-experiment-by-id",
+      "get-latest-prompt",
+      "get-project",
+      "get-prompt",
+      "get-prompt-by-identifier"
+    ],
+    "agent_run_sec": 4.479,
+    "agent_event_count": 3,
+    "agent_events": [
+      {
+        "author": "PhoenixQueryAgent",
+        "text": null,
+        "has_function_call": true,
+        "has_function_response": false
+      },
+      {
+        "author": "PhoenixQueryAgent",
+        "text": null,
+        "has_function_call": false,
+        "has_function_response": true
+      },
+      {
+        "author": "PhoenixQueryAgent",
+        "text": "[\"default\"]",
+        "has_function_call": false,
+        "has_function_response": false
+      }
+    ],
+    "phoenix_spans_captured": 7,
+    "phoenix_span_kinds": {
+      "UNKNOWN": 7
+    },
+    "phoenix_span_names_head": [
+      "generate_content gemini-3.1-flash-lite",
+      "call_llm",
+      "execute_tool list-projects",
+      "generate_content gemini-3.1-flash-lite",
+      "call_llm",
+      "invoke_agent PhoenixQueryAgent",
+      "invocation"
+    ]
+  },
+  "overall_pass": true,
+  "findings": [
+    "MCPToolset(connection_params=StdioConnectionParams(server_params=StdioServerParameters(...))) is the correct ADK wiring (NOT StdioServerParameters directly)",
+    "27 Phoenix MCP tools discovered via npx stdio",
+    "LlmAgent with MCPToolset successfully constructed and ran",
+    "Phoenix captured 7 spans via OpenInference auto-instrumentation",
+    "Stack confirmed: ADK -> MCPToolset -> stdio -> @arizeai/phoenix-mcp -> Phoenix Cloud/local"
+  ]
+}

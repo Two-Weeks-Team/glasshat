@@ -1,0 +1,85 @@
+{
+  "spike": "B",
+  "title": "ADK LoopAgent + escalation",
+  "case_1_convergeable": {
+    "pass": true,
+    "details": {
+      "unconvergeable": false,
+      "max_iter": 5,
+      "elapsed_sec": 0.001,
+      "event_count": 4,
+      "final_state": {
+        "current_score": 7.88,
+        "evidence_depth": 0.31,
+        "iteration_count": 2,
+        "inconsistency_flagged": false
+      },
+      "events_tail": [
+        {
+          "author": "InconsistencyDetector",
+          "text": "iter=1 score=9.0 ev_depth=0.31 flagged=True",
+          "escalate": false
+        },
+        {
+          "author": "Calibrator",
+          "text": "corrected score to 7.88",
+          "escalate": false
+        },
+        {
+          "author": "InconsistencyDetector",
+          "text": "iter=2 score=7.88 ev_depth=0.31 flagged=False",
+          "escalate": false
+        },
+        {
+          "author": "Calibrator",
+          "text": "EXIT_LOOP \u2014 converged",
+          "escalate": true
+        }
+      ]
+    }
+  },
+  "case_2_unconvergeable_capped": {
+    "pass": true,
+    "details": {
+      "unconvergeable": true,
+      "max_iter": 2,
+      "elapsed_sec": 0.0,
+      "event_count": 4,
+      "final_state": {
+        "current_score": 9.0,
+        "evidence_depth": 0.31,
+        "iteration_count": 2,
+        "inconsistency_flagged": true
+      },
+      "events_tail": [
+        {
+          "author": "InconsistencyDetector",
+          "text": "iter=1 score=9.0 ev_depth=0.31 flagged=True",
+          "escalate": false
+        },
+        {
+          "author": "Calibrator",
+          "text": "corrected score to 9.0",
+          "escalate": false
+        },
+        {
+          "author": "InconsistencyDetector",
+          "text": "iter=2 score=9.0 ev_depth=0.31 flagged=True",
+          "escalate": false
+        },
+        {
+          "author": "Calibrator",
+          "text": "corrected score to 9.0",
+          "escalate": false
+        }
+      ]
+    }
+  },
+  "overall_pass": true,
+  "findings": [
+    "LoopAgent runs sub_agents in order, repeating until escalate or max_iter",
+    "ctx.session.state is shared across iterations",
+    "EventActions(escalate=True) cleanly terminates the loop",
+    "max_iterations safely caps unconvergeable cases"
+  ]
+}

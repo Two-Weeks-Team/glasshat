@@ -1,0 +1,24 @@
+{
+  "spike": "E",
+  "title": "SSE animation latency",
+  "events_received": 6,
+  "intervals_sec": [
+    0.803,
+    0.802,
+    0.802,
+    0.817,
+    0.788
+  ],
+  "mean_interval_sec": 0.802,
+  "max_delivery_latency_sec": 0.0163,
+  "events_ok": true,
+  "interval_ok": true,
+  "delivery_ok": true,
+  "overall_pass": true,
+  "findings": [
+    "FastAPI StreamingResponse with text/event-stream emits at controlled intervals",
+    "Mean inter-event interval 0.802s within 800\u00b1100ms target",
+    "Max delivery latency 0.0163s \u2014 well below 100ms cushion",
+    "Suitable for demo pacing \u2014 production frontend can rely on server-controlled timing"
+  ]
+}

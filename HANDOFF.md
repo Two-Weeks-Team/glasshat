@@ -1,4 +1,4 @@
-# Panelyst — Session Handoff
+# Glasshat — Session Handoff
 
 > New session: `cd ~/Documents/GitHub/panelyst` then `/handon` (this file is at repo root). For Claude's persistent memory of this project see `/Users/kimsejun/.claude/projects/-Users-kimsejun-Documents-GitHub-hackathon-submissions/memory/` (start at `MEMORY.md`).
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-14 KST.
 
 ## §0 — Two-line summary
 
-**Panelyst** = an agentic fair-evaluation panel: ingest a pitch deck (PDF) + a codebase → six-perspective AI panel → 100-pt BMAD-style rubric score with **evidence-grounded, precedent-anchored** scores → 3D evaluation graph + a **live transparent fairness monitor**. **Not a chatbot.** Single project, dual-submitted to the **Qdrant "Think Outside the Bot" hackathon** (deadline **2026-06-01 23:59 PT** — Qdrant DB mandatory, no chatbots, all code in-period; submission via Google Form `forms.hl.qdrant.tech/hackathon-vsd`) AND the **Google Cloud Rapid Agent hackathon** (~2026-06-11/12 — Gemini + Google Cloud Agent Builder + an **Arize** partner-MCP integration that powers the real-time fairness monitor). Same codebase for both — only the demo video / framing differs.
+**Glasshat** = an agentic fair-evaluation panel: ingest a pitch deck (PDF) + a codebase → six-perspective AI panel → 100-pt BMAD-style rubric score with **evidence-grounded, precedent-anchored** scores → 3D evaluation graph + a **live transparent fairness monitor**. **Not a chatbot.** Single project, dual-submitted to the **Qdrant "Think Outside the Bot" hackathon** (deadline **2026-06-01 23:59 PT** — Qdrant DB mandatory, no chatbots, all code in-period; submission via Google Form `forms.hl.qdrant.tech/hackathon-vsd`) AND the **Google Cloud Rapid Agent hackathon** (~2026-06-11/12 — Gemini + Google Cloud Agent Builder + an **Arize** partner-MCP integration that powers the real-time fairness monitor). Same codebase for both — only the demo video / framing differs.
 
 ## §1 — Repo & lineage
 

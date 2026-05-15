@@ -1,0 +1,18 @@
+[project]
+name = "glasshat-spikes"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.12"
+dependencies = [
+    "arize-phoenix>=11",
+    "arize-phoenix-evals>=3.1.0",
+    "arize-phoenix-otel>=0.6",
+    "fastapi>=0.136.1",
+    "google-adk>=1.0",
+    "google-cloud-aiplatform>=1.152.0",
+    "httpx>=0.28.1",
+    "mcp>=1.27.1",
+    "python-dotenv>=1.2.2",
+    "qdrant-client>=1.10",
+    "uvicorn>=0.46.0",
+]
