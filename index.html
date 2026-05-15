@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dashboard" data-layout="scroll">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Glasshat — 온보딩 종합 보고서 (Onboarding Brief)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root{
+  --bg:#0f172a; --surface:#1e293b; --surface-2:#172033; --border:#334155;
+  --text:#f1f5f9; --text-2:#cbd5e1; --text-muted:#94a3b8;
+  --accent:#38bdf8; --accent-2:#7dd3fc;
+  --success:#4ade80; --warning:#fbbf24; --error:#f87171; --info:#a78bfa;
+  --code-bg:#0b1220; --code-border:#1f2937;
+  --shadow:0 10px 30px -10px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+  font-family:"Inter","Noto Sans KR",system-ui,-apple-system,sans-serif;
+  font-size:15.5px;line-height:1.65;-webkit-font-smoothing:antialiased}
+body{display:flex;min-height:100vh}
+
+/* --- TOC sidebar --- */
+.toc{position:sticky;top:0;width:280px;height:100vh;overflow-y:auto;
+  background:var(--surface-2);border-right:1px solid var(--border);
+  padding:24px 18px;flex-shrink:0}
+.toc-title{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--text-muted);margin:0 0 14px;font-weight:600}
+.toc-list{list-style:none;padding:0;margin:0}
+.toc-list li{margin:2px 0}
+.toc-list a{display:block;padding:7px 10px;color:var(--text-2);
+  text-decoration:none;border-radius:6px;font-size:.9rem;line-height:1.35;
+  border-left:3px solid transparent;transition:.15s}
+.toc-list a:hover{background:rgba(56,189,248,.07);color:var(--text)}
+.toc-list a.active{background:rgba(56,189,248,.12);color:var(--accent);
+  border-left-color:var(--accent);font-weight:600}
+.toc-list .toc-sub{padding-left:14px;font-size:.82rem;color:var(--text-muted)}
+
+/* --- Main --- */
+main{flex:1;max-width:1100px;padding:36px 48px 80px;overflow-x:hidden}
+header.report-header{margin-bottom:36px;padding-bottom:20px;
+  border-bottom:1px solid var(--border)}
+.eyebrow{display:inline-block;font-size:.7rem;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--accent);background:rgba(56,189,248,.1);
+  padding:4px 10px;border-radius:4px;font-weight:600}
+h1{margin:14px 0 6px;font-size:2.2rem;line-height:1.2;letter-spacing:-.02em;
+  font-weight:800;color:#fff}
+.subtitle{font-size:1.05rem;color:var(--text-2);margin:0 0 16px;font-weight:400}
+.report-meta{display:flex;gap:16px;flex-wrap:wrap;font-size:.85rem;
+  color:var(--text-muted)}
+.report-meta span{display:inline-flex;align-items:center;gap:6px}
+.report-meta .badge{background:var(--surface);border:1px solid var(--border);
+  padding:3px 10px;border-radius:12px;color:var(--text-2)}
+
+/* --- Sections --- */
+section{margin:48px 0;scroll-margin-top:24px}
+section h2{font-size:1.55rem;margin:0 0 8px;letter-spacing:-.01em;
+  font-weight:700;color:#fff;display:flex;align-items:baseline;gap:12px}
+section h2 .num{color:var(--text-muted);font-weight:500;font-size:1rem;
+  font-family:"JetBrains Mono",monospace}
+section h3{font-size:1.1rem;margin:24px 0 10px;font-weight:600;color:#fff}
+section h4{font-size:.95rem;margin:18px 0 8px;font-weight:600;
+  color:var(--accent-2);text-transform:uppercase;letter-spacing:.05em}
+p,ul,ol{color:var(--text-2)}
+strong{color:var(--text)}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+hr{border:none;border-top:1px solid var(--border);margin:32px 0}
+
+/* --- Metric cards --- */
+.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:14px;margin:18px 0}
+.metric{background:linear-gradient(160deg,var(--surface) 0%,var(--surface-2) 100%);
+  border:1px solid var(--border);border-radius:10px;padding:16px 18px;
+  box-shadow:var(--shadow)}
+.metric .label{font-size:.72rem;color:var(--text-muted);text-transform:uppercase;
+  letter-spacing:.1em;font-weight:600;margin-bottom:6px}
+.metric .value{font-size:1.65rem;font-weight:700;color:#fff;line-height:1.15;
+  font-family:"JetBrains Mono",monospace;letter-spacing:-.02em}
+.metric .sub{font-size:.78rem;color:var(--text-muted);margin-top:4px}
+.metric .value.accent{color:var(--accent)}
+.metric .value.success{color:var(--success)}
+.metric .value.warning{color:var(--warning)}
+
+/* --- Callouts --- */
+.callout{border-left:4px solid;padding:14px 18px;margin:18px 0;
+  border-radius:0 8px 8px 0;background:var(--surface)}
+.callout.info{border-color:var(--info);background:rgba(167,139,250,.08)}
+.callout.success{border-color:var(--success);background:rgba(74,222,128,.06)}
+.callout.warning{border-color:var(--warning);background:rgba(251,191,36,.07)}
+.callout.error{border-color:var(--error);background:rgba(248,113,113,.07)}
+.callout.tip{border-color:var(--accent);background:rgba(56,189,248,.07)}
+.callout p:first-child{margin-top:0}
+.callout p:last-child{margin-bottom:0}
+.callout .title{font-weight:600;color:#fff;margin-bottom:4px;display:block}
+
+/* --- Tables --- */
+.table-wrap{overflow-x:auto;margin:14px 0;border-radius:8px;
+  border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);
+  vertical-align:top}
+th{background:var(--surface-2);font-weight:600;color:var(--text);
+  font-size:.8rem;text-transform:uppercase;letter-spacing:.05em}
+tr:last-child td{border-bottom:none}
+tr:nth-child(even) td{background:rgba(255,255,255,.015)}
+td code{font-size:.85em}
+.cell-success{color:var(--success);font-weight:600}
+.cell-warning{color:var(--warning);font-weight:600}
+.cell-error{color:var(--error);font-weight:600}
+.cell-muted{color:var(--text-muted)}
+
+/* --- Code blocks --- */
+pre{background:var(--code-bg);border:1px solid var(--code-border);
+  border-radius:8px;padding:16px 18px;overflow-x:auto;font-size:.86rem;
+  line-height:1.55;margin:14px 0;position:relative}
+pre code{font-family:"JetBrains Mono",monospace;color:#e2e8f0;
+  background:transparent;padding:0}
+code{font-family:"JetBrains Mono",monospace;font-size:.88em;
+  background:rgba(255,255,255,.06);padding:1.5px 6px;border-radius:4px;
+  color:var(--accent-2)}
+pre .lang-tag{position:absolute;top:8px;right:12px;font-size:.7rem;
+  letter-spacing:.08em;color:var(--text-muted);text-transform:uppercase;
+  font-family:"JetBrains Mono",monospace}
+.k{color:#c4b5fd}    /* keyword */
+.s{color:#86efac}    /* string */
+.c{color:#64748b;font-style:italic}    /* comment */
+.n{color:#fbbf24}    /* number */
+.f{color:#7dd3fc}    /* function */
+.t{color:#f9a8d4}    /* type */
+
+/* --- Chart wrappers --- */
+.chart-wrap{background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:18px;margin:18px 0;box-shadow:var(--shadow)}
+.chart-wrap canvas{max-height:340px}
+.chart-wrap .title{font-size:.85rem;color:var(--text);font-weight:600;
+  margin-bottom:10px}
+
+/* --- Lists --- */
+ul li,ol li{margin:4px 0}
+ul.checkmark{list-style:none;padding-left:0}
+ul.checkmark li{padding-left:28px;position:relative;margin:6px 0}
+ul.checkmark li::before{content:"✓";position:absolute;left:6px;top:0;
+  color:var(--success);font-weight:700}
+
+/* --- Two-column grid --- */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:14px 0}
+@media (max-width:900px){.two-col{grid-template-columns:1fr}}
+
+/* --- Timeline --- */
+.timeline{position:relative;padding-left:28px;margin:18px 0}
+.timeline::before{content:"";position:absolute;left:8px;top:8px;bottom:8px;
+  width:2px;background:var(--border)}
+.timeline-item{position:relative;padding:10px 0 14px}
+.timeline-item::before{content:"";position:absolute;left:-26px;top:14px;
+  width:12px;height:12px;border-radius:50%;background:var(--accent);
+  border:3px solid var(--bg)}
+.timeline-item .date{font-size:.78rem;color:var(--text-muted);font-weight:600;
+  font-family:"JetBrains Mono",monospace}
+.timeline-item .title{font-weight:600;color:#fff;font-size:.98rem;margin:2px 0}
+.timeline-item .body{font-size:.88rem;color:var(--text-2)}
+
+/* --- Back to top --- */
+.top-btn{position:fixed;bottom:28px;right:28px;width:46px;height:46px;
+  border-radius:50%;background:var(--accent);color:#0f172a;border:none;
+  font-size:1.4rem;cursor:pointer;box-shadow:0 8px 20px rgba(56,189,248,.3);
+  display:none;align-items:center;justify-content:center;font-weight:700;
+  z-index:100}
+.top-btn.show{display:flex}
+
+/* --- Responsive --- */
+@media (max-width:900px){
+  body{flex-direction:column}
+  .toc{position:relative;width:100%;height:auto;border-right:none;
+    border-bottom:1px solid var(--border);max-height:240px}
+  main{padding:24px 20px 60px}
+  h1{font-size:1.6rem}
+  section h2{font-size:1.3rem;flex-direction:column;gap:2px}
+}
+
+/* --- Print --- */
+@media print{
+  body{background:#fff;color:#000;display:block}
+  .toc,.top-btn{display:none}
+  main{max-width:none;padding:0}
+  pre,table,.chart-wrap,.metric{break-inside:avoid;page-break-inside:avoid}
+  h2,h3{page-break-after:avoid}
+  a{color:#000;text-decoration:underline}
+  .metric,.callout,.chart-wrap{box-shadow:none;border:1px solid #999}
+}
+</style>
+</head>
+<body>
+
+<aside class="toc">
+  <div class="toc-title">목차 · TOC</div>
+  <ul class="toc-list">
+    <li><a href="#summary">TL;DR 핵심 요약</a></li>
+    <li><a href="#what-is-glasshat">1. Glasshat이란</a></li>
+    <li><a href="#hackathon">2. 듀얼 해커톤 컨텍스트</a></li>
+    <li><a href="#timeline">3. 의사결정 히스토리</a></li>
+    <li><a href="#architecture">4. 기술 아키텍처</a></li>
+    <li><a href="#wow">5. Audit-the-Auditor 모먼트</a></li>
+    <li><a href="#apex">6. 33 APPLY 기능 결정</a></li>
+    <li><a href="#spikes">7. 7-Spike 검증 결과</a></li>
+    <li><a href="#corpus">8. 524 Gemini 3 코퍼스</a></li>
+    <li><a href="#demos">9. 데모 스크립트 (양쪽)</a></li>
+    <li><a href="#risks">10. 리스크 + 완화</a></li>
+    <li><a href="#prob">11. 정직한 수상 확률</a></li>
+    <li><a href="#phase1">12. Phase 1 진입점</a></li>
+    <li><a href="#onboarding">13. 첫날 체크리스트</a></li>
+    <li><a href="#files">14. 참고 파일 인덱스</a></li>
+  </ul>
+</aside>
+
+<main>
+
+<header class="report-header">
+  <span class="eyebrow">Onboarding Brief</span>
+  <h1>Glasshat — 온보딩 종합 보고서</h1>
+  <p class="subtitle">"The panel that audits itself." — 신규 팀원에게 현재 상태·의사결정·기술 분석·우승 전략을 한 번에 인계하는 종합 자료.</p>
+  <div class="report-meta">
+    <span class="badge">버전 v1 · 2026-05-15 KST</span>
+    <span class="badge">상태: 계획·검증 완료 / 구현 미시작</span>
+    <span class="badge">생성: Claude Code</span>
+  </div>
+</header>
+
+<!-- ============================================================ -->
+<section id="summary">
+<h2><span class="num">§0</span>TL;DR 핵심 요약</h2>
+
+<p>Glasshat은 <strong>덱 PDF + GitHub 레포지토리</strong>를 입력으로 받아, <strong>6-perspective AI 패널(Six Thinking Hats)</strong>이 <strong>BMAD 17항목 / 100점 rubric</strong>으로 점수를 매기는 <strong>비-챗봇 평가 파이프라인</strong>. 차별점은 패널이 <strong>자기 자신의 편향을 실시간으로 감지하고 자가-교정</strong>하는 <strong>audit-the-auditor 루프</strong>가 화면에서 보인다는 점. 단일 코드베이스로 <strong>Qdrant VSD 해커톤(2026-06-01)</strong> + <strong>Google Cloud Rapid Agent 해커톤 / Arize 트랙(2026-06-11)</strong> 양쪽에 다른 narration으로 제출.</p>
+
+<div class="metric-grid">
+  <div class="metric"><div class="label">제출 마감 #1</div><div class="value">Jun 01</div><div class="sub">Qdrant VSD 23:59 PT</div></div>
+  <div class="metric"><div class="label">제출 마감 #2</div><div class="value">Jun 11</div><div class="sub">Rapid Agent 14:00 PT</div></div>
+  <div class="metric"><div class="label">P(Qdrant top-3)</div><div class="value accent">38-45%</div><div class="sub">post-spike 추정</div></div>
+  <div class="metric"><div class="label">P(Arize top-3)</div><div class="value accent">62-68%</div><div class="sub">post-spike 추정</div></div>
+  <div class="metric"><div class="label">상태</div><div class="value success">PLANNED</div><div class="sub">스파이크 7/7 PASS · 코드 미작성</div></div>
+  <div class="metric"><div class="label">APPLY 기능</div><div class="value">33</div><div class="sub">+9 STRETCH · 5 CUT</div></div>
+</div>
+
+<div class="callout tip">
+  <span class="title">💡 한 문장 핵심</span>
+  Glasshat은 "AI 패널이 자기 자신을 감사한다"는 단일 wow 모먼트를 두 해커톤에서 다르게 narration해서 양쪽 우승을 노리는 단일 프로젝트입니다. 모든 advanced 기능 결정, wow 모먼트 디자인, 기술 검증 spike는 모두 완료되었고, 다음 단계는 Phase 1 코드 작성입니다.
+</div>
+</section>
+
+<!-- ============================================================ -->
+<section id="what-is-glasshat">
+<h2><span class="num">§1</span>Glasshat이란</h2>
+
+<h3>1.1 제품 정의</h3>
+<p>Glasshat은 <strong>artifact-ingesting fair-evaluation agent</strong>입니다. 채팅 인터페이스가 아닙니다. 사용자가 두 개의 드롭존(PDF 덱 + GitHub URL)에 자료를 넣으면, 자율적으로 다음 파이프라인을 실행합니다:</p>
+
+<ol>
+  <li><strong>Ingest</strong> — PDF → Gemini multimodal 파싱 → 청크화 → Qdrant 임베딩 / 레포 shallow clone → 정적 휴리스틱 → 샘플 코드 → Qdrant 임베딩</li>
+  <li><strong>Plan</strong> — Blue 오케스트레이터가 검수 가능한 plan object 발행 (어떤 hat, 어떤 BMAD 항목, 어떤 기법 적용, 검색 예산 등). <em>사용자가 plan을 검토/수정 (Human Gate 1)</em></li>
+  <li><strong>Run Panel</strong> — 6 hats가 병렬 실행 (White facts / Red intuition / Yellow value / Black risk / Green creative / Blue synthesis)</li>
+  <li><strong>Audit-the-Auditor</strong> — Black hat이 Yellow의 점수 편향 감지 → Blue planner가 Phoenix MCP에 과거 드리프트 조회 → Qdrant Recommendation API로 anti-pattern 앵커 검색 → 점수가 화면에서 자가-교정</li>
+  <li><strong>Score</strong> — BMAD 17항목 / 100점 채점, 모든 sub-score에 evidence 부착</li>
+  <li><strong>Report</strong> — 서명된 audit trail, 2D radar + 3D 평가 그래프, vector-search 페이지. <em>사용자가 임의 점수 override 가능 (Human Gate 2)</em></li>
+</ol>
+
+<h3>1.2 왜 "non-chatbot"인가 (Qdrant 룰)</h3>
+<p>Qdrant VSD 해커톤은 "submissions that are only chatbots are not allowed"가 hard rule입니다. Glasshat의 UI는 <strong>드롭존 + 플랜 카드 + 모니터 + 리포트 + 3D 그래프 + 벡터 검색 페이지</strong>로 구성되며 채팅 박스가 어디에도 없습니다.</p>
+
+<h3>1.3 왜 "agent that does a task"인가 (Rapid Agent 룰)</h3>
+<p>입력이 프롬프트가 아니라 아티팩트이며, plan → tool use → execute → 사용자 통제 유지 → 결과물 생성 패턴을 만족합니다. Google ADK on Cloud Run + Vertex AI Agent Builder에 등록 + Phoenix MCP 파트너 통합으로 partner-track 자격을 충족합니다.</p>
+
+<h3>1.4 fairthon 컨셉 계보 (코드 재사용 아님)</h3>
+<p>Glasshat의 <strong>방법론</strong> — Six Thinking Hats + BMAD rubric + 75 기법 + 3D 그래프 — 는 <a href="https://fairthon.com">fairthon.com</a>(동일 팀)의 컨셉에서 파생됩니다. 그러나 그 방법론은 <strong>설계/스펙</strong>이지 코드가 아닙니다. <strong>fairthon 또는 어떤 이전 프로젝트의 소스 코드도 재사용하지 않으며, 본 레포의 모든 코드는 해커톤 기간(2026-05-13 첫 커밋) 내에 새로 작성</strong>되었습니다. 양쪽 해커톤의 "all code in period" 룰을 컴플라이언스 합니다.</p>
+
+</section>
+
+<!-- ============================================================ -->
+<section id="hackathon">
+<h2><span class="num">§2</span>듀얼 해커톤 컨텍스트</h2>
+
+<h3>2.1 Qdrant VSD "Think Outside the Bot" 2026 (Primary)</h3>
+<div class="table-wrap">
+<table>
+<tr><th>항목</th><th>값</th></tr>
+<tr><td>마감</td><td><code>2026-06-01 23:59 PT</code> (= 2026-06-02 ~16:00 KST)</td></tr>
+<tr><td>심사 기준</td><td>Functionality · Originality · User Experience (equal weight)</td></tr>
+<tr><td>제출 채널</td><td><code>https://forms.gle/YDQ2TDUi8MqS9Vx28</code> (Google Form · Devpost 아님)</td></tr>
+<tr><td>상금</td><td>1st $5K · 2nd $3K · 3rd $2K + Best-in-Category 스폰서 보너스(2026 스폰서 미공개; 2025 = Mistral $3K · CrewAI 1yr · Neo4j credits · Superlinked $1K · TwelveLabs $1K)</td></tr>
+<tr><td>제출 요건</td><td>Public/private GitHub repo + README.md + 데모영상 ≤3분 (Loom/YouTube/Dropbox) + basic code comments</td></tr>
+<tr><td>Hard rules</td><td><strong>No chatbots</strong> · Qdrant DB 필수 (material part) · <strong>All code in period</strong> · 팀 1-4명 · 18+ · 팀 간 작업 공유 금지</td></tr>
+<tr><td>2025 우승작 패턴</td><td>🥇 Vector Vintage (3D terrain commerce · R3F · Qdrant+Mistral+Neo4j) · 🥈 RoboBank (robot trajectory memory) · 🥉 Spatio-Temporal NPCs (game memory). <strong>R3F가 top winners 중 3건에 등장</strong>.</td></tr>
+</table>
+</div>
+
+<h3>2.2 Google Cloud Rapid Agent Hackathon — Arize Track (Secondary, repackaging)</h3>
+<div class="table-wrap">
+<table>
+<tr><th>항목</th><th>값</th></tr>
+<tr><td>기간</td><td>2026-05-05 12:00 PT → <code>2026-06-11 14:00 PT</code> (= 2026-06-12 ~06:00 KST)</td></tr>
+<tr><td>심사 (4축 동등)</td><td>(1) <strong>Tech Implementation</strong> ← <strong>타이브레이커 1순위</strong><br>(2) Design<br>(3) Potential Impact<br>(4) Quality of Idea<br>타이 발생 시 위 순서로 비교</td></tr>
+<tr><td>Stage 1 pass/fail</td><td>Gemini 3 + Agent Builder + Partner MCP + Google Cloud 모두 사용 증빙</td></tr>
+<tr><td>Arize 트랙 specifics</td><td>OpenInference instrumentation + Phoenix traces 송신 + <strong>Phoenix MCP runtime introspection</strong> + LLM-as-judge evals + (보너스) <strong>self-improvement loop</strong>. Runtime: Cloud Run / ADK / Gemini CLI / Agent Runtime / Gemini Enterprise SDK</td></tr>
+<tr><td>상금</td><td>1st $5K · 2nd $3K · 3rd $2K per track ($60K total · 6 tracks: Arize, Elastic, Dynatrace, Fivetran, GitLab, MongoDB)</td></tr>
+<tr><td>제출 요건</td><td>Hosted URL · public OSS repo (Apache-2.0 detectable in About sidebar) · 데모영상 ≤3분 (YouTube/Vimeo만) · English subtitles · Devpost 제출 form</td></tr>
+<tr><td>자격</td><td>제외국 명단 ≠ Korea ✓ · 18+ · 팀 1-4 · Google/Partner 직원 제외</td></tr>
+<tr><td>경쟁 제약</td><td>"선택한 파트너와 직접 경쟁하는 서비스 사용 불가" → Arize(observability) ≠ Qdrant(vector DB) 카테고리 다름, README §7.2에서 명시적 구분</td></tr>
+</table>
+</div>
+
+<h3>2.3 듀얼 제출 전략 — 단일 엔진, 두 narration</h3>
+<div class="two-col">
+  <div class="callout info">
+    <span class="title">🎯 Qdrant 데모 강조점</span>
+    Visual + theatrical · 3D evaluation graph · vector-anchored 점수 자가-교정 · 524-corpus 메타 narrative ("우리는 이 해커톤의 4,499개 제출작 중 524개를 평가해봤다")
+  </div>
+  <div class="callout info">
+    <span class="title">🔧 Arize 데모 강조점</span>
+    Technical depth · Phoenix MCP 4개 호출 trace tree 가시화 · self-improvement loop 점수 before/after 델타 · 아키텍처 stack 10개 badge
+  </div>
+</div>
+<p class="cell-muted" style="font-size:.88rem">📌 동일 엔진의 ~80% 코드 경로 공유. 차이는 narration + foreground UI + Phoenix UI side-by-side 녹화 여부.</p>
+
+</section>
+
+<!-- ============================================================ -->
+<section id="timeline">
+<h2><span class="num">§3</span>의사결정 히스토리</h2>
+<p>매 결정의 <strong>출처(누가)</strong> 및 <strong>근거</strong>를 함께 기록합니다. 사용자(app.2weeks@gmail.com)가 최종 결정자, 5-전문가 패널(Porter/Christensen/Godin/Doumont/Drucker)이 자문, Claude Code가 실행.</p>
+
+<div class="timeline">
+  <div class="timeline-item">
+    <div class="date">2026-05-13</div>
+    <div class="title">Repo scaffold · 컨셉 록업</div>
+    <div class="body">Two-Weeks-Team/panelyst 신규 repo, Apache-2.0 · fairthon 컨셉 계보 README 공개 · 양쪽 해커톤 단일 제출 결정</div>
+  </div>
+  <div class="timeline-item">
+    <div class="date">2026-05-13/14</div>
+    <div class="title">GCP 풀 셋업 + Gemini 3-tier 라이브 검증</div>
+    <div class="body">panelyst-hackathon 프로젝트(916178791322), SA panelyst-dev, 13 APIs. 6 모델 × 7 location 라이브 측정. gemini-3.1-pro-preview / 3-flash-preview / 3.1-flash-lite GA 모두 global 엔드포인트에서 작동 확인. 자세히는 <code>docs/gcp-setup.md</code></div>
+  </div>
+  <div class="timeline-item">
+    <div class="date">2026-05-14 (오전)</div>
+    <div class="title">사용자 지시: "수상 가능성과 양쪽 룰과 양쪽 수상에 최대치까지 계획을 완성"</div>
+    <div class="body">Phase 1 코드 진입 보류 결정. 7차원 max-wins-plan + multi-expert 분석 + 라이브 웹 리서치 실행.</div>
+  </div>
+  <div class="timeline-item">
+    <div class="date">2026-05-14 (오후)</div>
+    <div class="title">Max-Wins Plan v1 완성 (<code>docs/max-wins-plan.md</code> · 599 lines)</div>
+    <div class="body">5-전문가 패널 권고: <strong>(1)</strong> Qdrant primary, Arize repackaging <strong>(2)</strong> Glasshat 리네이밍 권고 <strong>(3)</strong> 3D graph stretch → must-build <strong>(4)</strong> KO i18n 컷 <strong>(5)</strong> audit-the-auditor 모먼트가 양쪽 wow factor. 사용자 모든 권고 승인.</div>
+  </div>
+  <div class="timeline-item">
+    <div class="date">2026-05-14 (저녁)</div>
+    <div class="title">Wow Moment Design + Gemini 3 코퍼스 결정</div>
+    <div class="body">5단계 wow 모먼트 기술 분해 (<code>docs/wow-moment-design.md</code>). 사용자가 <code>gemini3.devpost.com/project-gallery</code> 4,499 제출작 활용 제안 → 524 stratified (24+ winners + 500 random) 결정.</div>
+  </div>
+  <div class="timeline-item">
+    <div class="date">2026-05-14 (밤)</div>
+    <div class="title">Technical Apex Pass — 47 features 명시적 결정</div>
+    <div class="body">사용자 질문 "기술적 정점 모두 활용했나?" → 33 APPLY + 9 STRETCH + 5 CUT 결정 매트릭스 (<code>docs/technical-apex-features.md</code>). 데모 스크립트도 7-8 wow/kick beat으로 densify. P(Qdrant) 28-35% → 35-42%, P(Arize) 50-55% → 58-65%.</div>
+  </div>
+  <div class="timeline-item">
+    <div class="date">2026-05-14/15 (자정~새벽)</div>
+    <div class="title">7-Spike 기술 검증 — 모두 PASS</div>
+    <div class="body">A (Phoenix MCP smoke) · B (ADK LoopAgent) · C (ADK+MCPToolset wiring) · D (calibration policy 35.4% MAE↓) · E (SSE 802ms) · F (Phoenix Online Eval OSS) · G (Annotation R/W). 결과: <code>docs/spike-results.md</code>. P(Qdrant) → 38-45%, P(Arize) → 62-68%.</div>
+  </div>
+  <div class="timeline-item">
+    <div class="date">2026-05-15 (오전)</div>
+    <div class="title">Glasshat 리네이밍 마이그레이션</div>
+    <div class="body">이름 충돌 체크: GitHub Two-Weeks-Team/glasshat 비어있음 ✓, SaaSWorthy SEO 도구 존재 (다른 카테고리, 사용자 진행 결정). docs/.env/.env.example/README 모두 업데이트, branch <code>chore/rename-glasshat</code>. gh repo rename + 폴더 rename 대기 중.</div>
+  </div>
+  <div class="timeline-item">
+    <div class="date">2026-05-15 (현재)</div>
+    <div class="title">신규 팀원 온보딩 자료 생성 (본 문서)</div>
+    <div class="body">계획·검증·결정 모두 정리. Phase 1 빌드 진입 준비됨.</div>
+  </div>
+</div>
+
+<h3>3.1 주요 결정 12건 (locked)</h3>
+<div class="table-wrap">
+<table>
+<tr><th>#</th><th>결정</th><th>출처</th></tr>
+<tr><td>1</td><td>Qdrant VSD = primary 제출. Arize = 7일 repackaging.</td><td>Panel + User 2026-05-14</td></tr>
+<tr><td>2</td><td>Panelyst → <strong>Glasshat</strong> 리네이밍</td><td>Panel + User 2026-05-14</td></tr>
+<tr><td>3</td><td>3D evaluation graph = must-build (날짜 게이트 없음)</td><td>User 2026-05-14</td></tr>
+<tr><td>4</td><td>Audit-the-auditor 모먼트 = 양쪽 wow factor</td><td>Panel 2026-05-14</td></tr>
+<tr><td>5</td><td>KO i18n 컷 · fairthon 히스토리 컷 · 17 BMAD 풀 표시 컷 (데모만, 빌드는 유지)</td><td>Panel + User</td></tr>
+<tr><td>6</td><td>Phoenix MCP runtime consultation = Arize 모트 기능</td><td>Panel + 룰 분석</td></tr>
+<tr><td>7</td><td>Hosting = Cloud Run (frontend + backend 단일 런타임)</td><td>Resource allocation</td></tr>
+<tr><td>8</td><td>past_evals 시드 = fairthon 히스토리 NO, Gemini 3 hackathon 524 stratified만</td><td>User 2026-05-14</td></tr>
+<tr><td>9</td><td>Agent runtime = <strong>Google ADK</strong> on Cloud Run (Agent Builder는 등록만)</td><td>Spike+research 2026-05-14</td></tr>
+<tr><td>10</td><td>524 corpus = 24+ winners + 500 stratified random</td><td>User 2026-05-14</td></tr>
+<tr><td>11</td><td>메타-narrative = Qdrant 데모에만 명시, Arize는 Phoenix experiment 관점만</td><td>User 2026-05-14</td></tr>
+<tr><td>12</td><td>모든 데모 영상: on-screen 영어 캡션, no live voice-over</td><td>Doumont 권고</td></tr>
+</table>
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<section id="architecture">
+<h2><span class="num">§4</span>기술 아키텍처</h2>
+
+<h3>4.1 스택 한눈에</h3>
+<div class="table-wrap">
+<table>
+<tr><th>레이어</th><th>선택</th><th>비고</th></tr>
+<tr><td>Intelligence</td><td><strong>Gemini 3 on Vertex AI</strong> 3-tier</td><td>3.1 Pro (Blue/Black, thinking=high) · 3 Flash (White/Red/Yellow, thinking=medium) · 3.1 Flash-Lite (Code Grader/corpus seed Batch, thinking=minimal)</td></tr>
+<tr><td>Agent runtime</td><td><strong>Google ADK on Cloud Run</strong></td><td>LoopAgent + ParallelAgent + Custom BaseAgent + MCPToolset(Stdio) + 6 callback types + session state Firestore + native streaming. Spike C로 검증됨.</td></tr>
+<tr><td>Agent Builder 등록</td><td>Vertex AI Agent Builder</td><td>Blue planner 등록 → Rapid Agent partner-track 컴플라이언스. 실행 자체는 ADK가 담당.</td></tr>
+<tr><td>Partner MCP</td><td><strong>Arize Phoenix</strong> (Cloud free tier / self-host fallback)</td><td>27 tools via <code>npx @arizeai/phoenix-mcp@latest</code>. OpenInference 자동 instrument. Online Evals + Custom Evaluators + Annotations + Datasets + Experiments. Spike A/F/G 검증.</td></tr>
+<tr><td>Vector DB</td><td><strong>Qdrant</strong> Cloud (local docker-compose for dev)</td><td>6 컬렉션 hybrid dense+sparse RRF 융합 + Recommendation API (anti-pattern 검색) + group-by 집계 + Scalar Quantization on past_evals.</td></tr>
+<tr><td>Document of record</td><td>Firestore Native</td><td>Run records, technique registry, users, audit trail (서명).</td></tr>
+<tr><td>Compute</td><td>Cloud Run + Cloud Run Jobs</td><td>pipeline-orchestrator service + code-grader-job</td></tr>
+<tr><td>Ingest pipeline</td><td>Cloud Storage + Eventarc</td><td>GCS 업로드 → Eventarc 트리거 → ingest-svc</td></tr>
+<tr><td>Web search</td><td>Vertex AI Grounding with Google Search</td><td>White hat 인용. URL snapshot UI 가시화.</td></tr>
+<tr><td>Auth</td><td>Firebase Authentication</td><td>Google sign-in. (Phase 2부터)</td></tr>
+<tr><td>Frontend</td><td><strong>Next.js</strong> on Cloud Run</td><td>드롭존 + 플랜 카드 + 모니터 + 리포트 + 3D 그래프 (react-three-fiber) + 벡터 검색 페이지 + 영어 SSE + 800ms-paced wow beats. KO 컷.</td></tr>
+</table>
+</div>
+
+<h3>4.2 BMAD Rubric — 17 항목 / 100 점</h3>
+<div class="two-col">
+  <div>
+    <ul>
+      <li><strong>A. Problem & Vision (25)</strong> — A1 clarity 8 · A2 target users 5 · A3 differentiation 7 · A4 market impact 5</li>
+      <li><strong>B. Tech & Architecture (25)</strong> — B1 stack fit 7 · B2 system design 6 · B3 scalability 6 · B4 feasibility 6</li>
+      <li><strong>C. Implementation & Code (30)</strong> — C1-C5</li>
+      <li><strong>D. Documentation & Presentation (20)</strong> — D1-D4</li>
+    </ul>
+    <p>버전 관리된 외부 config (<code>packages/rubric/bmad-rubric.yaml</code>). LLM이 즉흥 채점하지 않음.</p>
+  </div>
+  <div class="chart-wrap">
+    <div class="title">BMAD Rubric 분포</div>
+    <canvas id="bmadChart"></canvas>
+  </div>
+</div>
+
+<h3>4.3 에이전트 토폴로지 (audit loop 포함)</h3>
+<pre><span class="lang-tag">topology</span><code>GlasshatRootAgent  <span class="c">// CustomAgent — orchestrator</span>
+├─ IngestAgent  <span class="c">// PDF 파서 + 레포 클로너</span>
+├─ BluePlannerAgent  <span class="c">// LlmAgent · Gemini 3.1 Pro · thinking=high</span>
+├─ HatsPanel  <span class="c">// ParallelAgent (6 hats 병렬)</span>
+│  ├─ WhiteAgent    <span class="c">// + Qdrant hybrid + Vertex Grounding</span>
+│  ├─ RedAgent
+│  ├─ YellowAgent   <span class="c">// + Qdrant hybrid</span>
+│  ├─ BlackAgent    <span class="c">// + Qdrant hybrid · must_cite_precedent</span>
+│  ├─ GreenAgent
+│  └─ BlueSynthesisAgent
+├─ AuditLoop  <span class="c">// LoopAgent · max_iterations=2</span>
+│  ├─ InconsistencyDetectorAgent  <span class="c">// 3-redundant 감지 union</span>
+│  │   ├─ Path 1: Phoenix Online Eval annotation
+│  │   ├─ Path 2: Phoenix Custom Python Evaluator
+│  │   └─ Path 3: Black hat counter-claim
+│  ├─ PhoenixConsultantAgent  <span class="c">// + Phoenix MCPToolset + Qdrant Recommend</span>
+│  │   ├─ get-experiment-by-id <span class="c">// 드리프트 집계</span>
+│  │   ├─ get-span-annotations <span class="c">// 증빙 체인</span>
+│  │   ├─ get-dataset-examples <span class="c">// 앵커 프로필</span>
+│  │   └─ qdrant.recommend(positive, negative, "average_vector")
+│  └─ ScoreCalibrationAgent  <span class="c">// clip(pred - 0.8*delta, p25, p75)</span>
+├─ BMADScorerAgent  <span class="c">// + group_by + context cache</span>
+└─ ReportAssemblerAgent  <span class="c">// Firestore audit + SSE 800ms-paced</span></code></pre>
+
+<p>전체 토폴로지·시퀀스·페이즈별 배포 매트릭스는 <code>docs/architecture.md</code> 및 <code>docs/wow-moment-design.md</code> §4 참조.</p>
+
+</section>
+
+<!-- ============================================================ -->
+<section id="wow">
+<h2><span class="num">§5</span>Audit-the-Auditor 모먼트</h2>
+
+<p>전체 전략의 린치핀입니다. 양쪽 데모의 wow factor가 같은 엔지니어링을 다른 narration으로 렌더링합니다.</p>
+
+<div class="callout info">
+  <span class="title">📌 한 문장</span>
+  "Black hat이 Yellow의 A1 점수를 evidence_depth와 불일치하다고 플래그 → Blue planner가 Phoenix MCP에 과거 드리프트 조회 → Qdrant Recommendation API로 anti-pattern 앵커 검색 → Yellow의 A1 점수가 9.0 → 7.6으로 화면에서 자가-교정, 3D 그래프 재구성"
+</div>
+
+<h3>5.1 5단계 분해 + 타당성 (모두 spike-검증)</h3>
+<div class="table-wrap">
+<table>
+<tr><th>단계</th><th>책임 에이전트</th><th>구현</th><th>타당성</th></tr>
+<tr><td>1. Detection</td><td>InconsistencyDetectorAgent</td><td>3-redundant: Phoenix Online Eval LLM-as-judge / Phoenix Custom Python rule / Black hat counter-claim</td><td class="cell-success">✓ Spike F (5/5 accuracy)</td></tr>
+<tr><td>2. Phoenix consultation</td><td>PhoenixConsultantAgent</td><td><code>get-experiment-by-id</code> (drift) + <code>get-span-annotations</code> (proof) + <code>get-dataset-examples</code> (anchors)</td><td class="cell-success">✓ Spike A (27 tools, 6-27ms)</td></tr>
+<tr><td>3. Qdrant anchor retrieval</td><td>(같은 에이전트)</td><td><code>recommend(positive, negative, "average_vector")</code></td><td class="cell-success">✓ 표준 vector search</td></tr>
+<tr><td>4. Score correction</td><td>ScoreCalibrationAgent</td><td><code>new = clip(pred - 0.8 × delta, p25, p75)</code>, ±2.0 cap</td><td class="cell-success">✓ Spike D (35.4% MAE↓)</td></tr>
+<tr><td>5. UI animation</td><td>Frontend SSE consumer</td><td>6 events · 800ms gaps · r3f node migration</td><td class="cell-success">✓ Spike E (802ms ±20)</td></tr>
+</table>
+</div>
+
+<h3>5.2 MCP 호출 chain (consultation 모먼트, 4 parallel calls, &lt;800ms)</h3>
+<pre><span class="lang-tag">mcp · python</span><code><span class="c"># Phoenix MCP via ADK MCPToolset (Stdio transport)</span>
+<span class="k">from</span> google.adk.tools.mcp_tool <span class="k">import</span> MCPToolset, StdioConnectionParams
+<span class="k">from</span> mcp <span class="k">import</span> StdioServerParameters
+
+phoenix_mcp = MCPToolset(
+    connection_params=StdioConnectionParams(
+        server_params=StdioServerParameters(
+            command=<span class="s">"npx"</span>,
+            args=[<span class="s">"-y"</span>, <span class="s">"@arizeai/phoenix-mcp@latest"</span>,
+                  <span class="s">"--baseUrl"</span>, os.environ[<span class="s">"PHOENIX_BASE_URL"</span>],
+                  <span class="s">"--apiKey"</span>, os.environ[<span class="s">"PHOENIX_API_KEY"</span>]],
+        ),
+        timeout=<span class="n">30.0</span>,
+    ),
+)
+
+<span class="c"># Consultation 모먼트의 4 parallel calls (Spike A 측정: 17-27ms each)</span>
+results = <span class="k">await</span> asyncio.gather(
+    phoenix_mcp.call(<span class="s">"get-experiment-by-id"</span>,
+        experiment_id=<span class="s">"glasshat-calibration-v1"</span>,
+        filters={<span class="s">"hat"</span>: <span class="s">"yellow"</span>, <span class="s">"criterion"</span>: <span class="s">"A1"</span>,
+                 <span class="s">"evidence_depth_bucket"</span>: <span class="s">"&lt;0.4"</span>}),
+    phoenix_mcp.call(<span class="s">"get-span-annotations"</span>,
+        span_ids=[yellow_a1_span_id], project_identifier=<span class="s">"glasshat-prod"</span>),
+    phoenix_mcp.call(<span class="s">"get-dataset-examples"</span>,
+        dataset=<span class="s">"calibration_corpus_v1"</span>, limit=<span class="n">3</span>,
+        filter={<span class="s">"hat"</span>: <span class="s">"yellow"</span>, <span class="s">"evidence_depth_bucket"</span>: <span class="s">"&lt;0.4"</span>}),
+    qdrant_client.recommend(
+        collection=<span class="s">"past_evals"</span>,
+        positive=anchor_overconfident_ids,
+        negative=anchor_accurate_ids,
+        strategy=<span class="s">"average_vector"</span>,
+        limit=<span class="n">3</span>),
+)</code></pre>
+
+<h3>5.3 Calibration 공식 (Spike D 검증)</h3>
+<pre><span class="lang-tag">python</span><code><span class="k">def</span> <span class="f">calibrate</span>(predicted: float, phoenix_findings: dict, anchors: list) -&gt; float:
+    mean_delta = phoenix_findings[<span class="s">"mean_delta"</span>]    <span class="c"># e.g. 1.2 (over-confident bias)</span>
+    raw = predicted - <span class="n">0.8</span> * mean_delta            <span class="c"># conservative pull</span>
+    delta = raw - predicted
+    delta = <span class="f">max</span>(-<span class="n">2.0</span>, <span class="f">min</span>(<span class="n">2.0</span>, delta))           <span class="c"># ±2.0 absolute cap</span>
+    candidate = predicted + delta
+    p25, p75 = anchors[<span class="s">"p25"</span>], anchors[<span class="s">"p75"</span>]
+    <span class="k">return</span> <span class="f">max</span>(p25, <span class="f">min</span>(p75, candidate))      <span class="c"># clip to anchor band</span>
+
+<span class="c"># Spike D synthetic test (50 train, 50 holdout):</span>
+<span class="c">#   Uncalibrated MAE: 0.517</span>
+<span class="c">#   Calibrated MAE:   0.334  → 35.4% improvement</span>
+<span class="c">#   Yellow A1 low-evidence bucket: 1.476 → 0.505 (66% reduction in the target bucket)</span></code></pre>
+
+<h3>5.4 사전-시드 의존성 (★ 데모 시연 차단요인)</h3>
+<div class="callout warning">
+  <span class="title">⚠ 가장 큰 운영 리스크</span>
+  Phoenix corpus에 과거 데이터가 없으면 consultation 단계가 빈손 → 모든 detection은 fired되지만 정량적 drift 데이터가 없어 데모가 평탄해짐. 따라서 Phase 1.12 (524 Gemini 3 코퍼스 스크레이핑) + Phase 1.13 (Phoenix Experiment 시드) <strong>반드시 데모 녹화 전 완료</strong> 필요. 자세히는 <code>docs/wow-moment-design.md</code> §6.
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<section id="apex">
+<h2><span class="num">§6</span>33 APPLY · 9 STRETCH · 5 CUT — Apex Pass 결정</h2>
+
+<p>Qdrant / Phoenix / Gemini 3 / Google ADK 각 스택의 고급 기능 47개를 명시적으로 결정. 자세히는 <code>docs/technical-apex-features.md</code>.</p>
+
+<div class="chart-wrap" style="margin-bottom:24px">
+  <div class="title">Feature 결정 분포</div>
+  <canvas id="featureChart"></canvas>
+</div>
+
+<h3>6.1 APPLY 33개 (v1 필수)</h3>
+<div class="two-col">
+  <div>
+    <h4>Qdrant (6)</h4>
+    <ul>
+      <li>1.1 dense+sparse hybrid + RRF fusion</li>
+      <li>1.2 weighted RRF (v1.17+)</li>
+      <li>1.3 <strong>Recommendation API ★</strong> (audit anti-pattern)</li>
+      <li>1.5 group-by/aggregations (anchor 1-call)</li>
+      <li>1.6 payload index high-cardinality fields</li>
+      <li>1.7 Scalar Quantization on past_evals</li>
+    </ul>
+    <h4>Phoenix (9)</h4>
+    <ul>
+      <li>2.1 OpenInference auto-instrumentation</li>
+      <li>2.2 semantic conventions for custom spans</li>
+      <li>2.3 <strong>Online Evals Task ★★</strong></li>
+      <li>2.4 Custom Python Evaluators</li>
+      <li>2.5 Datasets API</li>
+      <li>2.6 <strong>Experiments + MCP get-experiment-by-id ★</strong></li>
+      <li>2.7 Annotations (LLM/CODE/HUMAN) — human override 폐쇄 루프</li>
+      <li>2.9 built-in templates (groundedness, hallucination)</li>
+      <li>2.11 self-hosted fallback</li>
+    </ul>
+  </div>
+  <div>
+    <h4>Gemini 3 (8)</h4>
+    <ul>
+      <li>3.1 thinking_level per agent tier</li>
+      <li>3.2 <strong>thinking tokens visible UI ★</strong></li>
+      <li>3.3 context caching (90% 비용 절감, 4096+ tokens)</li>
+      <li>3.4 responseSchema strict on all hat outputs</li>
+      <li>3.6 Batch prediction (524 corpus seed)</li>
+      <li>3.8 Vertex Grounding with Google Search</li>
+      <li>3.9 citation snapshot UI</li>
+      <li>3.10 responseMimeType strict JSON</li>
+    </ul>
+    <h4>ADK (8)</h4>
+    <ul>
+      <li>4.1 LoopAgent (AuditLoop)</li>
+      <li>4.2 ParallelAgent (HatsPanel)</li>
+      <li>4.3 Custom BaseAgent (orchestrator)</li>
+      <li>4.4 MCPToolset (Stdio) for Phoenix MCP</li>
+      <li>4.5 before/after tool callbacks</li>
+      <li>4.6 before/after model callbacks</li>
+      <li>4.8 session state with Firestore</li>
+      <li>4.9 native streaming (SSE 800ms)</li>
+    </ul>
+  </div>
+</div>
+
+<h3>6.2 STRETCH 9개 (Phase 1/2 일정 허용 시)</h3>
+<ul>
+  <li>Qdrant: 1.4 Discovery API · 1.8 ColBERT multi-vector · 1.10 cross-collection lookup</li>
+  <li>Phoenix: 2.8 Prompt versioning · 2.10 Agent trajectory evaluator</li>
+  <li>Gemini: 3.5 multi-modal single-call ingestion · <strong>3.7 Code execution tool (메모리 잘 남음)</strong></li>
+  <li>ADK: 4.7 before/after agent callbacks · 4.12 Plugins for guardrails</li>
+</ul>
+
+<h3>6.3 CUT 5개 (v1 명시적 제외)</h3>
+<ul>
+  <li>Qdrant: 1.9 DBSF (RRF 충분) · 1.11 HA/snapshots/sharding (운영 우려, 심사 무관)</li>
+  <li>Gemini: 3.11 long-context stuffing (anti-pattern)</li>
+  <li>ADK: 4.10 ADK Eval framework (Phoenix evals와 중복) · 4.11 A2A protocol (May 2026 immature)</li>
+</ul>
+
+</section>
+
+<!-- ============================================================ -->
+<section id="spikes">
+<h2><span class="num">§7</span>7-Spike 검증 결과 (모두 PASS)</h2>
+
+<p>Phase 1 코드 작성 전, 선택된 기술 스택이 실제로 작동하는지 검증한 7개 spike test. 자세히는 <code>docs/spike-results.md</code>, 스크립트는 <code>spikes/0[1-7]_*.py</code>.</p>
+
+<div class="table-wrap">
+<table>
+<tr><th>#</th><th>Spike</th><th>결과</th><th>핵심 metric</th></tr>
+<tr><td>A</td><td>Phoenix MCP smoke test</td><td class="cell-success">✓ PASS</td><td>27 tools 검색 / list-projects 27ms / get-spans 6ms</td></tr>
+<tr><td>B</td><td>ADK LoopAgent + escalation</td><td class="cell-success">✓ PASS</td><td>Convergence 2 iter + max_iter cap 작동, state_delta 영구화</td></tr>
+<tr><td>C</td><td>ADK + Phoenix MCPToolset wiring</td><td class="cell-success">✓ PASS</td><td>LlmAgent 1 run = 7 Phoenix spans (MCP tool call 자동 캡처)</td></tr>
+<tr><td>D</td><td>Calibration policy on toy data</td><td class="cell-success">✓ PASS</td><td><strong>35.4% MAE↓ held-out</strong>, Yellow A1 bucket 66%↓, 0 catastrophic over-correction</td></tr>
+<tr><td>E</td><td>SSE animation latency</td><td class="cell-success">✓ PASS</td><td><strong>802ms 평균 간격</strong> (목표 800±100), 16ms 최대 전달 지연</td></tr>
+<tr><td>F</td><td>Phoenix Online Eval OSS</td><td class="cell-success">✓ PASS</td><td>5/5 accuracy, eval+5 writes in 30ms, MCP read 1.72s</td></tr>
+<tr><td>G</td><td>Phoenix Annotation R/W</td><td class="cell-success">✓ PASS</td><td>Write 12ms · SDK read 10ms · MCP read 2.1s · full fidelity</td></tr>
+</table>
+</div>
+
+<h3>7.1 결정적 발견</h3>
+<ul class="checkmark">
+  <li><strong>ADK MCPToolset 정확한 와이어링</strong> 발견 (문서엔 미명시): <code>MCPToolset(connection_params=StdioConnectionParams(server_params=mcp.StdioServerParameters(...)))</code> — 두 단계 wrap이 정답</li>
+  <li><strong>Spike C에서 7 Phoenix spans 자동 캡처</strong> — 데모에서 "에이전트가 자기 reasoning을 본다" narrative가 OpenInference 자동 instrumentation으로 추가 코드 없이 시각화</li>
+  <li><strong>Calibration 수학 실제 작동</strong> — Yellow A1 bias +1.4 합성 → mean_delta 1.453 정확히 회수</li>
+  <li><strong>Event는 EventActions() 필수</strong> (None 거부됨)</li>
+  <li><strong>Annotations은 dict 반환</strong> (SDK signature와 다름) → helper로 안전 접근</li>
+  <li><strong>MCP cold-start 1.7-2.1s</strong> (npx spin-up). 한 세션 재사용 시 sub-100ms — AuditLoop가 같은 toolset 세션 유지</li>
+</ul>
+
+<h3>7.2 환경 + 비용</h3>
+<div class="metric-grid">
+  <div class="metric"><div class="label">Python</div><div class="value">3.12.4</div><div class="sub">uv venv at spikes/.venv/</div></div>
+  <div class="metric"><div class="label">Node</div><div class="value">v24</div><div class="sub">npx phoenix-mcp@latest</div></div>
+  <div class="metric"><div class="label">Phoenix</div><div class="value">15.9.0</div><div class="sub">in-process (no Docker)</div></div>
+  <div class="metric"><div class="label">총 비용</div><div class="value success">$0.0001</div><div class="sub">Spike C Vertex Flash-Lite 1회</div></div>
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<section id="corpus">
+<h2><span class="num">§8</span>524 Gemini 3 코퍼스 전략</h2>
+
+<p><a href="https://gemini3.devpost.com/project-gallery">gemini3.devpost.com</a>의 4,499개 공개 제출작에서 stratified 샘플 524개를 추출, Glasshat의 calibration corpus로 사용.</p>
+
+<div class="metric-grid">
+  <div class="metric"><div class="label">Total submissions</div><div class="value">4,499</div><div class="sub">참가자 35,580명</div></div>
+  <div class="metric"><div class="label">Sampled (stratified)</div><div class="value accent">524</div><div class="sub">24 winners + 500 random</div></div>
+  <div class="metric"><div class="label">Prize pool</div><div class="value">$100K</div><div class="sub">Grand $50K + 2nd $20K + 3rd $10K + 10 honorable $2K</div></div>
+  <div class="metric"><div class="label">예상 시드 비용</div><div class="value">$20-50</div><div class="sub">$500 GCP credit 내</div></div>
+</div>
+
+<h3>8.1 왜 이 코퍼스인가</h3>
+<ul>
+  <li><strong>30-90× 더 큰 통계 power</strong> (기존 "50-150 random Devpost projects" 대비)</li>
+  <li>모든 프로젝트가 <strong>Gemini 3 스택</strong> — Glasshat 자체와 in-distribution</li>
+  <li>2025-Dec/2026-Feb 최근 데이터 — calibration 신선</li>
+  <li>required 자산: Devpost 설명 + <strong>public GitHub repo</strong> + 데모영상 — Glasshat이 평가하는 형식과 정확히 동일</li>
+  <li>공개된 심사 가중치 — <strong>Tech 40% · Innovation 30% · Impact 20% · Presentation 10%</strong> → Glasshat BMAD 4축에 거의 1:1 매핑</li>
+  <li><strong>24+ winners</strong> ribbon으로 ground-truth 라벨 확보</li>
+</ul>
+
+<h3>8.2 스크레이핑 파이프라인 (Phase 1.12)</h3>
+<ol>
+  <li>robots.txt + 1 RPS throttle 확인</li>
+  <li>188 페이지 × 24 = 4,499 인덱스 페치 → <code>seed/gemini3-index.jsonl</code></li>
+  <li>Stratified sampling: 24+ winners + 500 random non-winners → <code>seed/gemini3-sample-524.jsonl</code></li>
+  <li>524개 디테일 페이지 페치 (1 RPS, ~9분)</li>
+  <li>GitHub repo URL 있는 것만 필터 (예상 70-90%)</li>
+  <li>각 repo shallow clone + README + 정적 휴리스틱</li>
+  <li>Glasshat 파이프라인 실행 (Flash-Lite, batch prediction, ~6-12시간)</li>
+  <li>OpenInference 자동 → Phoenix Cloud <code>glasshat-prod</code></li>
+  <li>Phoenix Experiment <code>glasshat-calibration-v1</code> 집계</li>
+  <li>Held-out 검증: calibrated MAE ≤ 0.85 × uncalibrated MAE</li>
+</ol>
+
+<h3>8.3 컴플라이언스</h3>
+<div class="callout success">
+  <span class="title">✓ 양쪽 해커톤 룰 컴플라이언트</span>
+  공개 데이터를 calibration corpus로 소비하는 것은 "modification or extension of existing work"가 <strong>아닙니다</strong>. Glasshat 자체 코드는 100% 신규. README §7.2에 명시적으로 disclosure: <em>"Glasshat's calibration corpus is seeded from 524 public submissions to the Gemini 3 Hackathon ... used as evaluation calibration data only. No code or content from those submissions is reused in Glasshat."</em>
+</div>
+
+<h3>8.4 데모 메타-narrative (Qdrant 데모만)</h3>
+<div class="callout tip">
+  <span class="title">🎬 Qdrant 데모 2:30-2:50 캡션</span>
+  <em>"Glasshat evaluated 524 of the Gemini 3 Hackathon's 4,499 submissions — including all 24+ winners — to calibrate its own bias before scoring yours."</em>
+  <br><br>이 한 줄이 추상적인 "meta-evaluation" 주장을 구체적인 provenance 숫자로 변환. Arize 데모는 이를 사용하지 않고 Phoenix Experiment 데이터셋 관점으로만 framing (user decision 2026-05-14).
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<section id="demos">
+<h2><span class="num">§9</span>데모 스크립트 — 양쪽 3:00</h2>
+
+<p>두 데모 모두 ≤3분 / 영어 캡션 / no voice-over / 800ms-paced wow beats. 자세히는 <code>docs/max-wins-plan.md</code> §5.</p>
+
+<h3>9.1 Qdrant VSD 데모 — 7 wow/kick beats</h3>
+<div class="table-wrap">
+<table>
+<tr><th>시간</th><th>유형</th><th>내용</th></tr>
+<tr><td>0:00-0:10</td><td>WOW#0 hook</td><td>"Who audits the AI evaluator?" 텍스트 페이드인</td></tr>
+<tr><td>0:10-0:30</td><td>KICK#1</td><td>Cost dashboard 시작, hybrid 검색 (dense+sparse) 시각화, Blue planner thinking 표시</td></tr>
+<tr><td>0:30-1:00</td><td>KICK#2</td><td>Blue planner thinking trace + 6 hats parallel + White hat citation URL with favicon</td></tr>
+<tr><td>1:00-1:30</td><td>★★ WOW#1A</td><td><strong>Phoenix Online Eval auto-fire</strong> on Yellow A1, Black hat counter-claim parallel (backup beat)</td></tr>
+<tr><td>1:30-1:45</td><td>★★ WOW#1B</td><td>Phoenix MCP consultation + Qdrant Recommendation API, Yellow score 9.0 → 7.6 animation, contradicting chunks highlight</td></tr>
+<tr><td>1:45-2:30</td><td>★ WOW#2</td><td><strong>3D evaluation graph 524-anchor constellation 회전</strong> (2D radar fallback 준비됨)</td></tr>
+<tr><td>2:30-2:50</td><td>KICK#3</td><td>group_by anchor comparison + 524-corpus 메타-narrative caption + signed audit trail</td></tr>
+<tr><td>2:50-3:00</td><td>close</td><td>Logo + "The panel that audits itself."</td></tr>
+</table>
+</div>
+
+<h3>9.2 Rapid Agent / Arize 데모 — 8 wow/kick beats</h3>
+<div class="table-wrap">
+<table>
+<tr><th>시간</th><th>유형</th><th>내용</th></tr>
+<tr><td>0:00-0:15</td><td>WOW#0 hook</td><td>"Most agents claim self-improvement. Watch ours mid-correction." + 10 stack badges fade</td></tr>
+<tr><td>0:15-0:45</td><td>KICK#1</td><td>Full stack visible, Phoenix UI split view, 6 ADK ParallelAgent cards with model name + thinking_level</td></tr>
+<tr><td>0:45-1:00</td><td>KICK#2</td><td>Blue thinking trace + structured plan JSON (responseSchema), Phoenix spans with OpenInference attributes</td></tr>
+<tr><td>1:00-1:30</td><td>★★ WOW#1A</td><td>Phoenix Online Eval auto-fire (with Custom Python Evaluator backup parallel)</td></tr>
+<tr><td>1:30-2:00</td><td>★★ WOW#1B</td><td><strong>4 MCP calls visible in trace tree</strong>, score delta caption "Pre-Phoenix: 9.0 / Post-Phoenix: 7.6 / Δ=-1.4"</td></tr>
+<tr><td>2:00-2:30</td><td>KICK#3</td><td>Self-improvement loop completes, Phoenix Annotation written (human-in-loop closes), trace tree 전체 보임</td></tr>
+<tr><td>2:30-2:50</td><td>KICK#4</td><td>Score delta panel + cost dashboard 최종 + 10-stack architecture card slide</td></tr>
+<tr><td>2:50-3:00</td><td>close</td><td>"Glasshat. An agent that reads its own mistakes." + LICENSE-in-About 1-frame proof (Stage 1 pass/fail)</td></tr>
+</table>
+</div>
+
+<div class="callout info">
+  <span class="title">🎬 공통 production rules</span>
+  ≤3:00 (Rapid Agent: 3:00 초과분 무시), 영어 캡션 burn-in, YouTube/Vimeo upload (Rapid Agent), Phoenix UI live during recording 권장, demo 녹화 1주일 전 5명 비-팀원 user-test (≥4/5가 "AI가 자기 catch 후 fix" 30초 내 재진술 가능 시 통과)
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<section id="risks">
+<h2><span class="num">§10</span>리스크 + Mitigation</h2>
+
+<div class="table-wrap">
+<table>
+<tr><th>#</th><th>리스크</th><th>심각도 × 가능성</th><th>Mitigation</th></tr>
+<tr><td>1</td><td>Rapid Agent 경쟁 제약 — 심사관이 Qdrant를 Arize 경쟁자로 해석</td><td class="cell-warning">High × Low</td><td>README §7.2에 명시적 카테고리 구분, 데모 narration도 "Phoenix vector search" 표현 회피</td></tr>
+<tr><td>2</td><td><strong>듀얼 제출 분산 → 양쪽 mediocre</strong></td><td class="cell-error">High × High</td><td>Lock: Qdrant 제출 전 zero Arize-only 코드. Arize는 narration + Phoenix UI side-by-side + README 확장</td></tr>
+<tr><td>3</td><td>3D 그래프 시각적 under-deliver</td><td class="cell-warning">High × Medium</td><td>2D radar 동일 데이터 보장. 3D는 cluster-reveal-on-rotation을 discriminator로. 시각 검증 후 죽이기 (사용자 "날짜 무시" 지시)</td></tr>
+<tr><td>4</td><td>Audit 모먼트가 3분 데모에 read 못함</td><td class="cell-error">Critical × Medium</td><td>5명 비-팀원 user-test ≥4/5 통과 acceptance. 미통과 시 on-screen caption 추가, 페이싱 5-8초 slow</td></tr>
+<tr><td>5</td><td>Cloud Run cold-start mid-demo</td><td class="cell-warning">High × Medium</td><td>녹화 전 pre-warm, 로컬 cached demo as YouTube upload (라이브는 backup), "Try a sample" pre-cached</td></tr>
+<tr><td>6</td><td>Phoenix Cloud outage at judging</td><td class="cell-warning">High × Low</td><td>Self-hosted Phoenix in Cloud Run as failover (<code>MONITOR_BACKEND=phoenix-local</code>). Phoenix UI 스크린샷도 backup</td></tr>
+<tr><td>7</td><td>Gemini 3.1 Pro preview API 변경</td><td>Medium × Medium</td><td>LLM 어댑터가 <code>gemini-2.5-pro</code> 자동 폴백 (<code>docs/gcp-setup.md</code> 측정)</td></tr>
+<tr><td>8</td><td>Stage 1 pass/fail rejection (Rapid Agent)</td><td class="cell-error">Critical × Low</td><td>Hosted URL "Demo run" 버튼 + Phoenix UI 링크 + Cloud Run URL + GitHub About sidebar 모두 README §7에서 스크린샷</td></tr>
+<tr><td>9</td><td>Glasshat 이름 충돌 (이미 확인됨: SaaSWorthy SEO 도구)</td><td>Medium × Low</td><td>다른 카테고리. 해커톤 제출엔 영향 0. 상업화 시 trademark 재검토.</td></tr>
+<tr><td>10</td><td>2026 Qdrant Best-in-Category 스폰서 미공개</td><td>Low × Medium</td><td>주간 모니터링. 매칭 스폰서 발견 시 secondary narrative angle 추가</td></tr>
+<tr><td>11</td><td><strong>★ Phoenix corpus 사전 시드 누락 (실패 모드 #1)</strong></td><td class="cell-error">Critical × Medium</td><td>Phase 1.12+1.13가 데모 녹화 전 완료 게이트. Bucket 누락 시 Path 2 (deterministic) 항상 가능하도록 prepared demo deck 설계 (evidence_depth ≈ 0.31 fixed)</td></tr>
+<tr><td>12</td><td>스크레이핑 ToS 위반 (Devpost)</td><td>Medium × Medium</td><td>robots.txt 확인, 1 RPS throttle, descriptive User-Agent. 차단 시 다음 날 재시도</td></tr>
+</table>
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<section id="prob">
+<h2><span class="num">§11</span>정직한 수상 확률 추정</h2>
+
+<p>5-전문가 패널 + 룰 분석 + 과거 우승작 패턴 + spike 검증 기반의 정직한 추정. Marketing 표현 금지.</p>
+
+<div class="chart-wrap">
+  <div class="title">P(top-3) 추이 — 단계별 누적</div>
+  <canvas id="probChart"></canvas>
+</div>
+
+<div class="table-wrap">
+<table>
+<tr><th>단계</th><th>P(Qdrant top-3)</th><th>P(Arize top-3)</th><th>주요 driver</th></tr>
+<tr><td>Initial (계획 전)</td><td class="cell-muted">~13%</td><td class="cell-muted">~33%</td><td>일반 베이스라인. 듀얼 제출 전략 미정립.</td></tr>
+<tr><td>Post Max-Wins Plan</td><td>28-35%</td><td>50-55%</td><td>Qdrant primary 전략, 3D must-build, audit-the-auditor wow 정의, KO 컷.</td></tr>
+<tr><td>Post Apex Pass</td><td>35-42%</td><td>58-65%</td><td>Qdrant Recommendation API + Phoenix Online Evals + Annotations + 3-redundant detection.</td></tr>
+<tr><td>Post 7-Spike validation</td><td class="cell-success"><strong>38-45%</strong></td><td class="cell-success"><strong>62-68%</strong></td><td>모든 architectural risk 거의 0. 실행 risk만 남음.</td></tr>
+</table>
+</div>
+
+<h3>11.1 더 끌어올릴 단일 가장 큰 레버</h3>
+<div class="callout tip">
+  <span class="title">💡 최고 ROI 행동</span>
+  <strong>Audit-the-auditor 모먼트의 데모 품질</strong> — 기능적 안정성 + 30초 가독성 + 연극적 timing. 다른 모든 기능을 컷할 수 있어도 이것은 컷할 수 없습니다. 5명 비-팀원 user-test로 측정 + 반복.
+</div>
+
+<h3>11.2 의식적으로 인정하는 한계</h3>
+<ul>
+  <li>top-3 ≠ 1st-place. 위 확률은 "심사관 top-3 안에 들 가능성"이며, 1등 자체 확률은 더 낮음.</li>
+  <li>Combined expected value (1st-place equiv): pre-plan ≈ $1.7K, post-plan ≈ $4.2K — order-of-magnitude reasoning이지 financial forecast 아님.</li>
+  <li>2026 Qdrant Best-in-Category 스폰서 미공개 → upside potential 미포함.</li>
+  <li>심사관의 주관적 lineage 평가(fairthon)는 확률에 반영 안 됨.</li>
+</ul>
+
+</section>
+
+<!-- ============================================================ -->
+<section id="phase1">
+<h2><span class="num">§12</span>Phase 1 빌드 진입점</h2>
+
+<p>모든 계획 + 검증 완료. Phase 1 (로컬 E2E) 코드 작성 진입 준비됨. 우선순위 + 의존성 명시:</p>
+
+<div class="table-wrap">
+<table>
+<tr><th>#</th><th>작업</th><th>의존성</th><th>예상 LoC</th></tr>
+<tr><td>1.1</td><td>Python 프로젝트 셋업 (pyproject.toml, ruff/mypy/pytest, services/ 구조)</td><td>—</td><td>~200</td></tr>
+<tr><td>1.2</td><td><strong>LLM 어댑터</strong> (Vertex global/regional 라우팅 + 3-tier + thinking_level + context cache + responseSchema + Phoenix span 자동)</td><td>1.1</td><td>~400</td></tr>
+<tr><td>1.3</td><td>Qdrant 6 컬렉션 + local docker-compose (hybrid + payload index + Quantization)</td><td>—</td><td>~300</td></tr>
+<tr><td>1.4</td><td>Phoenix 통합 (auto-instrument + Online Eval Task script + Custom Evaluator + Annotations endpoint + self-host fallback)</td><td>1.2</td><td>~250</td></tr>
+<tr><td>1.5</td><td>PDF ingest (Cloud Run service, Gemini multimodal)</td><td>1.2, 1.3</td><td>~300</td></tr>
+<tr><td>1.6</td><td>Code Grader Job (clone + 15-20 휴리스틱 + 샘플 코드)</td><td>1.2, 1.3</td><td>~400</td></tr>
+<tr><td>1.7</td><td>BMAD rubric YAML + 75-technique registry</td><td>—</td><td>~600 (config)</td></tr>
+<tr><td>1.8</td><td>6 Hats system prompts</td><td>1.7</td><td>~300 (prompts)</td></tr>
+<tr><td>1.9</td><td><strong>Pipeline orchestrator (ADK)</strong> — GlasshatRootAgent + HatsPanel + AuditLoop + BMADScorer + ReportAssembler</td><td>1.2-1.8</td><td>~800</td></tr>
+<tr><td>1.10</td><td>Next.js 프론트 (드롭존+플랜+모니터+리포트+3D+search+thinking panel+cost dashboard)</td><td>1.9</td><td>~1,500</td></tr>
+<tr><td>1.11</td><td><code>make demo</code> · <code>make doctor</code></td><td>1.9, 1.10</td><td>~100</td></tr>
+<tr><td>1.12</td><td><strong>Gemini 3 코퍼스 스크레이핑</strong> (524 stratified)</td><td>1.5 (재사용 가능 시)</td><td>~400</td></tr>
+<tr><td>1.13</td><td><strong>Phoenix calibration experiment</strong> 시드 + validation</td><td>1.9, 1.12</td><td>~200</td></tr>
+</table>
+</div>
+
+<p><strong>총 예상 ~6,000 lines.</strong> 사용자 "시간 무시" 지시이므로 캘린더 제약은 적용 안 함 — 단 Qdrant 6/1 마감과 Rapid Agent 6/11 마감은 자연스럽게 ordering 결정.</p>
+
+<h3>12.1 Phase 1 완료 기준</h3>
+<div class="callout success">
+  <span class="title">✓ Phase 1 done = </span>
+  <code>cp .env.example .env && docker compose up && make demo</code> → 90초 내 점수 리포트 + 3D 그래프 + 라이브 모니터 트레이스 + audit-the-auditor 모먼트 시연 가능.
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<section id="onboarding">
+<h2><span class="num">§13</span>신규 팀원 첫날 체크리스트</h2>
+
+<p>이 보고서를 받고 처음 90분에 해야 할 액션. 한 항목씩 따라가면 됩니다.</p>
+
+<h3>13.1 환경 (15분)</h3>
+<ul class="checkmark">
+  <li>본 보고서 끝까지 읽기 (15분)</li>
+  <li>다음 파일도 읽기:
+    <ul>
+      <li><code>README.md</code> — 한 페이지 컨셉 요약</li>
+      <li><code>docs/max-wins-plan.md</code> §0 (one paragraph) + §12 (decisions) — 5분</li>
+      <li><code>docs/wow-moment-design.md</code> §1 + §4 (agent topology) — 5분</li>
+    </ul>
+  </li>
+</ul>
+
+<h3>13.2 로컬 환경 확인 (15분)</h3>
+<pre><span class="lang-tag">bash</span><code><span class="c"># Working directory (Glasshat 리네이밍 진행 중 — 폴더는 아직 panelyst)</span>
+<span class="k">cd</span> ~/Documents/GitHub/panelyst
+
+<span class="c"># 1) 환경 도구 확인</span>
+python3 --version  <span class="c"># 3.12.x 권장</span>
+node --version     <span class="c"># v24+</span>
+uv --version       <span class="c"># https://docs.astral.sh/uv/</span>
+
+<span class="c"># 2) .env 파일 확인 (이미 .env.backup-pre-rename 백업 존재)</span>
+<span class="k">grep</span> -c <span class="s">"GLASSHAT_"</span> .env  <span class="c"># 14 (post-rename)</span>
+
+<span class="c"># 3) GCP credentials 확인</span>
+<span class="k">ls</span> -l ~/.config/gcloud/panelyst-dev-sa-key.json  <span class="c"># mode 600</span>
+<span class="k">export</span> GOOGLE_APPLICATION_CREDENTIALS=~/.config/gcloud/panelyst-dev-sa-key.json
+<span class="k">export</span> GOOGLE_CLOUD_PROJECT=panelyst-hackathon  <span class="c"># GCP 프로젝트 ID는 KEEP</span></code></pre>
+
+<h3>13.3 Spike test 재현 (30분)</h3>
+<pre><span class="lang-tag">bash</span><code><span class="k">cd</span> spikes/
+uv sync                       <span class="c"># 약 60-90초</span>
+
+<span class="c"># 가장 짧은 spike부터:</span>
+uv run python 02_spike_b_adk_loop.py        <span class="c"># ~5초, no API calls</span>
+uv run python 04_spike_d_calibration_toy.py <span class="c"># ~1초, no API calls</span>
+uv run python 05_spike_e_sse_animation.py   <span class="c"># ~5초</span>
+uv run python 01_spike_a_phoenix_mcp_smoke.py    <span class="c"># ~30초 (Phoenix in-process + npx)</span>
+uv run python 07_spike_g_phoenix_annotations.py  <span class="c"># ~30초</span>
+uv run python 06_spike_f_phoenix_online_evals.py <span class="c"># ~30초</span>
+uv run python 03_spike_c_adk_mcptoolset.py       <span class="c"># ~60초 (~$0.0001 Vertex call)</span>
+
+<span class="c"># 모든 결과: spikes/results/spike_*.json (overall_pass=true 확인)</span></code></pre>
+
+<h3>13.4 핵심 의사결정 이해 확인 (15분)</h3>
+<p>다음 질문에 즉답할 수 있어야 합니다:</p>
+<ul>
+  <li>Glasshat의 wow 모먼트를 30초 안에 설명할 수 있는가?</li>
+  <li>왜 Qdrant primary이고 Arize secondary인가?</li>
+  <li>왜 ADK인가, Agent Builder가 아니라?</li>
+  <li>3-redundant detection의 세 경로는 무엇인가?</li>
+  <li>524 코퍼스는 어디서 오는가, 왜 stratified인가?</li>
+  <li>Phoenix MCP 4-call chain은 어떤 도구들을 호출하는가?</li>
+  <li>Rapid Agent Tech Implementation이 왜 타이브레이커 1번인가?</li>
+  <li>Gemini 3 thinking_level이 hat tier마다 어떻게 설정되었는가?</li>
+</ul>
+<p>답 못 하는 항목이 있으면 해당 문서 다시 읽기 (위 13.1 참조).</p>
+
+<h3>13.5 의문 + 의견 (15분)</h3>
+<p>다음 영역에서 자유롭게 push back / 추가 아이디어 제시:</p>
+<ul>
+  <li>Apex Pass <strong>9 STRETCH 기능 중</strong> Phase 1에 promotion할 만한 것?</li>
+  <li>Wow 모먼트의 추가 backup beat 제안?</li>
+  <li>Qdrant 데모의 0:30-1:00 슬롯이 충분히 dense한가?</li>
+  <li>524 corpus 외에 추가 calibration 데이터 소스?</li>
+  <li>3D 그래프의 r3f 디자인 제안?</li>
+  <li>리스크 #4 (audit 모먼트 가독성)에 대한 추가 mitigation?</li>
+</ul>
+
+<h3>13.6 첫 작업 (옵션)</h3>
+<p>다음 중 하나를 선택해서 Phase 1 진입 — 모두 Phase 1.X의 자기 완결 작업:</p>
+<div class="two-col">
+  <div class="callout info">
+    <span class="title">A. 1.7+1.8 (콘텐츠)</span>
+    BMAD rubric YAML + 6 hats system prompts. 코드 의존성 없음. 1일.
+  </div>
+  <div class="callout info">
+    <span class="title">B. 1.3 (Qdrant)</span>
+    Local docker-compose + 6 컬렉션 스키마 + hybrid 검증 스크립트. ~1-2일.
+  </div>
+  <div class="callout info">
+    <span class="title">C. 1.12 (Corpus 스크레이핑)</span>
+    Gemini 3 hackathon 524 stratified scrape. 파이프라인 코드 없이도 진행 가능. ~1-2일.
+  </div>
+  <div class="callout info">
+    <span class="title">D. 1.10 partial (Frontend scaffold)</span>
+    Next.js 스캐폴드 + 드롭존 + SSE consumer 골격. 백엔드 mock으로 동작. ~2일.
+  </div>
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<section id="files">
+<h2><span class="num">§14</span>참고 파일 인덱스</h2>
+
+<h3>14.1 권위 문서 (반드시 읽기)</h3>
+<div class="table-wrap">
+<table>
+<tr><th>파일</th><th>역할</th><th>크기</th></tr>
+<tr><td><code>README.md</code></td><td>1페이지 컨셉 요약 + 양쪽 데모 narration + compliance disclosure</td><td>~9KB</td></tr>
+<tr><td><code>docs/max-wins-plan.md</code></td><td>듀얼 제출 winning thesis + 12개 lock된 결정 + 데모 스크립트</td><td>780 lines · 68KB</td></tr>
+<tr><td><code>docs/wow-moment-design.md</code></td><td>Audit-the-auditor 5단계 분해 + 토폴로지 + 사전-시드 의존성 + 12 fallback</td><td>515 lines · 38KB</td></tr>
+<tr><td><code>docs/technical-apex-features.md</code></td><td>47 features 결정 매트릭스 (33 APPLY + 9 STRETCH + 5 CUT) + 심사축 커버리지 맵</td><td>225 lines · 27KB</td></tr>
+<tr><td><code>docs/spike-results.md</code></td><td>7-spike 결과 + 발견 + Phase 1 진입 권고</td><td>251 lines · 17KB</td></tr>
+<tr><td><code>docs/architecture.md</code></td><td>토폴로지 + 에이전트 그래프 + 시퀀스 + 페이즈별 배포 + 인터페이스 추상화</td><td>~12KB</td></tr>
+<tr><td><code>docs/gcp-setup.md</code></td><td>GCP 부트스트랩 + Gemini 3 패널 측정 + 5 gotchas</td><td>~8KB</td></tr>
+<tr><td><code>PLAN.md</code></td><td>엔지니어링 인벤토리 (umbrella mirror); §1 ADDENDUM이 max-wins-plan.md를 가리킴</td><td>~32KB</td></tr>
+<tr><td><code>HANDOFF.md</code></td><td>2026-05-14 세션 핸드오프 (folder rename 후 갱신 예정)</td><td>~7.6KB</td></tr>
+</table>
+</div>
+
+<h3>14.2 Spike 스크립트 (실행 + 재현 가능)</h3>
+<ul>
+  <li><code>spikes/01_spike_a_phoenix_mcp_smoke.py</code> — Phoenix in-process + MCP discovery</li>
+  <li><code>spikes/02_spike_b_adk_loop.py</code> — LoopAgent + escalation</li>
+  <li><code>spikes/03_spike_c_adk_mcptoolset.py</code> — ADK + Phoenix MCPToolset</li>
+  <li><code>spikes/04_spike_d_calibration_toy.py</code> — Calibration policy</li>
+  <li><code>spikes/05_spike_e_sse_animation.py</code> — SSE timing</li>
+  <li><code>spikes/06_spike_f_phoenix_online_evals.py</code> — Online Eval OSS</li>
+  <li><code>spikes/07_spike_g_phoenix_annotations.py</code> — Annotation R/W</li>
+  <li><code>spikes/README.md</code> — spike 인덱스</li>
+  <li><code>spikes/results/*.json</code> — 실행 결과 (모두 overall_pass=true)</li>
+</ul>
+
+<h3>14.3 영구 메모리 (Claude Code 세션 간 자동 로드)</h3>
+<p>경로: <code>/Users/kimsejun/.claude/projects/-Users-kimsejun-Documents-GitHub-hackathon-submissions/memory/</code></p>
+<ul>
+  <li><code>MEMORY.md</code> — 인덱스</li>
+  <li><code>panelyst-project.md</code> — Glasshat (formerly Panelyst) 마스터 (post-rename 상태 반영)</li>
+  <li><code>glasshat-max-wins-decisions.md</code> — 12 lock된 결정</li>
+  <li><code>glasshat-technical-apex.md</code> — 33 APPLY decision 결정</li>
+  <li><code>glasshat-spike-validation.md</code> — 7-spike 결과</li>
+  <li><code>gemini-model-panel-verified.md</code> — Gemini 3 모델 측정 + gotchas</li>
+  <li><code>gcp-panelyst-hackathon.md</code> — GCP 셋업 (KEEP "panelyst-hackathon" name)</li>
+  <li><code>qdrant-vsd-hackathon.md</code> · <code>rapid-agent-hackathon.md</code> · <code>qdrant-collection-design.md</code> · <code>fairthon-lineage.md</code> · <code>hackathon-pipeline-2026-may-jun.md</code></li>
+  <li><code>user-*.md</code> · <code>production-safety-rules.md</code> — 사용자 작업 선호 + 안전 룰</li>
+</ul>
+
+<h3>14.4 외부 출처 (URL)</h3>
+<ul>
+  <li>Qdrant VSD: <a href="https://try.qdrant.tech/hackathon-vsd">try.qdrant.tech/hackathon-vsd</a> · 제출 form <a href="https://forms.gle/YDQ2TDUi8MqS9Vx28">forms.gle/YDQ2TDUi8MqS9Vx28</a></li>
+  <li>Rapid Agent: <a href="https://rapid-agent.devpost.com/">rapid-agent.devpost.com</a> · 룰 <a href="https://rapid-agent.devpost.com/rules">/rules</a> · Arize <a href="https://rapid-agent.devpost.com/details/arize-resources">/details/arize-resources</a></li>
+  <li>Qdrant 2025 winners: <a href="https://qdrant.tech/blog/vector-space-hackathon-winners-2025/">qdrant.tech/blog/vector-space-hackathon-winners-2025</a></li>
+  <li>Phoenix MCP README: <a href="https://github.com/Arize-ai/phoenix/blob/main/js/packages/phoenix-mcp/README.md">github.com/Arize-ai/phoenix</a></li>
+  <li>Arize Gemini hackathon starter kit: <a href="https://github.com/Arize-ai/gemini-hackathon">github.com/Arize-ai/gemini-hackathon</a></li>
+  <li>ADK LoopAgent: <a href="https://adk.dev/agents/workflow-agents/loop-agents/">adk.dev/agents/workflow-agents/loop-agents</a></li>
+  <li>ADK Custom agents: <a href="https://adk.dev/agents/custom-agents">adk.dev/agents/custom-agents</a></li>
+  <li>Gemini 3 hackathon (corpus source): <a href="https://gemini3.devpost.com/">gemini3.devpost.com</a></li>
+</ul>
+
+<hr>
+
+<p style="color:var(--text-muted);font-size:.85rem;text-align:center;margin-top:48px">
+질문이 있으면 사용자(app.2weeks@gmail.com)에게 직접 또는 새 세션에서 <code>cd ~/Documents/GitHub/panelyst && /handon</code>으로 이어가세요.
+<br>본 보고서는 2026-05-15 KST 기준 상태이며, 이후 진행은 git log + 메모리 + handoff doc으로 추적됩니다.
+</p>
+
+</section>
+
+</main>
+
+<button class="top-btn" id="topBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+// ===== TOC active state =====
+const sections = document.querySelectorAll('section[id]');
+const tocLinks = document.querySelectorAll('.toc-list a');
+const linkMap = {};
+tocLinks.forEach(a => { linkMap[a.getAttribute('href').slice(1)] = a; });
+
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      tocLinks.forEach(a => a.classList.remove('active'));
+      const link = linkMap[e.target.id];
+      if (link) link.classList.add('active');
+    }
+  });
+}, { rootMargin: '-30% 0px -65% 0px', threshold: 0 });
+sections.forEach(s => obs.observe(s));
+
+// ===== Back-to-top button =====
+const topBtn = document.getElementById('topBtn');
+window.addEventListener('scroll', () => {
+  if (window.scrollY > 400) topBtn.classList.add('show');
+  else topBtn.classList.remove('show');
+});
+
+// ===== Smooth scroll =====
+tocLinks.forEach(a => {
+  a.addEventListener('click', (e) => {
+    e.preventDefault();
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+
+// ===== Charts =====
+const baseColor = '#38bdf8';
+const accent2 = '#7dd3fc';
+const success = '#4ade80';
+const warning = '#fbbf24';
+const error = '#f87171';
+const info = '#a78bfa';
+const grid = '#334155';
+const text = '#cbd5e1';
+
+Chart.defaults.color = text;
+Chart.defaults.borderColor = grid;
+Chart.defaults.font.family = '"Inter","Noto Sans KR",system-ui,sans-serif';
+
+// BMAD donut
+new Chart(document.getElementById('bmadChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['A. Problem & Vision (25)','B. Tech & Architecture (25)','C. Implementation & Code (30)','D. Documentation (20)'],
+    datasets: [{
+      data: [25,25,30,20],
+      backgroundColor: [baseColor, accent2, success, info],
+      borderColor: '#0f172a',
+      borderWidth: 2,
+    }],
+  },
+  options: {
+    plugins: {
+      legend: { position: 'bottom', labels: { font: { size: 11 } } },
+      tooltip: { callbacks: { label: (c) => `${c.label}: ${c.parsed} 점` } }
+    },
+    cutout: '60%',
+  }
+});
+
+// Feature decision donut
+new Chart(document.getElementById('featureChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['APPLY (must in v1)','STRETCH (schedule permitting)','CUT (explicitly out)'],
+    datasets: [{
+      data: [33, 9, 5],
+      backgroundColor: [success, warning, error],
+      borderColor: '#0f172a',
+      borderWidth: 2,
+    }],
+  },
+  options: {
+    plugins: { legend: { position: 'bottom' } },
+    cutout: '55%',
+  }
+});
+
+// Probability progression
+new Chart(document.getElementById('probChart'), {
+  type: 'line',
+  data: {
+    labels: ['Initial', 'Post Max-Wins Plan', 'Post Apex Pass', 'Post Spike Validation'],
+    datasets: [
+      {
+        label: 'P(Qdrant top-3)',
+        data: [13, 31.5, 38.5, 41.5],
+        borderColor: baseColor,
+        backgroundColor: 'rgba(56,189,248,.12)',
+        fill: true,
+        tension: 0.35,
+        pointRadius: 5,
+        pointBackgroundColor: baseColor,
+      },
+      {
+        label: 'P(Arize top-3)',
+        data: [33, 52.5, 61.5, 65],
+        borderColor: success,
+        backgroundColor: 'rgba(74,222,128,.12)',
+        fill: true,
+        tension: 0.35,
+        pointRadius: 5,
+        pointBackgroundColor: success,
+      },
+    ],
+  },
+  options: {
+    scales: {
+      y: { beginAtZero: true, max: 80, title: { display: true, text: 'P(top-3) %' }, grid: { color: grid } },
+      x: { grid: { color: grid } }
+    },
+    plugins: {
+      legend: { position: 'top', labels: { font: { size: 12 } } },
+      tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${c.parsed.y}% (mid-point)` } }
+    }
+  }
+});
+</script>
+
+</body>
+</html>
