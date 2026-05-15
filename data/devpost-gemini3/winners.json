@@ -1,0 +1,165 @@
+[
+  {
+    "software_id": "1156703",
+    "title": "Globot",
+    "tagline": "Multi-Agents. 2M-token compliance analysis. Satellite imagery risk detection. Globot turns sudden supply chain chaos into confident decisions in 60 seconds.",
+    "url": "https://devpost.com/software/globot-341w9q",
+    "page": 1,
+    "is_winner": true,
+    "thumbnail_url": "https://d112y698adiu2z.cloudfront.net/photos/production/software_thumbnail_photos/004/154/390/datas/medium.png",
+    "member_names": [
+      "Victor Mei",
+      "Yihang Deng",
+      "Molling Ma"
+    ]
+  },
+  {
+    "software_id": "1187800",
+    "title": "Aegis: Autonomous Multi-Agent Crisis Command",
+    "tagline": "An autonomous multi-agent command center that prevents 911 collapse by triaging thousands of distress signals instantly using Google Gemini 3.",
+    "url": "https://devpost.com/software/aegis-autonomous-multi-agent-crisis-command",
+    "page": 1,
+    "is_winner": true,
+    "thumbnail_url": "https://d112y698adiu2z.cloudfront.net/photos/production/software_thumbnail_photos/004/264/900/datas/medium.jpeg",
+    "member_names": [
+      "Danish Mansoori"
+    ]
+  },
+  {
+    "software_id": "1187761",
+    "title": "Netra: Empowering the Visually Impaired",
+    "tagline": "Restoring independence through AI. Netra provides the visually impaired with a high-speed vision system that reads text, recognizes faces, and describes surroundings in real-time.",
+    "url": "https://devpost.com/software/netra-empowering-the-visually-impaired",
+    "page": 1,
+    "is_winner": true,
+    "thumbnail_url": "https://d112y698adiu2z.cloudfront.net/photos/production/software_thumbnail_photos/004/265/436/datas/medium.png",
+    "member_names": [
+      "Amita Mantri"
+    ]
+  },
+  {
+    "software_id": "1185630",
+    "title": "Proofy.AI",
+    "tagline": "An explainable, Gemini-powered verification platform built to restore trust in digital media.",
+    "url": "https://devpost.com/software/fakey-ai",
+    "page": 1,
+    "is_winner": true,
+    "thumbnail_url": "https://d112y698adiu2z.cloudfront.net/photos/production/software_thumbnail_photos/004/297/847/datas/medium.jpeg",
+    "member_names": [
+      "Jivitesh reddy",
+      "Nathan James",
+      "Adhidev"
+    ]
+  },
+  {
+    "software_id": "1173309",
+    "title": "Agent-weaver",
+    "tagline": "Turn Gemini into a coordinated team of 5 specialized AI agents with shared memory, human-verified annotations, and real-time collaboration between teams and their agents.",
+    "url": "https://devpost.com/software/agent-weaver",
+    "page": 1,
+    "is_winner": true,
+    "thumbnail_url": "https://d112y698adiu2z.cloudfront.net/photos/production/software_photos/004/293/440/datas/medium.png",
+    "member_names": [
+      "Pranav Trivedi"
+    ]
+  },
+  {
+    "software_id": "1189749",
+    "title": "Orphafold",
+    "tagline": "OrphaFold orchestrates specialized Gemini 3 agents to bridge Orphanet, UniProt, Pubmed and AlphaFold data. Our AI Agents automates rare disease research to discover hidden therapeutic connections.",
+    "url": "https://devpost.com/software/orphafold",
+    "page": 1,
+    "is_winner": true,
+    "thumbnail_url": "https://d112y698adiu2z.cloudfront.net/photos/production/software_thumbnail_photos/004/284/141/datas/medium.jpeg",
+    "member_names": [
+      "Paul Barbaste"
+    ]
+  },
+  {
+    "software_id": "1161565",
+    "title": "Orbital Assets",
+    "tagline": "The first Investment Bank for the solar system. Orbital Assets, powered by Gemini 3 Reasoning, turns raw NASA asteroid data into rigorous, physics-based financial valuations.",
+    "url": "https://devpost.com/software/orbital-assets",
+    "page": 1,
+    "is_winner": true,
+    "thumbnail_url": "https://d112y698adiu2z.cloudfront.net/photos/production/software_thumbnail_photos/004/281/554/datas/medium.png",
+    "member_names": [
+      "Mauricio Castro",
+      "Tiancheng Chen"
+    ]
+  },
+  {
+    "software_id": "1150748",
+    "title": "Logic Lift",
+    "tagline": "Logic Lift uses Gemini 3 to perform 'Logic Archaeology'—autonomously recovering critical financial business logic from legacy COBOL and verifying it into cloud-native Python with 100% parity.",
+    "url": "https://devpost.com/software/the-bunny-ear-adventure",
+    "page": 1,
+    "is_winner": true,
+    "thumbnail_url": "https://d112y698adiu2z.cloudfront.net/photos/production/software_photos/004/218/049/datas/medium.png",
+    "member_names": [
+      "Alissa Troiano"
+    ]
+  },
+  {
+    "software_id": "1145230",
+    "title": "AgentGuard: The Semantic Firewall for the Agentic Web",
+    "tagline": "The SSL for AI Agents. A Semantic Firewall that uses Gemini 3.0 to distinguish helpful shoppers from malicious scrapers in real-time.",
+    "url": "https://devpost.com/software/agentguard-the-semantic-firewall-for-the-agentic-web",
+    "page": 1,
+    "is_winner": true,
+    "thumbnail_url": "https://d112y698adiu2z.cloudfront.net/photos/production/software_thumbnail_photos/004/254/764/datas/medium.png",
+    "member_names": [
+      "Mayur Pawar"
+    ]
+  },
+  {
+    "software_id": "1183526",
+    "title": "PROCSee",
+    "tagline": "PROCSee turns your system into a crime scene — and autonomously investigates every process",
+    "url": "https://devpost.com/software/procsee",
+    "page": 1,
+    "is_winner": true,
+    "thumbnail_url": "https://d112y698adiu2z.cloudfront.net/photos/production/software_thumbnail_photos/004/247/861/datas/medium.jpeg",
+    "member_names": [
+      "Mir Abbas"
+    ]
+  },
+  {
+    "software_id": "1159843",
+    "title": "BatteryForgeAI",
+    "tagline": "Multi-agent battery intelligence. Specialized AI for vision-based defect detection, charging optimization, and fleet safety to maximize battery lifecycle and performance.",
+    "url": "https://devpost.com/software/batteryforgeai",
+    "page": 1,
+    "is_winner": true,
+    "thumbnail_url": "https://d112y698adiu2z.cloudfront.net/photos/production/software_thumbnail_photos/004/210/612/datas/medium.gif",
+    "member_names": [
+      "Kumari Surya Remanan",
+      "shankar rajan"
+    ]
+  },
+  {
+    "software_id": "1173738",
+    "title": "Gemini GeoFlow",
+    "tagline": "Fusing Text and Terrain: An LLM-Powered Pipeline for Preparing Archaeological Datasets",
+    "url": "https://devpost.com/software/gemini-geoflow",
+    "page": 1,
+    "is_winner": true,
+    "thumbnail_url": "https://d112y698adiu2z.cloudfront.net/photos/production/software_thumbnail_photos/004/239/354/datas/medium.png",
+    "member_names": [
+      "Linduo Li",
+      "Zifeng Wang"
+    ]
+  },
+  {
+    "software_id": "1167552",
+    "title": "CineStream: A2A Mesh & Cinematic Learning",
+    "tagline": "A2A Intelligence Mesh & Academy: Eliminating 'Knowledge Friction' via strategic executive synthesis and high-fidelity cinematic pedagogy for all.",
+    "url": "https://devpost.com/software/cinestream-a2a-mesh-cinematic-learning",
+    "page": 1,
+    "is_winner": true,
+    "thumbnail_url": "https://d112y698adiu2z.cloudfront.net/photos/production/software_thumbnail_photos/004/192/610/datas/medium.jpg",
+    "member_names": [
+      "Xavier Nuñez"
+    ]
+  }
+]
