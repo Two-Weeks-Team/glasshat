@@ -1,0 +1,20 @@
+{
+  "spike": "G",
+  "title": "Phoenix Annotation write+read round-trip",
+  "span_id": "d1487150c98d37c9",
+  "write_sec": 0.012,
+  "sdk_read_sec": 0.01,
+  "mcp_read_sec": 2.114,
+  "sdk_ok": true,
+  "mcp_ok": true,
+  "sdk_annotation_count": 1,
+  "mcp_raw_head": "[TextContent(type='text', text='{\\n  \"annotations\": [\\n    {\\n      \"id\": \"U3BhbkFubm90YXRpb246MQ==\",\\n      \"created_at\": \"2026-05-14T12:51:16+00:00\",\\n      \"updated_at\": \"2026-05-14T12:51:16+00:00\",\\n      \"source\": \"API\",\\n      \"user_id\": null,\\n      \"name\": \"eval.calibration\",\\n      \"annotator_kind\": \"LLM\",\\n      \"result\": {\\n        \"label\": \"over_confident\",\\n        \"score\": 0.31,\\n        \"explanation\": \"evidence_depth 0.31 inconsistent with score 9.0\"\\n      },\\n      \"metadata\": {\\n        \"hat\": \"yellow\",\\n        \"criterion\": \"A1\",\\n        \"evaluator_version\": \"v1\"\\n      },\\n      \"identifier\": \"\",\\n      \"span_id\": \"d1487150c98d37c9\"\\n    }\\n  ],\\n  \"nextCursor\": null\\n}', annotations=None, meta=None)]",
+  "overall_pass": true,
+  "findings": [
+    "Phoenix SDK Client.spans.add_span_annotation accepts label/score/explanation/metadata",
+    "annotator_kind in [LLM, CODE, HUMAN] \u2014 supports both auto-eval and human-override use cases",
+    "Annotation visible via SDK get_span_annotations within 1s",
+    "Annotation visible via MCP get-span-annotations \u2014 closes the loop for AuditLoop consumption",
+    "Round-trip suitable for sub-second self-improvement loop"
+  ]
+}

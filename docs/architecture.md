@@ -1,4 +1,4 @@
-# Panelyst — Architecture
+# Glasshat — Architecture
 
 > Authoritative design document. Code references this; if the two diverge, this is the source of truth and the code is the bug.
 

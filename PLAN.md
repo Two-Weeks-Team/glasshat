@@ -1,5 +1,7 @@
 <!-- Mirrored from Two-Weeks-Team/hackathon-submissions:projects/rapid-agent-hackathon/planning/whyc-fairthon-port-plan.md . The umbrella copy is the source of truth for planning; this is the in-repo copy. Repo name is 'panelyst' (the prior 'WhyC' name belonged to the now-archived 'While YC hires' project). -->
 
+<!-- 🔴 ADDENDUM 2026-05-14: This file is engineering inventory. The authoritative dual-submission winning thesis + decision log is `docs/max-wins-plan.md` (locked 2026-05-14). The product was renamed **Panelyst → Glasshat** (user-approved, panel-recommended). Korean i18n cut from v1. 3D graph reclassified stretch → MUST-BUILD. Qdrant VSD is primary submission target; Rapid Agent / Arize track is 7-day repackaging of the same engine. PLAN.md §8 open items are CLOSED in max-wins-plan.md §8. Read max-wins-plan.md FIRST. -->
+
 # WhyC — Plan (fairthon-port: GCP + Agent Builder + Arize + Qdrant) — dual-submit: Rapid Agent + Qdrant VSD
 
 Recorded at KST: `2026-05-13`. Decisions locked by the user this session (see § "Decisions" below).

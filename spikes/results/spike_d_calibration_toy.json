@@ -1,0 +1,68 @@
+{
+  "spike": "D",
+  "title": "Calibration policy on toy data",
+  "n_train": 50,
+  "n_held_out": 50,
+  "calibration_cells": 7,
+  "mae_uncalibrated": 0.517,
+  "mae_calibrated": 0.334,
+  "improvement_pct": 35.4,
+  "catastrophic_over_corrections": 0,
+  "yellow_a1_low_mae_uncalibrated": 1.476,
+  "yellow_a1_low_mae_calibrated": 0.505,
+  "overall_improved_>=15pct": true,
+  "no_catastrophic_over_correction": true,
+  "targeted_bucket_improved": true,
+  "overall_pass": true,
+  "calibration_table": {
+    "yellow|A1|>=0.4": {
+      "mean_delta": 0.306,
+      "n": 16,
+      "anchor_p25": 5.07,
+      "anchor_p75": 7.65
+    },
+    "black|A1|>=0.4": {
+      "mean_delta": 0.049,
+      "n": 10,
+      "anchor_p25": 4.38,
+      "anchor_p75": 8.15
+    },
+    "yellow|A1|<0.4": {
+      "mean_delta": 1.453,
+      "n": 7,
+      "anchor_p25": 4.48,
+      "anchor_p75": 7.64
+    },
+    "black|B2|<0.4": {
+      "mean_delta": 0.2,
+      "n": 3,
+      "anchor_p25": 5.48,
+      "anchor_p75": 6.95
+    },
+    "black|A1|<0.4": {
+      "mean_delta": 0.034,
+      "n": 7,
+      "anchor_p25": 4.32,
+      "anchor_p75": 7.29
+    },
+    "black|B2|>=0.4": {
+      "mean_delta": 0.06,
+      "n": 4,
+      "anchor_p25": 8.26,
+      "anchor_p75": 8.86
+    },
+    "yellow|B2|<0.4": {
+      "mean_delta": -0.03,
+      "n": 2,
+      "anchor_p25": 4.02,
+      "anchor_p75": 8.45
+    }
+  },
+  "findings": [
+    "Calibration achieves 35.4% MAE reduction on held-out",
+    "Yellow A1 low-evidence bucket improved 0.971 MAE absolute",
+    "Policy clip to [p25, p75] band prevents anchor over-pull",
+    "Delta cap \u00b12.0 prevents catastrophic over-correction",
+    "Calibration table sparse (n_cells = 7); v1.13 production seed needs \u22653 samples per cell"
+  ]
+}

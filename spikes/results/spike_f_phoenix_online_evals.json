@@ -1,0 +1,21 @@
+{
+  "spike": "F",
+  "title": "Phoenix Online Eval (OSS) end-to-end",
+  "n_spans_evaluated": 5,
+  "classification_accuracy": 1.0,
+  "eval_write_sec": 0.03,
+  "mcp_read_sec": 1.72,
+  "accuracy_ok_>=80pct": true,
+  "mcp_read_contains_eval": true,
+  "round_trip_under_10s": true,
+  "mcp_raw_head": "[TextContent(type='text', text='{\\n  \"annotations\": [\\n    {\\n      \"id\": \"U3BhbkFubm90YXRpb246NQ==\",\\n      \"created_at\": \"2026-05-15T01:16:47+00:00\",\\n      \"updated_at\": \"2026-05-15T01:16:47+00:00\",\\n      \"source\": \"API\",\\n      \"user_id\": null,\\n      \"name\": \"eval.calibration\",\\n      \"annotator_kind\": \"CODE\",\\n      \"result\": {\\n        \"label\": \"over_confident\",\\n        \"score\": 0.25,\\n        \"explanation\": \"evidence_depth 0.25 < threshold 0.4 inconsistent with score 9.0\"\\n      },\\n      \"metadata\": {\\n        \"hat\": \"yellow\",\\n        \"criterion\": \"A1\",\\n        \"evaluator_version\": \"v1-code\"\\n      },\\n      \"identifier\": \"\",\\n      \"span_id\": \"10fa51457be4a1e2\"\\n    },\\n    {\\n      \"id\": \"U3BhbkFubm90YXRpb246NA==\",\\n      \"created_at\": \"2026-05-15T01:16:47+00:00\",\\n      \"updated_at\": \"2026-05-15T01:16:47+00:00\",\\n      \"source\": \"API\",\\n      \"user_id\": null,\\n      \"name\": \"eval.calibration\",\\n      \"annotator_kind\": \"CODE\",\\n      \"result\": {\\n        \"label\": \"calibrated\",\\n        \"score\": 0.6,\\n        \"explanation\": \"evidence_depth 0.6 consistent with score 6.0\"\\n      },\\n      \"metadata\": {\\n        \"hat\": \"yellow\",\\n        \"criterion\": \"A1\",\\n        \"eval",
+  "overall_pass": true,
+  "findings": [
+    "phoenix.evals.create_evaluator + CODE-kind evaluator pattern available in OSS",
+    "Custom Python rule (the same one used by AuditLoop's InconsistencyDetector path 2) works as a Phoenix evaluator",
+    "Classification correctly labels 5/5 synthetic cases",
+    "Annotations written + MCP-queryable in 1.74s",
+    "Loop CLOSED: emit span -> CODE eval -> write annotation -> MCP get-span-annotations reads it back",
+    "AuditLoop's path-2 detection (Phoenix Custom Evaluator) is functionally proven"
+  ]
+}
