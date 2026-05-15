@@ -1,8 +1,10 @@
 # Glasshat — Interactive Demo Prototype Spec
 
-> **Live URL** (after deploy): https://two-weeks-team.github.io/glasshat/prototype.html
-> **Source**: `mockups/index.html` (single self-contained file, ~1,767 lines, 58 KB)
-> **Status**: prototype v0.2 locked 2026-05-15. Approval-gated artifact — sign-off enables Phase 1 D code start.
+> **Live URL**: https://two-weeks-team.github.io/glasshat/prototype.html
+> **Source**: `mockups/index.html` (single self-contained file, 2,268 lines, 89 KB)
+> **Status**: prototype **v0.3** locked 2026-05-15. Approval-gated artifact — sign-off enables Phase 1 D code start.
+>
+> **v0.3 changelog** (2026-05-15): 10-persona expert panel review (UX Researcher, Senior Designer, Performance Eng, Hackathon Judge, VC Investor, Motion Designer, A11y Expert, Demo Director, Backend Eng, Skeptic) found 98 improvement points. ~30 P0/P1 applied: Three.js lazy load (PERF-1), 3D constellation as Tier 1 hero (JUD-1/DES-1), category-anchored hero copy (VC-1), Plain English caption toggle (UX-3), role-based CTAs (UX-2), Qdrant Live persistent badge (JUD-2), Why -1.4 expand panel with real anchors (JUD-3), `(correct)` → `rubric-faithful` (SK-1), Rubric Sanity Layer (SK-2), all trace names match OpenInference/Phoenix MCP/Qdrant API exactly (BE-1/2/10), math reconciles `9.0 - 0.8×1.75 = 7.6` (BE-3), full A11y (`prefers-reduced-motion`, `forced-colors`, `:focus-visible`, skip link, `aria-live`/`aria-label`/`aria-pressed`, semantic `<h2>` + landmarks), micro-beats fill 1:00-1:30 dead air (DEM-1), climax cinematic isolation (DEM-2), closing callback `It audits the judge.` (DEM-3), reveal stack pills + multi-CTA (DEM-7), OKLCH locked hat colors L=72 C=0.17 (DES-4), 6-step type scale + spacing 2-tier (DES-3/6), selective glass (DES-7), spring/out/emphasized easing semantics (DES-9/MO-3), debounced resize (PERF-2), scrubber transform-only (PERF-7), scrubber as ARIA slider with arrow keys, `EU AI Act Art. 12` compliance vocab (VC-6), "Why now" line (VC-9), unit economics in cost ticker (UX-9), scene markers + non-flicker scrubber seek (UX-7).
 
 ---
 
