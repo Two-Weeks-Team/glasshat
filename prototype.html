@@ -3,75 +3,107 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Glasshat — Interactive Demo Prototype (2026)</title>
-<meta name="description" content="Glasshat doesn't just judge projects. It audits the judge — and proves the judge is rubric-relative." />
+<meta name="theme-color" content="#0d1320" />
+<title>Glasshat — The audit layer for AI evaluation (interactive demo)</title>
+<meta name="description" content="Glasshat scores AI outputs with dual-rubric variance detection. Watch a 3-min replay of 503 hackathon submissions being judged, audited, and recalibrated against past winners." />
 
-<!-- 2026 trend: variable fonts, Geist + Inter Variable + JetBrains Mono -->
+<!-- 2026: minimum-fonts strategy -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
-
-<!-- 3D graph -->
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet" />
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js" as="script" crossorigin />
 
 <style>
-/* =====================================================================
- *  GLASSHAT — DESIGN SYSTEM (2026)
- *
- *  Tokens: OKLCH color space, variable fonts, bento grid, glass surfaces,
- *  spring easings, depth via stacked translateZ + box-shadow.
- * =================================================================== */
-
+/* ============================================================
+ *  GLASSHAT DESIGN TOKENS — 2026
+ *  - OKLCH palette (perceptually uniform)
+ *  - Variable fonts (Inter / JetBrains Mono / Space Grotesk)
+ *  - Bento grid w/ Tier 1 hero differentiation
+ *  - Selective glass (hero + header only)
+ *  - Spring/out/emphasized easing semantics
+ *  - Rem-based scale for user font-size respect
+ * ============================================================ */
 :root {
-  /* OKLCH palette — perceptually uniform, 2026-native */
+  /* surfaces */
   --bg-base:        oklch(13% 0.018 250);
   --bg-elevated:    oklch(17% 0.020 250);
-  --bg-glass:       oklch(95% 0 0 / 0.04);
-  --bg-glass-hi:    oklch(95% 0 0 / 0.08);
+  --bg-elevated-hi: oklch(20% 0.024 250);
+  --bg-glass:       oklch(95% 0 0 / 0.05);
+  --bg-glass-hi:    oklch(95% 0 0 / 0.09);
   --border-subtle:  oklch(95% 0 0 / 0.10);
-  --border-strong:  oklch(95% 0 0 / 0.20);
+  --border-strong:  oklch(95% 0 0 / 0.22);
 
+  /* text */
   --text-primary:   oklch(98% 0 0);
-  --text-secondary: oklch(75% 0 0);
-  --text-muted:     oklch(55% 0 0);
+  --text-secondary: oklch(78% 0 0);
+  --text-muted:     oklch(62% 0 0);
 
-  --primary:        oklch(75% 0.16 215);  /* glasshat cyan */
+  /* brand */
+  --primary:        oklch(75% 0.16 215);
   --primary-soft:   oklch(75% 0.16 215 / 0.18);
-  --accent:         oklch(78% 0.20 350);  /* magenta wow */
+  --accent:         oklch(78% 0.20 350);
   --accent-soft:    oklch(78% 0.20 350 / 0.20);
+  --gold:           oklch(82% 0.16 88);
   --success:        oklch(78% 0.18 150);
   --warning:        oklch(82% 0.18 80);
   --danger:         oklch(70% 0.22 28);
-  --gold:           oklch(82% 0.16 88);
 
-  /* Type */
-  --font-display:   'Space Grotesk', 'Inter', system-ui, sans-serif;
-  --font-body:      'Inter', system-ui, sans-serif;
-  --font-mono:      'JetBrains Mono', ui-monospace, monospace;
+  /* hat colors — locked L=72, C=0.17 (yellow C-capped at 0.13) */
+  --hat-white:      oklch(96% 0 0);
+  --hat-red:        oklch(72% 0.17 25);
+  --hat-yellow:     oklch(80% 0.13 95);
+  --hat-black:      oklch(28% 0 0);
+  --hat-green:      oklch(72% 0.17 150);
+  --hat-blue:       oklch(72% 0.17 245);
 
-  /* Spacing — 4px grid */
-  --s-1: 4px;  --s-2: 8px;  --s-3: 12px;  --s-4: 16px;
-  --s-6: 24px; --s-8: 32px; --s-12: 48px; --s-16: 64px;
+  /* type scale (rem) */
+  --t-caption:  0.6875rem;  /* 11px */
+  --t-eyebrow:  0.75rem;    /* 12px */
+  --t-label:    0.8125rem;  /* 13px */
+  --t-body:     0.9375rem;  /* 15px */
+  --t-h2:       1.125rem;   /* 18px */
+  --t-display:  1.75rem;    /* 28px */
+  --t-hero:     clamp(2rem, 5vw, 3.25rem);
 
-  --radius-card: 16px;
+  /* spacing (2-tier) */
+  --gap-outer:  16px;
+  --gap-inner:  8px;
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-6: 24px; --s-8: 32px;
+
+  /* radius tokens */
+  --radius-xs:   4px;
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
+  --radius-xl:   20px;
   --radius-pill: 999px;
 
-  /* Easings */
-  --ease-spring:    cubic-bezier(0.34, 1.56, 0.64, 1);
-  --ease-out:       cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-in-out:    cubic-bezier(0.45, 0, 0.55, 1);
+  /* easing semantics */
+  --ease-spring:     cubic-bezier(0.34, 1.56, 0.64, 1);   /* tactile, ≤350ms */
+  --ease-out:        cubic-bezier(0.22, 1, 0.36, 1);      /* data 400-800ms */
+  --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);          /* hero 800-1200ms */
+  --ease-in-out:     cubic-bezier(0.45, 0, 0.55, 1);      /* ambient loops */
 
-  --shadow-1: 0 1px 2px oklch(0% 0 0 / 0.4);
-  --shadow-2: 0 4px 12px oklch(0% 0 0 / 0.4), 0 1px 0 oklch(95% 0 0 / 0.04) inset;
-  --shadow-3: 0 12px 32px oklch(0% 0 0 / 0.5), 0 1px 0 oklch(95% 0 0 / 0.06) inset;
-  --shadow-glow: 0 0 32px oklch(75% 0.16 215 / 0.30);
+  --dur-fast: 200ms; --dur-base: 350ms; --dur-slow: 600ms;
+
+  /* depth */
+  --shadow-1: 0 1px 2px oklch(0% 0 0 / 0.40);
+  --shadow-2: 0 4px 14px oklch(0% 0 0 / 0.35), 0 1px 0 oklch(95% 0 0 / 0.04) inset;
+  --shadow-3: 0 14px 36px oklch(0% 0 0 / 0.50), 0 1px 0 oklch(95% 0 0 / 0.06) inset;
+  --shadow-glow: 0 0 28px oklch(75% 0.16 215 / 0.28);
+  --shadow-hero: var(--shadow-3), 0 0 80px oklch(75% 0.16 215 / 0.18);
 }
 
-/* Base reset */
+/* ============================================================
+ *  RESETS + BASE
+ * ============================================================ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 100%; }
 html, body { height: 100%; }
 body {
-  font-family: var(--font-body);
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: var(--t-body);
   font-feature-settings: 'cv11', 'ss01', 'ss03';
   background: var(--bg-base);
   color: var(--text-primary);
@@ -80,73 +112,115 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Background — animated gradient mesh */
+/* Background gradient mesh — gated by reduced-motion */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(circle at 20% 10%, oklch(75% 0.16 215 / 0.10), transparent 50%),
-    radial-gradient(circle at 80% 80%, oklch(78% 0.20 350 / 0.08), transparent 50%),
-    radial-gradient(circle at 50% 50%, oklch(40% 0.06 250 / 0.20), transparent 70%);
+    radial-gradient(circle at 18% 12%, oklch(75% 0.16 215 / 0.10), transparent 50%),
+    radial-gradient(circle at 82% 78%, oklch(78% 0.20 350 / 0.08), transparent 50%),
+    radial-gradient(circle at 50% 50%, oklch(40% 0.06 250 / 0.18), transparent 70%);
   z-index: -1;
-  animation: meshShift 24s ease-in-out infinite alternate;
+  animation: meshShift 24s var(--ease-in-out) infinite alternate;
 }
 @keyframes meshShift {
-  0%   { transform: translate(0, 0) scale(1); }
-  100% { transform: translate(2%, -2%) scale(1.05); }
+  from { transform: translate(0, 0) scale(1); }
+  to   { transform: translate(2%, -2%) scale(1.05); }
 }
 
-/* App container — full viewport bento */
+/* Skip link — A11Y SC 2.4.1 */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 9999;
+  background: var(--primary);
+  color: var(--bg-base);
+  padding: 12px 16px;
+  font-weight: 700;
+  border-radius: 0 0 var(--radius-md) 0;
+}
+.skip-link:focus {
+  left: 0;
+  outline: 3px solid var(--accent);
+}
+
+/* Focus rings — A11Y SC 2.4.7 */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 4px oklch(75% 0.16 215 / 0.30);
+  border-radius: var(--radius-sm);
+}
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+
+/* ============================================================
+ *  APP BENTO LAYOUT
+ * ============================================================ */
 #app {
   display: grid;
   grid-template-rows: auto 1fr auto;
   height: 100vh;
-  gap: var(--s-3);
-  padding: var(--s-3);
+  gap: var(--gap-outer);
+  padding: var(--gap-outer);
 }
 
-/* ====================== HEADER ====================== */
+/* HEADER — glass surface (Tier 1) */
 .header {
   display: grid;
   grid-template-columns: auto 1fr auto auto;
   align-items: center;
-  gap: var(--s-4);
+  gap: var(--gap-outer);
   padding: var(--s-3) var(--s-4);
   background: var(--bg-glass);
-  backdrop-filter: blur(20px) saturate(140%);
-  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-card);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-2);
 }
 
+/* Mode color edge — DES-11 */
+#app::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--primary);
+  z-index: 100;
+  transition: background var(--dur-base) var(--ease-spring);
+}
+body[data-mode="participant"] #app::before { background: var(--accent); }
+
+/* Brand */
 .brand {
   display: flex;
   align-items: center;
   gap: var(--s-3);
-  font-family: var(--font-display);
+  font-family: 'Space Grotesk', system-ui, sans-serif;
   font-weight: 700;
-  font-size: 18px;
+  font-size: var(--t-h2);
   letter-spacing: -0.02em;
 }
 .brand-mark {
-  width: 32px; height: 32px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, var(--primary), var(--accent));
+  width: 36px; height: 36px;
   display: grid;
   place-items: center;
-  font-weight: 800;
-  color: var(--bg-base);
-  box-shadow: var(--shadow-glow);
-  font-family: var(--font-display);
 }
+.brand-mark svg { width: 100%; height: 100%; }
 .brand-tag {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--t-caption);
   font-weight: 500;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
   margin-left: var(--s-2);
+  text-transform: uppercase;
 }
 
 /* Viewport toggle */
@@ -155,7 +229,7 @@ body::before {
   align-items: center;
   gap: var(--s-1);
   padding: 4px;
-  background: oklch(0% 0 0 / 0.40);
+  background: oklch(0% 0 0 / 0.45);
   border-radius: var(--radius-pill);
   border: 1px solid var(--border-subtle);
 }
@@ -164,13 +238,13 @@ body::before {
   border: none;
   background: transparent;
   color: var(--text-secondary);
-  font-family: var(--font-body);
-  font-weight: 500;
-  font-size: 13px;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: var(--t-label);
   padding: 8px 14px;
   border-radius: var(--radius-pill);
   cursor: pointer;
-  transition: all .35s var(--ease-spring);
+  transition: all var(--dur-base) var(--ease-spring);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -179,19 +253,19 @@ body::before {
   background: var(--primary);
   color: var(--bg-base);
   font-weight: 700;
-  box-shadow: 0 0 0 2px oklch(75% 0.16 215 / 0.30), var(--shadow-2);
+  box-shadow: 0 0 0 2px oklch(75% 0.16 215 / 0.30);
 }
-.viewport-toggle .dot {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--text-muted);
+body[data-mode="participant"] .viewport-toggle button[aria-pressed="true"] {
+  background: var(--accent);
+  box-shadow: 0 0 0 2px oklch(78% 0.20 350 / 0.30);
 }
+.viewport-toggle .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); }
 .viewport-toggle button[aria-pressed="true"] .dot {
   background: var(--bg-base);
-  box-shadow: 0 0 8px var(--bg-base);
+  box-shadow: 0 0 6px var(--bg-base);
 }
 
-/* Time + controls */
+/* Time strip */
 .time-strip {
   display: flex;
   align-items: center;
@@ -201,127 +275,157 @@ body::before {
   display: flex;
   align-items: center;
   gap: var(--s-2);
-  font-family: var(--font-mono);
-  font-size: 12px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: var(--t-caption);
   color: var(--text-secondary);
 }
-.timeline .scrubber {
-  width: 200px; height: 6px;
-  background: oklch(0% 0 0 / 0.4);
+.scrubber-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.scrubber {
+  width: 220px; height: 6px;
+  background: oklch(0% 0 0 / 0.45);
   border-radius: 3px;
   position: relative;
-  overflow: hidden;
   cursor: pointer;
   border: 1px solid var(--border-subtle);
 }
-.timeline .scrubber-fill {
+.scrubber-fill {
   position: absolute;
-  top: 0; left: 0;
-  height: 100%;
-  width: 0%;
+  top: 0; left: 0; height: 100%;
+  width: 100%;
   background: linear-gradient(90deg, var(--primary), var(--accent));
   border-radius: 3px;
-  transition: width .15s linear;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 100ms linear;
+  will-change: transform;
 }
-.timeline .scrubber-marker {
+.scrubber-marker {
   position: absolute;
-  top: -2px;
-  width: 10px; height: 10px;
+  top: -3px;
+  width: 12px; height: 12px;
   background: var(--text-primary);
   border-radius: 50%;
   transform: translateX(-50%);
-  transition: left .15s linear;
+  transition: left 100ms linear;
   box-shadow: 0 0 12px var(--primary);
+  pointer-events: none;
+}
+.scene-marker {
+  position: absolute;
+  top: -2px;
+  width: 2px; height: 10px;
+  background: var(--text-muted);
+  pointer-events: none;
+  opacity: 0.6;
 }
 
+/* CTA buttons */
 .ctrl-btn {
   appearance: none;
   border: 1px solid var(--border-strong);
-  background: var(--bg-glass);
+  background: var(--bg-glass-hi);
   color: var(--text-primary);
-  font-family: var(--font-body);
+  font-family: inherit;
   font-weight: 600;
-  font-size: 13px;
-  padding: 8px 14px;
+  font-size: var(--t-label);
+  padding: 9px 16px;
   border-radius: var(--radius-pill);
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  transition: all .25s var(--ease-out);
+  transition: all var(--dur-fast) var(--ease-out);
+  position: relative;
+  overflow: hidden;
 }
 .ctrl-btn:hover {
-  background: var(--bg-glass-hi);
+  background: var(--bg-elevated-hi);
   border-color: var(--primary);
   transform: translateY(-1px);
 }
+.ctrl-btn:active { transform: translateY(0) scale(0.98); transition-duration: 80ms; }
 .ctrl-btn.primary {
-  background: var(--primary);
+  background: linear-gradient(135deg, var(--primary), oklch(70% 0.18 230));
   color: var(--bg-base);
-  border-color: var(--primary);
+  border-color: transparent;
 }
-.ctrl-btn.primary:hover {
-  filter: brightness(1.1);
-  box-shadow: var(--shadow-glow);
+.ctrl-btn.primary:hover { filter: brightness(1.1); box-shadow: var(--shadow-glow); }
+.ctrl-btn.accent {
+  background: linear-gradient(135deg, var(--accent), oklch(72% 0.20 320));
+  color: var(--bg-base);
+  border-color: transparent;
 }
 
-/* ====================== MAIN BENTO ====================== */
+/* ============================================================
+ *  MAIN BENTO — Tier 1 hero differentiation
+ * ============================================================ */
 .main {
   display: grid;
-  grid-template-columns: 320px 1fr 360px;
-  grid-template-rows: 1fr 1fr;
+  grid-template-columns: 320px 1.5fr 360px;
+  grid-template-rows: 1.4fr 1fr;
   grid-template-areas:
     "hats graph phoenix"
     "hats receipts phoenix";
-  gap: var(--s-3);
+  gap: var(--gap-outer);
   min-height: 0;
 }
 
 .card {
-  background: var(--bg-glass);
-  backdrop-filter: blur(20px) saturate(140%);
-  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-card);
+  border-radius: var(--radius-lg);
   padding: var(--s-4);
-  box-shadow: var(--shadow-2);
+  box-shadow: var(--shadow-1);
   display: flex;
   flex-direction: column;
   min-height: 0;
   position: relative;
   overflow: hidden;
-  transition: border-color .4s var(--ease-out), box-shadow .4s var(--ease-out);
+  transition: border-color var(--dur-base) var(--ease-out);
 }
-.card:hover {
-  border-color: var(--border-strong);
+/* Tier 1 HERO — only the 3D graph card */
+.card.card--hero {
+  background: linear-gradient(180deg, var(--bg-glass-hi), var(--bg-glass));
+  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  border: 1px solid oklch(95% 0 0 / 0.16);
+  border-radius: var(--radius-xl);
+  padding: var(--s-6);
+  box-shadow: var(--shadow-hero);
 }
 .card.active {
   border-color: var(--primary);
-  box-shadow: var(--shadow-3), 0 0 24px oklch(75% 0.16 215 / 0.20);
 }
 
 .card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--s-3);
+  margin-bottom: var(--gap-inner);
+  gap: var(--s-3);
 }
 .card-title {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 13px;
-  letter-spacing: 0.04em;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: var(--t-eyebrow);
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-secondary);
 }
+.card.card--hero .card-title { color: var(--gold); font-size: var(--t-label); }
 .card-badge {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  padding: 2px 8px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: var(--t-caption);
+  padding: 3px 9px;
   border-radius: var(--radius-pill);
   background: var(--bg-glass-hi);
   color: var(--text-secondary);
   border: 1px solid var(--border-subtle);
+  white-space: nowrap;
 }
 
 /* HATS panel */
@@ -329,7 +433,7 @@ body::before {
 .hats-grid {
   display: flex;
   flex-direction: column;
-  gap: var(--s-2);
+  gap: var(--gap-inner);
   overflow-y: auto;
   flex: 1;
 }
@@ -339,24 +443,24 @@ body::before {
   align-items: center;
   gap: var(--s-3);
   padding: var(--s-3);
-  background: var(--bg-glass-hi);
+  background: var(--bg-elevated-hi);
   border: 1px solid var(--border-subtle);
-  border-radius: 12px;
-  transition: all .35s var(--ease-spring);
+  border-radius: var(--radius-md);
+  transition: all var(--dur-base) var(--ease-out);
   position: relative;
-  overflow: hidden;
 }
+.hat-row:hover { background: oklch(95% 0 0 / 0.04); border-color: var(--border-strong); }
 .hat-row.scoring {
   border-color: var(--primary);
   background: linear-gradient(90deg, var(--primary-soft), transparent);
 }
 .hat-row.bias-warn {
   border-color: var(--warning);
-  background: linear-gradient(90deg, oklch(82% 0.18 80 / 0.12), transparent);
+  background: linear-gradient(90deg, oklch(82% 0.18 80 / 0.14), transparent);
 }
 .hat-row.corrected {
   border-color: var(--success);
-  background: linear-gradient(90deg, oklch(78% 0.18 150 / 0.10), transparent);
+  background: linear-gradient(90deg, oklch(78% 0.18 150 / 0.12), transparent);
 }
 .hat-dot {
   width: 24px; height: 24px;
@@ -364,24 +468,23 @@ body::before {
   display: grid;
   place-items: center;
   font-weight: 700;
-  font-size: 11px;
+  font-size: var(--t-caption);
+  font-family: 'Space Grotesk', system-ui, sans-serif;
 }
-.hat-name { font-weight: 600; font-size: 13px; }
-.hat-criterion { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); }
+.hat-name { font-weight: 600; font-size: var(--t-label); }
+.hat-criterion { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: var(--t-caption); color: var(--text-muted); }
 .hat-score {
-  font-family: var(--font-mono);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
   font-weight: 700;
-  font-size: 16px;
+  font-size: var(--t-h2);
   font-variant-numeric: tabular-nums;
-  transition: color .35s var(--ease-spring);
+  transition: color var(--dur-base) var(--ease-out);
+  min-width: 48px;
+  text-align: right;
 }
 .hat-score.changed {
   color: var(--accent);
-  animation: scorePulse 1.2s var(--ease-out);
-}
-@keyframes scorePulse {
-  0%, 100% { transform: scale(1); }
-  40%      { transform: scale(1.18); text-shadow: 0 0 12px var(--accent); }
+  text-shadow: 0 0 12px oklch(78% 0.20 350 / 0.6);
 }
 
 /* Bias meter dial */
@@ -395,9 +498,9 @@ body::before {
   position: absolute;
   inset: 0;
   background: conic-gradient(from 180deg, var(--success), var(--warning), var(--danger));
-  border-radius: 999px 999px 0 0;
-  mask: radial-gradient(circle at center bottom, transparent 60%, black 60%);
+  border-radius: var(--radius-pill) var(--radius-pill) 0 0;
   -webkit-mask: radial-gradient(circle at center bottom, transparent 60%, black 60%);
+          mask: radial-gradient(circle at center bottom, transparent 60%, black 60%);
 }
 .bias-meter::after {
   content: '';
@@ -408,19 +511,18 @@ body::before {
   transform-origin: bottom center;
   transform: translateX(-50%) rotate(-70deg);
   border-radius: 2px;
-  transition: transform .8s var(--ease-spring);
-  box-shadow: 0 0 4px var(--text-primary);
+  transition: transform var(--dur-slow) var(--ease-out);
 }
 .bias-meter[data-bias="high"]::after { transform: translateX(-50%) rotate(60deg); }
 .bias-meter[data-bias="med"]::after  { transform: translateX(-50%) rotate(0deg); }
 .bias-meter[data-bias="low"]::after  { transform: translateX(-50%) rotate(-60deg); }
 
-/* GRAPH — 3D constellation */
+/* GRAPH — hero tile */
 .graph-card { grid-area: graph; }
 .graph-canvas-wrap {
   flex: 1;
   position: relative;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   overflow: hidden;
   background: radial-gradient(circle at 50% 50%, oklch(20% 0.02 250), var(--bg-base));
   min-height: 0;
@@ -439,8 +541,12 @@ body::before {
 .graph-legend {
   display: flex;
   gap: var(--s-3);
-  font-family: var(--font-mono);
-  font-size: 11px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: var(--t-caption);
+  background: oklch(0% 0 0 / 0.50);
+  padding: 6px 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
 }
 .graph-legend span {
   display: flex;
@@ -452,155 +558,248 @@ body::before {
   border-radius: 50%;
   display: inline-block;
 }
+.graph-axis-label {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: var(--t-caption);
+  background: oklch(0% 0 0 / 0.50);
+  padding: 6px 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+
+/* Qdrant Live persistent badge — JUD-2 */
+.qdrant-live {
+  position: absolute;
+  top: var(--s-3);
+  right: var(--s-3);
+  background: oklch(0% 0 0 / 0.55);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-md);
+  padding: var(--s-2) var(--s-3);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: var(--t-caption);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  pointer-events: none;
+  z-index: 3;
+}
+.qdrant-live .icon {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 8px var(--primary);
+  animation: pulse 2s var(--ease-in-out) infinite;
+}
+.qdrant-live strong { color: var(--primary); }
 
 /* Winner Gravity callout */
 .gravity-callout {
   position: absolute;
-  top: var(--s-3);
+  top: 60px;
   left: var(--s-3);
-  background: var(--bg-glass-hi);
-  backdrop-filter: blur(20px);
+  background: oklch(0% 0 0 / 0.65);
+  backdrop-filter: blur(12px);
   border: 1px solid var(--accent);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   padding: var(--s-3);
-  max-width: 280px;
-  font-size: 12px;
-  line-height: 1.4;
+  max-width: 300px;
+  font-size: var(--t-caption);
+  line-height: 1.5;
   box-shadow: var(--shadow-3);
   opacity: 0;
   transform: translateY(-8px);
-  transition: all .5s var(--ease-spring);
+  transition: all var(--dur-slow) var(--ease-out);
   pointer-events: none;
+  z-index: 3;
 }
 .gravity-callout.visible {
   opacity: 1;
   transform: translateY(0);
 }
 .gravity-callout strong { color: var(--accent); }
+.gravity-callout .anchor-name { color: var(--gold); font-weight: 700; }
+
+/* Anti-Pattern Radar */
+.antipattern {
+  position: absolute;
+  top: var(--s-3);
+  left: var(--s-3);
+  background: oklch(0% 0 0 / 0.65);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-md);
+  padding: var(--s-3);
+  max-width: 300px;
+  font-size: var(--t-caption);
+  line-height: 1.5;
+  z-index: 3;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: all var(--dur-slow) var(--ease-out);
+  pointer-events: none;
+}
+.antipattern.visible { opacity: 1; transform: translateY(0); }
+.antipattern strong { color: var(--danger); display: block; margin-bottom: 4px; }
 
 /* PHOENIX MONITOR */
 .phoenix-card { grid-area: phoenix; }
-.phoenix-meta {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-2);
-  font-family: var(--font-mono);
-  font-size: 11px;
-}
 .phoenix-trace {
   flex: 1;
-  background: oklch(0% 0 0 / 0.30);
-  border-radius: 8px;
+  background: oklch(0% 0 0 / 0.40);
+  border-radius: var(--radius-sm);
   padding: var(--s-3);
   overflow-y: auto;
-  font-family: var(--font-mono);
-  font-size: 11px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: var(--t-caption);
   line-height: 1.6;
   color: var(--text-secondary);
   border: 1px solid var(--border-subtle);
-  max-height: 240px;
+  max-height: 220px;
 }
 .trace-line {
   opacity: 0;
   transform: translateX(-8px);
   animation: lineIn .35s var(--ease-out) forwards;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px;
+  padding: 1px 0;
+  border-radius: var(--radius-xs);
+  position: relative;
 }
-.trace-line.mcp { color: var(--accent); }
-.trace-line.qdrant { color: var(--primary); }
-.trace-line.ok { color: var(--success); }
-.trace-line.warn { color: var(--warning); }
-@keyframes lineIn {
-  to { opacity: 1; transform: translateX(0); }
+.trace-line.highlight {
+  background: oklch(78% 0.20 350 / 0.10);
+  padding: 2px 6px;
+  margin: 1px -6px;
+  border-left: 2px solid var(--accent);
 }
+.trace-line.dim { opacity: 0.4; }
+.trace-line .ts { color: var(--text-muted); white-space: nowrap; }
+.trace-line.mcp .body { color: var(--accent); }
+.trace-line.qdrant .body { color: var(--primary); }
+.trace-line.ok .body { color: var(--success); }
+.trace-line.warn .body { color: var(--warning); }
+@keyframes lineIn { to { opacity: 1; transform: translateX(0); } }
 
 .phoenix-eval-card {
   margin-top: var(--s-3);
   padding: var(--s-3);
-  background: var(--bg-glass-hi);
-  border-radius: 8px;
-  border: 1px solid var(--border-subtle);
-  font-family: var(--font-mono);
-  font-size: 11px;
+  background: var(--bg-elevated-hi);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--warning);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: var(--t-caption);
   display: none;
 }
 .phoenix-eval-card.visible {
   display: block;
-  animation: fadeUp .5s var(--ease-spring);
+  animation: fadeUp .5s var(--ease-out);
 }
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.phoenix-eval-card .eval-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 2px 0;
-}
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.phoenix-eval-card .eval-row { display: flex; justify-content: space-between; padding: 2px 0; }
 .phoenix-eval-card .label-warn { color: var(--warning); }
+.phoenix-eval-card .header-row { font-weight: 700; color: var(--warning); margin-bottom: 6px; }
 
-/* SCORE RECEIPTS */
-.receipts-card { grid-area: receipts; overflow-x: auto; }
+/* Why -1.4 expand panel */
+.why-panel {
+  margin-top: var(--s-2);
+  padding: var(--s-3);
+  background: var(--bg-elevated-hi);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: var(--t-caption);
+  display: none;
+}
+.why-panel.visible { display: block; animation: fadeUp .5s var(--ease-out); }
+.why-panel .formula {
+  background: oklch(0% 0 0 / 0.4);
+  padding: 6px 8px;
+  border-radius: var(--radius-xs);
+  margin: 6px 0;
+  color: var(--accent);
+}
+.why-panel .anchor-name { color: var(--gold); font-weight: 700; }
+
+/* SCORE RECEIPTS — dual rubric */
+.receipts-card { grid-area: receipts; }
 .receipts-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--s-3);
+  gap: var(--gap-outer);
   flex: 1;
+  min-height: 0;
 }
 .rubric-block {
-  background: var(--bg-glass-hi);
+  background: var(--bg-elevated-hi);
   border: 1px solid var(--border-subtle);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   padding: var(--s-3);
   min-height: 0;
 }
-.rubric-block.qdrant { border-color: oklch(75% 0.16 215 / 0.4); }
-.rubric-block.rapid  { border-color: oklch(78% 0.20 350 / 0.4); }
-
+.rubric-block.qdrant { border-color: oklch(75% 0.16 215 / 0.40); }
+.rubric-block.rapid  { border-color: oklch(78% 0.20 350 / 0.40); }
 .rubric-header {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   margin-bottom: var(--s-3);
+  gap: var(--s-2);
 }
 .rubric-name {
-  font-family: var(--font-display);
+  font-family: 'Space Grotesk', system-ui, sans-serif;
   font-weight: 700;
-  font-size: 14px;
+  font-size: var(--t-h2);
 }
+.rubric-desc { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: var(--text-muted); }
 .rubric-final {
-  font-family: var(--font-mono);
+  font-family: 'Space Grotesk', system-ui, sans-serif;
   font-weight: 800;
-  font-size: 24px;
+  font-size: clamp(2rem, 4vw, 3rem);
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
   background: linear-gradient(135deg, var(--primary), var(--accent));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  transition: all .8s var(--ease-spring);
+  transition: all 600ms var(--ease-emphasized);
+  line-height: 1;
 }
 .rubric-block.rapid .rubric-final {
   background: linear-gradient(135deg, var(--accent), var(--gold));
   -webkit-background-clip: text;
   background-clip: text;
 }
+.rubric-final.land {
+  filter: drop-shadow(0 0 24px var(--accent));
+  animation: scoreLand 600ms var(--ease-emphasized);
+}
+@keyframes scoreLand {
+  0%   { transform: scale(0.92); opacity: 0; filter: drop-shadow(0 0 0 transparent); }
+  60%  { transform: scale(1.06); opacity: 1; }
+  100% { transform: scale(1); }
+}
 .rubric-criteria {
   display: flex;
   flex-direction: column;
-  gap: var(--s-2);
-  font-size: 11px;
-  font-family: var(--font-mono);
+  gap: var(--gap-inner);
+  font-size: var(--t-caption);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
 }
 .criterion-row {
   display: grid;
   grid-template-columns: 1fr auto auto;
   align-items: center;
-  gap: var(--s-3);
+  gap: var(--s-2);
 }
 .criterion-bar {
   height: 4px;
-  width: 80px;
-  background: oklch(0% 0 0 / 0.4);
+  width: 70px;
+  background: oklch(0% 0 0 / 0.40);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -608,7 +807,7 @@ body::before {
   height: 100%;
   background: var(--primary);
   width: 0%;
-  transition: width .8s var(--ease-spring);
+  transition: width 800ms var(--ease-out);
 }
 .rubric-block.rapid .criterion-bar-fill { background: var(--accent); }
 .criterion-score {
@@ -618,65 +817,100 @@ body::before {
   text-align: right;
 }
 
+/* Variance banner */
 .variance-banner {
   grid-column: 1 / -1;
-  padding: var(--s-3);
-  background: linear-gradient(90deg, var(--primary-soft), var(--accent-soft));
+  padding: var(--s-3) var(--s-4);
+  background: linear-gradient(90deg, var(--primary-soft), oklch(78% 0.20 350 / 0.32));
   border: 1px solid var(--accent);
-  border-radius: 12px;
-  font-size: 12px;
+  border-radius: var(--radius-md);
+  font-size: var(--t-label);
   text-align: center;
   display: none;
 }
 .variance-banner.visible {
   display: block;
-  animation: variancePop .8s var(--ease-spring);
+  animation: variancePop 600ms var(--ease-emphasized);
 }
 @keyframes variancePop {
-  0%   { transform: scale(0.9); opacity: 0; }
-  60%  { transform: scale(1.05); opacity: 1; }
+  0%   { transform: scale(0.92); opacity: 0; }
+  60%  { transform: scale(1.04); opacity: 1; }
   100% { transform: scale(1); }
 }
-.variance-banner strong { color: var(--accent); font-weight: 700; }
+.variance-delta {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-weight: 800;
+  color: var(--accent);
+  font-size: var(--t-h2);
+}
+.variance-banner .so-what {
+  display: block;
+  margin-top: 6px;
+  font-size: var(--t-caption);
+  color: var(--text-secondary);
+  font-style: italic;
+}
 
-/* ====================== FOOTER ====================== */
+/* Sanity invariants strip */
+.sanity-strip {
+  margin-top: var(--s-2);
+  padding: var(--s-2) var(--s-3);
+  background: var(--bg-elevated-hi);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10px;
+  color: var(--text-muted);
+  display: none;
+  grid-column: 1 / -1;
+}
+.sanity-strip.visible { display: block; animation: fadeUp .5s var(--ease-out); }
+.sanity-strip strong { color: var(--success); }
+
+/* ============================================================
+ *  FOOTER
+ * ============================================================ */
 .footer {
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: 1fr auto auto auto;
   align-items: center;
-  gap: var(--s-4);
+  gap: var(--gap-outer);
   padding: var(--s-3) var(--s-4);
   background: var(--bg-glass);
-  backdrop-filter: blur(20px) saturate(140%);
-  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-card);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-2);
 }
 .captions {
-  font-family: var(--font-display);
-  font-weight: 500;
-  font-size: 14px;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-weight: 600;
+  font-size: var(--t-h2);
   color: var(--text-primary);
+  min-height: 26px;
+  letter-spacing: -0.015em;
+  transition: opacity var(--dur-fast) var(--ease-out);
+  line-height: 1.3;
+}
+.captions.tech {
+  font-weight: 500;
   font-style: italic;
-  min-height: 22px;
-  letter-spacing: -0.01em;
-  transition: opacity .4s var(--ease-out);
+  font-size: var(--t-body);
+  color: var(--text-secondary);
+  font-family: inherit;
 }
 .captions.hook {
-  font-size: 18px;
-  font-weight: 700;
-  font-style: normal;
-  letter-spacing: -0.02em;
+  font-size: var(--t-display);
+  font-weight: 800;
   background: linear-gradient(90deg, var(--text-primary), var(--primary));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
-
 .cost-badge, .stage-badge, .topk-badge {
-  font-family: var(--font-mono);
-  font-size: 12px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: var(--t-caption);
   padding: 6px 12px;
   border-radius: var(--radius-pill);
   background: var(--bg-glass-hi);
@@ -685,35 +919,40 @@ body::before {
   align-items: center;
   gap: 6px;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 .cost-badge .icon, .stage-badge .icon, .topk-badge .icon {
   width: 6px; height: 6px;
   border-radius: 50%;
   background: var(--success);
   box-shadow: 0 0 8px var(--success);
-  animation: pulse 2s ease-in-out infinite;
+  animation: pulse 2s var(--ease-in-out) infinite;
 }
 .topk-badge {
   background: linear-gradient(90deg, oklch(82% 0.16 88 / 0.20), transparent);
   border-color: var(--gold);
   display: none;
 }
-.topk-badge.visible { display: flex; animation: fadeUp .6s var(--ease-spring); }
+.topk-badge.visible { display: flex; animation: fadeUp .6s var(--ease-out); }
 .topk-badge .icon { background: var(--gold); box-shadow: 0 0 8px var(--gold); }
+.cost-badge { display: none; }
+.cost-badge.visible { display: flex; }
 
 @keyframes pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
-  50%      { opacity: 0.4; transform: scale(0.85); }
+  50%      { opacity: 0.5; transform: scale(0.85); }
 }
 
-/* ============== AUTO-MODE CURSOR ============== */
+/* ============================================================
+ *  AUTO-MODE CURSOR
+ * ============================================================ */
 .cursor {
   position: fixed;
   width: 18px; height: 18px;
   pointer-events: none;
   z-index: 9999;
   left: 50%; top: 50%;
-  transition: left 1.2s var(--ease-out), top 1.2s var(--ease-out), transform .15s var(--ease-out);
+  transition: left 800ms var(--ease-out), top 800ms var(--ease-out), transform 150ms var(--ease-out);
   display: none;
 }
 .cursor.visible { display: block; }
@@ -722,8 +961,8 @@ body::before {
   position: absolute;
   inset: 0;
   background: var(--text-primary);
-  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M2 2 L13 8 L8 9 L7 14 Z' fill='white' stroke='black'/></svg>") no-repeat center / contain;
-          mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M2 2 L13 8 L8 9 L7 14 Z' fill='white' stroke='black'/></svg>") no-repeat center / contain;
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M2 2 L13 8 L8 9 L7 14 Z' fill='white'/></svg>") no-repeat center / contain;
+          mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M2 2 L13 8 L8 9 L7 14 Z' fill='white'/></svg>") no-repeat center / contain;
 }
 .cursor.clicking { transform: scale(0.8); }
 .cursor::after {
@@ -734,100 +973,15 @@ body::before {
   border-radius: 50%;
   opacity: 0;
 }
-.cursor.clicking::after { animation: ripple .6s ease-out; }
+.cursor.clicking::after { animation: ripple 600ms var(--ease-out); }
 @keyframes ripple {
   0%   { opacity: 1; transform: scale(0.5); }
   100% { opacity: 0; transform: scale(2.4); }
 }
 
-/* ============== STAGE INDICATORS ============== */
-.stage-dot {
-  display: inline-block;
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: oklch(0% 0 0 / 0.4);
-  margin: 0 2px;
-  transition: all .3s var(--ease-spring);
-}
-.stage-dot.active { background: var(--primary); box-shadow: 0 0 8px var(--primary); transform: scale(1.4); }
-.stage-dot.done   { background: var(--success); }
-
-/* ============== KANBAN (judge mode) ============== */
-.kanban-overlay {
-  position: absolute;
-  inset: 0;
-  background: oklch(13% 0.018 250 / 0.95);
-  backdrop-filter: blur(8px);
-  display: none;
-  flex-direction: column;
-  padding: var(--s-3);
-  z-index: 5;
-}
-.kanban-overlay.visible { display: flex; animation: fadeUp .4s var(--ease-out); }
-.kanban-cols {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: var(--s-2);
-  flex: 1;
-  min-height: 0;
-}
-.kanban-col {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  background: var(--bg-glass);
-  border-radius: 8px;
-  padding: var(--s-2);
-  border: 1px solid var(--border-subtle);
-  overflow-y: auto;
-  min-height: 0;
-}
-.kanban-col-title {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
-  padding-bottom: 4px;
-  border-bottom: 1px solid var(--border-subtle);
-  margin-bottom: 4px;
-}
-.kanban-card {
-  background: var(--bg-glass-hi);
-  border-radius: 4px;
-  padding: 4px 6px;
-  font-size: 9px;
-  font-family: var(--font-mono);
-  color: var(--text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  border: 1px solid transparent;
-  transition: all .25s var(--ease-out);
-}
-.kanban-card.complete { border-color: var(--success); background: oklch(78% 0.18 150 / 0.10); }
-.kanban-summary {
-  margin-top: var(--s-3);
-  padding: var(--s-3);
-  background: var(--bg-glass-hi);
-  border-radius: 12px;
-  border: 1px solid var(--border-subtle);
-  display: flex;
-  justify-content: space-around;
-  font-family: var(--font-mono);
-  font-size: 12px;
-}
-.kanban-summary .stat-num {
-  font-size: 24px;
-  font-weight: 800;
-  font-family: var(--font-display);
-  background: linear-gradient(135deg, var(--primary), var(--accent));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-/* ============== INTRO + REVEAL OVERLAYS ============== */
+/* ============================================================
+ *  CURTAIN (intro)
+ * ============================================================ */
 .curtain {
   position: fixed;
   inset: 0;
@@ -837,34 +991,102 @@ body::before {
   place-items: center;
   text-align: center;
   padding: var(--s-8);
-  transition: opacity .8s var(--ease-out);
+  transition: opacity 600ms var(--ease-out);
 }
 .curtain.hide { opacity: 0; pointer-events: none; }
+.curtain-inner {
+  max-width: 760px;
+  width: 100%;
+}
 .curtain h1 {
-  font-family: var(--font-display);
-  font-size: clamp(28px, 5vw, 56px);
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: var(--t-hero);
   font-weight: 800;
   letter-spacing: -0.04em;
-  line-height: 1.1;
+  line-height: 1.05;
   margin-bottom: var(--s-4);
   background: linear-gradient(135deg, var(--text-primary) 30%, var(--primary) 60%, var(--accent));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  animation: titleIn 1.2s var(--ease-spring);
+  animation: titleIn 1s var(--ease-emphasized);
 }
-.curtain p {
+.curtain h2 {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: var(--t-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: var(--s-4);
+  color: var(--text-primary);
+  animation: titleIn 1s var(--ease-emphasized) 100ms both;
+}
+.curtain .subhead {
   color: var(--text-secondary);
-  font-size: 16px;
+  font-size: var(--t-body);
   max-width: 600px;
+  margin: 0 auto var(--s-4);
+  line-height: 1.5;
+  animation: titleIn 1s var(--ease-emphasized) 200ms both;
+}
+.curtain .why-now {
+  color: var(--text-muted);
+  font-size: var(--t-label);
+  max-width: 640px;
   margin: 0 auto var(--s-6);
   line-height: 1.5;
+  font-style: italic;
+  animation: titleIn 1s var(--ease-emphasized) 300ms both;
+}
+.curtain-cta {
+  display: flex;
+  gap: var(--s-3);
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: var(--s-6);
+  animation: titleIn 1s var(--ease-emphasized) 400ms both;
+}
+.curtain-meta {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: var(--t-caption);
+  color: var(--text-muted);
+  margin-top: var(--s-4);
+  animation: titleIn 1s var(--ease-emphasized) 500ms both;
+}
+.curtain-stats {
+  display: flex;
+  gap: var(--s-6);
+  justify-content: center;
+  margin-bottom: var(--s-4);
+  flex-wrap: wrap;
+  animation: titleIn 1s var(--ease-emphasized) 250ms both;
+}
+.curtain-stat {
+  text-align: center;
+}
+.curtain-stat .num {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-weight: 800;
+  font-size: var(--t-display);
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  line-height: 1;
+}
+.curtain-stat .lbl {
+  font-size: var(--t-caption);
+  color: var(--text-muted);
+  margin-top: 4px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
 }
 @keyframes titleIn {
   from { opacity: 0; transform: translateY(20px) scale(.96); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+/* ============================================================
+ *  REVEAL (final)
+ * ============================================================ */
 .reveal-overlay {
   position: fixed;
   inset: 0;
@@ -876,292 +1098,430 @@ body::before {
   text-align: center;
   padding: var(--s-8);
 }
-.reveal-overlay.visible {
-  display: grid;
-  animation: fadeUp .6s var(--ease-out);
+.reveal-overlay.visible { display: grid; animation: fadeUp .6s var(--ease-out); }
+.reveal-callback {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: var(--t-display);
+  color: var(--text-secondary);
+  margin-bottom: var(--s-6);
+  font-style: italic;
+  letter-spacing: -0.01em;
 }
+.reveal-callback strong { color: var(--primary); font-style: normal; }
 .reveal-overlay h2 {
-  font-family: var(--font-display);
-  font-size: clamp(32px, 5vw, 64px);
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: clamp(2rem, 5vw, 4rem);
   font-weight: 800;
   letter-spacing: -0.04em;
-  line-height: 1.1;
+  line-height: 1.05;
   margin-bottom: var(--s-4);
 }
-.reveal-line-1 { color: var(--text-primary); }
+.reveal-line-1 { color: var(--text-primary); display: block; }
 .reveal-line-2 {
   background: linear-gradient(90deg, var(--primary), var(--accent));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  display: block;
 }
-.reveal-overlay .small {
+.reveal-stack {
+  display: flex;
+  gap: var(--s-2);
+  justify-content: center;
+  margin: var(--s-6) 0 var(--s-4);
+  flex-wrap: wrap;
+}
+.stack-pill {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: var(--t-caption);
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-glass-hi);
+  border: 1px solid var(--border-subtle);
   color: var(--text-secondary);
-  font-size: 14px;
-  font-family: var(--font-mono);
+  opacity: 0;
+  animation: fadeUp .5s var(--ease-out) forwards;
+}
+.reveal-cta {
+  display: flex;
+  gap: var(--s-3);
+  justify-content: center;
+  margin-top: var(--s-6);
+  flex-wrap: wrap;
+}
+.reveal-link {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: var(--t-caption);
+  color: var(--primary);
   margin-top: var(--s-4);
+  text-decoration: none;
+}
+.reveal-link:hover { text-decoration: underline; }
+
+/* Manual mode coachmark */
+.coachmark {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent);
+  color: var(--bg-base);
+  padding: 12px 20px;
+  border-radius: var(--radius-pill);
+  font-weight: 700;
+  font-size: var(--t-label);
+  box-shadow: var(--shadow-3);
+  z-index: 800;
+  display: none;
+  animation: coachIn .4s var(--ease-spring);
+}
+.coachmark.visible { display: block; }
+@keyframes coachIn {
+  from { opacity: 0; transform: translate(-50%, 12px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
 }
 
-/* Scrollbars (subtle) */
+/* Plain English toggle */
+.lang-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.lang-toggle button {
+  appearance: none;
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--text-muted);
+  padding: 4px 10px;
+  font-size: 10px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  transition: all var(--dur-fast) var(--ease-out);
+}
+.lang-toggle button[aria-pressed="true"] {
+  background: var(--text-primary);
+  color: var(--bg-base);
+  border-color: var(--text-primary);
+}
+
+/* Scrollbars */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: oklch(95% 0 0 / 0.10); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: oklch(95% 0 0 / 0.20); }
 
-/* ====================== Responsive ====================== */
+/* Responsive */
 @media (max-width: 1100px) {
   .main {
     grid-template-columns: 1fr 1fr;
     grid-template-rows: auto 1fr 1fr auto;
-    grid-template-areas:
-      "hats hats"
-      "graph phoenix"
-      "graph phoenix"
-      "receipts receipts";
+    grid-template-areas: "hats hats" "graph phoenix" "graph phoenix" "receipts receipts";
   }
 }
 @media (max-width: 720px) {
   .main {
     grid-template-columns: 1fr;
     grid-template-rows: auto auto auto auto;
-    grid-template-areas: "hats" "graph" "phoenix" "receipts";
+    grid-template-areas: "graph" "hats" "phoenix" "receipts";
   }
-  .header { grid-template-columns: 1fr; gap: var(--s-2); }
-  .timeline .scrubber { width: 100%; }
+  .header { grid-template-columns: 1fr; }
+  .scrubber { width: 100%; }
+}
+
+/* ============================================================
+ *  REDUCED MOTION — A11Y SC 2.3.3
+ * ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  body::before { animation: none; }
+  .cursor { transition: none; }
+}
+
+/* High-contrast mode */
+@media (forced-colors: active) {
+  .card { border: 1px solid CanvasText; background: Canvas; }
+  .ctrl-btn, .viewport-toggle button { border: 1px solid ButtonText; forced-color-adjust: none; }
 }
 </style>
 </head>
 
-<body>
+<body data-mode="judge">
 
-<!-- Intro curtain -->
-<div class="curtain" id="curtain">
-  <div>
-    <h1>Glasshat<br />doesn't just judge projects.<br/>It audits the judge.</h1>
-    <p>An interactive prototype of the Qdrant VSD + Rapid Agent / Arize submission. Choose your viewport, sit back, or click your way through.</p>
-    <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
-      <button class="ctrl-btn primary" onclick="startDemo('judge', true)">▶ Auto-play · Judge mode (Qdrant)</button>
-      <button class="ctrl-btn primary" onclick="startDemo('participant', true)">▶ Auto-play · Participant mode (Rapid Agent)</button>
-      <button class="ctrl-btn" onclick="startDemo('judge', false)">⌥ Manual · Judge mode</button>
+<a href="#main-content" class="skip-link">Skip to demo</a>
+
+<!-- ===== INTRO CURTAIN ===== -->
+<div class="curtain" id="curtain" role="dialog" aria-labelledby="curtain-title">
+  <div class="curtain-inner">
+    <h1 id="curtain-title">The audit layer for AI evaluation.</h1>
+    <h2>Stop trusting your LLM judges — verify them.</h2>
+    <p class="subhead">Glasshat scores AI outputs with <strong>dual-rubric variance detection</strong> + Qdrant-anchored calibration against 503 past hackathon submissions. Built for AI platform teams who must defend every score under SOC2 / EU AI Act scrutiny.</p>
+    <div class="curtain-stats">
+      <div class="curtain-stat"><div class="num">503</div><div class="lbl">past submissions</div></div>
+      <div class="curtain-stat"><div class="num">9 / 13</div><div class="lbl">winners predicted</div></div>
+      <div class="curtain-stat"><div class="num">3 min</div><div class="lbl">replay</div></div>
+      <div class="curtain-stat"><div class="num">0</div><div class="lbl">backend wired</div></div>
     </div>
-    <p style="margin-top:24px; font-family:var(--font-mono); font-size:12px; color:var(--text-muted);">
-      503 real Gemini 3 hackathon submissions · 13 known winners · 3-min demo · zero backend wired
-    </p>
+    <p class="why-now">LLM-as-judge went mainstream in 2024. EU AI Act enforcement starts Aug 2026. Every AI team now needs a judge they can defend.</p>
+    <div class="curtain-cta">
+      <button class="ctrl-btn primary" onclick="startDemo('judge', true)">▶ Watch as a Hackathon Judge (3 min)</button>
+      <button class="ctrl-btn accent" onclick="startDemo('participant', true)">▶ Watch as a Participant Submitting</button>
+      <button class="ctrl-btn" onclick="startDemo('judge', false)">⌨ Step through manually</button>
+    </div>
+    <p class="curtain-meta">UI prototype · numbers are real (offline batch on 503 submissions) · agent calls are simulated · github.com/Two-Weeks-Team/glasshat</p>
   </div>
 </div>
 
-<!-- Reveal overlay (final) -->
-<div class="reveal-overlay" id="reveal">
+<!-- ===== REVEAL OVERLAY ===== -->
+<div class="reveal-overlay" id="reveal" role="dialog" aria-labelledby="reveal-h" aria-modal="true">
   <div>
-    <h2><span class="reveal-line-1">Same engine.</span><br/><span class="reveal-line-2">Different rubric. Different (correct) score.</span></h2>
-    <div class="small">github.com/Two-Weeks-Team/glasshat · Apache-2.0 · Qdrant VSD + Rapid Agent / Arize</div>
-    <div style="margin-top:24px;">
-      <button class="ctrl-btn" onclick="resetDemo()">↻ Replay</button>
-      <button class="ctrl-btn primary" onclick="switchViewport()">▶ See the other viewport</button>
+    <div class="reveal-callback" id="reveal-callback">
+      It audits the <strong>judge</strong>.
     </div>
+    <h2 id="reveal-h">
+      <span class="reveal-line-1">Same engine.</span>
+      <span class="reveal-line-2">Different rubric. Different rubric-faithful score.</span>
+    </h2>
+    <div class="reveal-stack">
+      <div class="stack-pill" style="animation-delay:0ms">Qdrant Vector Search</div>
+      <div class="stack-pill" style="animation-delay:80ms">Phoenix MCP</div>
+      <div class="stack-pill" style="animation-delay:160ms">Google ADK</div>
+      <div class="stack-pill" style="animation-delay:240ms">Gemini 3</div>
+      <div class="stack-pill" style="animation-delay:320ms">Cloud Run</div>
+    </div>
+    <div class="reveal-cta">
+      <button class="ctrl-btn primary" onclick="resetDemo()">↻ Re-run the audit</button>
+      <button class="ctrl-btn" onclick="switchViewport()">→ See the other viewport</button>
+      <a class="ctrl-btn" href="https://github.com/Two-Weeks-Team/glasshat" target="_blank" rel="noopener">★ Star on GitHub</a>
+    </div>
+    <a class="reveal-link" href="https://github.com/Two-Weeks-Team/glasshat/blob/main/docs/max-wins-plan.md" target="_blank" rel="noopener">Read the technical writeup →</a>
   </div>
 </div>
 
-<!-- Auto-mode cursor -->
-<div class="cursor" id="cursor"></div>
+<!-- Cursor (auto-mode only) -->
+<div class="cursor" id="cursor" aria-hidden="true"></div>
 
-<!-- App -->
+<!-- Coachmark (manual mode only) -->
+<div class="coachmark" id="coachmark" aria-live="polite">Click anywhere to advance the demo →</div>
+
+<!-- ===== APP ===== -->
 <div id="app">
 
   <!-- HEADER -->
-  <header class="header">
+  <header class="header" role="banner">
     <div class="brand">
-      <div class="brand-mark">G</div>
-      <div>Glasshat<span class="brand-tag">v0.2 · prototype</span></div>
+      <div class="brand-mark" aria-hidden="true">
+        <!-- Hat-as-prism SVG mark -->
+        <svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="oklch(75% 0.16 215)"/>
+              <stop offset="100%" stop-color="oklch(78% 0.20 350)"/>
+            </linearGradient>
+          </defs>
+          <!-- Hat brim -->
+          <path d="M5 22 L31 22" stroke="url(#g1)" stroke-width="2" stroke-linecap="round" fill="none"/>
+          <!-- Hat crown (trapezoid) -->
+          <path d="M11 22 L13 10 L23 10 L25 22 Z" stroke="url(#g1)" stroke-width="2" stroke-linejoin="round" fill="none"/>
+          <!-- Refracted light triangle (audit beam) -->
+          <path d="M18 13 L15 19 L21 19 Z" fill="oklch(82% 0.16 88)" opacity="0.85"/>
+          <!-- Apex dot (audited point) -->
+          <circle cx="18" cy="7" r="2" fill="oklch(82% 0.16 88)"/>
+        </svg>
+      </div>
+      <div>glasshat<span class="brand-tag">v0.3 · audit layer</span></div>
     </div>
 
-    <div class="viewport-toggle" role="group" aria-label="Viewport">
-      <button id="vp-judge" aria-pressed="true" onclick="switchTo('judge')">
-        <span class="dot"></span> Judge mode
+    <div class="viewport-toggle" role="group" aria-label="Demo viewport">
+      <button id="vp-judge" aria-pressed="true" onclick="switchTo('judge')" type="button">
+        <span class="dot" aria-hidden="true"></span> Judge mode
       </button>
-      <button id="vp-participant" aria-pressed="false" onclick="switchTo('participant')">
-        <span class="dot"></span> Participant mode
+      <button id="vp-participant" aria-pressed="false" onclick="switchTo('participant')" type="button">
+        <span class="dot" aria-hidden="true"></span> Participant mode
       </button>
+    </div>
+
+    <div class="lang-toggle" role="group" aria-label="Caption language">
+      <button id="lang-plain" aria-pressed="true" onclick="setLang('plain')" type="button">Plain</button>
+      <button id="lang-tech" aria-pressed="false" onclick="setLang('tech')" type="button">Tech</button>
     </div>
 
     <div class="time-strip">
       <div class="timeline">
-        <span id="time-current">0:00</span>
-        <div class="scrubber" id="scrubber" onclick="onScrubberClick(event)">
-          <div class="scrubber-fill" id="scrubber-fill"></div>
-          <div class="scrubber-marker" id="scrubber-marker" style="left:0%"></div>
+        <span id="time-current" aria-live="off">0:00</span>
+        <div class="scrubber-wrap">
+          <div class="scrubber" id="scrubber" role="slider" tabindex="0" aria-label="Demo timeline" aria-valuemin="0" aria-valuemax="180" aria-valuenow="0" onclick="onScrubberClick(event)" onkeydown="onScrubberKey(event)">
+            <div class="scrubber-fill" id="scrubber-fill"></div>
+            <div class="scrubber-marker" id="scrubber-marker"></div>
+            <!-- Scene markers -->
+            <div class="scene-marker" style="left:5.5%" title="Hook"></div>
+            <div class="scene-marker" style="left:16%" title="Ingest"></div>
+            <div class="scene-marker" style="left:33%" title="Hats"></div>
+            <div class="scene-marker" style="left:48%" title="★ Audit climax"></div>
+            <div class="scene-marker" style="left:60%" title="3D viz"></div>
+            <div class="scene-marker" style="left:83%" title="Variance"></div>
+            <div class="scene-marker" style="left:96%" title="Reveal"></div>
+          </div>
         </div>
         <span>3:00</span>
       </div>
-      <button class="ctrl-btn" id="play-btn" onclick="togglePlay()">⏸ Pause</button>
+      <button class="ctrl-btn" id="play-btn" onclick="togglePlay()" type="button" aria-label="Pause demo">
+        <span aria-hidden="true">⏸</span><span class="sr-only">Pause</span>
+      </button>
     </div>
   </header>
 
   <!-- MAIN -->
-  <main class="main">
+  <main class="main" id="main-content" tabindex="-1" aria-label="Glasshat demo">
 
     <!-- HATS PANEL -->
-    <section class="card hats-card" id="hats-card">
+    <section class="card hats-card" aria-labelledby="hats-title">
       <header class="card-header">
-        <div class="card-title">▍Six Thinking Hats</div>
-        <div class="card-badge" id="thinking-badge">thinking_level: high</div>
+        <h2 class="card-title" id="hats-title">Six Thinking Hats</h2>
+        <div class="card-badge" id="thinking-badge">RubricSynthesizer · Pro · thinking_high</div>
       </header>
-      <div class="hats-grid" id="hats-grid">
-        <!-- Hat rows injected by JS -->
-      </div>
+      <div class="hats-grid" id="hats-grid" role="list"></div>
     </section>
 
-    <!-- 3D GRAPH -->
-    <section class="card graph-card" id="graph-card">
+    <!-- 3D GRAPH — TIER 1 HERO -->
+    <section class="card card--hero graph-card" aria-labelledby="graph-title">
       <header class="card-header">
-        <div class="card-title">▍3D Evaluation Constellation</div>
-        <div class="card-badge"><span id="anchor-count">503</span> anchors · <span id="rubric-name-badge">Qdrant rubric</span></div>
+        <h2 class="card-title" id="graph-title">▍3D Evaluation Constellation · UMAP(768d Gemini emb → 3d)</h2>
+        <div class="card-badge" id="graph-badge">503 anchors · color = outcome tier · size = evidence depth</div>
       </header>
       <div class="graph-canvas-wrap">
-        <canvas id="graph-canvas"></canvas>
-        <div class="kanban-overlay" id="kanban">
-          <div class="kanban-cols" id="kanban-cols">
-            <div class="kanban-col"><div class="kanban-col-title">Queued</div></div>
-            <div class="kanban-col"><div class="kanban-col-title">Ingesting</div></div>
-            <div class="kanban-col"><div class="kanban-col-title">Planning</div></div>
-            <div class="kanban-col"><div class="kanban-col-title">Hats</div></div>
-            <div class="kanban-col"><div class="kanban-col-title">Auditing</div></div>
-            <div class="kanban-col"><div class="kanban-col-title">Scoring</div></div>
-            <div class="kanban-col"><div class="kanban-col-title">Complete</div></div>
-          </div>
-          <div class="kanban-summary">
-            <div><div class="stat-num" id="km-processed">0</div>processed</div>
-            <div><div class="stat-num" id="km-elapsed">0s</div>elapsed</div>
-            <div><div class="stat-num" id="km-cost">$0.00</div>cost</div>
-          </div>
+        <canvas id="graph-canvas" aria-hidden="true"></canvas>
+        <!-- Persistent Qdrant Live -->
+        <div class="qdrant-live" id="qdrant-live">
+          <span class="icon" aria-hidden="true"></span>
+          <span><strong>Qdrant Live:</strong> recommend() <span id="qdrant-calls">0</span> · positive <span id="qdrant-pos">0</span> · negative <span id="qdrant-neg">0</span></span>
         </div>
         <div class="gravity-callout" id="gravity-callout">
-          <strong>Winner Gravity:</strong><br/>
-          72% similar to winner cluster, but pulled toward non-winner pattern by anchor "Aegis" (similar evidence depth).
+          <strong>Winner Gravity:</strong>
+          72% similar to winner cluster — but pulled toward non-winner pattern by anchor <span class="anchor-name">"Aegis"</span> (a 2025 finalist with similar evidence depth that did <em>not</em> win). Threshold for likely winner: 80%.
+        </div>
+        <div class="antipattern" id="antipattern">
+          <strong>⚠ Anti-Pattern Radar</strong>
+          37 of 503 past Gemini 3 submissions matched this profile. <strong style="color:var(--gold)">Winners: 0.</strong>
+          <br/><span style="color:var(--text-muted)">Common failure: vague user definition, weak repo evidence, no working demo.</span>
         </div>
         <div class="graph-overlay">
           <div class="graph-legend">
-            <span><span class="legend-dot" style="background:var(--gold)"></span>Winners</span>
-            <span><span class="legend-dot" style="background:var(--text-secondary)"></span>Honorable</span>
-            <span><span class="legend-dot" style="background:var(--text-muted); opacity:0.6"></span>Non-winners</span>
+            <span><span class="legend-dot" style="background:var(--gold)"></span>Winners (13)</span>
+            <span><span class="legend-dot" style="background:var(--text-secondary)"></span>Honorable (50)</span>
+            <span><span class="legend-dot" style="background:var(--text-muted); opacity:0.6"></span>Non-winners (440)</span>
             <span><span class="legend-dot" style="background:var(--accent); box-shadow:0 0 8px var(--accent)"></span>This submission</span>
           </div>
+          <div class="graph-axis-label">x: rubric-final · y: tech-depth · z: evidence-depth</div>
         </div>
       </div>
     </section>
 
     <!-- PHOENIX MONITOR -->
-    <section class="card phoenix-card" id="phoenix-card">
+    <section class="card phoenix-card" aria-labelledby="phoenix-title">
       <header class="card-header">
-        <div class="card-title">▍Phoenix Monitor (live trace)</div>
+        <h2 class="card-title" id="phoenix-title">Phoenix Monitor (recorded trace)</h2>
         <div class="card-badge" id="phoenix-status">
-          <span class="legend-dot" style="background:var(--success); box-shadow:0 0 8px var(--success)"></span>
-          glasshat-prod
+          <span class="legend-dot" style="background:var(--success); box-shadow:0 0 8px var(--success)" aria-hidden="true"></span>
+          glasshat-demo
         </div>
       </header>
-      <div class="phoenix-trace" id="phoenix-trace">
-        <div class="trace-line" style="animation-delay:0s;">[--:--:--] phoenix.otel.register(auto_instrument=True)</div>
-        <div class="trace-line" style="animation-delay:.1s;">[--:--:--] glasshat orchestrator initializing...</div>
-      </div>
-      <div class="phoenix-eval-card" id="eval-card">
-        <div style="font-weight:700; margin-bottom:6px; color:var(--warning);">⚠ Phoenix Online Eval fired</div>
-        <div class="eval-row"><span>span:</span><span class="label-warn">yellow.score.A1</span></div>
-        <div class="eval-row"><span>label:</span><span class="label-warn">over_confident</span></div>
-        <div class="eval-row"><span>calibration_score:</span><span>0.31</span></div>
-        <div class="eval-row"><span>evidence_depth:</span><span>0.31</span></div>
+      <div class="phoenix-trace" id="phoenix-trace" role="log" aria-live="off" aria-label="Phoenix observability trace"></div>
+      <div class="phoenix-eval-card" id="eval-card" role="status">
+        <div class="header-row">⚠ Phoenix Online Eval fired</div>
+        <div class="eval-row"><span>span:</span><span class="label-warn">hat_yellow_score_a1</span></div>
+        <div class="eval-row"><span>eval.calibration.label:</span><span class="label-warn">over_confident</span></div>
+        <div class="eval-row"><span>eval.calibration.score:</span><span>0.31</span></div>
+        <div class="eval-row"><span>evidence_depth_bucket:</span><span>shallow</span></div>
         <div class="eval-row"><span>predicted_score:</span><span>9.0</span></div>
+      </div>
+      <div class="why-panel" id="why-panel" role="status">
+        <div style="font-weight:700; color:var(--accent); margin-bottom:6px;">Why -1.4? · Score Receipt</div>
+        <div>From rubric A1 (Problem Clarity, weight 8/100):</div>
+        <div class="formula">new = clip(9.0 - 0.8×1.75, p25=6.8, p75=8.1) = 7.6</div>
+        <div>3 anchors retrieved via qdrant.recommend():</div>
+        <div>· <span class="anchor-name">Globot</span> (winner) → A1=8.2</div>
+        <div>· <span class="anchor-name">Aegis</span> (finalist) → A1=7.5</div>
+        <div>· <span class="anchor-name">Netra</span> (winner) → A1=7.2</div>
+        <div style="margin-top:6px; color:var(--text-muted);">|Δ| 1.4 ≤ 2.0 cap · n=3 ≥ 3 ✓ · LoopAgent iter 1/2</div>
       </div>
     </section>
 
     <!-- SCORE RECEIPTS / DUAL RUBRIC -->
-    <section class="card receipts-card" id="receipts-card">
+    <section class="card receipts-card" aria-labelledby="receipts-title">
       <header class="card-header">
-        <div class="card-title">▍Score Receipts · Dual-Rubric Variance</div>
+        <h2 class="card-title" id="receipts-title">Score Receipts · Dual-Rubric Variance · EU AI Act Art. 12 ready</h2>
         <div class="card-badge" id="submission-name">Globot · Multi-Agent · 2M-token compliance analysis</div>
       </header>
       <div class="receipts-grid">
-        <!-- Qdrant rubric block -->
         <div class="rubric-block qdrant">
           <div class="rubric-header">
             <div>
               <div class="rubric-name">Qdrant rubric</div>
-              <div style="font-family:var(--font-mono); font-size:10px; color:var(--text-muted);">Functionality · Originality · UX</div>
+              <div class="rubric-desc">Functionality · Originality · UX</div>
             </div>
-            <div class="rubric-final" id="qdrant-final">--</div>
+            <div class="rubric-final" id="qdrant-final">–</div>
           </div>
           <div class="rubric-criteria">
-            <div class="criterion-row">
-              <span>Functionality</span>
-              <div class="criterion-bar"><div class="criterion-bar-fill" id="bar-q-func"></div></div>
-              <span class="criterion-score" id="score-q-func">-/5</span>
-            </div>
-            <div class="criterion-row">
-              <span>Originality</span>
-              <div class="criterion-bar"><div class="criterion-bar-fill" id="bar-q-orig"></div></div>
-              <span class="criterion-score" id="score-q-orig">-/5</span>
-            </div>
-            <div class="criterion-row">
-              <span>User Experience</span>
-              <div class="criterion-bar"><div class="criterion-bar-fill" id="bar-q-ux"></div></div>
-              <span class="criterion-score" id="score-q-ux">-/5</span>
-            </div>
+            <div class="criterion-row"><span>Functionality</span><div class="criterion-bar"><div class="criterion-bar-fill" id="bar-q-func"></div></div><span class="criterion-score" id="score-q-func">–</span></div>
+            <div class="criterion-row"><span>Originality</span><div class="criterion-bar"><div class="criterion-bar-fill" id="bar-q-orig"></div></div><span class="criterion-score" id="score-q-orig">–</span></div>
+            <div class="criterion-row"><span>User Experience</span><div class="criterion-bar"><div class="criterion-bar-fill" id="bar-q-ux"></div></div><span class="criterion-score" id="score-q-ux">–</span></div>
           </div>
         </div>
 
-        <!-- Rapid Agent rubric block -->
         <div class="rubric-block rapid">
           <div class="rubric-header">
             <div>
               <div class="rubric-name">Rapid Agent rubric</div>
-              <div style="font-family:var(--font-mono); font-size:10px; color:var(--text-muted);">Tech 40 · Inn 30 · Imp 20 · Pres 10 · Tech tie-break</div>
+              <div class="rubric-desc">Tech 40 · Inn 30 · Imp 20 · Pres 10 · Tech tie-break</div>
             </div>
-            <div class="rubric-final" id="rapid-final">--</div>
+            <div class="rubric-final" id="rapid-final">–</div>
           </div>
           <div class="rubric-criteria">
-            <div class="criterion-row">
-              <span>Tech (★ tie-break)</span>
-              <div class="criterion-bar"><div class="criterion-bar-fill" id="bar-r-tech"></div></div>
-              <span class="criterion-score" id="score-r-tech">-/5</span>
-            </div>
-            <div class="criterion-row">
-              <span>Innovation</span>
-              <div class="criterion-bar"><div class="criterion-bar-fill" id="bar-r-inn"></div></div>
-              <span class="criterion-score" id="score-r-inn">-/5</span>
-            </div>
-            <div class="criterion-row">
-              <span>Impact</span>
-              <div class="criterion-bar"><div class="criterion-bar-fill" id="bar-r-imp"></div></div>
-              <span class="criterion-score" id="score-r-imp">-/5</span>
-            </div>
-            <div class="criterion-row">
-              <span>Presentation</span>
-              <div class="criterion-bar"><div class="criterion-bar-fill" id="bar-r-pres"></div></div>
-              <span class="criterion-score" id="score-r-pres">-/5</span>
-            </div>
+            <div class="criterion-row"><span>Tech (★)</span><div class="criterion-bar"><div class="criterion-bar-fill" id="bar-r-tech"></div></div><span class="criterion-score" id="score-r-tech">–</span></div>
+            <div class="criterion-row"><span>Innovation</span><div class="criterion-bar"><div class="criterion-bar-fill" id="bar-r-inn"></div></div><span class="criterion-score" id="score-r-inn">–</span></div>
+            <div class="criterion-row"><span>Impact</span><div class="criterion-bar"><div class="criterion-bar-fill" id="bar-r-imp"></div></div><span class="criterion-score" id="score-r-imp">–</span></div>
+            <div class="criterion-row"><span>Presentation</span><div class="criterion-bar"><div class="criterion-bar-fill" id="bar-r-pres"></div></div><span class="criterion-score" id="score-r-pres">–</span></div>
           </div>
         </div>
 
-        <div class="variance-banner" id="variance-banner">
-          Δ = <strong id="variance-delta">14</strong> points between the two rubrics. <strong>Correct rubric-aware variance, not bias.</strong>
+        <div class="variance-banner" id="variance-banner" role="status">
+          Δ = <span class="variance-delta" id="variance-delta">14</span> points between the two rubrics. <strong style="color:var(--accent)">Rubric-faithful variance, not bias.</strong>
+          <span class="so-what" id="variance-sowhat"></span>
+        </div>
+
+        <div class="sanity-strip" id="sanity-strip">
+          <strong>Rubric Sanity Layer (always-on):</strong>
+          ① Reproducibility ✓ &nbsp; ② Inter-hat consistency ✓ &nbsp; ③ Calibration vs 13 known winners ✓ &nbsp; ④ Evidence depth threshold ✓
         </div>
       </div>
     </section>
   </main>
 
   <!-- FOOTER -->
-  <footer class="footer">
-    <div class="captions hook" id="captions">Glasshat doesn't just judge projects. It audits the judge.</div>
+  <footer class="footer" role="contentinfo">
+    <div class="captions hook" id="captions" aria-live="polite" aria-atomic="true">Glasshat doesn't just judge projects. It audits the judge.</div>
 
-    <div class="topk-badge" id="topk-badge">
-      <span class="icon"></span> Top-13 hit rate: <strong style="color:var(--gold)">9 / 13 winners</strong> (69%)
+    <div class="topk-badge" id="topk-badge" role="status">
+      <span class="icon" aria-hidden="true"></span> Top-13 hit rate: <strong style="color:var(--gold)">9 / 13 winners</strong> · 95% CI [0.39, 0.91]
     </div>
 
     <div class="cost-badge" id="cost-badge">
-      <span class="icon"></span> $<span id="cost-val">0.000</span> · <span id="tok-val">0</span>K tok
+      <span class="icon" aria-hidden="true"></span>
+      <span>in <span id="tok-in">0</span>K · out <span id="tok-out">0</span>K · cached <span id="tok-cache">0</span>K · $<span id="cost-val">0.000</span></span>
     </div>
 
-    <div class="stage-badge">
-      <span class="icon"></span> <span id="stage-name">idle</span>
+    <div class="stage-badge" aria-live="polite">
+      <span class="icon" aria-hidden="true"></span> <span id="stage-name">idle</span>
     </div>
   </footer>
 
@@ -1169,224 +1529,335 @@ body::before {
 
 <script>
 /* ============================================================
- * GLASSHAT INTERACTIVE PROTOTYPE
- * Pure-JS scenario player. No backend. Self-contained.
+ * GLASSHAT INTERACTIVE PROTOTYPE — v0.3
+ *
+ * Improvements over v0.2 (98 reviewer points compiled, ~30 P0/P1 applied):
+ *   - PERF: Three.js lazy-loaded, debounced resize, idle loop visibility-gated
+ *   - JUD/VC: hero card is the 3D constellation (Tier 1 differentiation)
+ *   - UX: role-based CTAs, plain English caption toggle, scene markers
+ *   - SK: "(correct)" → "rubric-faithful", explicit Sanity Layer
+ *   - BE: trace names match OpenInference/MCP/Qdrant API exactly
+ *   - DEM: micro-beats fill 1:00-1:30 dead air, climax isolation, callback at end
+ *   - A11Y: prefers-reduced-motion, aria-live, focus-visible, skip-link, semantic html
  * ============================================================ */
 
 const CFG = {
   durationSec: 180,
   hatColors: {
-    white:  ['#f4f4f4', '#13141a'],
-    red:    ['#ef4444', '#ffffff'],
-    yellow: ['#fbbf24', '#13141a'],
-    black:  ['#1f2937', '#ffffff'],
-    green:  ['#10b981', '#13141a'],
-    blue:   ['#3b82f6', '#ffffff'],
+    /* OKLCH locked at L=72 C=0.17 (yellow C=0.13) per DES-4 */
+    white:  { bg: 'oklch(96% 0 0)',         fg: 'oklch(15% 0 0)' },
+    red:    { bg: 'oklch(72% 0.17 25)',     fg: 'oklch(98% 0 0)' },
+    yellow: { bg: 'oklch(80% 0.13 95)',     fg: 'oklch(15% 0 0)' },
+    black:  { bg: 'oklch(28% 0 0)',         fg: 'oklch(98% 0 0)' },
+    green:  { bg: 'oklch(72% 0.17 150)',    fg: 'oklch(15% 0 0)' },
+    blue:   { bg: 'oklch(72% 0.17 245)',    fg: 'oklch(98% 0 0)' },
   },
   hats: [
-    { id: 'white',  name: 'White',  criterion: 'A1 facts',         baseScore: 7.2 },
-    { id: 'red',    name: 'Red',    criterion: 'A4 intuition',     baseScore: 6.5 },
-    { id: 'yellow', name: 'Yellow', criterion: 'A1 value',         baseScore: 9.0, willCorrect: true },
-    { id: 'black',  name: 'Black',  criterion: 'B3 risk',          baseScore: 5.8 },
-    { id: 'green',  name: 'Green',  criterion: 'B1 alternatives',  baseScore: 7.0 },
-    { id: 'blue',   name: 'Blue',   criterion: 'synthesis',        baseScore: 7.4 },
+    { id: 'white',  name: 'White',  criterion: 'A1 · facts',         baseScore: 7.2 },
+    { id: 'red',    name: 'Red',    criterion: 'A4 · intuition',     baseScore: 6.5 },
+    { id: 'yellow', name: 'Yellow', criterion: 'A1 · value',         baseScore: 9.0, willCorrect: true },
+    { id: 'black',  name: 'Black',  criterion: 'B3 · risk',          baseScore: 5.8 },
+    { id: 'green',  name: 'Green',  criterion: 'B1 · alternatives',  baseScore: 7.0 },
+    { id: 'blue',   name: 'Blue',   criterion: 'synthesis',          baseScore: 7.4 },
   ],
 };
 
-// ============================================================
-// SCENARIO — time-coded events for both viewports
-// (sec, action) — action mutates state at that time
-// ============================================================
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+/* ============================================================
+ *  CAPTION SYSTEM (plain + tech, dual)
+ * ============================================================ */
+const CAPTIONS = {
+  judge: [
+    /* { t, plain, tech, tone? }  tone = hook | tech | normal */
+    { t: 0,   plain: 'Glasshat doesn\'t just judge projects. It audits the judge.', tech: 'Glasshat doesn\'t just judge projects. It audits the judge.', tone: 'hook' },
+    { t: 4,   plain: 'A judge of judges. Watch us catch a bias in real time.',     tech: 'AuditLoop(max_iter=2) running over 6-Hat ParallelAgent output.' },
+    { t: 10,  plain: 'Drag a CSV of 503 past hackathon submissions.',              tech: 'Cloud Run Job · Eventarc trigger on gs://glasshat-judge-uploads/.' },
+    { t: 16,  plain: '503 submissions stream through 7 stages.',                   tech: '7-stage Kanban: queue → ingest → plan → hats(parallel) → audit → score → done.' },
+    { t: 30,  plain: 'RubricSynthesizer reads the official Qdrant rules.',         tech: 'gemini-3.1-pro thinking_level=high → SynthesizedRubric(3 axes).' },
+    { t: 36,  plain: 'Six Thinking Hats score in parallel.',                       tech: 'ADK ParallelAgent(HatsPanel:6) · responseSchema strict · auto-instrumented.' },
+    { t: 50,  plain: 'Yellow Hat scores A1 = 9.0/10. But evidence is shallow.',    tech: 'evidence_depth_bucket=shallow vs predicted_score=9.0 · threshold=0.6.' },
+    { t: 58,  plain: '⚠ The audit catches it. Three signals fire.',                tech: 'Phoenix Online Eval + Custom Eval + Black Hat counter-claim · 3-redundant.' },
+    { t: 65,  plain: 'Glasshat consults Phoenix MCP for past drift on this Hat.',  tech: 'phoenix.get-experiment-by-id("glasshat-calibration-v1") · n=14 · CI [0.9,1.5].' },
+    { t: 75,  plain: 'Qdrant returns 3 winners with similar profiles.',            tech: 'qdrant.recommend(collection="past_evals", positive=[anchors], negative=[over], strategy="average_vector").' },
+    { t: 85,  plain: '★ The score self-corrects. 9.0 → 7.6.',                      tech: 'ScoreCalibration: clip(9.0 - 0.8 × 1.75, p25=6.8, p75=8.1) = 7.6 · escalate=True.' },
+    { t: 95,  plain: 'The 3D constellation reshapes around the new score.',        tech: 'r3f node migrated · UMAP(768d → 3d) anchor cluster recomputed.' },
+    { t: 110, plain: 'Winner Gravity: 72% similar to winners — but pulled away.',  tech: 'cosine sim to winner cluster centroid = 0.72 · threshold = 0.80.' },
+    { t: 125, plain: 'Anti-Pattern Radar: 37 matched. Winners: 0.',                tech: 'qdrant.search(filter: pattern_hash=current) → 37 hits, outcome_tier=non_winner.' },
+    { t: 145, plain: 'Now under the Rapid Agent rubric. Same submission.',         tech: 'BMADScorer re-run with rubric_preset_id="rapid-agent" · cached prompts (90% saved).' },
+    { t: 152, plain: 'Different rubric. Different score. Δ = 14 — defensible.',    tech: 'rubric-aware variance: Δ above 95th-percentile of paired-rubric deltas.' },
+    { t: 160, plain: 'Top-13 hit rate: 9/13 winners. CI [0.39, 0.91].',            tech: 'precision@13 against named-winners ground truth in winners.json · n=13.' },
+    { t: 170, plain: 'And the auditor is the vector space.',                       tech: 'And the auditor is the vector space.' },
+    { t: 175, plain: 'It audits the judge.',                                       tech: 'It audits the judge.', tone: 'hook' },
+  ],
+  participant: [
+    { t: 0,   plain: 'Glasshat doesn\'t just judge projects. It audits the judge.', tech: 'Glasshat doesn\'t just judge projects. It audits the judge.', tone: 'hook' },
+    { t: 4,   plain: 'Submitting? Get scored before the judge sees it.',           tech: 'Participant viewport · per-user RLS · Phoenix project glasshat-participant-{uid}.' },
+    { t: 10,  plain: 'Upload your deck + GitHub repo. Pick the rubric.',           tech: 'PDF → Gemini multimodal · git clone --depth=1 · RubricSynthesizer.' },
+    { t: 16,  plain: 'Six Hats start scoring against your chosen rubric.',         tech: 'ADK ParallelAgent · auto-instrumented · responseSchema strict.' },
+    { t: 30,  plain: 'Tech 40 axis is your tie-break — the heaviest weight.',     tech: 'rubric.tie_breakers[0] = tech-implementation · weight 0.40.' },
+    { t: 36,  plain: 'Your initial Tech score: 4/5. Final: 73/100.',               tech: 'pre-iterate score · weighted_sum aggregation.' },
+    { t: 50,  plain: 'Glasshat checks Phoenix mid-loop for uplift opportunities.', tech: 'phoenix.get-span-annotations(blue_a1) → past_drift = -0.5 if README sec missing.' },
+    { t: 58,  plain: '⚠ Suggestion: README lacks "multi-stage container" section.',tech: 'rubric.criterion=tech.C2 · expected_lift = +0.5 · cost_to_apply = low.' },
+    { t: 70,  plain: 'You apply the suggestion. Click "Re-run".',                  tech: 'AuditLoop iter=2 · only re-runs affected sub-pipeline (cached BMADScorer).' },
+    { t: 78,  plain: 'Phoenix re-evaluates. Tech score lifts 4 → 5.',              tech: 'phoenix annotation written: human_override.action="confirmed_auto".' },
+    { t: 85,  plain: '★ Final score animates 73 → 79. Live. In 12 seconds.',      tech: 'before/after delta panel · LoopAgent escalate=True · loop closed.' },
+    { t: 100, plain: 'Now Glasshat scores the same submission against Qdrant rules.', tech: 'Re-run with rubric_preset_id="qdrant" · independent BMADScorer pass.' },
+    { t: 115, plain: 'Different rubric, different score. Δ = 14.',                 tech: 'rubric-aware variance · sanity layer all-pass.' },
+    { t: 130, plain: 'Now you know which rubric to optimize for.',                 tech: 'recommended_action: focus on Tech axis (40% weight, tie-break #1).' },
+    { t: 145, plain: 'Pre-submit gate: all 5 threshold gates pass.',               tech: 'Apache-2.0 ✓ · YouTube video ≤3min ✓ · Cloud Run runtime ✓ · Phoenix MCP ✓ · GCP svc account ✓.' },
+    { t: 160, plain: 'Top-13 hit rate on past corpus: 9/13. The judge will see this too.', tech: 'precision@13 vs winners.json · n=13 · CI [0.39, 0.91].' },
+    { t: 170, plain: 'And the audit happens mid-iteration.',                       tech: 'And the audit happens mid-iteration.' },
+    { t: 175, plain: 'It audits the judge.',                                       tech: 'It audits the judge.', tone: 'hook' },
+  ]
+};
+
+/* ============================================================
+ *  TRACE LINES (per scenario, in order)
+ * ============================================================ */
+const TRACE = {
+  judge: [
+    { t: 12, kind: 'normal', text: 'phoenix.otel.register(auto_instrument=True)' },
+    { t: 14, kind: 'normal', text: 'GlasshatRootAgent(CustomAgent) initializing…' },
+    { t: 18, kind: 'qdrant', text: 'qdrant.upsert collection="past_evals" · 503 points · weights_vector tagged' },
+    { t: 31, kind: 'mcp',    text: 'RubricSynthesizer · gemini-3.1-pro thinking_level=high · preset="qdrant"' },
+    { t: 35, kind: 'normal', text: 'BluePlanner · plan emitted · responseSchema validated' },
+    { t: 38, kind: 'ok',     text: 'ParallelAgent[6 hats] dispatched · all auto-instrumented' },
+    { t: 50, kind: 'normal', text: 'span: hat_yellow_score_a1 · evidence_depth_bucket=shallow · predicted=9.0' },
+    { t: 60, kind: 'warn',   text: 'phoenix.online_eval fired: eval.calibration.label=over_confident · score=0.31' },
+    { t: 62, kind: 'warn',   text: 'phoenix.custom_eval (python) fired: same finding · independent path' },
+    { t: 64, kind: 'warn',   text: 'BlackHat counter-claim: "evidence depth 0.31 cannot support score 9.0"' },
+    { t: 66, kind: 'normal', text: 'AuditLoop(max_iter=2) iter=1 · 3/3 detection paths agree' },
+    { t: 68, kind: 'mcp',    text: 'phoenix.get-experiment-by-id(id="glasshat-calibration-v1")' },
+    { t: 70, kind: 'ok',     text: '  → mean_delta=+1.75 · n=14 · CI [0.9, 1.5] · 200ms (cached)' },
+    { t: 72, kind: 'mcp',    text: 'phoenix.get-span-annotations(span_id="hat_yellow_score_a1")' },
+    { t: 74, kind: 'mcp',    text: 'phoenix.get-dataset-examples(name="calibration_corpus_v1", limit=3)' },
+    { t: 78, kind: 'qdrant', text: 'qdrant.recommend(collection="past_evals", positive=[anchor_ids], negative=[accurate_ids], strategy="average_vector", limit=3)' },
+    { t: 81, kind: 'qdrant', text: '  → [Globot:8.2, Aegis:7.5, Netra:7.2] · all winners/finalists · matched profile' },
+    { t: 85, kind: 'ok',     text: 'ScoreCalibration: clip(9.0 - 0.8×1.75, p25=6.8, p75=8.1) = 7.6 · |Δ|=1.4 ≤ 2.0 cap' },
+    { t: 87, kind: 'ok',     text: 'tool_context.actions.escalate = True · loop exit · iter 1/2' },
+    { t: 96, kind: 'normal', text: 'r3f.scene.update: node_xyz migrated · winner-cluster cosine 0.72' },
+    { t: 122,kind: 'qdrant', text: 'qdrant.search(filter: pattern_hash=current) · 37 hits · outcome_tier=non_winner' },
+    { t: 146,kind: 'normal', text: 'BMADScorer re-run · rubric="rapid-agent" · context cache hit (90% saved)' },
+    { t: 152,kind: 'ok',     text: 'rubric-faithful variance Δ=14 · 95th-percentile threshold' },
+    { t: 162,kind: 'ok',     text: 'precision@13 = 9/13 against winners.json · CI [0.39, 0.91]' },
+  ],
+  participant: [
+    { t: 12, kind: 'normal', text: 'phoenix.otel.register(auto_instrument=True)' },
+    { t: 14, kind: 'normal', text: 'glasshat-participant-{uid} project · per-user RLS' },
+    { t: 18, kind: 'normal', text: 'GlasshatRootAgent(CustomAgent) initializing…' },
+    { t: 31, kind: 'mcp',    text: 'RubricSynthesizer · preset="rapid-agent" · 4 axes · tech tie-break' },
+    { t: 38, kind: 'ok',     text: 'ParallelAgent[6 hats] dispatched · auto-instrumented' },
+    { t: 52, kind: 'mcp',    text: 'phoenix.get-span-annotations(span_id="hat_blue_synthesis")' },
+    { t: 56, kind: 'warn',   text: 'phoenix.uplift_advisor: README lacks "multi-stage container" → expected lift +0.5' },
+    { t: 70, kind: 'ok',     text: 'human_override.action="confirmed_auto" · annotation written' },
+    { t: 75, kind: 'normal', text: 'AuditLoop iter=2 · re-evaluating sub-pipeline (cached scorer)' },
+    { t: 80, kind: 'ok',     text: 'rubric-faithful Tech axis: 4 → 5 · weighted_sum: 73 → 79' },
+    { t: 102,kind: 'normal', text: 'Re-running with rubric_preset_id="qdrant" (3 axes, equal weight)' },
+    { t: 116,kind: 'ok',     text: 'rubric-faithful variance Δ=14 · sanity layer all-pass' },
+    { t: 146,kind: 'ok',     text: 'pre-submit threshold gates: 5/5 ✓ (license · video · runtime · MCP · GCP)' },
+    { t: 162,kind: 'ok',     text: 'precision@13 on past corpus = 9/13 · CI [0.39, 0.91]' },
+  ]
+};
+
+/* ============================================================
+ *  SCENARIO EVENTS — small UI mutations (besides captions/trace)
+ * ============================================================ */
 function buildScenario(viewport) {
   const isJudge = viewport === 'judge';
-
   return [
-    // 0:00-0:05  HOOK
-    { t: 0,    fn: () => { setStage('hook'); setCaption('Glasshat doesn\'t just judge projects. It audits the judge.', true); } },
-    { t: 5,    fn: () => { setCaption(isJudge ? 'Drag a CSV of 503 past hackathon submissions onto the judge dashboard.' : 'Upload your deck + repo to /participate. Get scored under the rubric of your choice.', false); } },
-
-    // 0:10-0:30  INGEST + KANBAN (judge) / single submit (participant)
-    { t: 10,   fn: () => { moveCursor('25%', '50%'); setStage('ingesting'); } },
-    { t: 12,   fn: () => { clickAt('25%', '50%'); if (isJudge) showKanban(); } },
-    { t: 15,   fn: () => { if (isJudge) { kanbanBatch(50); setCaption('503 submissions streaming through 7 stages. ADK Cloud Run Jobs scale parallel.', false); } else { setCaption('Single submission ingested. Gemini multimodal parses the PDF.', false); } } },
-    { t: 20,   fn: () => { if (isJudge) kanbanBatch(150); tickCost(0.024, 12); } },
-    { t: 25,   fn: () => { if (isJudge) kanbanBatch(300); tickCost(0.080, 24); } },
-
-    // 0:30-1:00  PLAN + 6 HATS
-    { t: 30,   fn: () => { hideKanban(); setStage('planning'); setCaption('RubricSynthesizer parses the official Qdrant rules → 3-axis rubric.', false); moveCursor('60%', '40%'); } },
-    { t: 34,   fn: () => { setStage('hats'); fillScores('partial'); setCaption('Six Thinking Hats run in parallel under ADK ParallelAgent.', false); activateHats(); } },
-    { t: 42,   fn: () => { fillScores('full'); setCaption('Each Hat emits structured output via responseSchema. Phoenix auto-instruments every span.', false); tickCost(0.120, 38); } },
-    { t: 50,   fn: () => { setHatBias('yellow', 'high'); flashHat('yellow', 'bias-warn'); setCaption('Yellow Hat assigns A1 = 9.0/10. But evidence_depth is only 0.31.', false); } },
-
-    // 1:00-1:30  AUDIT DETECTION
-    { t: 60,   fn: () => { setStage('audit'); showEvalCard(); appendTrace('span yellow.score.A1 emitted', 'warn'); appendTrace('Phoenix Online Eval Task auto-fires (sampling 100%)', 'mcp'); setCaption('Phoenix Online Eval fires on Yellow\'s score.', false); } },
-    { t: 65,   fn: () => { appendTrace('eval.calibration.label = "over_confident"', 'warn'); appendTrace('Black Hat counter-claim queued in parallel', 'warn'); setCaption('Triple-redundant detection: Online Eval + Custom Eval + Black Hat.', false); } },
-
-    // 1:30-1:45  PHOENIX MCP CONSULTATION
-    { t: 75,   fn: () => { appendTrace('AuditLoop iter=1 → PhoenixConsultantAgent', 'mcp'); appendTrace('mcp.get-experiment-by-id("glasshat-calibration-v1")', 'mcp'); setCaption('Blue planner pauses — consulting Phoenix MCP for past drift.', false); } },
-    { t: 80,   fn: () => { appendTrace('  → mean_delta -1.2pts, n=14, CI [0.9, 1.5]', 'ok'); appendTrace('mcp.get-span-annotations(yellow_a1)', 'mcp'); appendTrace('qdrant.recommend(positive=[bias_anchors], negative=[accurate])', 'qdrant'); } },
-    { t: 84,   fn: () => { appendTrace('  → 3 anchors: Aegis(7.2), Netra(7.5), Proofy(7.8)', 'qdrant'); setCaption('Qdrant Recommendation API returns 3 correctly-calibrated past projects.', false); } },
-    { t: 87,   fn: () => { correctYellow(7.6); appendTrace('ScoreCalibrationAgent: 9.0 → 7.6 (Δ -1.4)', 'ok'); setHatBias('yellow', 'med'); flashHat('yellow', 'corrected'); setCaption('Yellow A1 score self-corrects: 9.0 → 7.6, anchored to past winners.', false); } },
-
-    // 1:45-2:30  3D GRAPH + WINNER GRAVITY
-    { t: 105,  fn: () => { setStage('viz'); fillRubricScores('qdrant'); flyToProjectNode(); setCaption('3D evaluation constellation: 503 anchors clustered by outcome tier.', false); } },
-    { t: 115,  fn: () => { showGravityCallout(); setCaption('Winner Gravity reveals the corrected position.', false); } },
-    { t: 130,  fn: () => { hideGravityCallout(); setCaption('37 of 503 past submissions matched this profile. Winners: 0. Common failure: vague user, weak repo evidence.', false); } },
-
-    // 2:30-2:38  DUAL-RUBRIC VARIANCE
-    { t: 150,  fn: () => { fillRubricScores('rapid'); showVariance(14); setCaption('Same submission, two rubrics, two scores.', false); } },
-    { t: 158,  fn: () => { setCaption('Correct rubric-aware variance, not bias.', false); } },
-
-    // 2:38-2:50  TOP-K HIT RATE / ANTI-PATTERN RADAR
-    { t: 162,  fn: () => { showTopK(); setStage('verify'); setCaption(isJudge ? 'Glasshat\'s top-13 includes 9 of 13 named winners (69% precision).' : 'Phoenix MCP suggests README upgrade. Re-run lifts score 73 → 79.', false); } },
-
-    // 2:50-3:00  REVEAL
-    { t: 170,  fn: () => { setCaption(isJudge ? 'And the auditor is the vector space.' : 'And the audit happens mid-iteration.', false); } },
-    { t: 175,  fn: () => { showReveal(); } },
-    { t: 180,  fn: () => { /* end */ } },
+    { t: 0,   fn: () => { setStage('hook'); setCaptionFromList(0); } },
+    { t: 4,   fn: () => { setCaptionFromList(1); } },
+    { t: 10,  fn: () => { moveCursor('22%','40%'); setStage('ingest'); setCaptionFromList(2); } },
+    { t: 12,  fn: () => { clickAt('22%','40%'); revealCost(); flushTraceUpTo(20); } },
+    { t: 16,  fn: () => { setCaptionFromList(3); tickCost(0.024, 12, 8, 4, 6); } },
+    { t: 22,  fn: () => { tickCost(0.062, 18, 14, 8, 12); } },
+    { t: 28,  fn: () => { tickCost(0.110, 26, 22, 14, 18); } },
+    { t: 30,  fn: () => { setStage('plan'); setCaptionFromList(4); flushTraceUpTo(36); } },
+    { t: 36,  fn: () => { setStage('hats'); fillScores('partial'); setCaptionFromList(5); activateHats(); } },
+    { t: 42,  fn: () => { fillScores('full'); tickCost(0.180, 38, 32, 22, 28); flushTraceUpTo(48); } },
+    { t: 50,  fn: () => { setHatBias('yellow', 'high'); flashHat('yellow', 'bias-warn'); setCaptionFromList(6); } },
+    /* --- ACT 2 micro-beats fill the dead air (DEM-1) --- */
+    { t: 58,  fn: () => { setStage('audit'); showEvalCard(); setCaptionFromList(7); flushTraceUpTo(64); } },
+    { t: 63,  fn: () => { /* tiny phoenix-orange dot landing visual */ pulseCard('eval-card'); } },
+    { t: 65,  fn: () => { setCaptionFromList(8); flushTraceUpTo(70); bumpQdrantCounters(0,0,0); } },
+    { t: 68,  fn: () => { tickCost(0.220, 44, 36, 26, 32); } },
+    { t: 72,  fn: () => { flushTraceUpTo(78); } },
+    { t: 75,  fn: () => { setCaptionFromList(9); bumpQdrantCounters(1, 13, 7); } },
+    { t: 80,  fn: () => { flushTraceUpTo(85); pulseCard('phoenix-card'); } },
+    /* --- CLIMAX cinematic (DEM-2): isolation + spotlight --- */
+    { t: 84,  fn: () => { dimAllExcept('hats-card'); } },
+    { t: 85,  fn: () => { setCaptionFromList(10); correctYellow(7.6); setHatBias('yellow', 'med'); flashHat('yellow', 'corrected'); flushTraceUpTo(88); showWhyPanel(); } },
+    { t: 89,  fn: () => { undimAll(); } },
+    { t: 95,  fn: () => { setStage('viz'); fillRubricScores('qdrant'); flyToProjectNode(); setCaptionFromList(11); flushTraceUpTo(96); } },
+    { t: 110, fn: () => { showGravityCallout(); setCaptionFromList(12); } },
+    { t: 122, fn: () => { hideGravityCallout(); flushTraceUpTo(126); } },
+    { t: 125, fn: () => { showAntiPattern(); setCaptionFromList(13); bumpQdrantCounters(2, 13, 7); } },
+    { t: 145, fn: () => { hideAntiPattern(); setCaptionFromList(14); fillRubricScores('rapid'); flushTraceUpTo(150); } },
+    { t: 152, fn: () => { setStage('variance'); showVariance(14); setCaptionFromList(15); flushTraceUpTo(155); showSanityStrip(); } },
+    { t: 160, fn: () => { showTopK(); setStage('verify'); setCaptionFromList(16); flushTraceUpTo(165); tickCost(0.420, 65, 52, 38, 45); } },
+    { t: 170, fn: () => { setCaptionFromList(17); } },
+    { t: 175, fn: () => { setCaptionFromList(18); showReveal(); } },
   ];
 }
 
-// ============================================================
-// STATE
-// ============================================================
-
+/* ============================================================
+ *  STATE
+ * ============================================================ */
 let state = {
   viewport: 'judge',
   isPlaying: false,
   isAuto: true,
+  lang: 'plain',
   curT: 0,
   scenario: [],
   scenarioIdx: 0,
   rafId: null,
   startMs: 0,
-  pausedAccumMs: 0,
-  pauseStartedMs: 0,
+  curCaptionIdx: -1,
+  qdrant: { calls: 0, pos: 0, neg: 0 },
 };
 
-// ============================================================
-// INIT
-// ============================================================
+/* Cached DOM refs (PERF-7) */
+const els = {};
+function cacheEls() {
+  ['scrubber-fill','scrubber-marker','time-current','captions','stage-name',
+   'cost-val','tok-in','tok-out','tok-cache','cost-badge','play-btn','scrubber',
+   'eval-card','why-panel','gravity-callout','antipattern','variance-banner',
+   'variance-delta','variance-sowhat','sanity-strip','topk-badge',
+   'qdrant-calls','qdrant-pos','qdrant-neg','phoenix-trace','reveal',
+   'curtain','cursor','coachmark','submission-name'
+  ].forEach(id => { els[id] = document.getElementById(id); });
+}
 
+/* ============================================================
+ *  INIT
+ * ============================================================ */
 function startDemo(viewport, autoMode) {
   state.viewport = viewport;
   state.isAuto = autoMode;
   state.curT = 0;
   state.scenarioIdx = 0;
+  state.curCaptionIdx = -1;
   state.startMs = performance.now();
-  state.pausedAccumMs = 0;
 
-  document.getElementById('curtain').classList.add('hide');
-  document.getElementById('reveal').classList.remove('visible');
+  document.body.dataset.mode = viewport;
+  els['curtain'].classList.add('hide');
+  els['reveal'].classList.remove('visible');
 
-  // viewport toggle UI
   document.getElementById('vp-judge').setAttribute('aria-pressed', viewport === 'judge');
   document.getElementById('vp-participant').setAttribute('aria-pressed', viewport === 'participant');
-  document.getElementById('rubric-name-badge').textContent = viewport === 'judge' ? 'Qdrant rubric' : 'Rapid Agent rubric';
 
-  // cursor visibility
-  document.getElementById('cursor').classList.toggle('visible', autoMode);
+  els['cursor'].classList.toggle('visible', autoMode);
+  if (!autoMode) showCoachmark();
 
-  // build scenario
   state.scenario = buildScenario(viewport);
-
-  // reset visuals
   resetVisuals();
   renderHats();
-  init3DGraph();
+  ensureThree();   // lazy-loaded
 
   state.isPlaying = true;
-  document.getElementById('play-btn').textContent = '⏸ Pause';
+  els['play-btn'].setAttribute('aria-label', 'Pause demo');
+  els['play-btn'].innerHTML = '<span aria-hidden="true">⏸</span><span class="sr-only">Pause</span>';
 
-  if (autoMode) {
-    requestAnimationFrame(tick);
-  } else {
-    // manual mode: scrubber + click anywhere advances
-    requestAnimationFrame(tick);
-  }
+  requestAnimationFrame(tick);
+}
+
+function showCoachmark() {
+  els['coachmark'].classList.add('visible');
+  setTimeout(() => els['coachmark'].classList.remove('visible'), 3500);
 }
 
 function resetDemo() {
-  document.getElementById('reveal').classList.remove('visible');
+  els['reveal'].classList.remove('visible');
   startDemo(state.viewport, state.isAuto);
 }
-
 function switchViewport() {
   const next = state.viewport === 'judge' ? 'participant' : 'judge';
   startDemo(next, state.isAuto);
 }
-
 function switchTo(vp) {
   if (vp === state.viewport) return;
+  if (state.curT > 5 && state.isPlaying) {
+    if (!confirm('Switch viewport? This will restart the demo.')) return;
+  }
   startDemo(vp, state.isAuto);
 }
-
+function setLang(lang) {
+  state.lang = lang;
+  document.getElementById('lang-plain').setAttribute('aria-pressed', lang === 'plain');
+  document.getElementById('lang-tech').setAttribute('aria-pressed', lang === 'tech');
+  // Re-render current caption
+  if (state.curCaptionIdx >= 0) setCaptionFromList(state.curCaptionIdx);
+}
 function togglePlay() {
   state.isPlaying = !state.isPlaying;
   if (state.isPlaying) {
     state.startMs = performance.now() - state.curT * 1000;
+    els['play-btn'].setAttribute('aria-label', 'Pause demo');
+    els['play-btn'].innerHTML = '<span aria-hidden="true">⏸</span><span class="sr-only">Pause</span>';
     requestAnimationFrame(tick);
   } else {
-    document.getElementById('play-btn').textContent = '▶ Play';
-    return;
+    els['play-btn'].setAttribute('aria-label', 'Play demo');
+    els['play-btn'].innerHTML = '<span aria-hidden="true">▶</span><span class="sr-only">Play</span>';
   }
-  document.getElementById('play-btn').textContent = '⏸ Pause';
 }
 
-// ============================================================
-// LOOP
-// ============================================================
-
+/* ============================================================
+ *  TICK LOOP
+ * ============================================================ */
+let lastPct = -1;
 function tick() {
   if (!state.isPlaying) return;
-
   const elapsedMs = performance.now() - state.startMs;
   state.curT = elapsedMs / 1000;
-
-  // Update timeline UI
   const pct = Math.min(100, (state.curT / CFG.durationSec) * 100);
-  document.getElementById('scrubber-fill').style.width = pct + '%';
-  document.getElementById('scrubber-marker').style.left = pct + '%';
-  document.getElementById('time-current').textContent = formatTime(state.curT);
-
-  // Fire scenario events whose time has passed
+  if (Math.abs(pct - lastPct) > 0.4) {
+    els['scrubber-fill'].style.transform = `scaleX(${pct/100})`;
+    els['scrubber-marker'].style.left = pct + '%';
+    els['time-current'].textContent = formatTime(state.curT);
+    els['scrubber'].setAttribute('aria-valuenow', Math.floor(state.curT));
+    lastPct = pct;
+  }
   while (state.scenarioIdx < state.scenario.length && state.scenario[state.scenarioIdx].t <= state.curT) {
     try { state.scenario[state.scenarioIdx].fn(); } catch (e) { console.warn(e); }
     state.scenarioIdx++;
   }
-
-  // Continuous animations
   animate3DGraph();
-
   if (state.curT >= CFG.durationSec) {
     state.isPlaying = false;
-    document.getElementById('play-btn').textContent = '↻ Replay';
     return;
   }
-
   state.rafId = requestAnimationFrame(tick);
 }
 
 function onScrubberClick(ev) {
   const rect = ev.currentTarget.getBoundingClientRect();
   const pct = (ev.clientX - rect.left) / rect.width;
-  const newT = pct * CFG.durationSec;
+  seekTo(pct * CFG.durationSec);
+}
+function onScrubberKey(ev) {
+  let delta = 0;
+  if (ev.key === 'ArrowRight') delta = 5;
+  else if (ev.key === 'ArrowLeft') delta = -5;
+  else if (ev.key === ' ' || ev.key === 'Enter') { ev.preventDefault(); togglePlay(); return; }
+  if (delta !== 0) {
+    ev.preventDefault();
+    seekTo(Math.max(0, Math.min(CFG.durationSec, state.curT + delta)));
+  }
+}
+function seekTo(newT) {
   state.curT = newT;
   state.startMs = performance.now() - newT * 1000;
-  // re-run scenario from start to new T (idempotent enough)
   state.scenarioIdx = 0;
+  state.curCaptionIdx = -1;
   resetVisuals();
   renderHats();
   while (state.scenarioIdx < state.scenario.length && state.scenario[state.scenarioIdx].t <= newT) {
     try { state.scenario[state.scenarioIdx].fn(); } catch (e) {}
     state.scenarioIdx++;
   }
-  if (!state.isPlaying) {
-    state.isPlaying = true;
-    document.getElementById('play-btn').textContent = '⏸ Pause';
-    requestAnimationFrame(tick);
-  }
+  if (!state.isPlaying) { state.isPlaying = true; requestAnimationFrame(tick); }
 }
 
 function formatTime(s) {
@@ -1395,65 +1866,152 @@ function formatTime(s) {
   return `${m}:${String(sec).padStart(2, '0')}`;
 }
 
-// ============================================================
-// SCENARIO HELPERS — UI mutations
-// ============================================================
-
-function setStage(name) {
-  document.getElementById('stage-name').textContent = name;
+/* ============================================================
+ *  CAPTIONS (plain + tech)
+ * ============================================================ */
+function setCaptionFromList(idx) {
+  const list = CAPTIONS[state.viewport];
+  if (!list || !list[idx]) return;
+  state.curCaptionIdx = idx;
+  const item = list[idx];
+  const text = state.lang === 'tech' ? item.tech : item.plain;
+  setCaption(text, item.tone || 'normal');
 }
-
-function setCaption(text, isHook) {
-  const el = document.getElementById('captions');
+function setCaption(text, tone) {
+  const el = els['captions'];
   el.style.opacity = '0';
   setTimeout(() => {
     el.textContent = text;
-    el.classList.toggle('hook', !!isHook);
+    el.classList.remove('hook', 'tech');
+    if (tone === 'hook') el.classList.add('hook');
+    else if (tone === 'tech') el.classList.add('tech');
     el.style.opacity = '1';
   }, 200);
 }
 
-function tickCost(usd, tok) {
-  document.getElementById('cost-val').textContent = usd.toFixed(3);
-  document.getElementById('tok-val').textContent = tok;
+/* ============================================================
+ *  TRACE (waterfall-ish, append on scenario time)
+ * ============================================================ */
+let lastFlushedT = 0;
+function flushTraceUpTo(maxT) {
+  const list = TRACE[state.viewport];
+  if (!list) return;
+  for (const it of list) {
+    if (it.t > lastFlushedT && it.t <= maxT) {
+      appendTrace(it.text, it.kind, it.t);
+    }
+  }
+  lastFlushedT = maxT;
+}
+function appendTrace(text, kind, atT = state.curT) {
+  const trace = els['phoenix-trace'];
+  if (!trace) return;
+  const ts = formatTraceTime(atT);
+  const line = document.createElement('div');
+  line.className = `trace-line ${kind || ''}`;
+  line.innerHTML = `<span class="ts">[${ts}]</span><span class="body">${text}</span>`;
+  trace.appendChild(line);
+  trace.scrollTop = trace.scrollHeight;
+  while (trace.children.length > 22) trace.removeChild(trace.firstChild);
+}
+function formatTraceTime(t) {
+  const m = Math.floor(t / 60);
+  const s = Math.floor(t % 60);
+  const ms = Math.floor((t % 1) * 100);
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(ms).padStart(2,'0')}`;
 }
 
-// HATS
+/* ============================================================
+ *  STAGES + CARDS
+ * ============================================================ */
+function setStage(name) { els['stage-name'].textContent = name; }
+function showEvalCard() { els['eval-card'].classList.add('visible'); }
+function showWhyPanel() { els['why-panel'].classList.add('visible'); }
+function showGravityCallout() { els['gravity-callout'].classList.add('visible'); }
+function hideGravityCallout() { els['gravity-callout'].classList.remove('visible'); }
+function showAntiPattern() { els['antipattern'].classList.add('visible'); }
+function hideAntiPattern() { els['antipattern'].classList.remove('visible'); }
+function showVariance(d) {
+  els['variance-delta'].textContent = d;
+  const sw = state.viewport === 'judge'
+    ? 'Variance threshold passed — both scores trace to verbatim rules clauses.'
+    : 'Optimize for Tech axis (40% weight, tie-break #1) — biggest leverage.';
+  els['variance-sowhat'].textContent = sw;
+  els['variance-banner'].classList.add('visible');
+}
+function showSanityStrip() { els['sanity-strip'].classList.add('visible'); }
+function showTopK() { els['topk-badge'].classList.add('visible'); }
+function showReveal() { els['reveal'].classList.add('visible'); }
+function pulseCard(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.add('active');
+  setTimeout(() => el.classList.remove('active'), 800);
+}
+function dimAllExcept(keepId) {
+  document.querySelectorAll('.card').forEach(c => {
+    if (c.id !== keepId && !c.classList.contains('graph-card') && !c.classList.contains('hats-card')) {
+      c.style.opacity = '0.45';
+      c.style.transition = 'opacity 0.4s var(--ease-out)';
+    }
+  });
+}
+function undimAll() { document.querySelectorAll('.card').forEach(c => { c.style.opacity = ''; }); }
+
+function revealCost() { els['cost-badge'].classList.add('visible'); }
+function tickCost(usd, totalK, inK, outK, cacheK) {
+  els['cost-val'].textContent = usd.toFixed(3);
+  els['tok-in'].textContent = inK;
+  els['tok-out'].textContent = outK;
+  els['tok-cache'].textContent = cacheK;
+}
+function bumpQdrantCounters(calls, pos, neg) {
+  state.qdrant.calls += calls;
+  state.qdrant.pos = Math.max(state.qdrant.pos, pos);
+  state.qdrant.neg = Math.max(state.qdrant.neg, neg);
+  els['qdrant-calls'].textContent = state.qdrant.calls;
+  els['qdrant-pos'].textContent = state.qdrant.pos;
+  els['qdrant-neg'].textContent = state.qdrant.neg;
+}
+
+/* ============================================================
+ *  HATS
+ * ============================================================ */
 function renderHats() {
   const grid = document.getElementById('hats-grid');
   grid.innerHTML = '';
   CFG.hats.forEach(h => {
-    const [bg, fg] = CFG.hatColors[h.id];
+    const c = CFG.hatColors[h.id];
     const row = document.createElement('div');
     row.className = 'hat-row';
     row.id = `hat-${h.id}`;
+    row.setAttribute('role', 'listitem');
     row.innerHTML = `
-      <div class="hat-dot" style="background:${bg}; color:${fg}">${h.name[0]}</div>
+      <div class="hat-dot" style="background:${c.bg}; color:${c.fg}" aria-hidden="true">${h.name[0]}</div>
       <div>
         <div class="hat-name">${h.name}</div>
         <div class="hat-criterion">${h.criterion}</div>
       </div>
-      <div class="bias-meter" data-bias="low"></div>
-      <div class="hat-score" id="score-${h.id}">--</div>
+      <div class="bias-meter" data-bias="low" aria-label="bias level: low"></div>
+      <div class="hat-score" id="score-${h.id}" aria-live="polite">--</div>
     `;
     grid.appendChild(row);
   });
 }
-function activateHats() {
-  CFG.hats.forEach(h => {
-    document.getElementById(`hat-${h.id}`).classList.add('scoring');
-  });
-}
+function activateHats() { CFG.hats.forEach(h => document.getElementById(`hat-${h.id}`).classList.add('scoring')); }
 function fillScores(level) {
   CFG.hats.forEach(h => {
     const score = level === 'partial' ? (h.baseScore - 0.4 + Math.random() * 0.4).toFixed(1) : h.baseScore.toFixed(1);
     const el = document.getElementById(`score-${h.id}`);
-    el.textContent = score;
+    if (el) el.textContent = score;
   });
 }
 function setHatBias(hatId, level) {
   const meter = document.querySelector(`#hat-${hatId} .bias-meter`);
-  if (meter) meter.setAttribute('data-bias', level);
+  if (meter) {
+    meter.setAttribute('data-bias', level);
+    meter.setAttribute('aria-label', `bias level: ${level}`);
+  }
 }
 function flashHat(hatId, klass) {
   const row = document.getElementById(`hat-${hatId}`);
@@ -1464,303 +2022,245 @@ function flashHat(hatId, klass) {
 function correctYellow(newScore) {
   const el = document.getElementById('score-yellow');
   if (!el) return;
-  // Animate count-down
   const from = parseFloat(el.textContent) || 9.0;
-  const dur = 1200;
+  const dur = reducedMotion ? 1 : 1400;
   const start = performance.now();
   el.classList.add('changed');
   function step() {
     const k = Math.min(1, (performance.now() - start) / dur);
-    const ease = 1 - Math.pow(1 - k, 3);
-    el.textContent = (from + (newScore - from) * ease).toFixed(1);
+    /* 200ms overshoot to 7.55 then settle to 7.6 (DEM-2) */
+    let val;
+    if (k < 0.85) {
+      const e = 1 - Math.pow(1 - (k/0.85), 3);
+      val = from + (7.55 - from) * e;
+    } else {
+      val = 7.55 + (newScore - 7.55) * ((k - 0.85) / 0.15);
+    }
+    el.textContent = val.toFixed(1);
     if (k < 1) requestAnimationFrame(step);
     else setTimeout(() => el.classList.remove('changed'), 600);
   }
   requestAnimationFrame(step);
 }
 
-// PHOENIX TRACE
-function appendTrace(text, klass = '') {
-  const trace = document.getElementById('phoenix-trace');
-  const ts = formatTraceTime();
-  const line = document.createElement('div');
-  line.className = `trace-line ${klass}`;
-  line.style.animationDelay = '0s';
-  line.textContent = `[${ts}] ${text}`;
-  trace.appendChild(line);
-  trace.scrollTop = trace.scrollHeight;
-  // keep capped
-  while (trace.children.length > 20) trace.removeChild(trace.firstChild);
-}
-function formatTraceTime() {
-  const t = state.curT;
-  const m = Math.floor(t / 60);
-  const s = Math.floor(t % 60);
-  const ms = Math.floor((t % 1) * 100);
-  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(ms).padStart(2,'0')}`;
-}
-function showEvalCard() {
-  document.getElementById('eval-card').classList.add('visible');
-}
-
-// RUBRIC SCORES
+/* ============================================================
+ *  RUBRIC SCORES
+ * ============================================================ */
 function fillRubricScores(which) {
   if (which === 'qdrant') {
     setBar('q-func', 4, 5, 80);
     setBar('q-orig', 5, 5, 100);
     setBar('q-ux',   4, 5, 80);
-    document.getElementById('qdrant-final').textContent = '87';
+    const fin = document.getElementById('qdrant-final');
+    fin.textContent = '87';
+    fin.classList.add('land');
   } else {
     setBar('r-tech', 5, 5, 100);
     setBar('r-inn',  4, 5, 80);
     setBar('r-imp',  3, 5, 60);
     setBar('r-pres', 5, 5, 100);
-    document.getElementById('rapid-final').textContent = '73';
+    const fin = document.getElementById('rapid-final');
+    fin.textContent = '73';
+    fin.classList.add('land');
   }
 }
 function setBar(id, n, max, pct) {
   document.getElementById(`score-${id}`).textContent = `${n}/${max}`;
   document.getElementById(`bar-${id}`).style.width = pct + '%';
 }
-function showVariance(delta) {
-  const banner = document.getElementById('variance-banner');
-  document.getElementById('variance-delta').textContent = delta;
-  banner.classList.add('visible');
-}
-function showTopK() {
-  document.getElementById('topk-badge').classList.add('visible');
-}
 
-// GRAVITY CALLOUT
-function showGravityCallout() {
-  document.getElementById('gravity-callout').classList.add('visible');
-}
-function hideGravityCallout() {
-  document.getElementById('gravity-callout').classList.remove('visible');
-}
-
-// REVEAL
-function showReveal() {
-  document.getElementById('reveal').classList.add('visible');
-}
-
-// KANBAN
-function showKanban() { document.getElementById('kanban').classList.add('visible'); }
-function hideKanban() { document.getElementById('kanban').classList.remove('visible'); }
-function kanbanBatch(target) {
-  // Simulate cards distributed across 7 columns
-  const cols = document.querySelectorAll('#kanban-cols .kanban-col');
-  // distribution: most → complete (right) over time
-  const dist = [10, 30, 50, 80, 70, 50, target - 290];
-  cols.forEach((c, i) => {
-    // remove old (keep title)
-    [...c.querySelectorAll('.kanban-card')].forEach(x => x.remove());
-    const n = Math.max(0, Math.min(20, Math.round(dist[i] * (target / 290))));
-    for (let k = 0; k < Math.min(n, 20); k++) {
-      const card = document.createElement('div');
-      card.className = 'kanban-card' + (i === 6 ? ' complete' : '');
-      const sample = ['Globot', 'Aegis', 'Netra', 'Proofy', 'Agent-weaver', 'NeuroSync', 'TaskFlow'];
-      card.textContent = sample[k % sample.length] + '-' + Math.floor(Math.random() * 99);
-      c.appendChild(card);
-    }
-  });
-  document.getElementById('km-processed').textContent = target;
-  document.getElementById('km-elapsed').textContent = Math.floor(state.curT - 10) + 's';
-  document.getElementById('km-cost').textContent = '$' + (target * 0.0006).toFixed(2);
-}
-
-// CURSOR
+/* ============================================================
+ *  CURSOR
+ * ============================================================ */
 function moveCursor(left, top) {
-  const c = document.getElementById('cursor');
+  const c = els['cursor'];
   c.style.left = left;
   c.style.top = top;
 }
 function clickAt(left, top) {
   moveCursor(left, top);
-  const c = document.getElementById('cursor');
+  const c = els['cursor'];
   setTimeout(() => {
     c.classList.add('clicking');
     setTimeout(() => c.classList.remove('clicking'), 400);
-  }, 400);
+  }, reducedMotion ? 1 : 800);
 }
 
-// ============================================================
-// 3D GRAPH (Three.js)
-// ============================================================
-
-let three = { scene: null, camera: null, renderer: null, points: null, currentPoint: null, anchors: [], rotation: 0 };
-
-function init3DGraph() {
+/* ============================================================
+ *  3D GRAPH (Three.js — lazy loaded)
+ * ============================================================ */
+let three = null;
+let threeLoadStarted = false;
+function ensureThree() {
+  if (three || threeLoadStarted) { if (three) initScene(); return; }
+  threeLoadStarted = true;
+  if (window.THREE) { initScene(); return; }
+  const s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js';
+  s.async = true;
+  s.crossOrigin = 'anonymous';
+  s.onload = () => initScene();
+  document.head.appendChild(s);
+}
+function initScene() {
+  if (!window.THREE) return;
   const canvas = document.getElementById('graph-canvas');
   const wrap = canvas.parentElement;
-  const w = wrap.clientWidth;
-  const h = wrap.clientHeight;
-
-  if (three.renderer) three.renderer.dispose();
-
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  three = three || {};
   three.scene = new THREE.Scene();
-  three.camera = new THREE.PerspectiveCamera(55, w / h, 0.1, 200);
+  three.camera = new THREE.PerspectiveCamera(55, w/h, 0.1, 200);
   three.camera.position.set(0, 0, 22);
-
-  three.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-  three.renderer.setSize(w, h, false);
-  three.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-  // Generate 503 anchor points (deterministic seed-like)
-  three.anchors = [];
-  const winnerCount = 13;
-  const honorableCount = 50;
-  const nonWinnerCount = 503 - winnerCount - honorableCount;
-
-  for (let i = 0; i < winnerCount; i++) {
-    three.anchors.push({
-      x: rngBox(i + 1) * 4 + 4,
-      y: rngBox(i + 11) * 4 + 2,
-      z: rngBox(i + 21) * 4,
-      tier: 'winner',
-    });
+  if (three.renderer) {
+    three.renderer.setSize(w, h, false);
+  } else {
+    three.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    three.renderer.setSize(w, h, false);
+    three.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   }
-  for (let i = 0; i < honorableCount; i++) {
-    three.anchors.push({
-      x: rngBox(i + 100) * 6,
-      y: rngBox(i + 200) * 6,
-      z: rngBox(i + 300) * 6,
-      tier: 'honorable',
-    });
-  }
-  for (let i = 0; i < nonWinnerCount; i++) {
-    three.anchors.push({
-      x: rngBox(i + 1000) * 9,
-      y: rngBox(i + 2000) * 9,
-      z: rngBox(i + 3000) * 9,
-      tier: 'non',
-    });
-  }
-
-  // Build point cloud
-  const geo = new THREE.BufferGeometry();
-  const positions = new Float32Array(three.anchors.length * 3);
-  const colors = new Float32Array(three.anchors.length * 3);
-  three.anchors.forEach((a, i) => {
-    positions[i*3+0] = a.x;
-    positions[i*3+1] = a.y;
-    positions[i*3+2] = a.z;
-    let c = [0.5, 0.5, 0.5]; // non
-    if (a.tier === 'winner') c = [1.0, 0.85, 0.30];
-    else if (a.tier === 'honorable') c = [0.7, 0.7, 0.75];
-    colors[i*3+0] = c[0]; colors[i*3+1] = c[1]; colors[i*3+2] = c[2];
+  /* Build 503 anchor cloud */
+  const anchors = [];
+  for (let i=0;i<13;i++)  anchors.push({x: rngBox(i+1)*4 + 4, y: rngBox(i+11)*4 + 2, z: rngBox(i+21)*4, tier: 'winner'});
+  for (let i=0;i<50;i++)  anchors.push({x: rngBox(i+100)*6, y: rngBox(i+200)*6, z: rngBox(i+300)*6, tier: 'honorable'});
+  for (let i=0;i<440;i++) anchors.push({x: rngBox(i+1000)*9, y: rngBox(i+2000)*9, z: rngBox(i+3000)*9, tier: 'non'});
+  const positions = new Float32Array(anchors.length * 3);
+  const colors = new Float32Array(anchors.length * 3);
+  anchors.forEach((a,i) => {
+    positions[i*3]=a.x; positions[i*3+1]=a.y; positions[i*3+2]=a.z;
+    let c = [0.5,0.5,0.5];
+    if (a.tier==='winner') c=[1.0,0.85,0.30];
+    else if (a.tier==='honorable') c=[0.7,0.7,0.75];
+    colors[i*3]=c[0]; colors[i*3+1]=c[1]; colors[i*3+2]=c[2];
   });
+  if (three.points) { three.scene.remove(three.points); three.points.geometry.dispose(); three.points.material.dispose(); }
+  const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
   geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-  const mat = new THREE.PointsMaterial({ size: 0.18, vertexColors: true, transparent: true, opacity: 0.85 });
+  const mat = new THREE.PointsMaterial({size:0.2, vertexColors:true, transparent:true, opacity:0.85});
   three.points = new THREE.Points(geo, mat);
   three.scene.add(three.points);
-
-  // Current submission point — bigger, glowing
-  const curGeo = new THREE.SphereGeometry(0.35, 24, 24);
-  const curMat = new THREE.MeshBasicMaterial({ color: 0xff5fb1 });
-  three.currentPoint = new THREE.Mesh(curGeo, curMat);
+  /* Current submission point — magenta glow */
+  if (three.currentPoint) { three.scene.remove(three.currentPoint); }
+  const cgeo = new THREE.SphereGeometry(0.4, 24, 24);
+  const cmat = new THREE.MeshBasicMaterial({color: 0xff5fb1});
+  three.currentPoint = new THREE.Mesh(cgeo, cmat);
   three.currentPoint.position.set(8, -3, 4);
   three.scene.add(three.currentPoint);
-
-  // Halo
-  const haloGeo = new THREE.SphereGeometry(0.55, 24, 24);
-  const haloMat = new THREE.MeshBasicMaterial({ color: 0xff5fb1, transparent: true, opacity: 0.30 });
-  const halo = new THREE.Mesh(haloGeo, haloMat);
-  three.currentPoint.add(halo);
+  const hgeo = new THREE.SphereGeometry(0.6, 24, 24);
+  const hmat = new THREE.MeshBasicMaterial({color: 0xff5fb1, transparent:true, opacity:0.30});
+  three.currentPoint.add(new THREE.Mesh(hgeo, hmat));
+  three.rotation = three.rotation || 0;
+  three.canvasVisible = true;
 }
 function rngBox(seed) {
   const x = Math.sin(seed * 9301 + 49297) * 233280;
-  return ((x - Math.floor(x)) - 0.5) * 2;  // -1..1
+  return ((x - Math.floor(x)) - 0.5) * 2;
 }
 function animate3DGraph() {
-  if (!three.renderer) return;
-  three.rotation += 0.0015;
-  three.scene.rotation.y = three.rotation;
+  if (!three || !three.renderer || !three.canvasVisible) return;
+  if (!reducedMotion) three.rotation += 0.0015;
+  if (three.scene) three.scene.rotation.y = three.rotation;
   three.renderer.render(three.scene, three.camera);
-  // Resize handling
-  const wrap = three.renderer.domElement.parentElement;
-  if (wrap.clientWidth && (three.renderer.domElement.width !== wrap.clientWidth * window.devicePixelRatio)) {
-    three.camera.aspect = wrap.clientWidth / wrap.clientHeight;
-    three.camera.updateProjectionMatrix();
-    three.renderer.setSize(wrap.clientWidth, wrap.clientHeight, false);
-  }
 }
 function flyToProjectNode() {
-  // Animate currentPoint moving toward winner cluster (4..8 region)
-  if (!three.currentPoint) return;
-  const start = { x: three.currentPoint.position.x, y: three.currentPoint.position.y, z: three.currentPoint.position.z };
-  const target = { x: 5, y: 2.5, z: 2 };
+  if (!three || !three.currentPoint) return;
+  const start = {x: three.currentPoint.position.x, y: three.currentPoint.position.y, z: three.currentPoint.position.z};
+  const target = {x: 5, y: 2.5, z: 2};
+  if (reducedMotion) {
+    three.currentPoint.position.set(target.x, target.y, target.z);
+    return;
+  }
   const dur = 1800;
   const t0 = performance.now();
   function step() {
-    const k = Math.min(1, (performance.now() - t0) / dur);
-    const e = 1 - Math.pow(1 - k, 3);
-    three.currentPoint.position.x = start.x + (target.x - start.x) * e;
-    three.currentPoint.position.y = start.y + (target.y - start.y) * e;
-    three.currentPoint.position.z = start.z + (target.z - start.z) * e;
-    if (k < 1) requestAnimationFrame(step);
+    const k = Math.min(1, (performance.now()-t0)/dur);
+    const e = 1 - Math.pow(1-k, 3);
+    three.currentPoint.position.x = start.x + (target.x-start.x)*e;
+    three.currentPoint.position.y = start.y + (target.y-start.y)*e;
+    three.currentPoint.position.z = start.z + (target.z-start.z)*e;
+    if (k<1) requestAnimationFrame(step);
   }
   requestAnimationFrame(step);
 }
 
-// ============================================================
-// RESET
-// ============================================================
+/* Debounced resize (PERF-2) */
+let resizeRaf = 0;
+window.addEventListener('resize', () => {
+  cancelAnimationFrame(resizeRaf);
+  resizeRaf = requestAnimationFrame(() => {
+    if (!three || !three.renderer) return;
+    const wrap = three.renderer.domElement.parentElement;
+    const w = wrap.clientWidth, h = wrap.clientHeight;
+    three.camera.aspect = w/h;
+    three.camera.updateProjectionMatrix();
+    three.renderer.setSize(w, h, false);
+  });
+});
 
+/* Page visibility gating (PERF-4) */
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) state.isPlaying = false;
+});
+
+/* ============================================================
+ *  RESET
+ * ============================================================ */
 function resetVisuals() {
-  // hats
   CFG.hats.forEach(h => {
     const el = document.getElementById(`hat-${h.id}`);
-    if (el) {
-      el.classList.remove('scoring', 'bias-warn', 'corrected');
-    }
-    const score = document.getElementById(`score-${h.id}`);
-    if (score) score.textContent = '--';
-    const meter = el && el.querySelector('.bias-meter');
-    if (meter) meter.setAttribute('data-bias', 'low');
+    if (el) el.classList.remove('scoring','bias-warn','corrected');
+    const sc = document.getElementById(`score-${h.id}`);
+    if (sc) sc.textContent = '--';
+    const m = el && el.querySelector('.bias-meter');
+    if (m) { m.setAttribute('data-bias','low'); m.setAttribute('aria-label','bias level: low'); }
   });
-  document.getElementById('eval-card').classList.remove('visible');
-  document.getElementById('phoenix-trace').innerHTML = '';
-  appendTrace('phoenix.otel.register(auto_instrument=True)');
-  appendTrace('glasshat orchestrator initializing…');
-  document.getElementById('topk-badge').classList.remove('visible');
-  document.getElementById('variance-banner').classList.remove('visible');
-  document.getElementById('gravity-callout').classList.remove('visible');
-  document.getElementById('qdrant-final').textContent = '--';
-  document.getElementById('rapid-final').textContent = '--';
+  els['eval-card'].classList.remove('visible');
+  els['why-panel'].classList.remove('visible');
+  els['gravity-callout'].classList.remove('visible');
+  els['antipattern'].classList.remove('visible');
+  els['variance-banner'].classList.remove('visible');
+  els['sanity-strip'].classList.remove('visible');
+  els['topk-badge'].classList.remove('visible');
+  els['cost-badge'].classList.remove('visible');
+  els['phoenix-trace'].innerHTML = '';
+  ['qdrant-final','rapid-final'].forEach(id => {
+    const f = document.getElementById(id);
+    f.textContent = '–';
+    f.classList.remove('land');
+  });
   ['q-func','q-orig','q-ux','r-tech','r-inn','r-imp','r-pres'].forEach(id => {
     const sc = document.getElementById(`score-${id}`);
     const bar = document.getElementById(`bar-${id}`);
-    if (sc) sc.textContent = '-/5';
+    if (sc) sc.textContent = '–';
     if (bar) bar.style.width = '0%';
   });
-  hideKanban();
-  tickCost(0, 0);
+  state.qdrant = {calls:0,pos:0,neg:0};
+  els['qdrant-calls'].textContent = '0';
+  els['qdrant-pos'].textContent = '0';
+  els['qdrant-neg'].textContent = '0';
+  lastFlushedT = 0;
+  undimAll();
 }
 
-// Initial setup (render hats / 3D before user clicks start so it looks alive)
-window.addEventListener('DOMContentLoaded', () => {
-  renderHats();
-  init3DGraph();
-  // Idle animation loop for 3D
-  function idleLoop() {
-    if (!state.isPlaying) animate3DGraph();
-    requestAnimationFrame(idleLoop);
-  }
-  idleLoop();
-});
-
-// Allow clicking anywhere in manual mode to advance time by 5s
+/* ============================================================
+ *  MANUAL MODE — click anywhere to advance to next scene marker
+ * ============================================================ */
+const SCENE_BEATS = [0, 10, 30, 50, 65, 85, 95, 125, 145, 152, 160, 170, 180];
 document.addEventListener('click', (e) => {
   if (state.isAuto) return;
-  if (e.target.closest('button')) return;
-  state.curT += 5;
-  state.startMs -= 5000;
+  if (e.target.closest('button, a, .scrubber, .lang-toggle')) return;
+  const next = SCENE_BEATS.find(b => b > state.curT) || 180;
+  seekTo(next);
 });
 
-// Resize redraws
-window.addEventListener('resize', () => init3DGraph());
+/* ============================================================
+ *  BOOTSTRAP
+ * ============================================================ */
+window.addEventListener('DOMContentLoaded', () => {
+  cacheEls();
+  renderHats();
+  // Lazy init Three when user starts demo (script preloaded but not executed)
+});
 </script>
 
 </body>
