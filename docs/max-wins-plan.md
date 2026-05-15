@@ -1,15 +1,15 @@
 # Glasshat — Max-Wins Plan (Qdrant VSD + Rapid Agent / Arize track)
 
-> **Status**: Strategic baseline locked 2026-05-14 by the user.
+> **Status**: Strategic baseline locked 2026-05-14 by the user. **Thesis upgrade locked 2026-05-15** (rubric is dynamic + hybrid mode + Top-K hit rate — see §13-§15).
 > Supersedes the implicit "build everything, submit twice" model in `PLAN.md`. `PLAN.md` remains the engineering inventory; this file is the **winning thesis** + **decision record**.
 >
-> **Product was named `Panelyst` (repo: `Two-Weeks-Team/panelyst`). User-approved rename to `Glasshat` on 2026-05-14 (panel recommendation §6).** All forward references use Glasshat. Repo/domain/.env migration is a downstream task tracked in §9.
+> **Product was named `Panelyst` (repo: `Two-Weeks-Team/panelyst`). User-approved rename to `Glasshat` on 2026-05-14 (panel recommendation §6).** All forward references use Glasshat. Repo/domain/.env migration completed 2026-05-15 (§9).
 
 ---
 
 ## §0 — One paragraph
 
-**Glasshat** ingests a PDF pitch deck + a GitHub repo URL, runs a six-perspective AI panel over both, scores against a fixed 100-point BMAD rubric with every sub-score grounded in vector-retrieved evidence and anchored to comparable past evaluations — and **on screen, in front of you, the panel catches itself being biased and self-corrects**. Built on Gemini 3 (Vertex) + Google Cloud Agent Builder + Arize Phoenix MCP (runtime self-introspection, not just trace emission) + Qdrant (six load-bearing collections) + Cloud Run + Firestore + Next.js (3D evaluation graph in react-three-fiber, 2D radar silent fallback). One codebase. Two hackathon submissions. Two demo narrations. **Qdrant VSD is primary** (binding deadline, visual remarkability is non-retrofittable). **Rapid Agent / Arize track is repackaging** (the planned architecture already does the harder thing — Phoenix MCP runtime consultation — that most submissions will skip).
+**Glasshat** ingests a PDF pitch deck + a GitHub repo URL **+ the evaluator's official rules**, has a `RubricSynthesizer` agent parse those rules into a per-evaluation rubric (BMAD becomes a vocabulary super-set, not a hard-coded scoring shape), runs a six-perspective AI panel scoring against the synthesized rubric with every sub-score grounded in vector-retrieved evidence and anchored to comparable past evaluations under matching weight schemas — and **on screen, in front of you, the panel proves the same submission gets a different (correct, defensible) score under different rubrics**. Two viewports on one engine: **Judge mode** (batch evaluation + rank table + Top-K hit rate ground-truth check), **Participant mode** (single submission + iterate-loop with Phoenix MCP mid-run uplift suggestions). Built on Gemini 3 (Vertex) + Google ADK on Cloud Run (Vertex AI Agent Builder partner-track registered) + Arize Phoenix MCP (runtime self-introspection, not just trace emission) + Qdrant (six load-bearing collections, past_evals payload-tagged with `rubric_schema_hash` + `weights_vector` for cross-rubric anchor retrieval) + Firestore + Next.js (3D evaluation graph in react-three-fiber, 2D radar silent fallback). One codebase. Two hackathon submissions. Two demo viewports + narrations. **Qdrant VSD is primary** (Judge-mode batch-503 demo; binding deadline; visual remarkability is non-retrofittable). **Rapid Agent / Arize track is repackaging** (Participant-mode iterate-loop demo; Phoenix MCP runtime consultation = literal self-improvement).
 
 ---
 
@@ -151,7 +151,11 @@
 | Demo-able with breathing room | ✓ — script in §5 leaves silence around the wow | Lock script + rehearse |
 | Partner tech stacked | Depends on 2026 sponsor list. Current stack: Mistral-equivalents are Gemini, Neo4j-equivalent is Qdrant graph metadata, R3F ✓, observability via Arize Phoenix | Re-check Qdrant sponsor list weekly |
 
-### 3.4 The Gemini 3 Hackathon as Glasshat's calibration corpus (added 2026-05-14)
+### 3.4 The Gemini 3 Hackathon as Glasshat's calibration corpus (added 2026-05-14, **actuals updated 2026-05-15**)
+
+**2026-05-15 update**: crawl complete. Actual yield = **503 projects (sequential page 1-21)** with **13 named winners in collected gallery**. Stored at `data/devpost-gemini3/` (commit `d840d2a`). README narrative updates from "524" → **"503 of 4,499 including 13 named winners"** (honest, accurate). Detailed integration plan: `data/devpost-gemini3/INTEGRATION.md`.
+
+
 
 Independent of the 2025 Qdrant winner pattern, a richer dataset for Glasshat's `past_evals` collection + Phoenix calibration experiment is the **concluded Gemini 3 Hackathon** (`gemini3.devpost.com`, Dec 2025 – Feb 2026, $100K prize pool, 4,499 submissions, 35,580 participants).
 
@@ -777,4 +781,142 @@ A short addendum will be appended to `PLAN.md` pointing to this file as the auth
 
 ---
 
-*Last updated: 2026-05-14 KST. Authoritative on dual-submission strategy + decision log + risk register. Living document — update as 2026 Qdrant sponsor list publishes, team composition firms, and Phase 1+ executes.*
+---
+
+## §13 — Dynamic rubric thesis (locked 2026-05-15)
+
+The original plan hard-coded BMAD 17 items × 100 points as the universal scoring shape. After analysis of `Two-Weeks-Team/seoul-26th-april-hack-judges` (CMUX×AIM judge workbench — track-aware rubric pattern), this is replaced:
+
+**Glasshat now synthesizes the rubric per evaluation from the evaluator's official rules.** A `RubricSynthesizer` agent (Gemini 3.1 Pro `thinking_level=high`) parses a rules URL/PDF/YAML and emits `rubric.synthesized.yaml` matching `packages/rubric/synthesized.schema.json`. BMAD 17 items become a *vocabulary super-set* — every synthesized criterion is defined as a mapping over 1+ BMAD primitives, preserving fairthon lineage while enabling domain fit.
+
+**4 presets ship in v1**: `qdrant`, `rapid-agent`, `cmux-aim`, `gemini3` — hand-curated, version-pinned, weekly auto-checked against source URL.
+
+**Why this matters for both hackathons**:
+
+| Axis | How dynamic rubric scores |
+|---|---|
+| Qdrant Originality | "Rule-aware rubric synthesis + dual-rubric variance" is novel (no 2025 winner did this) |
+| Qdrant Functionality | Glasshat actually evaluates *correctly* against Qdrant's own rules; not a generic 100-pt scale |
+| Qdrant UX | Plan-card UI (gate 1) shows source_clause + source_excerpt for every criterion → judge sees rubric fidelity |
+| Rapid Agent Tech (tie-break #1) | RubricSynthesizer is itself a non-trivial Gemini 3.1 Pro agent with structured output + multi-source input + traceability |
+| Rapid Agent Quality of Idea | "Fairness is rubric-relative" thesis → meta-evaluation novelty |
+
+**Audit moment becomes dual-rubric variance display** (8s scene at 2:30-2:38 in both demo timelines):
+
+```
+   ┌──────────────────────────┬──────────────────────────┐
+   │  Qdrant rubric           │  Rapid-Agent rubric      │
+   │  Functionality:    4/5   │  Tech Implementation: 5/5│
+   │  Originality:      5/5   │  Design:              4/5│
+   │  UX:               4/5   │  Impact:              3/5│
+   │                          │  Quality of Idea:     5/5│
+   │  Final: 4.33/5 = 87/100  │  Final: weighted = 73/100│
+   └──────────────────────────┴──────────────────────────┘
+   Δ = 14 points. Caption: "Correct rubric-aware variance, not bias."
+```
+
+**Calibration approach**: weight schema metadata only on past_evals (`rubric_schema_hash` + `weights_vector` payload + `rubric_weights` named vector). No 4×503 re-evaluation needed (would cost ~$60 + 6h, deferred).
+
+**Authoritative spec**: [`docs/rubric-synthesis-spec.md`](rubric-synthesis-spec.md). Phase 1.5 implementation derives from it.
+
+---
+
+## §14 — Hybrid mode thesis (locked 2026-05-15)
+
+One evaluation engine. Two viewports.
+
+| | Judge mode (`/judge`) | Participant mode (`/participate`) |
+|---|---|---|
+| **Persona** | Hackathon ops, incubator, VC firm, R&D board | Hackathon participant, founder, academic |
+| **Input** | CSV/zip batch of N submissions + rubric | Single submission + rubric |
+| **UI** | Live Kanban + rank table + Top-K hit rate badge + lock gate | Score breakdown + iterate suggestions + threshold-gate checklist |
+| **Demo** | Qdrant primary (503 batch evaluation, ground-truth check) | Rapid Agent primary (mid-loop Phoenix MCP uplift, iterate live) |
+| **RLS scope** | judge_runs/{run_id} + judge_share_grants | participant_runs/{user_id}/{run_id} |
+| **Phoenix project** | `glasshat-judge-{run_id}` | `glasshat-participant-{user_id}` |
+
+Both viewports read the same `runs/{id}` Firestore documents and the same Phoenix project for the engine output. The viewport split is presentation + RLS, not engine logic.
+
+**Pattern reference**: `Two-Weeks-Team/seoul-26th-april-hack-judges` (14 tables × 24 RLS policies + Kanban + lock gate). **Design pattern only — zero code reuse**, per fairthon-lineage discipline.
+
+**Final 1-second reveal** (both demos): caption *"Same engine. Different viewer. Different fairness."* — dinner-table-retellable closure.
+
+**Judge-mode demo (Qdrant)** primary scene = batch run 503 corpus + 9/13 winner hit rate badge. **Participant-mode demo (Rapid Agent)** primary scene = upload + Phoenix MCP suggestion + iterate → score 73→79 in real-time.
+
+**Authoritative spec**: [`docs/hybrid-mode-spec.md`](hybrid-mode-spec.md). Phase 1.mode-UI implementation derives from it (~2.3d).
+
+---
+
+## §15 — Top-K hit rate verification thesis (locked 2026-05-15)
+
+The Judge-mode demo needs an *external* truth check, not just Glasshat's own self-reported confidence. Solution: **Top-K hit rate against the 13 known winners in the 503 Gemini 3 corpus**.
+
+**Metric definition**:
+```
+hit_rate@K = |Glasshat's predicted top-K ∩ actual winners| / min(K, |actual winners|)
+```
+
+**Demo number**: K = 13 (matches winner count). Target ≥ 9/13 = 69%. (Random baseline at K=13 from 503 = ~3% — anything materially above is signal.)
+
+**Why this works for the demo**:
+- One number, instantly comprehensible
+- "Glasshat picked 9 of the 13 actual winners on its first try" is dinner-table-retellable
+- Rebuts the "AI evaluation can't be verified" critique with a literal prediction → ground truth comparison
+- Shows up in `/judge` viewport's rank table as a badge ("9/13 winners in predicted top-13")
+
+**Risk + mitigation**:
+
+| Risk | Mitigation |
+|---|---|
+| Cherry-picking (run all 4 presets, report best) | Disclose all 4 preset hit rates in README appendix; demo viewport uses the preset most aligned with Gemini 3's rules (which is `gemini3` preset) |
+| Hit rate < 9/13 on first run | Iterate evaluation prompts before submission (this is dev-time iteration, not demo-time deception) |
+| Spearman correlation contradicts hit rate | Show both in README; demo uses hit rate (simpler), paper appendix uses Spearman (rigorous) |
+
+**Compliance**: 503 corpus seeding done at deploy time, not demo time. The 13 winners are *public knowledge* (Devpost gallery shows winner ribbons); Glasshat's prediction is the test.
+
+---
+
+## §16 — Updated probability estimates (post-rubric-and-mode lock 2026-05-15)
+
+| Hackathon | Original | After max-wins plan | After Apex Pass | After spike validation | **After rubric+mode lock 2026-05-15** |
+|---|---|---|---|---|---|
+| Qdrant top-3 | ~13% | 28-35% | 35-42% | 38-45% | **42-52%** |
+| Rapid Agent top-3 | ~33% | 50-55% | 58-65% | 62-68% | **65-72%** |
+| Combined EV (1st-place equiv) | ~$1.7K | ~$3.2K | ~$3.9K | ~$4.2K | **~$4.7K** |
+
+**Top 3 leverage shifts (rubric+mode delta)**:
+1. Dual-rubric audit moment lands on Qdrant Originality + Functionality + UX simultaneously (was just one wow moment) — **Qdrant +4 pp**
+2. Top-K hit rate on 503 corpus = ground-truth proof that judges can verify in 30 seconds — **Qdrant +3 pp**
+3. Participant-mode iterate-loop = literal "agent that improves over time" (Arize bonus dimension) — **Rapid Agent +3 pp**
+4. RubricSynthesizer + 4 source-clause traceability maxes Tech tie-break #1 — **Rapid Agent +2 pp**
+5. Hybrid mode reveal closes the narrative loop on both demos (dinner-table retellability up) — **+0.5 pp both**
+
+---
+
+## §17 — Updated Phase 1 build sequence (locked 2026-05-15)
+
+Per [[glasshat-rubric-and-mode]] §6, Phase 1 is sequenced for engine-first then RubricSynthesizer then Qdrant-with-extended-payload then mode UI:
+
+| Phase | Sub-phase | Time | Owner | Spec |
+|---|---|---|---|---|
+| 1.D | Python+LLM adapter | 2.5d | Backend | `services/shared/llm.py`, technical-apex-features §3 |
+| 1.5 | RubricSynthesizer + 4 presets + bmad-vocabulary super-set | 2.0d | Backend | `docs/rubric-synthesis-spec.md` |
+| 1.B | Qdrant 6 collections (with `rubric_schema_hash` + `weights_vector`) + 503 corpus seed | 1.5d | Data | `data/devpost-gemini3/INTEGRATION.md`, `qdrant-collection-design` memory |
+| 1.mode-UI | Next.js `/judge` + `/participate` viewports + Firestore RLS | 2.3d | Frontend + Backend | `docs/hybrid-mode-spec.md` |
+| **Subtotal** | | **8.3d** | | |
+| (parallel) 1.4 | Phoenix integration | 1.0d | Backend | technical-apex-features §2 |
+| (parallel) 1.A | BMAD vocabulary YAML + 6 hat prompts | 1.0d | Backend | technical-apex-features §0 + agents/ |
+| (parallel) 1.C | PDF ingest + Code Grader | 1.5d | Backend + Data | architecture.md §1 |
+| **Total Phase 1** | | **~10d** with parallelism | | |
+
+**D-day**: D-13.2 effective (Qdrant deadline 2026-06-01, Phase 1 estimated finish ~2026-05-25 with parallelism, leaving ~7d for Phase 2 polish + demo recording + submission).
+
+**Team allocation** (for the new dev team — see `docs/team-onboarding.md` §5):
+- Backend (LLM + Agent): owns 1.D, 1.5, 1.4, 1.A
+- Data: owns 1.B, integration of 503 corpus
+- Frontend: owns 1.mode-UI, 3D graph, SSE consumer
+- DevOps: owns Cloud Run deploys, Firestore rules, CI/CD
+- QA / Demo: owns spike maintenance, demo recording, threshold gates
+
+---
+
+*Last updated: 2026-05-15 KST. Authoritative on dual-submission strategy + decision log + risk register + rubric+mode thesis upgrade. Living document — update as 2026 Qdrant sponsor list publishes, team composition firms, and Phase 1+ executes.*

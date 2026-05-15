@@ -1,6 +1,8 @@
 # Glasshat — Architecture
 
 > Authoritative design document. Code references this; if the two diverge, this is the source of truth and the code is the bug.
+>
+> **2026-05-15 update**: Architecture extended for [[glasshat-rubric-and-mode]] (RubricSynthesizer agent + Hybrid mode viewports + past_evals weight payload). See §10 (additions) for the diff against the 2026-05-13 baseline.
 
 ## 1. Topology (textual diagram)
 
@@ -207,3 +209,120 @@ Every external system sits behind an interface; the implementation is chosen by 
 - It **executes a multi-stage workflow autonomously** (the sequence in § 3).
 - It **keeps the user in control** (the two human gates).
 - It **produces an artifact** (a signed, evidence-grounded, precedent-anchored scored report + a live audit trail).
+
+---
+
+## 9. Hybrid Mode topology (Judge × Participant viewports)
+
+Per `docs/hybrid-mode-spec.md` (locked 2026-05-15). One engine, two viewports.
+
+```
+                     ┌────────────────────────────────────────────┐
+                     │     GLASSHAT EVALUATION ENGINE              │
+                     │  RubricSynthesizer → BluePlanner → Hats →  │
+                     │  AuditLoop → BMADScorer → Report            │
+                     └─────────────┬───────────────┬───────────────┘
+                                   │               │
+                       same engine output (Phoenix-traced, Firestore-persisted)
+                                   │               │
+              ┌────────────────────┘               └────────────────────┐
+              ▼                                                          ▼
+   ┌──────────────────────┐                              ┌──────────────────────┐
+   │  /judge viewport      │                              │  /participate         │
+   │                      │                              │  viewport             │
+   │  Batch upload        │                              │  Single submission    │
+   │  Rank table          │                              │  Iterate loop         │
+   │  Top-K hit rate      │                              │  Phoenix uplift       │
+   │  Human-locked scores │                              │  Pre-submit gate      │
+   └──────────────────────┘                              └──────────────────────┘
+              │                                                          │
+              │     (Firestore RLS + ADK SessionService scope)           │
+              ▼                                                          ▼
+   judge_runs/{run_id}                                  participant_runs/{user_id}/{run_id}
+   judge_locked_scores/{run_id}/{submission_id}         participant_iterations/{run_id}
+```
+
+Demo viewport split:
+- **Qdrant VSD demo** = Judge mode (batch 503 corpus, Top-K hit rate badge, 3D anchor constellation)
+- **Rapid Agent demo** = Participant mode (single submission, Phoenix MCP mid-loop suggestion, iterate live)
+- **Both demos close** = 1-second reveal: *"Same engine. Different viewer. Different fairness."*
+
+---
+
+## 10. Architecture additions (2026-05-15 rubric+mode lock)
+
+This section captures the **additive** changes vs the baseline architecture above. None of §1-§7 is invalidated; this section adds a new agent node and extends the data model.
+
+### 10.1 New agent node — RubricSynthesizer (between IngestAgent and BluePlannerAgent)
+
+```
+GlasshatRootAgent (CustomAgent)
+│
+├─ IngestAgent (unchanged)
+│
+├─ RubricSynthesizerAgent (NEW)
+│  ├─ Path A: load preset (qdrant/rapid-agent/cmux-aim/gemini3) — skip Gemini
+│  ├─ Path B: fetch URL + Gemini 3.1 Pro thinking_high parses rules
+│  ├─ Path C: PDF parse + Gemini parses rules
+│  ├─ Path D: validate user-supplied YAML — skip Gemini
+│  └─ output_key="rubric_synthesized" (validates against synthesized.schema.json)
+│
+├─ BluePlannerAgent (uses ctx.session.state["rubric_synthesized"])
+├─ HatsPanel (unchanged)
+├─ AuditLoop (anchor retrieval now weight-aware via past_evals weights_vector)
+├─ BMADScorerAgent (maps hat outputs to synthesized criteria via bmad_mapping)
+└─ ReportAssemblerAgent (emits scores in synthesized rubric's native scale)
+```
+
+Full spec: `docs/rubric-synthesis-spec.md`.
+
+### 10.2 Past_evals payload extension
+
+| Field | Type | Purpose |
+|---|---|---|
+| `rubric_schema_hash` | keyword (indexed) | SHA-256 of canonicalized SynthesizedRubric — exact-match lookup |
+| `weights_vector` | float[] | Numeric weight vector, alphabetical-by-criterion-id canonical order |
+| `rubric_preset_id` | keyword (indexed, optional) | If derived from a preset, the preset id |
+
+Plus a new **named vector** `rubric_weights` (size 16, padded; cosine distance) for weight-similarity anchor retrieval.
+
+Full spec: `data/devpost-gemini3/INTEGRATION.md` + `qdrant-collection-design` memory (Phase 1.B updates).
+
+### 10.3 Frontend split — Next.js app structure
+
+```
+apps/web/
+├── app/
+│   ├── page.tsx                  # Landing — choose viewport
+│   ├── judge/                    # Judge viewport
+│   │   ├── page.tsx              # Dashboard
+│   │   ├── new/page.tsx          # Batch upload wizard
+│   │   └── runs/[runId]/page.tsx # Live Kanban + rank table + Top-K badge
+│   └── participate/              # Participant viewport
+│       ├── page.tsx              # Dashboard
+│       ├── new/page.tsx          # Single submission upload
+│       └── runs/[runId]/page.tsx # Score breakdown + iterate UI
+└── components/
+    ├── shared/                   # KanbanCard, ScoreBar, AuditDrawer, SSE hook
+    ├── judge/                    # RankTable, BatchUploader, LockGate, TopKBadge
+    └── participate/              # IterateBar, PhoenixSuggestionCard, ThresholdGateChecklist
+```
+
+Full spec: `docs/hybrid-mode-spec.md` §7.
+
+### 10.4 Firestore data model additions
+
+```
+runs/{run_id}                          # ENGINE-OWNED, both modes
+judge_runs/{run_id}                    # JUDGE METADATA
+judge_locked_scores/{run_id}/{submission_id}   # IMMUTABLE post-lock
+participant_runs/{user_id}/{run_id}    # PARTICIPANT OWNERSHIP
+judge_share_grants/{run_id}/{judge_uid}  # RLS access grants
+audit_events/                          # Append-only via DB trigger
+```
+
+Full RLS rules: `docs/hybrid-mode-spec.md` §6.
+
+---
+
+*Last updated: 2026-05-15 KST. §1-§8 baseline (2026-05-13) + §9-§10 additions (2026-05-15 rubric+mode lock). Authoritative on architecture.*

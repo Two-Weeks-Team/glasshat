@@ -1,6 +1,6 @@
 # Technical Apex Features — Decision Matrix
 
-> **Status**: Locked 2026-05-14. Maps every advanced capability from Qdrant / Phoenix-Arize / Gemini 3 / Google ADK to an APPLY / CUT / STRETCH decision for Glasshat. Each row records the judging-axis payoff and implementation complexity, so the build sequence is deterministic. Companion files: `docs/max-wins-plan.md` (strategy + scripts), `docs/wow-moment-design.md` (audit-the-auditor design).
+> **Status**: Locked 2026-05-14. Extended 2026-05-15 (+5 features for rubric+mode lock — §10). Maps every advanced capability from Qdrant / Phoenix-Arize / Gemini 3 / Google ADK to an APPLY / CUT / STRETCH decision for Glasshat. Each row records the judging-axis payoff and implementation complexity, so the build sequence is deterministic. Companion files: `docs/max-wins-plan.md` (strategy + scripts), `docs/wow-moment-design.md` (audit-the-auditor design), `docs/rubric-synthesis-spec.md` + `docs/hybrid-mode-spec.md` (rubric+mode upgrade).
 
 ---
 
@@ -222,4 +222,78 @@ That is technical apex.
 
 ---
 
-*Last updated: 2026-05-14 KST. Authoritative on advanced feature decisions for Glasshat v1. Companion: `docs/max-wins-plan.md` (strategy), `docs/wow-moment-design.md` (audit moment), `PLAN.md` (engineering inventory).*
+---
+
+## §10 — Rubric+Mode lock additions (2026-05-15)
+
+5 new features locked per [[glasshat-rubric-and-mode]] (extends from 47 → **52 explicit feature-level decisions**). All APPLY-tier.
+
+| # | Feature | Decision | Judging payoff | Complexity | Implementation |
+|---|---|---|---|---|---|
+| 6.1 | **RubricSynthesizer agent** (Gemini 3.1 Pro thinking_high) — parses official rules → SynthesizedRubric YAML | APPLY | Q-O ★ (rule-aware = novel) · R-T ★★ (Tech tie-break #1, structured-output multi-source synthesis) · R-Q ★ (meta-evaluation thesis) | Medium-High | `services/rubric_synthesizer/agent.py` + `agents/rubric_synthesizer/prompt.md` + `packages/rubric/synthesized.schema.json`. Phase 1.5, 2.0d. Full spec: `docs/rubric-synthesis-spec.md`. |
+| 6.2 | **4 preset rubrics** (qdrant, rapid-agent, cmux-aim, gemini3) version-pinned + weekly auto-check vs source URL | APPLY | Q-F · R-T · R-D | Low | `packages/rubric/presets/{4 YAMLs}` + `scripts/check-preset-freshness.sh` (CI). Phase 1.5, included in 2.0d. |
+| 6.3 | **Source-clause traceability** in Plan-card UI (every synthesized criterion shows verbatim source quote) | APPLY | Q-UX (defensibility visible) · R-D · R-T (rigor signal) | Low | `components/shared/PlanCard.tsx` reads SynthesizedRubric.criteria[].source_clause + source_excerpt. Phase 1.mode-UI, included in 2.3d. |
+| 6.4 | **Past_evals weight payload extension** + `rubric_weights` named vector for cross-rubric anchor retrieval | APPLY | Q-F (production-ready) · R-T · R-Arize | Low | `packages/shared/qdrant-schemas/past_evals.yaml` + `services/shared/qdrant.py` anchor retrieval helper. Phase 1.B, 0.4d (subset of 1.5d). |
+| 6.5 | **Hybrid mode (Judge + Participant viewports)** — same engine, RLS + UI split | APPLY | Q-O (one-engine-two-viewports thesis is novel) · R-D ★ · R-I (TAM expansion) · R-Arize (Participant iterate-loop = literal self-improvement) | Medium-High | `apps/web/app/{judge,participate}/` + Firestore RLS rules + per-mode auth claims. Phase 1.mode-UI, 2.3d. Full spec: `docs/hybrid-mode-spec.md`. |
+| 6.6 | **Top-K hit rate verification** (Glasshat top-13 vs known 13 winners on 503 corpus) | APPLY | Q-F (ground-truth proof) · R-I (defensibility scales) · Q-O (one-shot judge-comprehensible metric) | Low | `scripts/check_top_k_hit_rate.py` + `components/judge/TopKBadge.tsx`. Phase 1.B + 1.mode-UI, included in 1.5d + 2.3d. |
+| 6.7 | **Dual-rubric variance display** (8s scene at 2:30-2:38 in both demo timelines, side-by-side score under TWO rubrics) | APPLY | Q-O ★★ (the wow upgrade) · Q-UX · R-D · R-Q | Medium | `components/shared/DualRubricCompare.tsx` runs the BMADScorer twice (once per rubric) on same hat outputs (cheap, scorer is the cheapest stage); animates two scores side-by-side. Phase 1.mode-UI, included in 2.3d. |
+
+**Updated totals**: **38 APPLY (was 33)** + 9 STRETCH + 5 CUT = **52 explicit feature-level decisions**.
+
+### §10.0 sangguen's wow-sharpening (added 2026-05-15 by ComBba × sangguen collaboration)
+
+sangguen's positioning insight (2026-05-15 17:45 KST): **"Qdrant should be the protagonist that holds the AI judge accountable, not background storage."** Demo line: *"Glasshat doesn't just judge projects. It audits the judge."*
+
+This refines our existing thesis without scope expansion. 4 specific UI/narration upgrades land below as APPLY-tier features.
+
+| # | Feature | Decision | Judging payoff | Complexity | Implementation |
+|---|---|---|---|---|---|
+| 6.8 | **Live Bias Meter per Hat** — small dial gauge in each hat card; rises when Hat overscores, falls back to normal range after Phoenix-MCP + Qdrant-anchor consultation | APPLY | Q-UX ★ (visible bias correction) · Q-O · R-D | Low | `components/shared/HatBiasMeter.tsx` — reads `glasshat.score.{hat}.{criterion}` + Phoenix `eval.calibration.score` span attribute; animated CSS dial. Phase 1.mode-UI, +0.3d. |
+| 6.9 | **Anti-Pattern Radar narration** — at audit moment, screen shows: *"37 of 503 past Gemini 3 submissions matched this profile. Winners: 0. Common failure: vague user, weak repo evidence, no working demo."* | APPLY | Q-O ★ (vector-DB protagonism explicit) · Q-F · R-Q | Low | Reuses Qdrant Recommendation API (technical-apex §1.3) negative-anchor results; just adds narration UI panel + group-by-failure-pattern aggregation. Phase 1.B + 1.mode-UI, +0.2d. |
+| 6.10 | **Winner Gravity 3D narration upgrade** — when corrected score lands, 3D graph caption: *"72% similar to winner cluster, but pulled toward non-winner pattern by anchor 'X' (similar evidence depth)."* | APPLY | Q-O ★★ (the wow upgrade sangguen called out) · Q-UX | Low | `components/shared/WinnerGravityCallout.tsx` — reads anchor scores + cosine similarity; renders as floating tooltip on the moving node. Phase 1.mode-UI, included in 2.3d. |
+| 6.11 | **Score Receipts UI rebrand** — what we called "evidence drill-down" becomes "Score Receipts" (each score has a receipt: deck quote + repo file:line + 2 anchor projects with their score). Reframing makes the audit-trail thesis emotionally legible | APPLY | Q-UX ★ (memorable label) · R-D · R-T (rigor signal) | Low | Pure rename + visual treatment; same data model. `components/shared/ScoreReceipt.tsx`. Phase 1.mode-UI, +0.0d. |
+
+**sangguen's "Vector DB is the protagonist" positioning** is now explicit in the demo narration via 6.8-6.11 + the existing 1.3 Recommendation API + 1.5 Group-by + 1.7 Quantization + 6.4 weight-aware anchor retrieval. Qdrant is foregrounded *eight times* across the 3-min Qdrant demo.
+
+**Demo-line lock** (both demos' 0:00-0:05 hook): *"Glasshat doesn't just judge projects. It audits the judge."* Qdrant demo close adds: *"And the auditor is the vector space."* Rapid Agent demo close adds: *"And the audit happens mid-iteration."* Both end with rubric+mode reveal: *"Same engine. Different rubric. Different (correct) score."*
+
+**Updated totals after §10.0**: **42 APPLY** + 9 STRETCH + 5 CUT = **56 explicit feature-level decisions**.
+
+### §10.1 Updated judging-axis coverage map
+
+For Qdrant axes (with rubric+mode features added):
+
+| Axis | APPLY features that score |
+|---|---|
+| **Functionality** | (existing) + **6.4 weight-aware anchor retrieval** + **6.6 Top-K hit rate** + **6.7 dual-rubric** |
+| **Originality** | (existing) + **6.1 RubricSynthesizer ★** + **6.5 Hybrid mode ★** + **6.7 dual-rubric ★★** |
+| **User Experience** | (existing) + **6.3 source-clause traceability ★** + **6.5 viewport split UX** |
+
+For Rapid Agent axes:
+
+| Axis | APPLY features that score |
+|---|---|
+| **Tech Implementation (tie-break #1)** | (existing) + **6.1 RubricSynthesizer ★★** + **6.4 weight-aware anchor retrieval** + **6.7 dual-rubric** |
+| **Design** | (existing) + **6.3 source-clause traceability** + **6.5 Hybrid mode ★** + **6.7 dual-rubric** |
+| **Potential Impact** | (existing) + **6.5 Hybrid mode (TAM expansion: judge B2B + participant B2C)** |
+| **Quality of Idea** | (existing) + **6.1 RubricSynthesizer (rule-aware synthesis novel) ★** + **6.5 Hybrid mode (one-engine-two-viewports novel)** |
+| **R-Arize bonus** | (existing) + **6.5 Participant-mode iterate-loop = literal "agent improves over time"** |
+
+Every axis gains ≥2 APPLY features in the rubric+mode upgrade; the wow moment scales from 1 layer to 2 layers without sacrificing the existing 47.
+
+### §10.2 Phase 1 sequencing (per max-wins-plan §17)
+
+| Sub-phase | Time | What gets implemented |
+|---|---|---|
+| 1.D | 2.5d | Python+LLM adapter (existing 33 APPLY's foundation) |
+| **1.5** | **2.0d** | **6.1 RubricSynthesizer + 6.2 4 presets** (new) |
+| 1.B | 1.5d | Qdrant 6 collections + **6.4 past_evals weight payload** + **6.6 hit rate util** + 503 corpus seed |
+| **1.mode-UI** | **2.3d** | **6.3 source-clause UI + 6.5 Hybrid mode + 6.6 TopK badge + 6.7 dual-rubric scene** |
+| (parallel) 1.4 | 1.0d | Phoenix integration (existing) |
+| (parallel) 1.A | 1.0d | BMAD vocabulary + hat prompts (existing, BMAD now super-set not fixed scoring) |
+| (parallel) 1.C | 1.5d | PDF ingest + Code Grader (existing) |
+| **Total Phase 1** | **~10d with parallelism** | |
+
+---
+
+*Last updated: 2026-05-15 KST. Authoritative on advanced feature decisions for Glasshat v1. 52 explicit features (38 APPLY + 9 STRETCH + 5 CUT). Companion: `docs/max-wins-plan.md` (strategy), `docs/wow-moment-design.md` (audit moment), `docs/rubric-synthesis-spec.md` + `docs/hybrid-mode-spec.md` (rubric+mode upgrade), `PLAN.md` (engineering inventory).*

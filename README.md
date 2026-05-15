@@ -1,21 +1,25 @@
 # Glasshat
 
-> **The panel that audits itself.**
+> **Glasshat doesn't just judge projects. It audits the judge.**
 
-**Glasshat** ingests a PDF pitch deck and a GitHub repo, runs a six-perspective AI panel against a 100-point evaluation rubric, and — on screen, in front of you — **catches its own biases mid-evaluation and corrects them in real time, in 3D**. It is an *artifact-ingesting evaluation pipeline + a live transparent fairness monitor*, **not a chatbot**.
+**Glasshat** ingests a PDF pitch deck + a GitHub repo + the **evaluator's official rules**. A `RubricSynthesizer` agent parses those rules into a per-evaluation rubric. A six-perspective AI panel scores each submission, with every sub-score grounded in vector-retrieved evidence and anchored to comparable past evaluations under matching weight schemas. Then — on screen, in front of you — **the panel catches its own biases mid-evaluation, the Qdrant vector space pulls it toward correctly-calibrated past projects, and the score self-corrects in 3D**. It is an *artifact-ingesting evaluation pipeline + a live transparent fairness monitor*, **not a chatbot**.
+
+**Two viewports on one engine**: **Judge mode** (`/judge`) for batch evaluation + Top-K hit rate ground-truth check; **Participant mode** (`/participate`) for single submission + iterate-loop with Phoenix MCP mid-run uplift. Final demo reveal: *"Same engine. Different rubric. Different (correct) score."*
 
 > 📺 **Demo videos** *(uploaded at submission)* — one for each hackathon, same engine, different narration.
 >
 > - **Qdrant VSD demo** — the panel audits itself; vector-anchored score correction; 3D evaluation graph
 > - **Rapid Agent / Arize demo** — agent consults Phoenix MCP mid-run, detects past drift, changes retrieval strategy live
 
-**Status (2026-05-15)**: scaffold + architecture + GCP/Gemini verification + 7-spike technical validation **complete**. Renamed from `Panelyst` → `Glasshat` on 2026-05-14 (panel recommendation, see `docs/max-wins-plan.md` §6.1). Phase 1 implementation cleared to begin.
+**Status (2026-05-15)**: scaffold + architecture + GCP/Gemini verification + 7-spike technical validation **complete**. Renamed from `Panelyst` → `Glasshat` on 2026-05-14. **Thesis upgrade locked 2026-05-15** (rubric is dynamic per-evaluator, hybrid Judge+Participant viewports, Top-K hit rate verification on 503 Gemini 3 corpus, dual-rubric variance audit moment — see `docs/max-wins-plan.md` §13-§17, `docs/rubric-synthesis-spec.md`, `docs/hybrid-mode-spec.md`). Phase 1 implementation in progress.
+
+**Win probability** (post-thesis-upgrade 2026-05-15): Qdrant top-3 **42-52%** · Rapid Agent / Arize top-3 **65-72%**.
 
 ---
 
 ## The one-paragraph pitch
 
-Glasshat takes a pitch deck and a codebase, runs a six-perspective agent panel (Six Thinking Hats — White facts / Red intuition / Yellow value / Black risk / Green creative / Blue synthesis), and scores against a fixed 17-item / 100-point BMAD rubric. **Every sub-score is grounded in vector-retrieved evidence** (Qdrant, hybrid dense + sparse) **and anchored to comparable past evaluations** drawn from a calibrated corpus. The novelty: a **triple-redundant audit loop** (Phoenix Online Eval LLM-as-judge + Phoenix Custom Evaluator + Black-hat counter-claim) that detects when a hat's score is inconsistent with its evidence depth; the Blue planner then **consults Arize Phoenix's MCP server at runtime** to retrieve past-drift statistics and a Qdrant **Recommendation API** call returns anti-pattern anchors. The score visibly self-corrects on screen; the 3D evaluation graph reshapes. **One engine, two demo narrations** for the Qdrant VSD and Rapid Agent / Arize hackathons respectively.
+Glasshat takes a pitch deck + a codebase + the evaluator's official rules, has a `RubricSynthesizer` agent (Gemini 3.1 Pro `thinking_level=high`) parse those rules into a per-evaluation rubric (BMAD's 17 items become a *vocabulary super-set*; the runtime scoring shape mirrors the actual rules — Qdrant's 3 axes, Rapid Agent's Tech-40/Inn-30/Imp-20/Pres-10 with Tech tie-break, CMUX×AIM's per-track 5-criterion 1-5 scale, etc.), then runs a six-perspective agent panel (Six Thinking Hats — White facts / Red intuition / Yellow value / Black risk / Green creative / Blue synthesis) scoring against the synthesized rubric. **Every sub-score is grounded in vector-retrieved evidence** (Qdrant, hybrid dense + sparse with RRF) **and anchored to comparable past evaluations** drawn from the 503-project Gemini 3 calibration corpus tagged with `rubric_schema_hash` + `weights_vector` (anchor retrieval is weight-aware via cosine similarity on the named vector). The novelty: a **triple-redundant audit loop** (Phoenix Online Eval LLM-as-judge + Phoenix Custom Evaluator + Black-hat counter-claim) that detects when a hat's score is inconsistent with its evidence depth; the Blue planner then **consults Arize Phoenix's MCP server at runtime** to retrieve past-drift statistics and a Qdrant **Recommendation API** call returns anti-pattern anchors. The score visibly self-corrects on screen; the 3D evaluation graph reshapes. Then **the dual-rubric variance display** shows the same submission under TWO synthesized rubrics side-by-side (e.g., Qdrant 87/100 vs Rapid 73/100), captioned *"correct rubric-aware variance, not bias"* — proof that fairness is rubric-relative. **Two viewports on one engine** (Judge for batch evaluation, Participant for iterate-loop) for the Qdrant VSD and Rapid Agent / Arize hackathons respectively.
 
 ---
 

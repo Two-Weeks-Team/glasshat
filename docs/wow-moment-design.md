@@ -512,4 +512,185 @@ The 5 spike-tests (§7, ~10 hours) prove the integration before sinking weeks in
 
 ---
 
-*Last updated: 2026-05-14 KST post-Apex-Pass. Authoritative on wow moment technical design. Updates require user review.*
+---
+
+## §12 — Rubric-aware audit + Hybrid mode (added 2026-05-15)
+
+This section supersedes parts of §3 + §4 + §11 where they previously assumed a single, fixed rubric. Per [[glasshat-rubric-and-mode]] (locked 2026-05-15), Glasshat now **synthesizes the rubric per evaluation** (`docs/rubric-synthesis-spec.md`) and **runs in two viewports** on one engine (`docs/hybrid-mode-spec.md`).
+
+### §12.1 What changed in the wow moment
+
+**Before**: a single Yellow A1 score self-corrects from 9.0 → 7.6 based on Phoenix calibration data. Compelling but single-axis.
+
+**After**: the wow moment now has **two layers**:
+
+1. **Layer 1 (existing)**: triple-redundant detection (§11.1) + Phoenix MCP consultation (§11.2) + ScoreCalibrationAgent correction. *Same as before.*
+2. **Layer 2 (NEW)**: a **dual-rubric variance display** at 2:30-2:38 — same submission scored under TWO synthesized rubrics shown side-by-side. Caption: *"Correct rubric-aware variance, not bias."*
+
+The variance display proves Glasshat doesn't just self-correct; it proves **fairness is rubric-relative**. This is the dinner-table-retellable upgrade.
+
+### §12.2 Demo viewport split
+
+| Demo | Primary viewport | Wow moment specifics |
+|---|---|---|
+| **Qdrant VSD** | Judge mode (`/judge`) | Layer 1 fires on a high-profile card from the 503 corpus during batch run; Layer 2 dual-rubric variance shows after batch complete |
+| **Rapid Agent / Arize** | Participant mode (`/participate`) | Layer 1 fires mid-iteration; participant accepts Phoenix MCP suggestion → re-runs → score animates 73→79; Layer 2 dual-rubric variance shows after re-run |
+
+**Final 1-second reveal in both demos**: caption *"Same engine. Different viewer. Different fairness."*
+
+### §12.3 Anchor retrieval becomes weight-aware
+
+§3 Step 3 (Qdrant anchor retrieval) is updated to use the new `rubric_weights` named vector on `past_evals`:
+
+```python
+# services/audit/anchor_retrieval.py
+def select_anchors(synthesized_rubric, hat, criterion_id, evidence_depth_bucket, top_k=3):
+    return qdrant.search(
+        collection="past_evals",
+        query_vector=synthesized_rubric["weights_vector"],
+        using="rubric_weights",  # named vector, cosine similarity
+        query_filter={
+            "must": [
+                {"key": "hat", "match": {"value": hat}},
+                {"key": "criterion_bmad_mapping",
+                 "match": {"any": criterion["bmad_mapping"]}},
+                {"key": "evidence_depth_bucket", "match": {"value": evidence_depth_bucket}},
+            ]
+        },
+        limit=top_k,
+        with_payload=True,
+    )
+```
+
+This means **the 503 Gemini 3 corpus (anchored under Gemini 3's Tech 40/Inn 30/Imp 20/Pres 10 weights) is reusable across all 4 preset rubrics** — the cosine similarity on `weights_vector` automatically biases retrieval toward anchors with similar weight schemas to the current evaluation. No re-evaluation required at seed time.
+
+See `docs/rubric-synthesis-spec.md` §8 for the full anchor retrieval logic.
+
+### §12.4 Updated agent topology (additive — RubricSynthesizer node)
+
+```
+GlasshatRootAgent (CustomAgent)
+│
+├─ IngestAgent
+│
+├─ RubricSynthesizerAgent  (NEW — LlmAgent, Gemini 3.1 Pro thinking_high)
+│  ├─ Path A: load preset directly (skip Gemini call)
+│  ├─ Path B: fetch_url + parse rules
+│  ├─ Path C: PDF parse + parse rules
+│  ├─ Path D: validate user YAML (skip Gemini call)
+│  └─ output_key="rubric_synthesized"
+│
+├─ BluePlannerAgent (LlmAgent, thinking_level=high)
+│  └─ Reads ctx.session.state["rubric_synthesized"] to plan retrieval budgets per criterion
+│
+├─ HatsPanel (ParallelAgent)  ── unchanged from §11.4 ──
+├─ AuditLoop (LoopAgent, max_iterations=2)  ── unchanged from §11.4 ──
+├─ BMADScorerAgent (LlmAgent)
+│  └─ Maps hat outputs to synthesized rubric criteria via bmad_mapping (NEW)
+│
+└─ ReportAssemblerAgent
+   └─ Emits scores in synthesized rubric's native scale (NOT fixed BMAD 100)
+```
+
+The RubricSynthesizer node sits *between* Ingest and BluePlanner. All downstream agents read `ctx.session.state["rubric_synthesized"]` for the rubric-of-record.
+
+### §12.5 Probability impact
+
+Per [[glasshat-rubric-and-mode]] §1 estimates:
+
+- Qdrant top-3: 38-45% → **42-52%** (+4-7 pp)
+  - Layer 2 dual-rubric scene lands on Originality + Functionality + UX simultaneously
+  - Top-K hit rate badge on 503 corpus = ground-truth proof
+- Arize top-3: 62-68% → **65-72%** (+3-4 pp)
+  - Participant-mode iterate-loop = literal "agent that improves over time"
+  - RubricSynthesizer + 4 source-clause traceability maxes Tech tie-break #1
+
+### §12.6 What this does NOT change
+
+- All 5 existing wow-moment steps (§2) remain
+- All 7 spike validations (§7 + Apex Spikes F, G) remain valid (no new spike needed for rubric synthesis — pure prompt-engineering against existing Vertex Gemini 3.1 Pro pathway)
+- All fallbacks (§8) remain
+- Phoenix MCP consultation chain (§11.2) unchanged
+- Annotation closure (§11.3) unchanged
+- Triple-redundant detection (§11.1) unchanged
+
+The rubric+mode upgrade is **additive**, not destructive. Phase 1 build can proceed exactly per §17 of `docs/max-wins-plan.md` with the new ordering: D → 1.5 (RubricSynthesizer) → B → mode UI.
+
+---
+
+---
+
+## §13 — sangguen's Vector-DB-as-Protagonist sharpening (added 2026-05-15)
+
+sangguen's positioning insight (2026-05-15 17:45 KST) refines the wow moment without scope expansion:
+
+> *"AI 심사위원이 자기 점수가 틀렸다는 걸, **Qdrant에 저장된 과거 제출작 벡터 공간 때문에** 들켜서, 실시간으로 점수를 고친다."*
+>
+> *"Glasshat doesn't just judge projects. It audits the judge."*
+
+This is the demo's first 5-second hook in **both** Qdrant and Rapid Agent versions.
+
+### §13.1 Four narration upgrades (all APPLY-tier per `docs/technical-apex-features.md` §10.0)
+
+1. **Live Bias Meter per Hat** (6.8) — Hat cards show a small dial gauge: rises when the Hat overscores, falls back to normal range *visibly* after Phoenix-MCP + Qdrant-anchor consultation. Makes the bias correction tactile — judges see meters move, not just numbers tick.
+
+2. **Anti-Pattern Radar narration** (6.9) — at audit moment, on-screen text: *"37 of 503 past Gemini 3 submissions matched this profile. Winners: 0. Common failure: vague user, weak repo evidence, no working demo."* Re-uses Qdrant Recommendation API negative anchors; the **narration** is what's new.
+
+3. **Winner Gravity narration upgrade** (6.10) — when 3D graph node moves post-correction, floating tooltip: *"72% similar to winner cluster, but pulled toward non-winner pattern by anchor 'X' (similar evidence depth)."* Makes the spatial movement *legible*.
+
+4. **Score Receipts UI rebrand** (6.11) — what we called "evidence drill-down" → **"Score Receipts"** (each score has a receipt: deck quote + repo file:line + 2 anchor projects + their scores). Memorable shareable label.
+
+### §13.2 Qdrant becomes the protagonist (8 visible touch points across 3-min demo)
+
+Per sangguen's "Vector DB must be load-bearing", Qdrant is foregrounded **eight times** in the Qdrant 3-min demo:
+
+| Slot | Qdrant feature visible |
+|---|---|
+| 0:10-0:30 | LAYER 2 — pitch_chunks + repo_chunks DENSE+SPARSE indicators ticking |
+| 0:30-1:00 | LAYER 4 — Yellow card shows evidence_depth = 0.31 (computed from Qdrant retrieval depth) |
+| 1:30-1:45 | LAYER — Recommendation API call visible: positive=[over_confident_anchors] negative=[accurate_anchors], strategy=average_vector |
+| 1:30-1:45 | LAYER — group_by query results: anchor projects + their A1 scores |
+| 1:45-2:30 | LAYER 2 — 503 anchor constellation in 3D, clustered by outcome_tier (gold/silver/grey) |
+| 1:45-2:30 | LAYER 4 — corrected node migrates toward winner-anchor cluster (Winner Gravity narration) |
+| 2:30-2:50 | RIGHT panel — group_by query "Ranks similar to X (winner)" + Anti-Pattern Radar narration |
+| 2:50-3:00 | Tagline: "*And the auditor is the vector space.*" |
+
+### §13.3 sangguen's scope-cut alignment (already in our v1)
+
+| sangguen proposed cut | Our v1 status |
+|---|---|
+| KO/EN i18n 보류 | ✅ Already cut (max-wins-plan §12 decision 5) |
+| 75 evaluation techniques 보류 | ✅ Already cut (max-wins-plan §12 decision 6 + technical-apex §0) |
+| Production auth 보류 | Partial — Firebase Auth Google sign-in retained (RLS prerequisite); SSO/SAML/enterprise auth in V2 |
+| 6 Hats UI: only 3 visible | ✅ Already cut (max-wins-plan §12 decision 6) |
+
+### §13.4 Why our hybrid+rubric thesis sharpens sangguen's message (one level higher)
+
+sangguen's framing is **"Qdrant audits the judge."** Our 2026-05-15 thesis upgrade ([[glasshat-rubric-and-mode]]) extends this to:
+
+> **"Qdrant audits the judge — *and proves the judge is rubric-relative*."**
+
+Why this is one level higher (Christensen JTBD-frame):
+- sangguen's frame answers: "Is the AI judge fair?"
+- Our extended frame also answers: "**Fair according to whom**?"
+
+The dual-rubric variance display (§12.1 Layer 2 + max-wins-plan §13) shows the same submission scoring 87 under Qdrant rubric and 73 under Rapid Agent rubric, captioned *"Correct rubric-aware variance, not bias."* This delivers sangguen's message **and** opens Glasshat to evaluators across hackathons / VCs / accelerators / academic boards — single-protagonist Qdrant audit + multi-rubric defensibility.
+
+Both demos' final 1-second reveal: *"Same engine. Different rubric. Different (correct) score."*
+
+### §13.5 Authoritative narration anchors (lock 2026-05-15)
+
+These exact strings are demo voice / on-screen captions; do not paraphrase in scripts:
+
+| Beat | String |
+|---|---|
+| Both demos 0:00-0:05 hook | *"Glasshat doesn't just judge projects. It audits the judge."* |
+| Qdrant demo 1:30-1:45 anti-pattern | *"37 of 503 past submissions matched this profile. Winners: 0."* |
+| Qdrant demo 1:45-2:30 gravity | *"72% similar to winner cluster, but pulled toward non-winner pattern."* |
+| Qdrant demo 2:50-3:00 close | *"And the auditor is the vector space."* |
+| Rapid Agent demo 2:50-3:00 close | *"And the audit happens mid-iteration."* |
+| Both demos 2:55-3:00 reveal | *"Same engine. Different rubric. Different (correct) score."* |
+
+---
+
+*Last updated: 2026-05-15 KST post-rubric-and-mode lock + sangguen's wow-sharpening. Authoritative on wow moment technical design. Updates require user review.*
