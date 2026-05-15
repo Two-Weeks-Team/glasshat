@@ -4,6 +4,8 @@
 
 <!-- 🔴 ADDENDUM 2026-05-15: Phase 1 sequence is now **D → 1.5 (RubricSynthesizer) → B (Qdrant w/ extended payload) → mode-UI (Hybrid Judge+Participant)**. RubricSynthesizer agent + 4 preset rubrics + bmad-vocabulary super-set + Hybrid mode viewports + Top-K hit rate verification + dual-rubric variance audit moment + sangguen's Vector-DB-as-Protagonist narration upgrades (Live Bias Meter + Anti-Pattern Radar + Winner Gravity + Score Receipts). Phase 1 estimated finish ~2026-05-25 with role parallelism (D-7 buffer before Qdrant 6/1 deadline). Read **`docs/max-wins-plan.md` §13-§17** + **`docs/rubric-synthesis-spec.md`** + **`docs/hybrid-mode-spec.md`** + **`docs/team-onboarding.md`** + **`data/devpost-gemini3/INTEGRATION.md`**. New team members start with `docs/team-onboarding.md`. -->
 
+<!-- 🟢 PROTOTYPE 2026-05-15: Live interactive prototype (3-min auto-play, Judge × Participant viewports) at https://two-weeks-team.github.io/glasshat/prototype.html · source `mockups/index.html` · spec `docs/demo-prototype-spec.md`. **Approval-gated artifact** — sign-off here unlocks Phase 1 D code start. -->
+
 # WhyC — Plan (fairthon-port: GCP + Agent Builder + Arize + Qdrant) — dual-submit: Rapid Agent + Qdrant VSD
 
 Recorded at KST: `2026-05-13`. Decisions locked by the user this session (see § "Decisions" below).

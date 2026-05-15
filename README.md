@@ -11,7 +11,9 @@
 > - **Qdrant VSD demo** — the panel audits itself; vector-anchored score correction; 3D evaluation graph
 > - **Rapid Agent / Arize demo** — agent consults Phoenix MCP mid-run, detects past drift, changes retrieval strategy live
 
-**Status (2026-05-15)**: scaffold + architecture + GCP/Gemini verification + 7-spike technical validation **complete**. Renamed from `Panelyst` → `Glasshat` on 2026-05-14. **Thesis upgrade locked 2026-05-15** (rubric is dynamic per-evaluator, hybrid Judge+Participant viewports, Top-K hit rate verification on 503 Gemini 3 corpus, dual-rubric variance audit moment — see `docs/max-wins-plan.md` §13-§17, `docs/rubric-synthesis-spec.md`, `docs/hybrid-mode-spec.md`). Phase 1 implementation in progress.
+**Status (2026-05-15)**: scaffold + architecture + GCP/Gemini verification + 7-spike technical validation **complete**. Renamed from `Panelyst` → `Glasshat` on 2026-05-14. **Thesis upgrade locked 2026-05-15** (rubric is dynamic per-evaluator, hybrid Judge+Participant viewports, Top-K hit rate verification on 503 Gemini 3 corpus, dual-rubric variance audit moment — see `docs/max-wins-plan.md` §13-§17, `docs/rubric-synthesis-spec.md`, `docs/hybrid-mode-spec.md`). **Interactive prototype live (v0.2)** — 3-min auto-play, Judge × Participant viewports, 2026 design trends (OKLCH + bento grid + Three.js 3D constellation + spring motion); approval-gated artifact for Phase 1 D start.
+
+> 🎬 **[Try the live prototype →](https://two-weeks-team.github.io/glasshat/prototype.html)** · spec: [`docs/demo-prototype-spec.md`](docs/demo-prototype-spec.md) · source: [`mockups/index.html`](mockups/index.html)
 
 **Win probability** (post-thesis-upgrade 2026-05-15): Qdrant top-3 **42-52%** · Rapid Agent / Arize top-3 **65-72%**.
 
