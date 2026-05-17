@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#0a0e14" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<title>Glasshat — judge the judge, in your thumb</title>
+<style>
+/* ============================================================
+ *  GLASSHAT MOBILE-FIRST · P07
+ *  - Primary viewport: 375x812 (iPhone 15)
+ *  - Desktop upgrade: max 480px card on a centered phone frame
+ *  - OKLCH palette · system fonts · self-contained
+ *  - Bottom-sheet CTA · 48px tap targets · story scroll
+ * ============================================================ */
+:root {
+  /* surfaces */
+  --bg:           oklch(13% 0.018 250);
+  --surface:      oklch(17% 0.020 250);
+  --surface-hi:   oklch(21% 0.024 250);
+  --border:       oklch(95% 0 0 / 0.12);
+  --border-hi:    oklch(95% 0 0 / 0.24);
+
+  /* text */
+  --fg:           oklch(98% 0 0);
+  --fg-mute:      oklch(78% 0 0);
+  --fg-dim:       oklch(60% 0 0);
+
+  /* brand */
+  --primary:      oklch(75% 0.16 215);
+  --primary-soft: oklch(75% 0.16 215 / 0.18);
+  --accent:       oklch(78% 0.20 350);
+  --accent-soft:  oklch(78% 0.20 350 / 0.20);
+  --gold:         oklch(82% 0.16 88);
+  --success:      oklch(78% 0.18 150);
+  --danger:       oklch(70% 0.22 28);
+
+  /* hats */
+  --h-white:  oklch(96% 0 0);
+  --h-red:    oklch(72% 0.17 25);
+  --h-yellow: oklch(80% 0.13 95);
+  --h-black:  oklch(28% 0 0);
+  --h-green:  oklch(72% 0.17 150);
+  --h-blue:   oklch(72% 0.17 245);
+
+  /* spacing */
+  --tap: 48px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+  /* type */
+  --t-cap: 11px;
+  --t-lbl: 13px;
+  --t-bod: 16px;
+  --t-h2: 20px;
+  --t-h1: 32px;
+  --t-hero: 40px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overscroll-behavior-y: contain; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, system-ui, 'Helvetica Neue', sans-serif;
+  font-size: var(--t-bod);
+  line-height: 1.5;
+  color: var(--fg);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ============================================================
+ *  DESKTOP UPGRADE — phone frame
+ * ============================================================ */
+.phone-frame {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  background: var(--bg);
+  overflow-x: hidden;
+}
+@media (min-width: 640px) {
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at 30% 20%, oklch(20% 0.03 250), oklch(8% 0.01 250));
+    padding: 20px;
+  }
+  .phone-frame {
+    width: 390px;
+    min-height: 844px;
+    max-height: 90vh;
+    border-radius: 48px;
+    border: 12px solid oklch(18% 0 0);
+    box-shadow:
+      0 40px 120px oklch(0% 0 0 / 0.6),
+      0 0 0 1px oklch(95% 0 0 / 0.06) inset,
+      0 0 60px oklch(75% 0.16 215 / 0.15);
+    overflow: hidden;
+  }
+  .phone-frame::before {
+    content: '';
+    position: absolute;
+    top: 12px; left: 50%;
+    transform: translateX(-50%);
+    width: 120px; height: 28px;
+    background: oklch(8% 0 0);
+    border-radius: 0 0 16px 16px;
+    z-index: 1000;
+  }
+}
+
+/* ============================================================
+ *  STATUS BAR (mobile + desktop frame)
+ * ============================================================ */
+.status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: calc(8px + var(--safe-top)) 24px 8px;
+  font-size: var(--t-lbl);
+  font-weight: 600;
+  color: var(--fg);
+  background: var(--bg);
+  position: sticky; top: 0; z-index: 50;
+}
+.status-bar .time { font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+.status-bar .icons { display: flex; gap: 6px; align-items: center; }
+.status-bar svg { width: 16px; height: 12px; fill: var(--fg); }
+
+/* ============================================================
+ *  HEADER (sticky, 56px)
+ * ============================================================ */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  height: 56px;
+  background: oklch(13% 0.018 250 / 0.92);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 36px; z-index: 40;
+}
+.brand {
+  display: flex; align-items: center; gap: 8px;
+  font-weight: 700; font-size: 17px;
+  letter-spacing: -0.02em;
+}
+.brand-mark {
+  width: 28px; height: 28px;
+  display: grid; place-items: center;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  border-radius: 8px;
+  font-size: 16px;
+}
+.menu-btn {
+  width: var(--tap); height: var(--tap);
+  display: grid; place-items: center;
+  background: transparent;
+  border: none;
+  color: var(--fg);
+  font-size: 20px;
+  cursor: pointer;
+}
+
+/* ============================================================
+ *  HERO — thumb-reach zone (top 60vh)
+ * ============================================================ */
+.hero {
+  padding: 32px 20px 24px;
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+}
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--primary-soft);
+  border: 1px solid oklch(75% 0.16 215 / 0.35);
+  border-radius: 999px;
+  font-size: var(--t-cap);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin-bottom: 20px;
+  align-self: flex-start;
+}
+.hero-eyebrow .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--primary);
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.4); }
+}
+.hero h1 {
+  font-size: var(--t-hero);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  margin-bottom: 16px;
+}
+.hero h1 .accent {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.hero p {
+  font-size: 17px;
+  color: var(--fg-mute);
+  line-height: 1.45;
+  margin-bottom: 24px;
+  max-width: 32ch;
+}
+.hero-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 24px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+.hero-stat { text-align: center; }
+.hero-stat-num {
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+}
+.hero-stat-num.gold { color: var(--gold); }
+.hero-stat-num.primary { color: var(--primary); }
+.hero-stat-num.accent { color: var(--accent); }
+.hero-stat-lbl {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  margin-top: 2px;
+}
+
+/* Scroll hint */
+.scroll-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 28px;
+  font-size: var(--t-cap);
+  color: var(--fg-dim);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  animation: bob 2.4s ease-in-out infinite;
+}
+@keyframes bob {
+  0%, 100% { transform: translateY(0); opacity: 0.5; }
+  50% { transform: translateY(6px); opacity: 1; }
+}
+.scroll-hint-arrow {
+  width: 18px; height: 18px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+  margin-bottom: 4px;
+}
+
+/* ============================================================
+ *  STORY SCENES — Instagram-Stories cadence
+ * ============================================================ */
+.story {
+  padding: 24px 20px 100px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.scene {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.scene:nth-child(1) { animation-delay: 0.05s; }
+.scene:nth-child(2) { animation-delay: 0.12s; }
+.scene:nth-child(3) { animation-delay: 0.18s; }
+.scene:nth-child(4) { animation-delay: 0.22s; }
+.scene:nth-child(5) { animation-delay: 0.28s; }
+.scene:nth-child(6) { animation-delay: 0.34s; }
+@keyframes rise {
+  to { opacity: 1; transform: translateY(0); }
+}
+.scene-num {
+  position: absolute;
+  top: 16px; right: 20px;
+  font-size: var(--t-cap);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+}
+.scene-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+.scene-tag.ingest  { background: oklch(72% 0.17 245 / 0.18); color: var(--h-blue); }
+.scene-tag.plan    { background: oklch(72% 0.17 150 / 0.18); color: var(--h-green); }
+.scene-tag.panel   { background: oklch(80% 0.13 95 / 0.18);  color: var(--h-yellow); }
+.scene-tag.audit   { background: oklch(70% 0.22 28 / 0.18);  color: var(--danger); }
+.scene-tag.score   { background: oklch(82% 0.16 88 / 0.18);  color: var(--gold); }
+.scene-tag.rubric  { background: oklch(78% 0.20 350 / 0.18); color: var(--accent); }
+
+.scene h3 {
+  font-size: var(--t-h2);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin-bottom: 8px;
+  line-height: 1.25;
+}
+.scene p {
+  font-size: 15px;
+  color: var(--fg-mute);
+  line-height: 1.45;
+}
+
+/* Scene visuals — inline SVG, mobile-native */
+.scene-vis {
+  margin-top: 14px;
+  padding: 14px;
+  background: var(--surface-hi);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+
+/* Two drop zones */
+.drop-row {
+  display: flex;
+  gap: 10px;
+}
+.drop {
+  flex: 1;
+  padding: 14px 10px;
+  background: oklch(15% 0.018 250);
+  border: 1px dashed var(--border-hi);
+  border-radius: 10px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--fg-mute);
+}
+.drop svg { width: 24px; height: 24px; margin-bottom: 6px; opacity: 0.7; }
+.drop strong { display: block; font-weight: 700; color: var(--fg); margin-top: 2px; }
+
+/* Plan list */
+.plan-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.plan-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--fg-mute);
+  font-family: ui-monospace, 'SF Mono', monospace;
+}
+.plan-list li::before {
+  content: '▸';
+  color: var(--h-green);
+  font-size: 11px;
+}
+
+/* Hats row */
+.hats-row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+.hat-chip {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 14px;
+  border: 2px solid oklch(95% 0 0 / 0.12);
+  position: relative;
+}
+.hat-chip.white  { background: var(--h-white); color: var(--bg); }
+.hat-chip.red    { background: var(--h-red); color: var(--bg); }
+.hat-chip.yellow { background: var(--h-yellow); color: var(--bg); }
+.hat-chip.black  { background: var(--h-black); color: var(--fg); border-color: var(--border-hi); }
+.hat-chip.green  { background: var(--h-green); color: var(--bg); }
+.hat-chip.blue   { background: var(--h-blue); color: var(--bg); }
+.hat-chip.audit-active {
+  animation: hatPulse 1.6s ease-in-out infinite;
+  box-shadow: 0 0 0 3px oklch(70% 0.22 28 / 0.4);
+}
+@keyframes hatPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+/* Audit pulse — the wow */
+.audit-pulse {
+  position: relative;
+  height: 80px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.audit-pulse-core {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--danger), oklch(70% 0.22 28 / 0));
+  position: relative;
+  z-index: 2;
+}
+.audit-pulse-ring {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--danger);
+  transform: translate(-50%, -50%);
+  animation: ring 2s ease-out infinite;
+}
+.audit-pulse-ring.r2 { animation-delay: 0.6s; }
+.audit-pulse-ring.r3 { animation-delay: 1.2s; }
+@keyframes ring {
+  0% { width: 48px; height: 48px; opacity: 0.9; }
+  100% { width: 220px; height: 220px; opacity: 0; }
+}
+.audit-caption {
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--danger);
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+/* Score self-correct ticker */
+.score-correct {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-family: ui-monospace, 'SF Mono', monospace;
+  font-size: 28px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  padding: 14px 0;
+}
+.score-before {
+  color: var(--fg-dim);
+  text-decoration: line-through;
+  text-decoration-color: var(--danger);
+  text-decoration-thickness: 2px;
+}
+.score-arrow {
+  color: var(--primary);
+  font-size: 18px;
+}
+.score-after {
+  color: var(--success);
+  position: relative;
+}
+.score-after::after {
+  content: '✓';
+  position: absolute;
+  top: -4px; right: -16px;
+  font-size: 14px;
+  color: var(--success);
+}
+.score-delta {
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  font-family: ui-monospace, monospace;
+}
+
+/* Dual rubric */
+.dual-rubric {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.rubric-card {
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: oklch(15% 0.018 250);
+}
+.rubric-card.qdrant { border-color: oklch(75% 0.16 215 / 0.4); }
+.rubric-card.rapid  { border-color: oklch(78% 0.20 350 / 0.4); }
+.rubric-name {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  margin-bottom: 6px;
+}
+.rubric-score {
+  font-family: ui-monospace, monospace;
+  font-size: 24px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.rubric-card.qdrant .rubric-score { color: var(--primary); }
+.rubric-card.rapid  .rubric-score { color: var(--accent); }
+.rubric-axes {
+  margin-top: 6px;
+  font-size: 10px;
+  color: var(--fg-dim);
+  line-height: 1.4;
+}
+.rubric-caption {
+  grid-column: 1 / -1;
+  text-align: center;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--fg-mute);
+  margin-top: 4px;
+}
+
+/* ============================================================
+ *  BOTTOM SHEET — CTAs at thumb height
+ * ============================================================ */
+.bottom-sheet {
+  position: fixed;
+  left: 0; right: 0;
+  bottom: 0;
+  padding: 12px 16px calc(12px + var(--safe-bottom));
+  background: oklch(13% 0.018 250 / 0.95);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 100;
+}
+@media (min-width: 640px) {
+  .bottom-sheet {
+    position: absolute;
+    border-radius: 0 0 36px 36px;
+  }
+}
+.cta-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: var(--tap);
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: var(--bg);
+  border: none;
+  border-radius: 14px;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.cta-primary:active { transform: scale(0.97); }
+.cta-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  background: transparent;
+  color: var(--fg-mute);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+.cta-secondary:active { background: var(--surface); }
+
+/* spacer for bottom-sheet */
+.bottom-spacer { height: 130px; }
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .scene { opacity: 1; transform: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="phone-frame" role="application" aria-label="Glasshat mobile demo">
+
+  <!-- ============================================================
+       STATUS BAR
+       ============================================================ -->
+  <div class="status-bar" aria-hidden="true">
+    <span class="time">9:41</span>
+    <span class="icons">
+      <svg viewBox="0 0 16 12"><path d="M2 8h2v3H2zm4-2h2v5H6zm4-2h2v7h-2zm4-3h2v10h-2z"/></svg>
+      <svg viewBox="0 0 16 12"><path d="M8 2C5 2 2.5 3.2 1 5l1 1c1.2-1.4 3.3-2.5 6-2.5s4.8 1.1 6 2.5l1-1C12.5 3.2 10 2 8 2zm0 3c-1.8 0-3.4.7-4.5 1.8l1 1C5.4 7 6.6 6.5 8 6.5s2.6.5 3.5 1.3l1-1C11.4 5.7 9.8 5 8 5zm0 3c-1 0-1.8.4-2.5 1l1 1c.4-.3.9-.5 1.5-.5s1.1.2 1.5.5l1-1C9.8 8.4 9 8 8 8z"/></svg>
+      <svg viewBox="0 0 16 12"><rect x="1" y="3" width="11" height="6" rx="1" fill="none" stroke="currentColor"/><rect x="2.5" y="4.5" width="8" height="3" rx="0.5"/><rect x="13" y="5" width="1.5" height="2"/></svg>
+    </span>
+  </div>
+
+  <!-- ============================================================
+       HEADER (sticky)
+       ============================================================ -->
+  <header class="app-header">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/>
+        </svg>
+      </span>
+      Glasshat
+    </div>
+    <button class="menu-btn" aria-label="Menu">≡</button>
+  </header>
+
+  <!-- ============================================================
+       HERO — thumb-reach zone
+       ============================================================ -->
+  <section class="hero">
+    <span class="hero-eyebrow">
+      <span class="dot"></span>
+      Live · 2026 hackathons
+    </span>
+    <h1>The judge<br/>gets <span class="accent">judged.</span></h1>
+    <p>Watch six AI hats catch their own bias — and self-correct the score, on the phone you're already holding.</p>
+
+    <div class="hero-stats" role="list">
+      <div class="hero-stat" role="listitem">
+        <div class="hero-stat-num gold">503</div>
+        <div class="hero-stat-lbl">corpus</div>
+      </div>
+      <div class="hero-stat" role="listitem">
+        <div class="hero-stat-num primary">6</div>
+        <div class="hero-stat-lbl">hats</div>
+      </div>
+      <div class="hero-stat" role="listitem">
+        <div class="hero-stat-num accent">2</div>
+        <div class="hero-stat-lbl">rubrics</div>
+      </div>
+    </div>
+
+    <div class="scroll-hint" aria-hidden="true">
+      <span class="scroll-hint-arrow"></span>
+      swipe to watch
+    </div>
+  </section>
+
+  <!-- ============================================================
+       STORY — 6 scenes, vertical
+       ============================================================ -->
+  <section class="story" aria-label="Demo storyboard">
+
+    <!-- Scene 1: Ingest -->
+    <article class="scene">
+      <span class="scene-num">01 / 06</span>
+      <span class="scene-tag ingest">Ingest</span>
+      <h3>Drop a deck + repo.</h3>
+      <p>No chatbox. Two drop zones. Gemini multimodal parses, Qdrant embeds with hybrid dense + sparse.</p>
+      <div class="scene-vis">
+        <div class="drop-row">
+          <div class="drop">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            pitch.pdf<strong>parsed</strong>
+          </div>
+          <div class="drop">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"/></svg>
+            repo.url<strong>cloned</strong>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- Scene 2: Plan -->
+    <article class="scene">
+      <span class="scene-num">02 / 06</span>
+      <span class="scene-tag plan">Plan</span>
+      <h3>Blue planner emits an inspectable plan.</h3>
+      <p>Gemini 3.1 Pro <code>thinking_level=high</code> proposes hats, BMAD items, retrieval budgets. You approve.</p>
+      <div class="scene-vis">
+        <ul class="plan-list">
+          <li>hats: white · red · yellow · black · green</li>
+          <li>bmad: A1 A3 B2 C1 C4 D2</li>
+          <li>retrieval: past_evals × 12</li>
+          <li>rubric: qdrant_vsd_v1.json</li>
+        </ul>
+      </div>
+    </article>
+
+    <!-- Scene 3: Panel -->
+    <article class="scene">
+      <span class="scene-num">03 / 06</span>
+      <span class="scene-tag panel">Panel</span>
+      <h3>Six hats run in parallel.</h3>
+      <p>ADK ParallelAgent. Each emits structured findings with evidence refs. Allowed to disagree.</p>
+      <div class="scene-vis">
+        <div class="hats-row" aria-label="Six hats">
+          <div class="hat-chip white">W</div>
+          <div class="hat-chip red">R</div>
+          <div class="hat-chip yellow">Y</div>
+          <div class="hat-chip black">B</div>
+          <div class="hat-chip green">G</div>
+          <div class="hat-chip blue">Bl</div>
+        </div>
+      </div>
+    </article>
+
+    <!-- Scene 4: Audit (THE WOW) -->
+    <article class="scene" style="border-color: oklch(70% 0.22 28 / 0.45); background: linear-gradient(180deg, var(--surface), oklch(20% 0.04 28));">
+      <span class="scene-num">04 / 06</span>
+      <span class="scene-tag audit">Audit · the wow</span>
+      <h3>The panel catches itself.</h3>
+      <p>Phoenix MCP detects Yellow's score inconsistent with evidence depth. Black hat fires counter-claim. Qdrant retrieves 3 anti-pattern anchors.</p>
+      <div class="scene-vis" style="padding: 8px;">
+        <div class="audit-pulse" aria-hidden="true">
+          <div class="audit-pulse-ring"></div>
+          <div class="audit-pulse-ring r2"></div>
+          <div class="audit-pulse-ring r3"></div>
+          <div class="audit-pulse-core"></div>
+        </div>
+        <div class="audit-caption">drift detected · ±1.2 pts on A1</div>
+      </div>
+    </article>
+
+    <!-- Scene 5: Score self-corrects -->
+    <article class="scene">
+      <span class="scene-num">05 / 06</span>
+      <span class="scene-tag score">Score</span>
+      <h3>The number self-corrects on screen.</h3>
+      <p><code>new_score = clip(predicted − 0.8 × mean_delta, p25, p75)</code>. Animated decrement, visible delta.</p>
+      <div class="scene-vis">
+        <div class="score-correct" aria-label="Score self-correction">
+          <span class="score-before">87</span>
+          <span class="score-arrow">→</span>
+          <span class="score-after">83</span>
+        </div>
+        <div class="score-delta">−4 pts · anchored to past_evals p50</div>
+      </div>
+    </article>
+
+    <!-- Scene 6: Dual rubric -->
+    <article class="scene">
+      <span class="scene-num">06 / 06</span>
+      <span class="scene-tag rubric">Dual rubric · the close</span>
+      <h3>Same submission. Two rubrics.</h3>
+      <p>Qdrant's 3 axes vs Rapid Agent's 4 with Tech tie-break. Different scores. Both correct.</p>
+      <div class="scene-vis">
+        <div class="dual-rubric">
+          <div class="rubric-card qdrant">
+            <div class="rubric-name">Qdrant VSD</div>
+            <div class="rubric-score">87/100</div>
+            <div class="rubric-axes">Func · Orig · UX</div>
+          </div>
+          <div class="rubric-card rapid">
+            <div class="rubric-name">Rapid Agent</div>
+            <div class="rubric-score">73/100</div>
+            <div class="rubric-axes">Tech · Des · Imp · Idea</div>
+          </div>
+          <div class="rubric-caption">correct rubric-aware variance, not bias</div>
+        </div>
+      </div>
+    </article>
+
+  </section>
+
+  <div class="bottom-spacer"></div>
+
+  <!-- ============================================================
+       BOTTOM SHEET — pinned thumb-zone CTAs
+       ============================================================ -->
+  <div class="bottom-sheet" role="region" aria-label="Primary actions">
+    <a class="cta-primary" href="./demo.html">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <polygon points="6,4 20,12 6,20"/>
+      </svg>
+      Play the 90-sec demo
+    </a>
+    <a class="cta-secondary" href="https://two-weeks-team.github.io/glasshat/prototype.html">
+      Open full prototype on desktop →
+    </a>
+  </div>
+
+</div>
+
+<script>
+// Minimal interactivity: tap a scene to "open" it (future deep-link)
+document.querySelectorAll('.scene').forEach((scene, i) => {
+  scene.addEventListener('click', () => {
+    scene.style.transform = 'scale(0.98)';
+    setTimeout(() => { scene.style.transform = ''; }, 150);
+  });
+});
+
+// Pull-to-refresh hook (visual stub — no network)
+let startY = 0;
+document.addEventListener('touchstart', (e) => {
+  if (window.scrollY === 0) startY = e.touches[0].clientY;
+}, { passive: true });
+document.addEventListener('touchmove', (e) => {
+  if (window.scrollY === 0 && e.touches[0].clientY - startY > 80) {
+    document.body.style.transition = 'transform 0.3s';
+    document.body.style.transform = 'translateY(20px)';
+    setTimeout(() => { document.body.style.transform = ''; }, 400);
+  }
+}, { passive: true });
+</script>
+
+</body>
+</html>

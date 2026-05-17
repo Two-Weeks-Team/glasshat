@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#0a0e14" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<title>Glasshat live · phone demo</title>
+<style>
+/* ============================================================
+ *  GLASSHAT DEMO · P07 mobile
+ *  - The phone IS the demo surface
+ *  - Snap-scroll story · swipe scenes
+ *  - 3D constellation replaced w/ vertical fly-over
+ *  - Bottom nav · 48px tap targets
+ * ============================================================ */
+:root {
+  --bg:           oklch(10% 0.018 250);
+  --surface:      oklch(15% 0.020 250);
+  --surface-hi:   oklch(20% 0.024 250);
+  --border:       oklch(95% 0 0 / 0.12);
+  --border-hi:    oklch(95% 0 0 / 0.28);
+
+  --fg:           oklch(98% 0 0);
+  --fg-mute:      oklch(78% 0 0);
+  --fg-dim:       oklch(58% 0 0);
+
+  --primary:      oklch(75% 0.16 215);
+  --primary-soft: oklch(75% 0.16 215 / 0.18);
+  --accent:       oklch(78% 0.20 350);
+  --accent-soft:  oklch(78% 0.20 350 / 0.20);
+  --gold:         oklch(82% 0.16 88);
+  --success:      oklch(78% 0.18 150);
+  --warning:      oklch(82% 0.18 80);
+  --danger:       oklch(70% 0.22 28);
+
+  --h-white:  oklch(96% 0 0);
+  --h-red:    oklch(72% 0.17 25);
+  --h-yellow: oklch(80% 0.13 95);
+  --h-black:  oklch(28% 0 0);
+  --h-green:  oklch(72% 0.17 150);
+  --h-blue:   oklch(72% 0.17 245);
+
+  --tap: 48px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body {
+  height: 100%;
+  overscroll-behavior: contain;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, system-ui, 'Helvetica Neue', sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--fg);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+/* ============================================================
+ *  DESKTOP PHONE FRAME
+ * ============================================================ */
+.phone {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+@media (min-width: 640px) {
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at 30% 20%, oklch(20% 0.03 250), oklch(6% 0.01 250));
+    padding: 20px;
+  }
+  .phone {
+    width: 390px;
+    height: 844px;
+    max-height: 92vh;
+    border-radius: 48px;
+    border: 12px solid oklch(15% 0 0);
+    box-shadow:
+      0 40px 120px oklch(0% 0 0 / 0.7),
+      0 0 0 1px oklch(95% 0 0 / 0.06) inset,
+      0 0 80px oklch(75% 0.16 215 / 0.18);
+    overflow: hidden;
+  }
+  .phone::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 120px; height: 28px;
+    background: oklch(6% 0 0);
+    border-radius: 0 0 16px 16px;
+    z-index: 1000;
+  }
+}
+
+/* ============================================================
+ *  STATUS BAR
+ * ============================================================ */
+.status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: calc(8px + var(--safe-top)) 24px 8px;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--bg);
+  z-index: 50;
+  flex-shrink: 0;
+}
+.status-bar .icons { display: flex; gap: 6px; }
+.status-bar svg { width: 16px; height: 12px; fill: currentColor; }
+
+/* ============================================================
+ *  TOP BAR
+ * ============================================================ */
+.top-bar {
+  display: grid;
+  grid-template-columns: var(--tap) 1fr var(--tap);
+  align-items: center;
+  padding: 8px;
+  height: 56px;
+  border-bottom: 1px solid var(--border);
+  background: oklch(10% 0.018 250 / 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  flex-shrink: 0;
+}
+.top-bar .icon-btn {
+  width: var(--tap); height: var(--tap);
+  display: grid; place-items: center;
+  background: transparent;
+  border: none;
+  color: var(--fg);
+  font-size: 22px;
+  text-decoration: none;
+  cursor: pointer;
+}
+.top-bar .title {
+  text-align: center;
+  font-weight: 700;
+  font-size: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.1;
+}
+.top-bar .title small {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--fg-dim);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+.top-bar .live-dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  margin-right: 4px;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ============================================================
+ *  PROGRESS DOTS (story-style)
+ * ============================================================ */
+.progress {
+  display: flex;
+  gap: 4px;
+  padding: 8px 12px;
+  background: oklch(10% 0.018 250 / 0.95);
+  flex-shrink: 0;
+}
+.progress-bar {
+  flex: 1;
+  height: 3px;
+  background: oklch(95% 0 0 / 0.15);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+.progress-bar.done { background: oklch(95% 0 0 / 0.45); }
+.progress-bar.active::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; height: 100%;
+  width: 100%;
+  background: var(--primary);
+  animation: progressFill 4s linear forwards;
+}
+@keyframes progressFill {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+/* ============================================================
+ *  STORY VIEWPORT — snap scroll
+ * ============================================================ */
+.story-viewport {
+  flex: 1;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.story-viewport::-webkit-scrollbar { display: none; }
+
+.scene {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  min-height: 100%;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+}
+
+/* Scene header */
+.scene-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.scene-num {
+  font-family: ui-monospace, 'SF Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+}
+.scene-tag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.scene-tag.ingest  { background: oklch(72% 0.17 245 / 0.20); color: var(--h-blue); }
+.scene-tag.plan    { background: oklch(72% 0.17 150 / 0.20); color: var(--h-green); }
+.scene-tag.panel   { background: oklch(80% 0.13 95 / 0.20);  color: var(--h-yellow); }
+.scene-tag.audit   { background: oklch(70% 0.22 28 / 0.22);  color: var(--danger); }
+.scene-tag.score   { background: oklch(82% 0.16 88 / 0.20);  color: var(--gold); }
+.scene-tag.rubric  { background: oklch(78% 0.20 350 / 0.20); color: var(--accent); }
+.scene-tag.constel { background: oklch(75% 0.16 215 / 0.20); color: var(--primary); }
+
+.scene h2 {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+}
+.scene .caption {
+  font-size: 15px;
+  color: var(--fg-mute);
+  line-height: 1.5;
+  max-width: 36ch;
+}
+
+/* Scene body — visualization area */
+.scene-body {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ============================================================
+ *  SCENE 1 · INGEST — two drop tiles
+ * ============================================================ */
+.drop-tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.drop-tile {
+  padding: 18px 12px;
+  background: var(--surface-hi);
+  border: 1px dashed var(--border-hi);
+  border-radius: 14px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.drop-tile.done { border-style: solid; border-color: var(--success); }
+.drop-tile svg.icon { width: 32px; height: 32px; opacity: 0.85; }
+.drop-tile-name {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  margin-top: 8px;
+  color: var(--fg);
+  font-weight: 600;
+  word-break: break-all;
+}
+.drop-tile-meta {
+  font-size: 10px;
+  color: var(--fg-dim);
+  margin-top: 2px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.drop-tile-check {
+  position: absolute;
+  top: 6px; right: 6px;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--success);
+  color: var(--bg);
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.ingest-meta {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+}
+.ingest-meta-cell {
+  padding: 8px;
+  background: oklch(13% 0.018 250);
+  border-radius: 8px;
+  text-align: center;
+}
+.ingest-meta-num {
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--primary);
+  font-variant-numeric: tabular-nums;
+}
+.ingest-meta-lbl {
+  display: block;
+  font-size: 9px;
+  color: var(--fg-dim);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+/* ============================================================
+ *  SCENE 2 · PLAN
+ * ============================================================ */
+.plan-card {
+  background: oklch(13% 0.018 250);
+  border-radius: 12px;
+  padding: 12px;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.plan-row {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px dashed var(--border);
+  padding: 6px 0;
+}
+.plan-row:last-child { border-bottom: none; }
+.plan-key { color: var(--fg-dim); }
+.plan-val { color: var(--fg); font-weight: 600; }
+.plan-val.accent { color: var(--primary); }
+.thinking-trace {
+  background: oklch(11% 0.020 250);
+  border-left: 3px solid var(--primary);
+  border-radius: 0 8px 8px 0;
+  padding: 10px 12px;
+  font-size: 11px;
+  font-family: ui-monospace, monospace;
+  color: var(--fg-mute);
+  line-height: 1.5;
+}
+.thinking-trace .think-lbl {
+  display: block;
+  font-size: 9px;
+  color: var(--primary);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  font-weight: 700;
+}
+.approve-btn {
+  height: var(--tap);
+  background: var(--success);
+  color: var(--bg);
+  border: none;
+  border-radius: 12px;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  letter-spacing: -0.01em;
+}
+
+/* ============================================================
+ *  SCENE 3 · PANEL — 6 hats
+ * ============================================================ */
+.hats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.hat {
+  padding: 10px;
+  background: var(--surface-hi);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  text-align: center;
+  position: relative;
+}
+.hat-orb {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  margin: 0 auto 6px;
+  position: relative;
+}
+.hat.white  .hat-orb { background: var(--h-white); }
+.hat.red    .hat-orb { background: var(--h-red); }
+.hat.yellow .hat-orb { background: var(--h-yellow); }
+.hat.black  .hat-orb { background: var(--h-black); border: 1px solid var(--border-hi); }
+.hat.green  .hat-orb { background: var(--h-green); }
+.hat.blue   .hat-orb { background: var(--h-blue); }
+.hat-name {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg);
+}
+.hat-score {
+  font-family: ui-monospace, monospace;
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-mute);
+  margin-top: 2px;
+}
+.hat.running .hat-orb::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 2px solid var(--primary);
+  border-top-color: transparent;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.panel-log {
+  background: oklch(11% 0.020 250);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  max-height: 84px;
+  overflow: hidden;
+}
+.panel-log-row { display: flex; gap: 6px; }
+.panel-log-row .ts { color: var(--fg-dim); font-variant-numeric: tabular-nums; }
+.panel-log-row .who { font-weight: 700; min-width: 40px; }
+.panel-log-row.white  .who { color: var(--h-white); }
+.panel-log-row.red    .who { color: var(--h-red); }
+.panel-log-row.yellow .who { color: var(--h-yellow); }
+.panel-log-row.black  .who { color: var(--fg-mute); }
+.panel-log-row.blue   .who { color: var(--h-blue); }
+.panel-log-row .msg { color: var(--fg-mute); }
+
+/* ============================================================
+ *  SCENE 4 · AUDIT — the wow moment
+ * ============================================================ */
+.scene.audit-scene .scene-body {
+  background: linear-gradient(180deg, var(--surface), oklch(18% 0.05 28));
+  border-color: oklch(70% 0.22 28 / 0.4);
+}
+.audit-stage {
+  position: relative;
+  flex: 1;
+  min-height: 180px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.audit-core {
+  position: relative;
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--danger), oklch(70% 0.22 28 / 0));
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  color: var(--fg);
+  font-weight: 800;
+  font-size: 18px;
+  box-shadow: 0 0 32px oklch(70% 0.22 28 / 0.5);
+}
+.audit-ring {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  border: 2px solid var(--danger);
+  transform: translate(-50%, -50%);
+  animation: auditRing 2.4s ease-out infinite;
+  pointer-events: none;
+}
+.audit-ring.r2 { animation-delay: 0.8s; }
+.audit-ring.r3 { animation-delay: 1.6s; }
+@keyframes auditRing {
+  0% { width: 60px; height: 60px; opacity: 0.95; }
+  100% { width: 280px; height: 280px; opacity: 0; border-width: 1px; }
+}
+.audit-evidence {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.audit-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: oklch(11% 0.020 250);
+  border-radius: 8px;
+  font-size: 12px;
+  border-left: 3px solid transparent;
+}
+.audit-row.detect  { border-left-color: var(--danger); }
+.audit-row.consult { border-left-color: var(--primary); }
+.audit-row.calib   { border-left-color: var(--success); }
+.audit-row-icon {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.audit-row.detect  .audit-row-icon { background: var(--danger); color: var(--fg); }
+.audit-row.consult .audit-row-icon { background: var(--primary); color: var(--bg); }
+.audit-row.calib   .audit-row-icon { background: var(--success); color: var(--bg); }
+.audit-row-text { color: var(--fg-mute); flex: 1; }
+.audit-row-text strong { color: var(--fg); font-weight: 700; }
+
+/* ============================================================
+ *  SCENE 5 · SCORE — animated ticker
+ * ============================================================ */
+.score-display {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  font-family: ui-monospace, monospace;
+}
+.score-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 56px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+}
+.score-before-big {
+  color: var(--fg-dim);
+  text-decoration: line-through;
+  text-decoration-color: var(--danger);
+  text-decoration-thickness: 4px;
+}
+.score-arrow-big {
+  font-size: 28px;
+  color: var(--primary);
+}
+.score-after-big {
+  color: var(--success);
+  text-shadow: 0 0 24px oklch(78% 0.18 150 / 0.4);
+}
+.score-formula {
+  background: oklch(11% 0.020 250);
+  padding: 12px;
+  border-radius: 10px;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--fg-mute);
+  line-height: 1.5;
+  border-left: 3px solid var(--primary);
+}
+.score-formula strong { color: var(--primary); }
+
+/* ============================================================
+ *  SCENE 6 · CONSTELLATION — vertical fly-over (mobile-native)
+ *  Replaces 3D R3F with vertical scatter visualization
+ * ============================================================ */
+.constellation {
+  flex: 1;
+  position: relative;
+  background: radial-gradient(circle at 50% 50%, oklch(15% 0.025 250), oklch(8% 0.015 250));
+  border-radius: 12px;
+  overflow: hidden;
+  min-height: 220px;
+}
+.const-axis-y {
+  position: absolute;
+  left: 8px;
+  top: 12px; bottom: 12px;
+  width: 1px;
+  background: oklch(95% 0 0 / 0.1);
+}
+.const-axis-y::after {
+  content: 'score';
+  position: absolute;
+  left: -2px; top: 50%;
+  transform: rotate(-90deg) translateX(20px);
+  font-size: 9px;
+  color: var(--fg-dim);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.const-node {
+  position: absolute;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: oklch(72% 0.17 245);
+  box-shadow: 0 0 8px currentColor;
+}
+.const-node.winner { background: var(--gold); width: 10px; height: 10px; }
+.const-node.you {
+  background: var(--accent);
+  width: 14px; height: 14px;
+  box-shadow: 0 0 20px var(--accent), 0 0 40px var(--accent-soft);
+  animation: youPulse 2s ease-in-out infinite;
+  z-index: 5;
+}
+@keyframes youPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+}
+.const-label {
+  position: absolute;
+  font-size: 9px;
+  color: var(--fg-mute);
+  font-family: ui-monospace, monospace;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.const-label.you-label {
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 11px;
+}
+
+/* ============================================================
+ *  SCENE 7 · DUAL RUBRIC — the close
+ * ============================================================ */
+.dual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  flex: 1;
+}
+.dual-card {
+  padding: 14px 10px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: oklch(13% 0.018 250);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+}
+.dual-card.qdrant { border-color: oklch(75% 0.16 215 / 0.5); }
+.dual-card.rapid  { border-color: oklch(78% 0.20 350 / 0.5); }
+.dual-card-name {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+.dual-card.qdrant .dual-card-name { color: var(--primary); }
+.dual-card.rapid  .dual-card-name { color: var(--accent); }
+.dual-card-score {
+  font-family: ui-monospace, monospace;
+  font-size: 40px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  margin: 6px 0 4px;
+}
+.dual-card.qdrant .dual-card-score { color: var(--primary); }
+.dual-card.rapid  .dual-card-score { color: var(--accent); }
+.dual-card-axes {
+  font-size: 10px;
+  color: var(--fg-dim);
+  line-height: 1.3;
+}
+.dual-card-place {
+  margin-top: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gold);
+}
+.dual-caption {
+  background: oklch(11% 0.020 250);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--fg-mute);
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* ============================================================
+ *  BOTTOM NAV — 48px tap targets
+ * ============================================================ */
+.bottom-nav {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  height: calc(56px + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom);
+  background: oklch(10% 0.018 250 / 0.95);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: transparent;
+  border: none;
+  color: var(--fg-dim);
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  letter-spacing: 0.03em;
+  min-height: var(--tap);
+}
+.nav-btn.active { color: var(--primary); }
+.nav-btn svg { width: 22px; height: 22px; }
+.nav-btn:active { background: var(--surface); }
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="phone" role="application" aria-label="Glasshat live demo">
+
+  <!-- ============================================================
+       STATUS BAR
+       ============================================================ -->
+  <div class="status-bar" aria-hidden="true">
+    <span class="time">9:41</span>
+    <span class="icons">
+      <svg viewBox="0 0 16 12"><path d="M2 8h2v3H2zm4-2h2v5H6zm4-2h2v7h-2zm4-3h2v10h-2z"/></svg>
+      <svg viewBox="0 0 16 12"><path d="M8 2C5 2 2.5 3.2 1 5l1 1c1.2-1.4 3.3-2.5 6-2.5s4.8 1.1 6 2.5l1-1C12.5 3.2 10 2 8 2zm0 3c-1.8 0-3.4.7-4.5 1.8l1 1C5.4 7 6.6 6.5 8 6.5s2.6.5 3.5 1.3l1-1C11.4 5.7 9.8 5 8 5z"/></svg>
+      <svg viewBox="0 0 16 12"><rect x="1" y="3" width="11" height="6" rx="1" fill="none" stroke="currentColor"/><rect x="2.5" y="4.5" width="8" height="3" rx="0.5"/></svg>
+    </span>
+  </div>
+
+  <!-- ============================================================
+       TOP BAR
+       ============================================================ -->
+  <header class="top-bar">
+    <a class="icon-btn" href="./landing.html" aria-label="Back">‹</a>
+    <div class="title">
+      <span><span class="live-dot"></span>Glasshat live</span>
+      <small>QDRANT VSD · 2026</small>
+    </div>
+    <button class="icon-btn" aria-label="Info">ⓘ</button>
+  </header>
+
+  <!-- ============================================================
+       PROGRESS DOTS
+       ============================================================ -->
+  <div class="progress" aria-label="Story progress" id="progress">
+    <div class="progress-bar done"></div>
+    <div class="progress-bar done"></div>
+    <div class="progress-bar done"></div>
+    <div class="progress-bar active"></div>
+    <div class="progress-bar"></div>
+    <div class="progress-bar"></div>
+    <div class="progress-bar"></div>
+  </div>
+
+  <!-- ============================================================
+       STORY VIEWPORT — 7 swipe scenes
+       ============================================================ -->
+  <main class="story-viewport" id="viewport">
+
+    <!-- =========== Scene 1 · Ingest =========== -->
+    <section class="scene" data-scene="1">
+      <div class="scene-head">
+        <span class="scene-num">01 / 07</span>
+        <span class="scene-tag ingest">Ingest</span>
+      </div>
+      <h2>Two drops.<br/>No chatbox.</h2>
+      <p class="caption">PDF deck and a GitHub URL. Gemini multimodal parses, Qdrant embeds with hybrid dense + sparse.</p>
+      <div class="scene-body">
+        <div class="drop-tiles">
+          <div class="drop-tile done">
+            <span class="drop-tile-check">✓</span>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <div class="drop-tile-name">pitch_v3.pdf</div>
+            <div class="drop-tile-meta">847 chunks</div>
+          </div>
+          <div class="drop-tile done">
+            <span class="drop-tile-check">✓</span>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"/></svg>
+            <div class="drop-tile-name">glasshat/demo</div>
+            <div class="drop-tile-meta">1,243 chunks</div>
+          </div>
+        </div>
+        <div class="ingest-meta">
+          <div class="ingest-meta-cell">
+            <span class="ingest-meta-num">2,090</span>
+            <span class="ingest-meta-lbl">chunks</span>
+          </div>
+          <div class="ingest-meta-cell">
+            <span class="ingest-meta-num">6</span>
+            <span class="ingest-meta-lbl">collections</span>
+          </div>
+          <div class="ingest-meta-cell">
+            <span class="ingest-meta-num">3.4s</span>
+            <span class="ingest-meta-lbl">embed</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========== Scene 2 · Plan =========== -->
+    <section class="scene" data-scene="2">
+      <div class="scene-head">
+        <span class="scene-num">02 / 07</span>
+        <span class="scene-tag plan">Plan</span>
+      </div>
+      <h2>Blue planner shows<br/>its homework.</h2>
+      <p class="caption">Gemini 3.1 Pro thinking_level=high. Plan is inspectable JSON. You approve before any score runs.</p>
+      <div class="scene-body">
+        <div class="plan-card">
+          <div class="plan-row"><span class="plan-key">hats</span>     <span class="plan-val accent">5 of 6</span></div>
+          <div class="plan-row"><span class="plan-key">bmad</span>     <span class="plan-val">A1 · A3 · B2 · C1 · D2</span></div>
+          <div class="plan-row"><span class="plan-key">retrieval</span><span class="plan-val">past_evals × 12</span></div>
+          <div class="plan-row"><span class="plan-key">rubric</span>   <span class="plan-val accent">qdrant_v1.json</span></div>
+          <div class="plan-row"><span class="plan-key">budget</span>   <span class="plan-val">~$0.04</span></div>
+        </div>
+        <div class="thinking-trace">
+          <span class="think-lbl">thinking trace · 12k tokens</span>
+          Skip Red — emotional appeal low-signal for B-tier infra deck. Yellow + Black asymmetric on A1; prep audit anchor. Pull past_evals where rubric_schema_hash matches.
+        </div>
+        <button class="approve-btn">Approve plan</button>
+      </div>
+    </section>
+
+    <!-- =========== Scene 3 · Panel =========== -->
+    <section class="scene" data-scene="3">
+      <div class="scene-head">
+        <span class="scene-num">03 / 07</span>
+        <span class="scene-tag panel">Panel</span>
+      </div>
+      <h2>Six hats,<br/>parallel.</h2>
+      <p class="caption">ADK ParallelAgent. Each emits structured findings with evidence refs. Disagreement is allowed.</p>
+      <div class="scene-body">
+        <div class="hats-grid">
+          <div class="hat white"><div class="hat-orb"></div><div class="hat-name">White</div><div class="hat-score">7.5/8</div></div>
+          <div class="hat red"><div class="hat-orb"></div><div class="hat-name">Red</div><div class="hat-score">—</div></div>
+          <div class="hat yellow"><div class="hat-orb"></div><div class="hat-name">Yellow</div><div class="hat-score">8.0/8</div></div>
+          <div class="hat black running"><div class="hat-orb"></div><div class="hat-name">Black</div><div class="hat-score">…</div></div>
+          <div class="hat green"><div class="hat-orb"></div><div class="hat-name">Green</div><div class="hat-score">6.0/7</div></div>
+          <div class="hat blue"><div class="hat-orb"></div><div class="hat-name">Blue</div><div class="hat-score">⏸</div></div>
+        </div>
+        <div class="panel-log" aria-label="Panel log">
+          <div class="panel-log-row white"><span class="ts">09:41:02</span><span class="who">white</span><span class="msg">facts loaded · 14 evidence</span></div>
+          <div class="panel-log-row yellow"><span class="ts">09:41:04</span><span class="who">yellow</span><span class="msg">A1=8 "strong TAM"</span></div>
+          <div class="panel-log-row black"><span class="ts">09:41:05</span><span class="who">black</span><span class="msg">A1 evidence depth thin…</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========== Scene 4 · AUDIT (THE WOW) =========== -->
+    <section class="scene audit-scene" data-scene="4">
+      <div class="scene-head">
+        <span class="scene-num">04 / 07</span>
+        <span class="scene-tag audit">Audit · the wow</span>
+      </div>
+      <h2>The panel<br/>catches itself.</h2>
+      <p class="caption">Phoenix MCP detects drift. Qdrant retrieves anti-pattern anchors. Score recalibrates live.</p>
+      <div class="scene-body">
+        <div class="audit-stage" aria-hidden="true">
+          <div class="audit-ring"></div>
+          <div class="audit-ring r2"></div>
+          <div class="audit-ring r3"></div>
+          <div class="audit-core">!</div>
+        </div>
+        <div class="audit-evidence">
+          <div class="audit-row detect">
+            <span class="audit-row-icon">1</span>
+            <span class="audit-row-text"><strong>Detect</strong> · Phoenix online-eval flags Yellow A1 inconsistency</span>
+          </div>
+          <div class="audit-row consult">
+            <span class="audit-row-icon">2</span>
+            <span class="audit-row-text"><strong>Consult</strong> · 4 parallel MCP calls + Qdrant recommend()</span>
+          </div>
+          <div class="audit-row calib">
+            <span class="audit-row-icon">3</span>
+            <span class="audit-row-text"><strong>Calibrate</strong> · 3 past_evals anchor to p25–p75 band</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========== Scene 5 · Score self-corrects =========== -->
+    <section class="scene" data-scene="5">
+      <div class="scene-head">
+        <span class="scene-num">05 / 07</span>
+        <span class="scene-tag score">Score</span>
+      </div>
+      <h2>The number<br/>moves.</h2>
+      <p class="caption">Animated decrement, anchored to past_evals p50. Every move logged in Phoenix as a signed annotation.</p>
+      <div class="scene-body">
+        <div class="score-display">
+          <div class="score-row" aria-label="Score corrected from 87 to 83">
+            <span class="score-before-big">87</span>
+            <span class="score-arrow-big">→</span>
+            <span class="score-after-big">83</span>
+          </div>
+        </div>
+        <div class="score-formula">
+          <strong>new_score</strong> = clip(predicted − 0.8 × mean_delta, anchor_p25, anchor_p75)<br/>
+          <span style="opacity:0.7;">= clip(87 − 0.8 × 5.0, 81, 85) = <strong style="color:var(--success);">83</strong></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========== Scene 6 · Constellation (mobile fly-over) =========== -->
+    <section class="scene" data-scene="6">
+      <div class="scene-head">
+        <span class="scene-num">06 / 07</span>
+        <span class="scene-tag constel">Anchors · 503 past</span>
+      </div>
+      <h2>You're here.<br/>p72 vs corpus.</h2>
+      <p class="caption">Vertical fly-over of the 503-project anchor constellation. Gold = winners. You = pink, at score 83.</p>
+      <div class="scene-body">
+        <div class="constellation" aria-label="Anchor constellation">
+          <div class="const-axis-y"></div>
+          <!-- Random scatter of past projects -->
+          <span class="const-node" style="left:18%;top:88%;"></span>
+          <span class="const-node" style="left:32%;top:78%;"></span>
+          <span class="const-node" style="left:48%;top:82%;"></span>
+          <span class="const-node" style="left:62%;top:70%;"></span>
+          <span class="const-node" style="left:78%;top:66%;"></span>
+          <span class="const-node" style="left:24%;top:62%;"></span>
+          <span class="const-node" style="left:54%;top:54%;"></span>
+          <span class="const-node" style="left:36%;top:48%;"></span>
+          <span class="const-node" style="left:70%;top:42%;"></span>
+          <span class="const-node" style="left:44%;top:36%;"></span>
+          <span class="const-node" style="left:58%;top:32%;"></span>
+          <span class="const-node winner" style="left:28%;top:26%;"></span>
+          <span class="const-node winner" style="left:66%;top:20%;"></span>
+          <span class="const-node winner" style="left:82%;top:14%;"></span>
+          <span class="const-node winner" style="left:42%;top:18%;"></span>
+          <!-- You -->
+          <span class="const-node you" style="left:52%;top:28%;"></span>
+          <span class="const-label you-label" style="left:58%;top:24%;">YOU · 83</span>
+          <span class="const-label" style="left:84%;top:12%;color:var(--gold);">winner p90+</span>
+          <span class="const-label" style="left:14%;top:90%;">non-winner</span>
+        </div>
+        <div style="display:flex;justify-content:space-around;font-size:10px;color:var(--fg-dim);letter-spacing:0.08em;text-transform:uppercase;font-family:ui-monospace,monospace;">
+          <span>● 488 peers</span>
+          <span style="color:var(--gold);">● 13 winners</span>
+          <span style="color:var(--accent);">● you</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========== Scene 7 · DUAL RUBRIC · the close =========== -->
+    <section class="scene" data-scene="7">
+      <div class="scene-head">
+        <span class="scene-num">07 / 07</span>
+        <span class="scene-tag rubric">Dual rubric · the close</span>
+      </div>
+      <h2>Same deck.<br/>Two scores.<br/>Both correct.</h2>
+      <p class="caption">Qdrant's 3 axes vs Rapid Agent's 4 with Tech tie-break. Fairness is rubric-relative.</p>
+      <div class="scene-body">
+        <div class="dual">
+          <div class="dual-card qdrant">
+            <div class="dual-card-name">Qdrant VSD</div>
+            <div class="dual-card-score">83</div>
+            <div class="dual-card-axes">Func · Orig · UX<br/>equal weight</div>
+            <div class="dual-card-place">top 3 likely</div>
+          </div>
+          <div class="dual-card rapid">
+            <div class="dual-card-name">Rapid Agent</div>
+            <div class="dual-card-score">73</div>
+            <div class="dual-card-axes">Tech · Des · Imp · Idea<br/>Tech tie-break</div>
+            <div class="dual-card-place">honorable</div>
+          </div>
+        </div>
+        <div class="dual-caption">
+          "correct rubric-aware variance,<br/>not bias."
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============================================================
+       BOTTOM NAV
+       ============================================================ -->
+  <nav class="bottom-nav" aria-label="Demo navigation">
+    <a class="nav-btn" href="./landing.html" aria-label="Home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Home
+    </a>
+    <button class="nav-btn" data-jump="2" aria-label="Plan">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      Plan
+    </button>
+    <button class="nav-btn active" data-jump="4" aria-label="Audit">
+      <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2 15,9 22,9 17,14 19,22 12,18 5,22 7,14 2,9 9,9"/></svg>
+      Audit
+    </button>
+    <button class="nav-btn" data-jump="7" aria-label="Score">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Score
+    </button>
+    <button class="nav-btn" aria-label="Share">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      Share
+    </button>
+  </nav>
+
+</div>
+
+<script>
+// Story progress sync — track which scene is in view
+const viewport = document.getElementById('viewport');
+const progress = document.getElementById('progress');
+const bars = progress.querySelectorAll('.progress-bar');
+const scenes = viewport.querySelectorAll('.scene');
+
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting && entry.intersectionRatio > 0.6) {
+      const idx = parseInt(entry.target.dataset.scene, 10) - 1;
+      bars.forEach((b, i) => {
+        b.classList.remove('active', 'done');
+        if (i < idx) b.classList.add('done');
+        else if (i === idx) b.classList.add('active');
+      });
+    }
+  });
+}, { root: viewport, threshold: [0.6] });
+scenes.forEach(s => io.observe(s));
+
+// Bottom nav jump
+document.querySelectorAll('.nav-btn[data-jump]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const idx = parseInt(btn.dataset.jump, 10);
+    const target = viewport.querySelector(`[data-scene="${idx}"]`);
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+
+// Pull-to-refresh hook (visual stub)
+let startY = 0;
+viewport.addEventListener('touchstart', (e) => {
+  if (viewport.scrollTop === 0) startY = e.touches[0].clientY;
+}, { passive: true });
+viewport.addEventListener('touchmove', (e) => {
+  if (viewport.scrollTop === 0 && e.touches[0].clientY - startY > 100) {
+    viewport.style.transition = 'transform 0.3s';
+    viewport.style.transform = 'translateY(24px)';
+    setTimeout(() => { viewport.style.transform = ''; }, 400);
+  }
+}, { passive: true });
+
+// Keyboard fallback for desktop
+document.addEventListener('keydown', (e) => {
+  const cur = Array.from(scenes).findIndex(s => {
+    const r = s.getBoundingClientRect();
+    return r.top >= 0 && r.top < window.innerHeight / 2;
+  });
+  if (e.key === 'ArrowDown' && cur < scenes.length - 1) {
+    scenes[cur + 1].scrollIntoView({ behavior: 'smooth' });
+  } else if (e.key === 'ArrowUp' && cur > 0) {
+    scenes[cur - 1].scrollIntoView({ behavior: 'smooth' });
+  }
+});
+</script>
+
+</body>
+</html>

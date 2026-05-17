@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Glasshat — Demo Timeline (rubric-faithful, ship-today)</title>
+<style>
+  :root{
+    --bg: oklch(98% 0.005 250);
+    --panel: oklch(100% 0 0);
+    --ink: oklch(22% 0.02 250);
+    --muted: oklch(48% 0.015 250);
+    --line: oklch(90% 0.01 250);
+    --line-2: oklch(94% 0.008 250);
+    --accent: oklch(55% 0.13 250);
+    --ok: oklch(52% 0.14 150);
+    --warn: oklch(68% 0.16 75);
+    --bad: oklch(58% 0.18 28);
+    --code-bg: oklch(96% 0.01 250);
+    --hat-white: oklch(94% 0.005 250);
+    --hat-red: oklch(58% 0.18 28);
+    --hat-yellow: oklch(78% 0.14 90);
+    --hat-green: oklch(60% 0.14 150);
+    --hat-black: oklch(28% 0.02 250);
+    --hat-blue: oklch(55% 0.13 250);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font:14px/1.5 system-ui,-apple-system,sans-serif}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px}
+  pre{background:var(--code-bg);padding:8px 10px;border-radius:5px;
+    border:1px solid var(--line);overflow:auto;margin:6px 0;line-height:1.45}
+  code{background:var(--code-bg);padding:1px 5px;border-radius:3px;font-size:12px}
+  .app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+  aside{background:var(--panel);border-right:1px solid var(--line);padding:18px 14px;
+    position:sticky;top:0;height:100vh;overflow:auto}
+  aside .brand{font-weight:700;font-size:15px;margin-bottom:2px}
+  aside .brand .sub{font-weight:400;color:var(--muted);font-size:12px;display:block}
+  aside nav h4{font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);
+    margin:14px 0 6px}
+  aside nav a{display:block;padding:5px 8px;border-radius:4px;color:var(--ink);font-size:13px}
+  aside nav a:hover{background:var(--line-2);text-decoration:none}
+  aside nav a.cur{background:var(--line-2);font-weight:600}
+  header.topbar{background:var(--panel);border-bottom:1px solid var(--line);
+    padding:14px 28px;display:flex;align-items:center;justify-content:space-between;gap:16px;
+    position:sticky;top:0;z-index:2}
+  .topbar .title{font-weight:600;font-size:15px}
+  .topbar .meta{color:var(--muted);font-size:12.5px}
+  main{padding:0}
+  .content{padding:22px 28px 60px;max-width:1000px}
+  .badge{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:10px;
+    font-size:11.5px;font-weight:500;border:1px solid var(--line)}
+  .badge.ok{background:oklch(96% 0.05 150);color:var(--ok);border-color:oklch(82% 0.08 150)}
+  .badge.warn{background:oklch(97% 0.05 75);color:oklch(48% 0.14 75);border-color:oklch(86% 0.08 75)}
+  .badge.neutral{background:var(--code-bg);color:var(--muted)}
+  .badge.q{background:oklch(95% 0.05 320);color:oklch(45% 0.16 320);border-color:oklch(82% 0.08 320)}
+  .badge.p{background:oklch(95% 0.06 200);color:oklch(45% 0.14 200);border-color:oklch(82% 0.08 200)}
+  /* hero */
+  .hero{background:var(--panel);border:1px solid var(--line);border-radius:8px;
+    padding:18px 22px;margin-bottom:18px}
+  .hero h1{margin:0 0 4px;font-size:20px;letter-spacing:-0.01em}
+  .hero p{margin:0;color:var(--muted);font-size:14px}
+  .hero .row{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px}
+  /* run bar */
+  .runbar{display:grid;grid-template-columns:130px 1fr 200px;gap:12px;align-items:center;
+    background:var(--panel);border:1px solid var(--line);border-radius:6px;
+    padding:10px 14px;margin-bottom:18px;font-size:13px}
+  .runbar .lab{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:0.04em}
+  .runbar .track{height:8px;border-radius:4px;background:var(--line);position:relative;overflow:hidden}
+  .runbar .track > .fill{height:100%;background:var(--accent);width:62%}
+  .runbar .ticks{position:relative;margin-top:4px;height:14px;font-size:10.5px;color:var(--muted)}
+  .runbar .ticks span{position:absolute;transform:translateX(-50%)}
+  .runbar .cost{font-variant-numeric:tabular-nums;text-align:right;font-size:13px;color:var(--ink)}
+  .runbar .cost .lab{font-size:10.5px}
+  /* timeline rows */
+  .row-time{display:grid;grid-template-columns:90px 1fr;gap:14px;margin-bottom:14px}
+  .row-time .t{font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px;
+    padding-top:14px;font-weight:600;font-family:ui-monospace,monospace}
+  .row-time .b{background:var(--panel);border:1px solid var(--line);border-radius:6px;
+    padding:12px 14px}
+  .row-time .b h3{margin:0 0 6px;font-size:14px;display:flex;align-items:center;gap:8px}
+  .row-time .b .sub{color:var(--muted);font-size:12.5px;margin:0 0 8px}
+  /* hats grid */
+  .hats{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:8px}
+  .hat{padding:7px 8px;border:1px solid var(--line);border-radius:5px;background:var(--panel);
+    font-size:11.5px;text-align:center}
+  .hat .name{font-weight:600;font-size:12px}
+  .hat .swatch{width:14px;height:14px;border-radius:3px;display:inline-block;vertical-align:middle;
+    margin-right:5px;border:1px solid var(--line)}
+  .hat .score{font-variant-numeric:tabular-nums;color:var(--muted);font-size:11px;margin-top:3px}
+  .hat .score.flag{color:var(--warn);font-weight:600}
+  .hat .score.fix{color:var(--ok);font-weight:600}
+  /* audit moment */
+  .audit{border:1px solid oklch(82% 0.08 75);background:oklch(98% 0.04 75);
+    border-radius:5px;padding:10px 12px;margin-top:8px}
+  .audit h4{margin:0 0 6px;font-size:13px;color:oklch(45% 0.14 75)}
+  .audit .step{display:grid;grid-template-columns:70px 1fr;gap:8px;font-size:12.5px;
+    padding:3px 0;border-top:1px dashed oklch(85% 0.06 75)}
+  .audit .step:first-of-type{border-top:0}
+  .audit .step .who{font-weight:600;color:oklch(40% 0.14 75)}
+  /* radar */
+  .radar-wrap{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px}
+  .radar-wrap .card{background:var(--code-bg);border:1px solid var(--line);border-radius:5px;
+    padding:10px 12px}
+  .radar-wrap .card h4{margin:0 0 6px;font-size:12px;text-transform:uppercase;
+    letter-spacing:0.04em;color:var(--muted)}
+  .radar-wrap svg{display:block;width:100%;height:auto;max-width:280px;margin:0 auto}
+  .legend{display:flex;gap:10px;font-size:11px;color:var(--muted);margin-top:6px;
+    flex-wrap:wrap;justify-content:center}
+  .legend i{width:10px;height:10px;border-radius:2px;display:inline-block;vertical-align:middle;
+    margin-right:4px}
+  /* delta panel */
+  .delta{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px}
+  .delta .b{background:var(--code-bg);border:1px solid var(--line);border-radius:5px;
+    padding:10px;text-align:center}
+  .delta .b .lab{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em}
+  .delta .b .v{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:3px}
+  .delta .b.bad .v{color:var(--bad)}
+  .delta .b.ok .v{color:var(--ok)}
+  /* mcp call panel */
+  .mcp{background:var(--code-bg);border:1px solid var(--line);border-radius:5px;
+    padding:10px 12px;margin-top:8px}
+  .mcp .h{font-size:11.5px;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted);
+    margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+  /* checklist compliance pinned panel */
+  .compl-pin{position:sticky;top:54px;background:var(--panel);border:1px solid var(--line);
+    border-radius:6px;padding:10px 14px;margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;
+    align-items:center;font-size:12.5px;z-index:1}
+  .compl-pin strong{font-size:12px;text-transform:uppercase;letter-spacing:0.04em;
+    color:var(--muted);margin-right:6px}
+  /* file:line refs */
+  .ref{font-family:ui-monospace,monospace;font-size:11.5px;color:var(--muted);
+    background:var(--code-bg);padding:1px 5px;border-radius:3px;white-space:nowrap}
+  footer{padding:18px 28px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;
+    background:var(--panel)}
+  @media (max-width:780px){
+    .app{grid-template-columns:1fr}
+    aside{position:static;height:auto}
+    .hats{grid-template-columns:repeat(3,1fr)}
+    .radar-wrap{grid-template-columns:1fr}
+    .row-time{grid-template-columns:60px 1fr}
+    .delta{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+<aside>
+  <div class="brand">Glasshat <span class="sub">demo timeline · v0.4</span></div>
+  <nav>
+    <h4>Pages</h4>
+    <a href="landing.html">← Submission status</a>
+    <a href="demo.html" class="cur">Demo timeline</a>
+    <h4>Timeline</h4>
+    <a href="#t-0">0:00 Hook</a>
+    <a href="#t-10">0:10 Ingest</a>
+    <a href="#t-30">0:30 Panel runs</a>
+    <a href="#t-60">1:00 Detection</a>
+    <a href="#t-90">1:30 MCP consult</a>
+    <a href="#t-105">1:45 Score self-corrects</a>
+    <a href="#t-150">2:30 Anchor close</a>
+    <a href="#t-170">2:50 Tagline</a>
+    <h4>Rubric anchors</h4>
+    <a href="#evidence">File:line evidence</a>
+    <a href="#fallback">2D fallback note</a>
+  </nav>
+</aside>
+
+<main>
+
+<header class="topbar">
+  <div>
+    <div class="title">Glasshat — Demo Timeline (rubric-faithful)</div>
+    <div class="meta">recyclable v0.3 timeline · ornament stripped · 2D radar (3D optional)</div>
+  </div>
+  <div style="display:flex;gap:6px">
+    <span class="badge q">Qdrant cut 2:58</span>
+    <span class="badge p">Arize cut 2:57</span>
+    <span class="badge ok">Apache-2.0</span>
+  </div>
+</header>
+
+<div class="content">
+
+<div class="hero">
+  <h1>Same engine. Two narrations. Same boring HTML.</h1>
+  <p>Every beat below carries (a) a <em>file:line</em> in the repo so Stage 1 reviewers can verify, (b) an explicit Phoenix-MCP-or-Qdrant call so the partner-tech requirement is undeniable, and (c) a degrade path if WebGL or the network fails on demo day.</p>
+  <div class="row">
+    <span class="badge neutral">non-chatbot UX</span>
+    <span class="badge neutral">no CDN deps</span>
+    <span class="badge neutral">≤70KB</span>
+    <span class="badge neutral">2D radar default</span>
+  </div>
+</div>
+
+<div class="compl-pin">
+  <strong>Compliance ping</strong>
+  <span class="badge ok">Qdrant load-bearing ✓</span>
+  <span class="badge ok">Phoenix MCP runtime ✓</span>
+  <span class="badge ok">Gemini 3 ✓</span>
+  <span class="badge ok">ADK on Cloud Run ✓</span>
+  <span class="badge ok">Agent Builder ✓</span>
+  <span class="badge ok">Apache-2.0 ✓</span>
+  <span class="badge ok">non-chatbot ✓</span>
+</div>
+
+<div class="runbar">
+  <div>
+    <div class="lab">runtime</div>
+    <div style="font-variant-numeric:tabular-nums">00:01:51 / 00:03:00</div>
+  </div>
+  <div>
+    <div class="track"><div class="fill"></div></div>
+    <div class="ticks">
+      <span style="left:0%">0:00</span>
+      <span style="left:16%">0:30</span>
+      <span style="left:33%">1:00</span>
+      <span style="left:50%">1:30</span>
+      <span style="left:67%">2:00</span>
+      <span style="left:83%">2:30</span>
+      <span style="left:100%">3:00</span>
+    </div>
+  </div>
+  <div class="cost">
+    <div class="lab">cost · tokens</div>
+    <div>$0.041 · 26,402 tok</div>
+    <div class="lab">7.1K cached (90% saved)</div>
+  </div>
+</div>
+
+<!-- 0:00 -->
+<div class="row-time" id="t-0">
+  <div class="t">0:00</div>
+  <div class="b">
+    <h3>Hook · "Who audits the AI evaluator?"</h3>
+    <p class="sub">10s black-on-white text · wordmark fades in at 0:08 · no narration</p>
+    <pre>0:00  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+       Who audits the AI evaluator?
+       ───────────────────────────────────────────── glasshat .</pre>
+  </div>
+</div>
+
+<!-- 0:10 -->
+<div class="row-time" id="t-10">
+  <div class="t">0:10</div>
+  <div class="b">
+    <h3>Ingest · drop deck + paste GitHub URL <span class="ref">services/ingest/main.py:24</span></h3>
+    <p class="sub">Qdrant dense + sparse indexing tick visibly for <code>pitch_chunks</code> and <code>repo_chunks</code>. RRF fusion enabled.</p>
+    <pre>POST /ingest
+  deck.pdf       → gs://glasshat/decks/...    (Cloud Storage)
+  repo: github.com/team/example-startup       (shallow clone)
+  → qdrant.upsert("pitch_chunks",  vectors_dense=384, vectors_sparse=BM25)
+  → qdrant.upsert("repo_chunks",   vectors_dense=384, vectors_sparse=BM25)
+  fusion: RRF (k=60)                          [packages/shared/qdrant.py:42]</pre>
+    <div style="display:flex;gap:6px;margin-top:4px">
+      <span class="badge q">Qdrant call #1</span>
+      <span class="badge neutral">$0.012 / 8K tok</span>
+    </div>
+  </div>
+</div>
+
+<!-- 0:30 -->
+<div class="row-time" id="t-30">
+  <div class="t">0:30</div>
+  <div class="b">
+    <h3>Blue planner reasoning + 6 hats parallel <span class="ref">services/pipeline-orchestrator/main.py:54</span></h3>
+    <p class="sub">ADK ParallelAgent · Gemini 3.1 Pro thinking trace streaming · responseSchema enforced</p>
+    <div class="hats">
+      <div class="hat" style="border-color:var(--hat-blue)">
+        <div class="name"><span class="swatch" style="background:var(--hat-blue)"></span>Blue</div>
+        <div class="score">3.1 Pro · plan</div>
+      </div>
+      <div class="hat" style="border-color:oklch(85% 0.01 250)">
+        <div class="name"><span class="swatch" style="background:var(--hat-white)"></span>White</div>
+        <div class="score">facts · 2 URL</div>
+      </div>
+      <div class="hat" style="border-color:var(--hat-red)">
+        <div class="name"><span class="swatch" style="background:var(--hat-red)"></span>Red</div>
+        <div class="score">intuition</div>
+      </div>
+      <div class="hat" style="border-color:var(--hat-yellow)">
+        <div class="name"><span class="swatch" style="background:var(--hat-yellow)"></span>Yellow</div>
+        <div class="score flag">A1=9.0 ⚠</div>
+      </div>
+      <div class="hat" style="border-color:var(--hat-green)">
+        <div class="name"><span class="swatch" style="background:var(--hat-green)"></span>Green</div>
+        <div class="score">creative</div>
+      </div>
+      <div class="hat" style="border-color:var(--hat-black)">
+        <div class="name"><span class="swatch" style="background:var(--hat-black)"></span>Black</div>
+        <div class="score">risk · 3.1 Pro</div>
+      </div>
+    </div>
+    <pre style="margin-top:8px">{
+  "plan": {
+    "hats_running": 6,
+    "criteria_addressed": 17,
+    "retrieval_budget": {"pitch_chunks": 5, "repo_chunks": 5, "past_evals": 3},
+    "thinking_level": "high"
+  }
+}</pre>
+  </div>
+</div>
+
+<!-- 1:00 -->
+<div class="row-time" id="t-60">
+  <div class="t">1:00</div>
+  <div class="b">
+    <h3>Detection · Phoenix Online Eval fires on Yellow's span <span class="ref">agents/audit_loop.py:88</span></h3>
+    <p class="sub">Triple-redundant detection: (1) Phoenix Online Eval LLM-as-judge, (2) Phoenix Custom Python Evaluator, (3) Black hat counter-claim from session state.</p>
+    <div class="audit">
+      <h4>⚠ Inconsistency flagged on Yellow.A1</h4>
+      <div class="step"><div class="who">Phoenix</div><div>eval.calibration.label = <code>over_confident</code> · score 0.31 · explanation "evidence_depth 0.31 inconsistent with score 9.0 (threshold 0.6)"</div></div>
+      <div class="step"><div class="who">Custom</div><div>statistical rule (Python, deterministic backup): same flag</div></div>
+      <div class="step"><div class="who">Black</div><div>counter-claim: "Evidence depth 0.31 does not support A1=9.0"</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 1:30 -->
+<div class="row-time" id="t-90">
+  <div class="t">1:30</div>
+  <div class="b">
+    <h3>Blue consults Phoenix MCP + Qdrant Recommendation API <span class="ref">agents/audit_loop.py:142</span></h3>
+    <p class="sub">4 parallel calls. The Phoenix call is what graders look for — Arize Stage 1 requires it. The Qdrant call is what Qdrant graders look for.</p>
+    <div class="mcp">
+      <div class="h"><span>MCP &amp; vector calls (parallel)</span><span class="badge p">Phoenix MCP runtime</span></div>
+      <pre>phoenix.mcp.call("get-experiment-by-id", id="glasshat-calibration-v1")
+  → mean_delta: -1.2pts, n=14, CI ±0.3
+
+phoenix.mcp.call("get-span-annotations", span="yellow_a1_span")
+  → label: over_confident, score: 0.31
+
+phoenix.mcp.call("get-dataset-examples",
+                 dataset="calibration_corpus_v1",
+                 filter="hat=yellow AND evidence_depth_bucket=low",
+                 limit=3)
+  → 3 anchor projects [gemini3-#247, #318, #401]
+
+qdrant.recommend(                                    # [packages/shared/qdrant.py:118]
+  collection="past_evals",
+  positive=[over_confident_yellow_anchors],
+  negative=[accurate_yellow_anchors],
+  strategy="average_vector"
+) → 3 anti-pattern anchors (correctly-scored A1: 7.2, 7.5, 7.8)</pre>
+    </div>
+    <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
+      <span class="badge p">Phoenix MCP call #1-3</span>
+      <span class="badge q">Qdrant call #2 (Recommendation API)</span>
+    </div>
+  </div>
+</div>
+
+<!-- 1:45 -->
+<div class="row-time" id="t-105">
+  <div class="t">1:45</div>
+  <div class="b">
+    <h3>Score self-corrects · Yellow.A1: 9.0 → 7.6 <span class="ref">agents/score_calibration.py:33</span></h3>
+    <p class="sub">ScoreCalibrationAgent: <code>new = clip(predicted − 0.8 × mean_delta, anchor_p25, anchor_p75)</code> · ±2.0 cap · LoopAgent escalates on convergence</p>
+    <div class="delta">
+      <div class="b bad"><div class="lab">pre-Phoenix</div><div class="v">9.0</div></div>
+      <div class="b"><div class="lab">Δ (calibration)</div><div class="v" style="color:var(--muted)">−1.4</div></div>
+      <div class="b ok"><div class="lab">post-Phoenix</div><div class="v">7.6</div></div>
+    </div>
+
+    <div class="radar-wrap">
+      <div class="card">
+        <h4>BMAD radar — before audit</h4>
+        <!-- 6-axis radar, before -->
+        <svg viewBox="0 0 240 240" role="img" aria-label="radar before">
+          <g transform="translate(120,120)">
+            <!-- rings -->
+            <polygon points="0,-90 78,-45 78,45 0,90 -78,45 -78,-45" fill="none" stroke="oklch(88% 0.01 250)"/>
+            <polygon points="0,-60 52,-30 52,30 0,60 -52,30 -52,-30" fill="none" stroke="oklch(90% 0.01 250)"/>
+            <polygon points="0,-30 26,-15 26,15 0,30 -26,15 -26,-15" fill="none" stroke="oklch(92% 0.01 250)"/>
+            <!-- axes -->
+            <line x1="0" y1="0" x2="0" y2="-90" stroke="oklch(88% 0.01 250)"/>
+            <line x1="0" y1="0" x2="78" y2="-45" stroke="oklch(88% 0.01 250)"/>
+            <line x1="0" y1="0" x2="78" y2="45" stroke="oklch(88% 0.01 250)"/>
+            <line x1="0" y1="0" x2="0" y2="90" stroke="oklch(88% 0.01 250)"/>
+            <line x1="0" y1="0" x2="-78" y2="45" stroke="oklch(88% 0.01 250)"/>
+            <line x1="0" y1="0" x2="-78" y2="-45" stroke="oklch(88% 0.01 250)"/>
+            <!-- before polygon (Yellow A1 inflated) -->
+            <polygon points="0,-86 72,-42 60,34 0,52 -60,34 -68,-39"
+              fill="oklch(78% 0.14 90 / 0.25)" stroke="oklch(58% 0.18 28)" stroke-width="2"/>
+            <!-- labels -->
+            <text x="0" y="-100" text-anchor="middle" font-size="10" fill="oklch(35% 0.02 250)">A1 problem</text>
+            <text x="92" y="-50" font-size="10" fill="oklch(35% 0.02 250)">A2 users</text>
+            <text x="92" y="55" font-size="10" fill="oklch(35% 0.02 250)">B stack</text>
+            <text x="0" y="106" text-anchor="middle" font-size="10" fill="oklch(35% 0.02 250)">C impl</text>
+            <text x="-92" y="55" text-anchor="end" font-size="10" fill="oklch(35% 0.02 250)">D docs</text>
+            <text x="-92" y="-50" text-anchor="end" font-size="10" fill="oklch(35% 0.02 250)">B feas</text>
+          </g>
+        </svg>
+        <div class="legend"><span><i style="background:oklch(58% 0.18 28)"></i>before (78/100)</span></div>
+      </div>
+      <div class="card">
+        <h4>BMAD radar — after audit</h4>
+        <svg viewBox="0 0 240 240" role="img" aria-label="radar after">
+          <g transform="translate(120,120)">
+            <polygon points="0,-90 78,-45 78,45 0,90 -78,45 -78,-45" fill="none" stroke="oklch(88% 0.01 250)"/>
+            <polygon points="0,-60 52,-30 52,30 0,60 -52,30 -52,-30" fill="none" stroke="oklch(90% 0.01 250)"/>
+            <polygon points="0,-30 26,-15 26,15 0,30 -26,15 -26,-15" fill="none" stroke="oklch(92% 0.01 250)"/>
+            <line x1="0" y1="0" x2="0" y2="-90" stroke="oklch(88% 0.01 250)"/>
+            <line x1="0" y1="0" x2="78" y2="-45" stroke="oklch(88% 0.01 250)"/>
+            <line x1="0" y1="0" x2="78" y2="45" stroke="oklch(88% 0.01 250)"/>
+            <line x1="0" y1="0" x2="0" y2="90" stroke="oklch(88% 0.01 250)"/>
+            <line x1="0" y1="0" x2="-78" y2="45" stroke="oklch(88% 0.01 250)"/>
+            <line x1="0" y1="0" x2="-78" y2="-45" stroke="oklch(88% 0.01 250)"/>
+            <!-- after: A1 lowered -->
+            <polygon points="0,-66 72,-42 60,34 0,52 -60,34 -68,-39"
+              fill="oklch(60% 0.14 150 / 0.25)" stroke="oklch(52% 0.14 150)" stroke-width="2"/>
+            <text x="0" y="-100" text-anchor="middle" font-size="10" fill="oklch(35% 0.02 250)">A1 problem</text>
+            <text x="92" y="-50" font-size="10" fill="oklch(35% 0.02 250)">A2 users</text>
+            <text x="92" y="55" font-size="10" fill="oklch(35% 0.02 250)">B stack</text>
+            <text x="0" y="106" text-anchor="middle" font-size="10" fill="oklch(35% 0.02 250)">C impl</text>
+            <text x="-92" y="55" text-anchor="end" font-size="10" fill="oklch(35% 0.02 250)">D docs</text>
+            <text x="-92" y="-50" text-anchor="end" font-size="10" fill="oklch(35% 0.02 250)">B feas</text>
+          </g>
+        </svg>
+        <div class="legend"><span><i style="background:oklch(52% 0.14 150)"></i>after (71/100)</span></div>
+      </div>
+    </div>
+    <p class="sub" id="fallback" style="margin-top:8px"><strong>3D fallback note.</strong> The hosted app has a Three.js scene with the 524-anchor constellation. For ship-today / cold-laptop reliability the demo can switch to this 2D radar via <code>?view=2d</code> — same narrative beat, zero WebGL risk.</p>
+  </div>
+</div>
+
+<!-- 2:30 -->
+<div class="row-time" id="t-150">
+  <div class="t">2:30</div>
+  <div class="b">
+    <h3>Anchor comparison + meta-corpus close <span class="ref">packages/shared/qdrant.py:201</span></h3>
+    <p class="sub">Qdrant <code>group_by</code> aggregation across <code>past_evals</code> (503 Gemini 3 projects · 13 named winners). One call, three comparisons.</p>
+    <pre>qdrant.search_groups(
+  collection="past_evals",
+  query_vector=current_run_embedding,
+  group_by="outcome_tier",
+  limit_per_group=1
+) →
+  [winner ] gemini3-#082   score 82   "ranks similar to"
+  [winner ] gemini3-#117   score 88   "weaker than · evidence depth"
+  [non-w  ] gemini3-#394   score 64   "stronger than"
+
+caption: "Glasshat evaluated 503 of the Gemini 3 Hackathon's 4,499
+         submissions — including all 13 named winners — to calibrate
+         its own bias before scoring yours."</pre>
+    <span class="badge q">Qdrant call #3 (group_by)</span>
+    <span class="badge neutral">$0.041 / 26K tok · 7.1K cached</span>
+  </div>
+</div>
+
+<!-- 2:50 -->
+<div class="row-time" id="t-170">
+  <div class="t">2:50</div>
+  <div class="b">
+    <h3>Tagline + compliance frame</h3>
+    <p class="sub">Single static frame: logo + 1-line tagline + license badge + repo URL. Stage 1 graders use this frame to verify Apache-2.0 in About.</p>
+    <pre>┌──────────────────────────────────────────────────────────────┐
+│                                                              │
+│   Glasshat.   The panel that audits itself.                  │
+│                                                              │
+│   [Apache-2.0]   github.com/Two-Weeks-Team/glasshat          │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘</pre>
+  </div>
+</div>
+
+<section id="evidence" style="margin-top:24px">
+  <h3 style="font-size:14px;margin:0 0 6px">Repo evidence map (the only thing graders need)</h3>
+  <p style="color:var(--muted);font-size:12.5px;margin:0 0 10px">If the demo network dies, this table alone proves Stage 1 compliance.</p>
+  <pre>Phoenix MCP runtime   → agents/audit_loop.py:88        + spikes/01_spike_a_phoenix_mcp_smoke.py
+Qdrant load-bearing   → packages/shared/qdrant.py:42   + spikes/05_spike_e_qdrant_hybrid.py
+Gemini 3 invocation   → packages/shared/llm.py:17      + docs/gcp-setup.md
+ADK ParallelAgent     → services/pipeline-orchestrator/main.py:54
+Agent Builder reg.    → infra/agent-builder/blue.yaml
+OpenInference auto    → packages/shared/tracing.py:12
+Cloud Run runtime     → infra/cloud-run.yaml
+Apache-2.0 license    → LICENSE  +  GitHub About sidebar (gh repo view --json licenseInfo)
+Non-chatbot UX        → apps/web/app/(routes)/{judge,participate}/page.tsx  (no chat box)
+First commit in-period→ git log --reverse | head -1   →  2026-05-13</pre>
+</section>
+
+</div>
+
+<footer>
+  Glasshat · ship-today demo timeline · vanilla HTML · 2D radar by default, 3D as progressive enhancement ·
+  <a href="landing.html">← back to submission status</a>
+</footer>
+
+</main>
+</div>
+</body>
+</html>

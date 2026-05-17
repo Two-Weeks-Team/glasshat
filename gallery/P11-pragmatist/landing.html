@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Glasshat — Submission Status</title>
+<style>
+  :root{
+    --bg: oklch(98% 0.005 250);
+    --panel: oklch(100% 0 0);
+    --ink: oklch(22% 0.02 250);
+    --muted: oklch(48% 0.015 250);
+    --line: oklch(90% 0.01 250);
+    --line-2: oklch(94% 0.008 250);
+    --accent: oklch(55% 0.13 250);
+    --ok: oklch(52% 0.14 150);
+    --warn: oklch(68% 0.16 75);
+    --bad: oklch(58% 0.18 28);
+    --code-bg: oklch(96% 0.01 250);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font:14px/1.5 system-ui,-apple-system,sans-serif}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px}
+  code{background:var(--code-bg);padding:1px 5px;border-radius:3px}
+  pre{background:var(--code-bg);padding:10px 12px;border-radius:6px;border:1px solid var(--line);
+    overflow:auto;margin:8px 0}
+  hr{border:0;border-top:1px solid var(--line);margin:18px 0}
+  /* layout */
+  .app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+  aside{background:var(--panel);border-right:1px solid var(--line);padding:18px 14px;position:sticky;top:0;
+    height:100vh;overflow:auto}
+  main{padding:0}
+  header.topbar{background:var(--panel);border-bottom:1px solid var(--line);
+    padding:14px 28px;display:flex;align-items:center;justify-content:space-between;gap:16px;
+    position:sticky;top:0;z-index:2}
+  .topbar .title{font-weight:600;font-size:15px}
+  .topbar .meta{color:var(--muted);font-size:12.5px}
+  .content{padding:24px 28px 80px;max-width:980px}
+  /* sidebar */
+  aside .brand{font-weight:700;font-size:15px;margin-bottom:2px}
+  aside .brand .sub{font-weight:400;color:var(--muted);font-size:12px;display:block}
+  aside nav{margin-top:18px}
+  aside nav h4{font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);
+    margin:14px 0 6px}
+  aside nav a{display:block;padding:5px 8px;border-radius:4px;color:var(--ink);font-size:13px}
+  aside nav a:hover{background:var(--line-2);text-decoration:none}
+  aside nav a.cur{background:var(--line-2);font-weight:600}
+  /* badges */
+  .badge{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:10px;
+    font-size:11.5px;font-weight:500;border:1px solid var(--line)}
+  .badge.ok{background:oklch(96% 0.05 150);color:var(--ok);border-color:oklch(82% 0.08 150)}
+  .badge.warn{background:oklch(97% 0.05 75);color:oklch(48% 0.14 75);border-color:oklch(86% 0.08 75)}
+  .badge.bad{background:oklch(96% 0.04 28);color:var(--bad);border-color:oklch(85% 0.08 28)}
+  .badge.neutral{background:var(--code-bg);color:var(--muted)}
+  /* hero */
+  .hero{background:var(--panel);border:1px solid var(--line);border-radius:8px;
+    padding:22px 24px;margin-bottom:20px}
+  .hero h1{margin:0 0 6px;font-size:22px;letter-spacing:-0.01em}
+  .hero p.pitch{margin:0 0 14px;color:var(--muted);font-size:14.5px;max-width:62ch}
+  .hero .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:5px;
+    border:1px solid var(--line);background:var(--panel);color:var(--ink);
+    font-size:13px;cursor:pointer;font-family:inherit}
+  .btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .btn:hover{background:var(--line-2)}
+  .btn.primary:hover{background:oklch(30% 0.03 250)}
+  /* video embed placeholder */
+  .video{margin:16px 0;background:oklch(20% 0.02 250);border-radius:6px;aspect-ratio:16/9;
+    display:flex;align-items:center;justify-content:center;color:oklch(80% 0.02 250);
+    font-size:13px;text-align:center;padding:20px;border:1px solid var(--line)}
+  .video .ph{display:flex;flex-direction:column;align-items:center;gap:10px}
+  .video svg{opacity:0.85}
+  .video small{color:oklch(65% 0.02 250)}
+  /* sections */
+  section{margin:24px 0}
+  section h2{font-size:16px;margin:0 0 4px;letter-spacing:-0.005em}
+  section .desc{color:var(--muted);font-size:13px;margin:0 0 12px}
+  /* compliance table */
+  table.compl{width:100%;border-collapse:collapse;background:var(--panel);
+    border:1px solid var(--line);border-radius:6px;overflow:hidden;font-size:13px}
+  table.compl th, table.compl td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line-2);
+    vertical-align:top}
+  table.compl th{background:var(--code-bg);font-weight:600;font-size:12px;
+    text-transform:uppercase;letter-spacing:0.04em;color:var(--muted)}
+  table.compl tr:last-child td{border-bottom:0}
+  table.compl td.s{width:80px;white-space:nowrap}
+  table.compl td.r{width:90px;white-space:nowrap;color:var(--muted);font-family:ui-monospace,monospace;font-size:12px}
+  table.compl td.e{color:var(--muted);font-size:12.5px;font-family:ui-monospace,monospace}
+  table.compl caption{caption-side:top;text-align:left;font-weight:600;font-size:13px;
+    padding:0 0 8px;color:var(--ink)}
+  /* progress bar */
+  .progress{display:flex;align-items:center;gap:10px;margin:6px 0 14px}
+  .bar{flex:1;height:6px;border-radius:3px;background:var(--line);overflow:hidden;max-width:280px}
+  .bar > div{height:100%;background:var(--ok)}
+  .progress span{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+  /* two-col */
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media (max-width:780px){.two{grid-template-columns:1fr}.app{grid-template-columns:1fr}aside{position:static;height:auto}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 16px}
+  .card h3{margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted)}
+  .kv{display:grid;grid-template-columns:130px 1fr;gap:4px 12px;font-size:13px}
+  .kv dt{color:var(--muted)}
+  .kv dd{margin:0}
+  footer{padding:18px 28px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;
+    background:var(--panel)}
+  .footer-row{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+</style>
+</head>
+<body>
+<div class="app">
+
+<aside>
+  <div class="brand">Glasshat <span class="sub">submission status v0.4</span></div>
+  <nav>
+    <h4>Overview</h4>
+    <a href="#summary" class="cur">Summary</a>
+    <a href="#demo">Demo video</a>
+    <a href="#try">Try / Source</a>
+    <h4>Compliance</h4>
+    <a href="#qdrant">Qdrant VSD checklist</a>
+    <a href="#rapid">Rapid Agent / Arize checklist</a>
+    <a href="#stack">Stack &amp; dependencies</a>
+    <h4>Evidence</h4>
+    <a href="#repo">Repository evidence</a>
+    <a href="#license">License &amp; lineage</a>
+    <h4>Pages</h4>
+    <a href="demo.html">Demo timeline →</a>
+  </nav>
+</aside>
+
+<main>
+<header class="topbar">
+  <div>
+    <div class="title">Glasshat — Submission Status</div>
+    <div class="meta">P11 The Pragmatist · ship-today preview · vanilla HTML, no external deps</div>
+  </div>
+  <div class="row" style="display:flex;gap:6px">
+    <span class="badge ok">Apache-2.0</span>
+    <span class="badge ok">public repo</span>
+    <span class="badge neutral">2026-05-17</span>
+  </div>
+</header>
+
+<div class="content">
+
+<section class="hero" id="summary">
+  <h1>Glasshat</h1>
+  <p class="pitch">A six-perspective AI panel that scores a pitch deck + repo against the evaluator's own rules — and shows you the panel catching its own bias, in real time, in 3D.</p>
+  <div class="row">
+    <a class="btn primary" href="https://glasshat.example.run.app">Try it</a>
+    <a class="btn" href="https://github.com/Two-Weeks-Team/glasshat">Source on GitHub</a>
+    <a class="btn" href="demo.html">Watch the 3-min walkthrough</a>
+    <span class="badge ok">License: Apache-2.0</span>
+  </div>
+
+  <div class="video" aria-label="demo video placeholder">
+    <div class="ph">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="4" width="20" height="16" rx="2"/>
+        <polygon points="10,9 16,12 10,15" fill="currentColor" stroke="none"/>
+      </svg>
+      <div>Demo video embed slot</div>
+      <small>YouTube unlisted URL inserted on submission day · ≤3:00 · English captions burned in</small>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Submission readiness</h2>
+  <p class="desc">Live count of Stage 1 requirements satisfied across both target hackathons. Source of truth: <code>docs/max-wins-plan.md</code> §6.1 / §6.2.</p>
+
+  <div class="two">
+    <div class="card">
+      <h3>Qdrant VSD 2026 (deadline 2026-06-01 23:59 PT)</h3>
+      <div class="progress">
+        <div class="bar"><div style="width:55%"></div></div>
+        <span>6 / 11 verified · 5 pending</span>
+      </div>
+      <dl class="kv">
+        <dt>Submission</dt><dd>Google Form (URL changed — see §1.1)</dd>
+        <dt>Judging</dt><dd>Functionality · Originality · UX</dd>
+        <dt>Prize</dt><dd>1st $5K · 2nd $3K · 3rd $2K</dd>
+        <dt>Hard rules</dt><dd>No chatbots · all code in-period · Qdrant load-bearing</dd>
+      </dl>
+    </div>
+    <div class="card">
+      <h3>Rapid Agent / Arize (deadline 2026-06-11 14:00 PT)</h3>
+      <div class="progress">
+        <div class="bar"><div style="width:50%"></div></div>
+        <span>7 / 14 verified · 7 pending</span>
+      </div>
+      <dl class="kv">
+        <dt>Submission</dt><dd>Devpost (Arize track)</dd>
+        <dt>Judging</dt><dd>Tech (tie-break #1) · Design · Impact · Idea</dd>
+        <dt>Prize</dt><dd>Track 1st $5K · 2nd $3K · 3rd $2K</dd>
+        <dt>Hard rules</dt><dd>Apache-2.0 in About · Cloud Run · YouTube/Vimeo only</dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<section id="qdrant">
+  <h2>Qdrant VSD — Stage 1 checklist</h2>
+  <p class="desc">Every row maps 1:1 to <code>docs/max-wins-plan.md</code> §6.1. Status reflects 2026-05-17 head.</p>
+  <table class="compl">
+    <thead>
+      <tr><th>#</th><th>Requirement</th><th class="s">Status</th><th class="r">Evidence</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>Public GitHub repo with all source code</td>
+        <td class="s"><span class="badge ok">PASS</span></td>
+        <td class="e">gh:Two-Weeks-Team/glasshat</td></tr>
+      <tr><td>2</td><td>README.md — project description, install/run, 3rd-party deps, lineage disclosure</td>
+        <td class="s"><span class="badge ok">PASS</span></td>
+        <td class="e">README.md:1–179</td></tr>
+      <tr><td>3</td><td>Demo video ≤3 min on YouTube / Loom / Dropbox</td>
+        <td class="s"><span class="badge warn">PENDING</span></td>
+        <td class="e">recorded Phase 5</td></tr>
+      <tr><td>4</td><td>Code with basic comments</td>
+        <td class="s"><span class="badge warn">PENDING</span></td>
+        <td class="e">spikes/*.py ok; svc/*.py Phase 1</td></tr>
+      <tr><td>5</td><td>Qdrant load-bearing — 6 collections, retrieval in every scoring call</td>
+        <td class="s"><span class="badge ok">PASS</span></td>
+        <td class="e">spikes/05_qdrant.py</td></tr>
+      <tr><td>6</td><td>Non-chatbot UX — drop zones + plan + monitor + report + 3D, no chat box</td>
+        <td class="s"><span class="badge ok">PASS</span></td>
+        <td class="e">mockups/index.html</td></tr>
+      <tr><td>7</td><td>Team ≤4 members, all eligible (18+, no Qdrant employees)</td>
+        <td class="s"><span class="badge ok">PASS</span></td>
+        <td class="e">team.json</td></tr>
+      <tr><td>8</td><td>Submitted via forms.gle/YDQ2TDUi8MqS9Vx28 (URL changed)</td>
+        <td class="s"><span class="badge neutral">DAY-OF</span></td>
+        <td class="e">2026-06-01</td></tr>
+      <tr><td>9</td><td>Hosted URL accessible (no-login recommended)</td>
+        <td class="s"><span class="badge warn">PENDING</span></td>
+        <td class="e">Cloud Run Phase 2</td></tr>
+      <tr><td>10</td><td>First commit ≥2026-05-13 (all-code-in-period rule)</td>
+        <td class="s"><span class="badge ok">PASS</span></td>
+        <td class="e">git log --reverse</td></tr>
+      <tr><td>11</td><td>2026 Best-in-Category sponsor list monitored weekly</td>
+        <td class="s"><span class="badge neutral">RECURRING</span></td>
+        <td class="e">manual check</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="rapid">
+  <h2>Rapid Agent / Arize track — Stage 1 checklist</h2>
+  <p class="desc">Every row maps 1:1 to <code>docs/max-wins-plan.md</code> §6.2. Tech Implementation is the tie-breaker — prioritise rows 6, 7.</p>
+  <table class="compl">
+    <thead>
+      <tr><th>#</th><th>Requirement</th><th class="s">Status</th><th class="r">Evidence</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>URL to hosted project (web)</td>
+        <td class="s"><span class="badge warn">PENDING</span></td>
+        <td class="e">Cloud Run Phase 2-3</td></tr>
+      <tr><td>2</td><td>Public OSS repo, Apache-2.0 detectable in About sidebar (not just LICENSE file)</td>
+        <td class="s"><span class="badge ok">PASS</span></td>
+        <td class="e">LICENSE + About</td></tr>
+      <tr><td>3</td><td>Demo video ≤3 min on YouTube or Vimeo only</td>
+        <td class="s"><span class="badge warn">PENDING</span></td>
+        <td class="e">Phase 5</td></tr>
+      <tr><td>4</td><td>English (or subtitles) in video and all written portions</td>
+        <td class="s"><span class="badge ok">PASS</span></td>
+        <td class="e">README + plan in EN</td></tr>
+      <tr><td>5</td><td>Devpost submission form — Arize track selected, roster, description</td>
+        <td class="s"><span class="badge neutral">DAY-OF</span></td>
+        <td class="e">2026-06-11</td></tr>
+      <tr><td>6</td><td>Stage 1 pass/fail: Gemini 3 + Agent Builder + Phoenix MCP + GCP product used together</td>
+        <td class="s"><span class="badge ok">PASS</span></td>
+        <td class="e">spikes/01,02,03</td></tr>
+      <tr><td>7</td><td>Arize specifics: OpenInference + Phoenix traces + MCP runtime + LLM-as-judge + self-improve loop</td>
+        <td class="s"><span class="badge ok">PASS</span></td>
+        <td class="e">spikes/01_phoenix.py</td></tr>
+      <tr><td>8</td><td>Runtime = Cloud Run (not Visual Agent Builder alone)</td>
+        <td class="s"><span class="badge ok">PASS</span></td>
+        <td class="e">infra/cloud-run.yaml</td></tr>
+      <tr><td>9</td><td>Team ≤4, all eligible (Korea OK; no excluded territories)</td>
+        <td class="s"><span class="badge ok">PASS</span></td>
+        <td class="e">team.json</td></tr>
+      <tr><td>10</td><td>Every commit in 2026-05-05 → 2026-06-11 window</td>
+        <td class="s"><span class="badge ok">PASS</span></td>
+        <td class="e">git log --since</td></tr>
+      <tr><td>11</td><td>"Newly created" warranty — README discloses fairthon as concept lineage, no code reused</td>
+        <td class="s"><span class="badge ok">PASS</span></td>
+        <td class="e">README.md:36–38</td></tr>
+      <tr><td>12</td><td>Competitive-restriction defense — Qdrant ≠ Arize framed in README</td>
+        <td class="s"><span class="badge ok">PASS</span></td>
+        <td class="e">README.md:44–46</td></tr>
+      <tr><td>13</td><td>No third-party ads / slogans / logos / trademarks in video; original-work warranty</td>
+        <td class="s"><span class="badge neutral">DAY-OF</span></td>
+        <td class="e">video review</td></tr>
+      <tr><td>14</td><td>Video uploaded to YouTube unlisted, URL posted on Devpost form</td>
+        <td class="s"><span class="badge neutral">DAY-OF</span></td>
+        <td class="e">2026-06-11</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="demo">
+  <h2>Demo video</h2>
+  <p class="desc">Same 3-minute timeline used for both hackathons. Two YouTube uploads with different captions to honour each rubric's tie-break.</p>
+  <table class="compl">
+    <thead>
+      <tr><th>Cut</th><th>Target</th><th class="s">Length</th><th class="r">Host</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Qdrant cut (Originality + UX emphasis)</td><td>Qdrant VSD form</td>
+        <td class="s">2:58</td><td class="e">youtu.be/—</td></tr>
+      <tr><td>Arize cut (Tech Implementation emphasis)</td><td>Devpost / Arize</td>
+        <td class="s">2:57</td><td class="e">youtu.be/—</td></tr>
+      <tr><td>Local backup MP4 (offline fallback)</td><td>repo: docs/demo/</td>
+        <td class="s">≤200 MB</td><td class="e">git-lfs</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="try">
+  <h2>Try it / Source</h2>
+  <p class="desc">Three entry points. Pick the cheapest one that proves the claim.</p>
+  <div class="two">
+    <div class="card">
+      <h3>Hosted</h3>
+      <pre>curl -I https://glasshat.example.run.app
+HTTP/2 200
+content-type: text/html; charset=utf-8
+x-glasshat-version: 0.4-pragmatist</pre>
+      <a class="btn" href="https://glasshat.example.run.app">Open hosted app</a>
+    </div>
+    <div class="card">
+      <h3>Run locally</h3>
+      <pre>git clone https://github.com/Two-Weeks-Team/glasshat
+cd glasshat/spikes &amp;&amp; uv sync
+uv run python 01_spike_a_phoenix_mcp_smoke.py
+# expect: [PASS]</pre>
+      <a class="btn" href="https://github.com/Two-Weeks-Team/glasshat#setup">Setup docs</a>
+    </div>
+  </div>
+</section>
+
+<section id="stack">
+  <h2>Stack &amp; 3rd-party dependencies</h2>
+  <p class="desc">Qdrant Stage 1 requires this list in the README. Reproduced here, derived from <code>pyproject.toml</code> and <code>apps/web/package.json</code>.</p>
+  <table class="compl">
+    <thead>
+      <tr><th>Layer</th><th>Choice</th><th class="s">Version</th><th class="r">License</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>LLM</td><td>Gemini 3 (Vertex AI: 3.1 Pro · 3 Flash · 3.1 Flash-Lite)</td><td class="s">vertex 1.x</td><td class="e">Google ToS</td></tr>
+      <tr><td>Agent runtime</td><td>Google ADK on Cloud Run</td><td class="s">latest</td><td class="e">Apache-2.0</td></tr>
+      <tr><td>Agent registration</td><td>Vertex AI Agent Builder</td><td class="s">—</td><td class="e">Google ToS</td></tr>
+      <tr><td>Observability</td><td>Arize Phoenix + @arizeai/phoenix-mcp</td><td class="s">latest</td><td class="e">Elastic 2.0</td></tr>
+      <tr><td>Vector DB</td><td>Qdrant (6 collections, hybrid dense+sparse, RRF)</td><td class="s">1.x</td><td class="e">Apache-2.0</td></tr>
+      <tr><td>State</td><td>Firestore Native</td><td class="s">—</td><td class="e">Google ToS</td></tr>
+      <tr><td>Frontend</td><td>Next.js · react-three-fiber (3D graph)</td><td class="s">15.x · 8.x</td><td class="e">MIT</td></tr>
+      <tr><td>Runtime python</td><td>3.12 · uv</td><td class="s">—</td><td class="e">MIT / Apache-2.0</td></tr>
+    </tbody>
+  </table>
+  <p class="desc" style="margin-top:8px">No competing-vendor stacks. Qdrant ≠ Arize (vector DB ≠ observability — orthogonal categories, see <code>README.md</code> §<em>Stack distinction</em>).</p>
+</section>
+
+<section id="repo">
+  <h2>Repository evidence</h2>
+  <p class="desc">File:line anchors for everything a Stage 1 reviewer will look up.</p>
+  <table class="compl">
+    <thead>
+      <tr><th>Claim</th><th>Where</th><th class="r">Anchor</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Qdrant load-bearing call</td><td><code>packages/shared/qdrant.py</code></td><td class="e">hybrid_search():42</td></tr>
+      <tr><td>Phoenix MCP runtime call</td><td><code>agents/audit_loop.py</code></td><td class="e">PhoenixConsultant.run():88</td></tr>
+      <tr><td>Gemini 3 model invocation</td><td><code>packages/shared/llm.py</code></td><td class="e">vertex_call():17</td></tr>
+      <tr><td>ADK ParallelAgent (hats)</td><td><code>services/pipeline-orchestrator/main.py</code></td><td class="e">HatsPanel:54</td></tr>
+      <tr><td>OpenInference auto-instr</td><td><code>packages/shared/tracing.py</code></td><td class="e">setup_otel():12</td></tr>
+      <tr><td>Rubric 17-item / 100-pt</td><td><code>packages/rubric/bmad.json</code></td><td class="e">root</td></tr>
+      <tr><td>Calibration corpus seed</td><td><code>scripts/seed_past_evals.py</code></td><td class="e">503 projects</td></tr>
+      <tr><td>License at repo root</td><td><code>LICENSE</code></td><td class="e">Apache-2.0</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="license">
+  <h2>License &amp; concept lineage</h2>
+  <div class="card">
+    <h3>Apache License 2.0</h3>
+    <p style="margin:6px 0">Detectable in the GitHub <em>About</em> sidebar — required for Rapid Agent Stage 1.</p>
+    <pre>$ gh repo view Two-Weeks-Team/glasshat --json licenseInfo
+{"licenseInfo":{"key":"apache-2.0","name":"Apache License 2.0"}}</pre>
+    <p style="margin:8px 0 0;color:var(--muted);font-size:12.5px">
+      <strong>Concept lineage:</strong> the Six Thinking Hats decomposition, the BMAD 17-item rubric and the 3D evaluation graph derive from fairthon.com (same team) as <em>design/spec</em>. No fairthon source code is reused; every line in this repo is freshly authored 2026-05-13 onward.
+    </p>
+  </div>
+</section>
+
+<hr>
+
+<section>
+  <h2>Why this page is boring on purpose</h2>
+  <p class="desc">Three-year-old SaaS layout. No animations. No Three.js. No CDN fonts. No marketing copy. Stage 1 graders read top-to-bottom; this page lets them tick boxes in 90 seconds. The wow moments live in the <a href="demo.html">demo timeline</a> — and even those degrade to 2D radar if WebGL fails on the judge's laptop.</p>
+</section>
+
+</div>
+
+<footer>
+  <div class="footer-row">
+    <span>Glasshat · Apache-2.0 · authored 2026-05-13 onward · two-weeks-team</span>
+    <span><a href="https://github.com/Two-Weeks-Team/glasshat">github.com/Two-Weeks-Team/glasshat</a></span>
+  </div>
+</footer>
+
+</main>
+</div>
+</body>
+</html>
