@@ -174,6 +174,51 @@ a:hover { text-decoration: underline; }
 .quote-callout { background: var(--bg-elevated-hi); border-left: 4px solid var(--accent); padding: 18px 22px; border-radius: 0 var(--radius-md) var(--radius-md) 0; margin: 18px 0; font-family: 'Space Grotesk', sans-serif; font-style: italic; font-size: 17px; line-height: 1.5; color: var(--text-primary); }
 .quote-callout .attrib { display: block; margin-top: 10px; font-family: 'JetBrains Mono', monospace; font-style: normal; font-size: 12px; color: var(--text-muted); }
 
+/* WOW/KICK storyboard */
+.wk-grid { display: flex; flex-direction: column; gap: 8px; margin: 12px 0 28px; }
+.wk-slot { display: grid; grid-template-columns: 72px 1fr auto; gap: 12px; align-items: stretch; padding: 12px 14px; background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-left-width: 4px; border-radius: 10px; transition: all .15s ease; }
+.wk-slot:hover { background: var(--bg-elevated-hi); }
+.wk-slot.wow { border-left-color: var(--accent); }
+.wk-slot.kick { border-left-color: var(--primary); }
+.wk-slot.wow-double { border-left-color: var(--gold); background: linear-gradient(90deg, oklch(82% 0.16 88 / 0.10), var(--bg-elevated)); }
+.wk-slot.breath { border-left-color: var(--text-muted); opacity: 0.65; }
+.wk-time { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 12px; color: var(--text-muted); padding-top: 2px; white-space: nowrap; }
+.wk-body { min-width: 0; }
+.wk-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
+.wk-stars { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 11px; padding: 2px 8px; border-radius: 4px; }
+.wk-slot.wow .wk-stars { background: var(--accent-soft); color: var(--accent); }
+.wk-slot.wow-double .wk-stars { background: oklch(82% 0.16 88 / 0.20); color: var(--gold); }
+.wk-slot.kick .wk-stars { background: var(--primary-soft); color: var(--primary); }
+.wk-slot.breath .wk-stars { background: oklch(70% 0 0 / 0.16); color: var(--text-muted); }
+.wk-label { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 14px; color: var(--text-primary); }
+.wk-visual { font-size: 12px; color: var(--text-secondary); margin: 2px 0; }
+.wk-visual code { font-size: 11px; }
+.wk-narration { font-style: italic; font-size: 13px; color: var(--text-primary); margin-top: 4px; font-family: 'Space Grotesk', sans-serif; }
+.wk-backup { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--warning); margin-top: 4px; padding-top: 4px; border-top: 1px dashed oklch(82% 0.18 80 / 0.30); }
+.wk-backup::before { content: '⊕ BACKUP: '; font-weight: 700; }
+.wk-owner { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-muted); font-weight: 600; align-self: start; padding-top: 2px; white-space: nowrap; }
+
+/* WOW/KICK summary bar */
+.wk-summary { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin: 20px 0; padding: 16px; background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); }
+.wk-summary .item { text-align: center; }
+.wk-summary .item .n { font-family: 'Space Grotesk', sans-serif; font-weight: 800; font-size: 26px; line-height: 1; }
+.wk-summary .item .n.wow { color: var(--accent); }
+.wk-summary .item .n.kick { color: var(--primary); }
+.wk-summary .item .n.gold { color: var(--gold); }
+.wk-summary .item .l { font-family: 'JetBrains Mono', monospace; font-size: 10px; text-transform: uppercase; color: var(--text-muted); margin-top: 4px; }
+
+.viewport-tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--border-subtle); }
+.viewport-tabs button { appearance: none; border: none; background: transparent; color: var(--text-muted); padding: 10px 16px; font-family: inherit; font-weight: 600; font-size: 13px; cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s ease; }
+.viewport-tabs button:hover { color: var(--text-primary); }
+.viewport-tabs button[aria-pressed="true"] { color: var(--primary); border-bottom-color: var(--primary); }
+
+.viewport-pane { display: none; }
+.viewport-pane.active { display: block; }
+
+/* Judge-feel callout */
+.judge-feel { padding: 16px 20px; background: linear-gradient(90deg, oklch(82% 0.16 88 / 0.10), transparent); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; margin: 16px 0; font-size: 13px; }
+.judge-feel strong { color: var(--gold); font-family: 'JetBrains Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+
 /* Score gauge */
 .gauge { display: inline-block; padding: 16px 24px; background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); }
 .gauge .num { font-family: 'Space Grotesk', sans-serif; font-weight: 800; font-size: 36px; line-height: 1; }
@@ -213,7 +258,8 @@ footer { padding-top: 32px; border-top: 1px solid var(--border-subtle); color: v
     <li><a href="#build">7. 빌드 순서 (50h)</a></li>
     <li><a href="#risk">8. 핵심 리스크 2건</a></li>
     <li><a href="#decision">9. 경영진 결정 요청</a></li>
-    <li><a href="#next">10. 다음 단계</a></li>
+    <li><a href="#wowkick">10. ★ WOW/KICK Storyboard</a></li>
+    <li><a href="#next">11. 다음 단계</a></li>
   </ul>
 </aside>
 
@@ -631,9 +677,368 @@ footer { padding-top: 32px; border-top: 1px solid var(--border-subtle); color: v
 </div>
 </section>
 
+<!-- ====================== WOW/KICK STORYBOARD ====================== -->
+<section id="wowkick">
+<h2><span class="num">§10</span>★ WOW / KICK Storyboard — 심사위원이 보는 그림</h2>
+<p class="sec-lead">9-surface combo를 심사위원 1인칭 시점에서 슬롯별로 ★ <strong style="color:var(--accent)">WOW</strong> (dinner-table-retellable) / ★ <strong style="color:var(--primary)">KICK</strong> (engineering depth signal) 분포로 재구성. 양쪽 viewport × 3분 + landing 30초. 단일 실패 지점에 BACKUP beat 보장 + breathing room 슬롯 명시.</p>
+
+<div class="wk-summary">
+  <div class="item"><div class="n wow">6+6</div><div class="l">★ WOW × 2 viewport</div></div>
+  <div class="item"><div class="n kick">5+6</div><div class="l">★ KICK × 2 viewport</div></div>
+  <div class="item"><div class="n gold">4</div><div class="l">★★ Double WOW</div></div>
+  <div class="item"><div class="n">5</div><div class="l">⊕ BACKUP beats</div></div>
+  <div class="item"><div class="n">≤15s</div><div class="l">max gap between stars</div></div>
+</div>
+
+<div class="judge-feel">
+  <strong>Judge mental model</strong> · 심사위원이 3분 후 다음 데모로 넘어가기 직전 5초 안에 회상할 수 있는 frame이 ★ WOW. "이 팀은 진짜다" 신호로 받아들이는 detail이 ★ KICK. 두 신호가 ≥15s 간격 없이 fall, 게임 frame trivialize 위험을 P25+P13가 중화하는 구조.
+</div>
+
+<h3 style="margin-top:32px;">§10.0 Viewport 선택</h3>
+
+<div class="viewport-tabs" role="group" aria-label="Demo viewport">
+  <button id="tab-qdrant" aria-pressed="true" onclick="showVp('qdrant')" type="button">🏆 Qdrant VSD (Judge mode)</button>
+  <button id="tab-rapid" aria-pressed="false" onclick="showVp('rapid')" type="button">🤖 Rapid Agent / Arize (Participant mode)</button>
+  <button id="tab-landing" aria-pressed="false" onclick="showVp('landing')" type="button">⚡ Landing 30s (양쪽 공통)</button>
+</div>
+
+<!-- ============ QDRANT VIEWPORT ============ -->
+<div class="viewport-pane active" id="vp-qdrant">
+<h3>§10.1 Qdrant VSD demo · Judge mode (3분)</h3>
+<p>Qdrant 심사 axis (Functionality · Originality · UX) 모두 hit. 가장 시끄러운 자산은 P23 game-canvas + P05 cinematic hero. <strong>P25 trace right rail은 always-visible</strong>로 Originality 안의 "Qdrant load-bearing" 직접 증명.</p>
+
+<div class="wk-grid">
+
+  <div class="wk-slot wow">
+    <div class="wk-time">0:00<br/>↓<br/>0:05</div>
+    <div class="wk-body">
+      <div class="wk-head"><span class="wk-stars">★ WOW #0</span><span class="wk-label">Hook (P05 serif italic)</span></div>
+      <div class="wk-visual">검정 배경 → P05 italic serif "<em>audits the judge.</em>" 156px 천천히 fade-in. 배경에 P05 R3F 503-anchor constellation 회전 시작. Magenta "this submission" 점 cluster 외곽에 등장.</div>
+      <div class="wk-narration">"Glasshat doesn't just judge projects. It audits the judge."</div>
+    </div>
+    <div class="wk-owner">P05</div>
+  </div>
+
+  <div class="wk-slot breath">
+    <div class="wk-time">0:05<br/>↓<br/>0:08</div>
+    <div class="wk-body">
+      <div class="wk-head"><span class="wk-stars">breath</span><span class="wk-label">호흡 3초</span></div>
+      <div class="wk-visual">정적. constellation 회전만 진행. Hook이 가라앉을 시간.</div>
+    </div>
+    <div class="wk-owner">—</div>
+  </div>
+
+  <div class="wk-slot kick">
+    <div class="wk-time">0:10<br/>↓<br/>0:20</div>
+    <div class="wk-body">
+      <div class="wk-head"><span class="wk-stars">★ KICK #1</span><span class="wk-label">Cost ticker init + drag CSV</span></div>
+      <div class="wk-visual">자동 cursor가 우측 상단으로 → CSV 파일 아이콘이 dropzone에 떨어짐. Cost ticker 우측 상단 등장: <code>in 0K · out 0K · cached 0K · $0.000</code>. 즉시 tick: <code>$0.000 → $0.024</code>. Phoenix trace right rail 첫 줄 등장: <code>phoenix.otel.register(auto_instrument=True)</code>.</div>
+    </div>
+    <div class="wk-owner">P23 + P25</div>
+  </div>
+
+  <div class="wk-slot wow">
+    <div class="wk-time">0:20<br/>↓<br/>0:30</div>
+    <div class="wk-body">
+      <div class="wk-head"><span class="wk-stars">★ WOW #1</span><span class="wk-label">503 cards Kanban stream — 스케일 wow</span></div>
+      <div class="wk-visual">P23 Kanban 7-col(queue → ingest → plan → hats → audit → score → done) 풀스크린 오버레이 슬라이드인. 카드들이 ~30/sec 속도로 좌→우로 흐름. 우측 상단: "503 submissions · 21s elapsed · $0.080". P25 trace tree에 spans 누적: <code>qdrant.upsert collection="past_evals" · 503 points</code>.</div>
+      <div class="wk-narration">"503 of Gemini 3's 4,499 submissions — judged in real time."</div>
+    </div>
+    <div class="wk-owner">P23 + P25</div>
+  </div>
+
+  <div class="wk-slot kick">
+    <div class="wk-time">0:30<br/>↓<br/>1:00</div>
+    <div class="wk-body">
+      <div class="wk-head"><span class="wk-stars">★ KICK #2</span><span class="wk-label">RubricSynthesizer + 6 Hats parallel</span></div>
+      <div class="wk-visual">Kanban 한 카드(Globot)로 zoom-in. P05 typography로 plan-card slide: "RubricSynthesizer · gemini-3.1-pro · thinking_level=high · preset=qdrant". 6 hat cards 동시 활성, 각 cards에 token streaming + thinking trace. P25 trace tree에 <code>ParallelAgent[6 hats] dispatched · auto-instrumented</code>.</div>
+    </div>
+    <div class="wk-owner">P23 + P25</div>
+  </div>
+
+  <div class="wk-slot wow-double">
+    <div class="wk-time">1:00<br/>↓<br/>1:30</div>
+    <div class="wk-body">
+      <div class="wk-head"><span class="wk-stars">★★ WOW #2A</span><span class="wk-label">Yellow A1=9.0 + bias meter peg red — DETECTION</span></div>
+      <div class="wk-visual">Yellow Hat card flashes warning. Live Bias Meter dial swings to red. P25 trace right rail에 3 spans 동시 등장: <code>phoenix.online_eval fired: over_confident · score 0.31</code> + <code>phoenix.custom_eval fired (parallel)</code> + <code>BlackHat counter-claim: "evidence depth 0.31 cannot support 9.0"</code>. 3-way redundant detection 시각적으로 명시.</div>
+      <div class="wk-narration">"Yellow scores 9.0. But evidence is 0.31. Three signals fire."</div>
+      <div class="wk-backup">2/3 detection paths만 fire해도 narration 동일 ("Three signals fire" → "Two signals fire"). Yellow row className 'bias-warn'만 보여도 시각적으로 인식 가능.</div>
+    </div>
+    <div class="wk-owner">P23 + P25</div>
+  </div>
+
+  <div class="wk-slot wow-double">
+    <div class="wk-time">1:30<br/>↓<br/>1:45</div>
+    <div class="wk-body">
+      <div class="wk-head"><span class="wk-stars">★★ WOW #2B + ★ KICK #3</span><span class="wk-label">Phoenix MCP consultation chain · 4 calls in &lt;800ms</span></div>
+      <div class="wk-visual">P25 trace right rail에 4 MCP calls가 waterfall gantt로 동시 등장 (실제 OpenInference 이름): <code>phoenix.get-experiment-by-id("glasshat-calibration-v1")</code> → mean_delta=+1.75 · CI [0.9, 1.5] · <code>phoenix.get-span-annotations(yellow_a1)</code> · <code>phoenix.get-dataset-examples(calibration_corpus_v1, limit=3)</code> · <code>qdrant.recommend(collection="past_evals", positive=[anchor_ids], negative=[accurate_ids], strategy="average_vector", limit=3)</code>. 4 calls 모두 200ms 이내 ack. Anchor results: <span style="color:var(--gold)">Globot:8.2</span> · <span style="color:var(--gold)">Aegis:7.5</span> · <span style="color:var(--gold)">Netra:7.2</span>.</div>
+      <div class="wk-narration">"Consulting Phoenix MCP. Qdrant returns 3 winners with similar profiles."</div>
+    </div>
+    <div class="wk-owner">P25 (always-visible)</div>
+  </div>
+
+  <div class="wk-slot wow-double">
+    <div class="wk-time">1:45<br/>↓<br/>2:00</div>
+    <div class="wk-body">
+      <div class="wk-head"><span class="wk-stars">★★ WOW #3</span><span class="wk-label">★ CLIMAX · Yellow A1 9.0 → 7.6 (cinematic isolation)</span></div>
+      <div class="wk-visual">주변 모든 카드 dim 0.4로 (DEM-2 cinematic isolation). Yellow score number 200ms breath ↗ 9.05 → 200ms overshoot to 7.55 → settle 7.6. P23 critical-hit micro-animation (단, 풀스크린 splash 제거 — Chair veto). P01 strike-through micro-gesture: <code>9.0 → 7̶.̶6̶</code> CSS. Why-panel slide-in: <code>clip(9.0 - 0.8×1.75, p25=6.8, p75=8.1) = 7.6</code> + 3 anchors. Trace: <code>ScoreCalibration · escalate=True · iter 1/2</code>.</div>
+      <div class="wk-narration">"The score self-corrects. 9.0 → 7.6, anchored to past winners."</div>
+      <div class="wk-backup">애니메이션 실패 시: text instant swap + Why-panel만 visible. "9.0 → 7.6 anchored to Globot, Aegis, Netra" caption 단독으로도 climax 전달.</div>
+    </div>
+    <div class="wk-owner">P23 + P01 + P25</div>
+  </div>
+
+  <div class="wk-slot wow">
+    <div class="wk-time">2:00<br/>↓<br/>2:30</div>
+    <div class="wk-body">
+      <div class="wk-head"><span class="wk-stars">★ WOW #4</span><span class="wk-label">3D constellation reshape + Winner Gravity + P18 Phoenix-eye blink</span></div>
+      <div class="wk-visual">P05 R3F constellation pull-back. Magenta point가 1.8s ease-out으로 winner cluster (gold) 방향으로 migrate. Floating tooltip (P10 Winner Gravity copy): <code>72% similar to winner cluster, but pulled toward "Aegis" pattern (a 2024 finalist that did not win)</code>. 동시에 P18 Phoenix-as-eye motif 1회 blink (subtle silhouette). 카메라가 천천히 dolly-in.</div>
+      <div class="wk-narration">"And the auditor is the vector space."</div>
+      <div class="wk-backup">3D 실패 시 2D radar + 동일 narration. Constellation 자체가 wow가 아니라 narration이 wow.</div>
+    </div>
+    <div class="wk-owner">P05 + P18</div>
+  </div>
+
+  <div class="wk-slot kick">
+    <div class="wk-time">2:30<br/>↓<br/>2:42</div>
+    <div class="wk-body">
+      <div class="wk-head"><span class="wk-stars">★ KICK #4</span><span class="wk-label">P13 reliability diagram + Top-K hit rate</span></div>
+      <div class="wk-visual">P13 reliability diagram (vanilla vs Glasshat ECE) slide-in 좌하단. 4-KPI strip: <code>ECE −38.4%</code> · <code>Spearman +0.29</code> · <code>bias-flip −14.7pp</code> · <code>P@10 +0.40</code>. 모든 숫자 95% bootstrap CI 표시. Gold badge: <code>9/13 winners predicted · CI [0.39, 0.91]</code>. Red의 38점 정량 응대.</div>
+    </div>
+    <div class="wk-owner">P13</div>
+  </div>
+
+  <div class="wk-slot kick">
+    <div class="wk-time">2:42<br/>↓<br/>2:55</div>
+    <div class="wk-body">
+      <div class="wk-head"><span class="wk-stars">★ KICK #5</span><span class="wk-label">P17 compliance strip + evidence-export chip</span></div>
+      <div class="wk-visual">하단 4-badge strip 등장: <code>SOC2 in progress</code> · <code>EU AI Act Art.12</code> · <code>NIST RMF Measure-2.7</code> · <code>ISO/IEC 42001 gap analysis</code>. P17 evidence-export chip pulses: <code>📥 Download signed run record (.zip)</code>. Click 시 (실제 download — 가짜 zip but content는 real audit trail JSON). Doumont quiet — no caption.</div>
+    </div>
+    <div class="wk-owner">P17</div>
+  </div>
+
+  <div class="wk-slot wow">
+    <div class="wk-time">2:55<br/>↓<br/>3:00</div>
+    <div class="wk-body">
+      <div class="wk-head"><span class="wk-stars">★ WOW #5</span><span class="wk-label">Callback + reveal (P05 typography)</span></div>
+      <div class="wk-visual">모든 UI dim. P05 serif italic 회귀: <em>"It audits the judge."</em> (callback) · 200ms hold · cross-fade → <em>"Same engine. Different rubric. Different rubric-faithful score."</em> 5 stack pills fade-in: Qdrant Vector Search · Phoenix MCP · Google ADK · Gemini 3 · Cloud Run. Replay CTA + GitHub star CTA.</div>
+      <div class="wk-narration">"It audits the judge. Same engine. Different rubric."</div>
+    </div>
+    <div class="wk-owner">P05 + P25</div>
+  </div>
+
+</div>
+
+<div class="judge-feel">
+  <strong>Judge recall test</strong> · 3분 후 심사위원이 회상할 frame 후보: ① 503-card Kanban stream (★ WOW #1) ② Yellow 9.0 → 7.6 strike-through (★★ WOW #3) ③ Phoenix MCP 4-call cascade (★★ WOW #2B) ④ "And the auditor is the vector space" + 3D node migration (★ WOW #4) ⑤ Callback reveal (★ WOW #5). <strong>목표</strong>: 5중 ≥3가지를 1주일 후에도 회상 (n=20 dry-run).
+</div>
+</div>
+
+<!-- ============ RAPID AGENT VIEWPORT ============ -->
+<div class="viewport-pane" id="vp-rapid">
+<h3>§10.2 Rapid Agent / Arize demo · Participant mode (3분)</h3>
+<p>Rapid Agent의 <strong>Tech tie-break #1</strong>이 모든 결정의 우선순위. P25 always-visible trace + ADK topology SVG + MCP fidelity가 KICK 다수. Participant iterate-loop가 Self-Improvement Arize bonus 직접 시각화.</p>
+
+<div class="wk-grid">
+
+  <div class="wk-slot wow">
+    <div class="wk-time">0:00<br/>↓<br/>0:05</div>
+    <div class="wk-body">
+      <div class="wk-head"><span class="wk-stars">★ WOW #0</span><span class="wk-label">Hook (P05 serif italic)</span></div>
+      <div class="wk-visual">동일 hook (양쪽 데모 공통).</div>
+      <div class="wk-narration">"Glasshat doesn't just judge projects. It audits the judge."</div>
+    </div>
+    <div class="wk-owner">P05</div>
+  </div>
+
+  <div class="wk-slot kick">
+    <div class="wk-time">0:05<br/>↓<br/>0:15</div>
+    <div class="wk-body">
+      <div class="wk-head"><span class="wk-stars">★ KICK #1</span><span class="wk-label">Phoenix UI loads · OpenInference auto-instrument</span></div>
+      <div class="wk-visual">단일 submission upload 화면. 우측에 P25 Phoenix-replica UI 로드: top crumbs + sub-tabs (Spans / Datasets / Experiments / Prompts / Evaluators / Annotations). Trace 첫 줄: <code>phoenix.otel.register(auto_instrument=True)</code>. Phoenix UI <strong>real-looking</strong> (실제 Arize Phoenix Cloud UI replica).</div>
+    </div>
+    <div class="wk-owner">P25</div>
+  </div>
+
+  <div class="wk-slot kick">
+    <div class="wk-time">0:15<br/>↓<br/>0:45</div>
+    <div class="wk-body">
+      <div class="wk-head"><span class="wk-stars">★ KICK #2</span><span class="wk-label">ADK topology SVG live + 47-span tree</span></div>
+      <div class="wk-visual">중앙: ADK topology SVG live-animated: <code>GlasshatRootAgent(CustomAgent) → ParallelAgent[6 hats] → AuditLoop(max_iter=2) → MCPToolset(StdioServerParameters)</code>. 각 node가 활성화 시 cyan glow. P25 좌측: 47-span tree 누적. RubricSynthesizer + 6 hats spans 등장. Tech tie-break #1 직접 응대.</div>
+    </div>
+    <div class="wk-owner">P25</div>
+  </div>
+
+  <div class="wk-slot wow">
+    <div class="wk-time">0:45<br/>↓<br/>1:00</div>
+    <div class="wk-body">
+      <div class="wk-head"><span class="wk-stars">★ WOW #1</span><span class="wk-label">Initial score 73/100 + Tech 4/5 highlighted</span></div>
+      <div class="wk-visual">Participant 시점: 자신의 submission 점수 등장. Tech axis 4/5 (highest weight 40%, tie-break #1). 동시에 Yellow A1 bias meter peg red. Phoenix Online Eval annotation 등장.</div>
+      <div class="wk-narration">"Your score: 73/100. Tech axis is your tie-break — weight 40%."</div>
+      <div class="wk-backup">Bias meter fail 시: yellow row 'bias-warn' className으로 시각화. Narration 단독으로 climax 전달.</div>
+    </div>
+    <div class="wk-owner">P23 + P25</div>
+  </div>
+
+  <div class="wk-slot wow-double">
+    <div class="wk-time">1:00<br/>↓<br/>1:30</div>
+    <div class="wk-body">
+      <div class="wk-head"><span class="wk-stars">★★ WOW #2 + ★ KICK #3</span><span class="wk-label">Phoenix MCP uplift advisor · 4-call chain visible</span></div>
+      <div class="wk-visual">Phoenix UI에서 MCP call chain waterfall: <code>phoenix.get-span-annotations(blue_synthesis)</code> · <code>phoenix.get-dataset-examples(uplift_corpus, ...)</code> · <code>qdrant.recommend(positive=[uplift_anchors], negative=[no_uplift], strategy="best_score", limit=5)</code> · <code>phoenix.experiment.compare(baseline_id=...)</code>. 결과: "README lacks 'multi-stage container' section → expected lift +0.5 on Tech axis". 4 calls in <800ms.</div>
+      <div class="wk-narration">"Phoenix consults its past observability data. Returns one specific uplift."</div>
+    </div>
+    <div class="wk-owner">P25</div>
+  </div>
+
+  <div class="wk-slot kick">
+    <div class="wk-time">1:30<br/>↓<br/>1:45</div>
+    <div class="wk-body">
+      <div class="wk-head"><span class="wk-stars">★ KICK #4</span><span class="wk-label">Participant clicks "Apply" · annotation written</span></div>
+      <div class="wk-visual">Auto cursor → "Apply suggestion" 버튼 click. P25 trace에 <code>phoenix.annotations.write({action: "confirmed_auto", reason: "uplift advisor"})</code>. AuditLoop iter=2 시작.</div>
+    </div>
+    <div class="wk-owner">P23 + P25</div>
+  </div>
+
+  <div class="wk-slot wow-double">
+    <div class="wk-time">1:45<br/>↓<br/>2:00</div>
+    <div class="wk-body">
+      <div class="wk-head"><span class="wk-stars">★★ WOW #3</span><span class="wk-label">★ CLIMAX · Score 73 → 79 live animation</span></div>
+      <div class="wk-visual">주변 dim. Tech axis bar 4/5 → 5/5 (200ms breath → overshoot to 5.1 → settle 5). Final score number rolls 73 → 79 (P01 strike-through micro-gesture). Phoenix trace: <code>ScoreCalibration · escalate=True · iter 2/2 · loop closed</code>. Phoenix annotation icon 우측 상단 light up.</div>
+      <div class="wk-narration">"Your score lifts. 73 → 79. The agent improved itself."</div>
+      <div class="wk-backup">애니메이션 실패 시: instant text swap. "73 → 79" caption 단독으로 climax.</div>
+    </div>
+    <div class="wk-owner">P23 + P01 + P25</div>
+  </div>
+
+  <div class="wk-slot kick">
+    <div class="wk-time">2:00<br/>↓<br/>2:15</div>
+    <div class="wk-body">
+      <div class="wk-head"><span class="wk-stars">★ KICK #5</span><span class="wk-label">Loop closure · trace tree complete</span></div>
+      <div class="wk-visual">P25 좌측 trace tree에 전체 self-improvement loop가 완성된 모습 보임: <code>yellow.score → eval.calibration → mcp.consult → blue.adjust → yellow.score(rev) → eval.calibration(pass) → annotation.human_override</code>. 모든 spans 검정→녹색. "Loop closed" badge.</div>
+    </div>
+    <div class="wk-owner">P25</div>
+  </div>
+
+  <div class="wk-slot kick">
+    <div class="wk-time">2:15<br/>↓<br/>2:30</div>
+    <div class="wk-body">
+      <div class="wk-head"><span class="wk-stars">★ KICK #6</span><span class="wk-label">Cost dashboard + ADK topology re-light</span></div>
+      <div class="wk-visual">Cost ticker final: <code>in 27K · out 8K · cached 7.2K (90% saved) · $0.043 · 67s runtime</code>. ADK topology SVG 우측 상단으로 축소되며 architecture card slide-in: 10 stack badges (Gemini 3.1 Pro · Gemini 3 Flash · Gemini 3.1 Flash-Lite · Agent Builder · Google ADK · Phoenix MCP · Phoenix Online Evals · Qdrant Cloud · Cloud Run · Firestore).</div>
+    </div>
+    <div class="wk-owner">P25 + P11</div>
+  </div>
+
+  <div class="wk-slot wow">
+    <div class="wk-time">2:30<br/>↓<br/>2:48</div>
+    <div class="wk-body">
+      <div class="wk-head"><span class="wk-stars">★ WOW #4</span><span class="wk-label">Dual-rubric variance: Qdrant 87 vs Rapid 73</span></div>
+      <div class="wk-visual">화면 split: 좌측 P05 typography로 "Qdrant rubric: 4.33/5 = 87", 우측 동일 typography로 "Rapid Agent rubric: weighted = 79 (post-iterate)". Δ banner: <strong>Δ = 8 · Rubric-faithful variance, not bias.</strong> P13 variance 표준 95th percentile threshold 표시.</div>
+      <div class="wk-narration">"Same submission. Two rubrics. Rubric-faithful variance."</div>
+    </div>
+    <div class="wk-owner">P23 + P13</div>
+  </div>
+
+  <div class="wk-slot wow">
+    <div class="wk-time">2:48<br/>↓<br/>3:00</div>
+    <div class="wk-body">
+      <div class="wk-head"><span class="wk-stars">★ WOW #5</span><span class="wk-label">Callback + reveal + LICENSE badge proof</span></div>
+      <div class="wk-visual">"<em>It audits the judge.</em>" callback (P05 typography). 1-frame flash at 2:55: GitHub About sidebar with Apache-2.0 badge visible (Rapid Agent Stage 1 pass/fail proof). Final reveal: "Same engine. Different rubric. Different rubric-faithful score." 4 stack pills + 3 CTAs.</div>
+      <div class="wk-narration">"And the audit happens mid-iteration. It audits the judge."</div>
+    </div>
+    <div class="wk-owner">P05 + P17</div>
+  </div>
+
+</div>
+
+<div class="judge-feel">
+  <strong>Arize judge mental model</strong> · 회상 frame 후보: ① ADK topology SVG live (★ KICK #2) ② Phoenix MCP 4-call cascade in real Phoenix UI (★★ WOW #2) ③ Score 73 → 79 live iterate (★★ WOW #3) ④ Loop closure trace tree (★ KICK #5) ⑤ Dual-rubric variance reveal (★ WOW #4). <strong>Tech tie-break</strong>: ★ KICK #2 + #3 + #5가 직접 응대. <strong>Self-improvement loop</strong>: ★★ WOW #3 + ★ KICK #5가 직접 응대.
+</div>
+</div>
+
+<!-- ============ LANDING 30S ============ -->
+<div class="viewport-pane" id="vp-landing">
+<h3>§10.3 Landing 첫 30초 — Devpost / GitHub visitor 5초 dwell 보장</h3>
+<p>Hackathon judge는 200+ Devpost 페이지를 스크롤한다. 첫 5초에 wow + 첫 30초에 thesis 도달 못 하면 다음 페이지. 5-패널 verdict: P05 hero + P13 proof + P17 compliance + P18 Act II 순.</p>
+
+<div class="wk-grid">
+
+  <div class="wk-slot wow">
+    <div class="wk-time">0-1s</div>
+    <div class="wk-body">
+      <div class="wk-head"><span class="wk-stars">★ WOW #0</span><span class="wk-label">P05 hero typography load</span></div>
+      <div class="wk-visual">검정 배경 → <em>"audits the judge."</em> serif italic 156px fade-in (300ms). Custom cursor가 활성화.</div>
+    </div>
+    <div class="wk-owner">P05</div>
+  </div>
+
+  <div class="wk-slot kick">
+    <div class="wk-time">1-3s</div>
+    <div class="wk-body">
+      <div class="wk-head"><span class="wk-stars">★ KICK #1</span><span class="wk-label">R3F constellation appears (instanced, 503 anchors)</span></div>
+      <div class="wk-visual">Background에 503 anchor 점들이 instanced로 fade-in. Gold cluster (winner) + grey cloud (non-winner) 분리 visible. Cinematic camera dolly 시작 (P05).</div>
+    </div>
+    <div class="wk-owner">P05</div>
+  </div>
+
+  <div class="wk-slot wow">
+    <div class="wk-time">3-5s</div>
+    <div class="wk-body">
+      <div class="wk-head"><span class="wk-stars">★ WOW #1</span><span class="wk-label">Magenta point migrates into winner cluster — silent demo</span></div>
+      <div class="wk-visual">Magenta "this submission" 점이 천천히 winner cluster (gold) 쪽으로 drift. <strong>narration 없음 — 시각만</strong>. 심사위원이 "what is this?" 호기심 발화. 5초 dwell 결정.</div>
+      <div class="wk-backup">3D 실패 시: 2D scatter SVG에서 동일 migration. Magenta point의 motion 자체가 wow.</div>
+    </div>
+    <div class="wk-owner">P05</div>
+  </div>
+
+  <div class="wk-slot wow">
+    <div class="wk-time">5-10s</div>
+    <div class="wk-body">
+      <div class="wk-head"><span class="wk-stars">★ WOW #2</span><span class="wk-label">Thesis caption fade-in (P05 typography)</span></div>
+      <div class="wk-visual">Caption 천천히 등장: <em>"Glasshat doesn't just judge projects. It audits the judge."</em> Word-by-word reveal (P05 kinetic typography). 동시에 sub-caption: "The audit layer for AI evaluation."</div>
+      <div class="wk-narration">"Stop trusting your LLM judges — verify them."</div>
+    </div>
+    <div class="wk-owner">P05</div>
+  </div>
+
+  <div class="wk-slot kick">
+    <div class="wk-time">10-15s</div>
+    <div class="wk-body">
+      <div class="wk-head"><span class="wk-stars">★ KICK #2</span><span class="wk-label">P13 KPI strip slides in — quant proof</span></div>
+      <div class="wk-visual">4-KPI strip slide-up from bottom: <code>ECE −38.4%</code> · <code>Spearman +0.29</code> · <code>bias-flip −14.7pp</code> · <code>P@10 +0.40</code>. 모든 숫자에 95% bootstrap CI 작은 글씨. Red의 "no quant proof" 비판 직접 응대.</div>
+    </div>
+    <div class="wk-owner">P13</div>
+  </div>
+
+  <div class="wk-slot kick">
+    <div class="wk-time">15-20s</div>
+    <div class="wk-body">
+      <div class="wk-head"><span class="wk-stars">★ KICK #3</span><span class="wk-label">P17 compliance strip + evidence-export chip</span></div>
+      <div class="wk-visual">하단 4-badge strip: <code>SOC2</code> · <code>EU AI Act Art.12</code> · <code>NIST RMF</code> · <code>ISO 42001</code>. Evidence-export chip pulse: <code>📥 Sample run record (.zip)</code>. Click 가능 (실제 download). "Why now" 한 줄: "LLM-as-judge mainstream 2024 · EU AI Act enforce 2026-08."</div>
+    </div>
+    <div class="wk-owner">P17</div>
+  </div>
+
+  <div class="wk-slot wow">
+    <div class="wk-time">20-30s</div>
+    <div class="wk-body">
+      <div class="wk-head"><span class="wk-stars">★ WOW #3</span><span class="wk-label">P18 Act II cinematic scroll begin</span></div>
+      <div class="wk-visual">사용자 scroll trigger. P18 6-scene cinematic (silhouette characters only, full Pixar avatar 사용 안 함): Cast → Turn → Proof 3-act 시작. Phoenix-as-eye motif 등장. CTA buttons appear: "Watch full demo" + "Try as Participant".</div>
+    </div>
+    <div class="wk-owner">P18</div>
+  </div>
+
+</div>
+
+<div class="judge-feel">
+  <strong>Landing 5-second decision test</strong> · 0-5s: hook + constellation + magenta migration만으로 "이건 다르다" 신호. 5-10s: thesis caption. 10-20s: quant + compliance로 신뢰. 20-30s: cinematic Act II로 "더 보고 싶다" 유도. <strong>목표</strong>: 5초 dwell rate ≥ 60%, 30초 dwell rate ≥ 40%, demo click-through ≥ 25%.
+</div>
+</div>
+
+</section>
+
 <!-- ====================== NEXT ====================== -->
 <section id="next">
-<h2><span class="num">§10</span>다음 단계 (lock 후)</h2>
+<h2><span class="num">§11</span>다음 단계 (lock 후)</h2>
 <ol style="padding-left: 24px; color: var(--text-secondary); line-height: 1.8;">
   <li>경영진 4 decisions lock → 메모리 <code>glasshat-chosen-combo</code> 저장</li>
   <li><code>feat/chosen-combo-mode-ui</code> branch 생성</li>
@@ -652,6 +1057,14 @@ source: <a href="https://github.com/Two-Weeks-Team/glasshat/tree/main/mockups/ga
 </main>
 
 <script>
+// Viewport tabs (WOW/KICK storyboard)
+function showVp(which) {
+  ['qdrant','rapid','landing'].forEach(v => {
+    document.getElementById('vp-' + v).classList.toggle('active', v === which);
+    document.getElementById('tab-' + v).setAttribute('aria-pressed', v === which);
+  });
+}
+
 // TOC active section
 (function() {
   const links = document.querySelectorAll('.toc-list a');
