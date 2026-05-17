@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Glasshat — Agent that audits the judge</title>
+<style>
+  :root {
+    --bg: oklch(14% 0.012 264);
+    --bg-2: oklch(17% 0.018 264);
+    --panel: oklch(20% 0.022 264);
+    --panel-2: oklch(23% 0.026 264);
+    --line: oklch(28% 0.028 264);
+    --text: oklch(96% 0.01 264);
+    --muted: oklch(70% 0.02 264);
+    --dim: oklch(55% 0.025 264);
+    --accent: oklch(78% 0.16 88);    /* glasshat amber */
+    --accent-2: oklch(72% 0.18 28);   /* signal red */
+    --ok: oklch(78% 0.16 155);
+    --info: oklch(78% 0.14 235);
+    --warn: oklch(82% 0.16 75);
+    --violet: oklch(72% 0.18 295);
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font: 14px/1.55 system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: var(--info); text-decoration: none; }
+  ::selection { background: oklch(78% 0.16 88 / .35); }
+
+  /* ---------------- Top bar (Vercel-ish) ---------------- */
+  header.top {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: blur(14px);
+    background: oklch(14% 0.012 264 / .72);
+    border-bottom: 1px solid var(--line);
+    padding: 10px 22px;
+    display: flex; align-items: center; gap: 18px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; letter-spacing: -0.01em; }
+  .brand-mark { width: 22px; height: 22px; }
+  .nav { display: flex; gap: 18px; font-size: 13px; color: var(--muted); margin-left: 18px; }
+  .nav span:hover { color: var(--text); cursor: pointer; }
+  .top-right { margin-left: auto; display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--muted); font-family: var(--mono); }
+  .pill { padding: 3px 8px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); }
+  .pill.live { color: var(--ok); border-color: oklch(78% 0.16 155 / .35); }
+  .pill.live::before { content: "●"; margin-right: 5px; animation: blink 1.6s infinite; }
+  @keyframes blink { 0%, 60% { opacity: 1; } 80%, 100% { opacity: .25; } }
+
+  /* ---------------- Hero ---------------- */
+  section.hero {
+    padding: 80px 22px 40px;
+    max-width: 1240px; margin: 0 auto;
+    display: grid; grid-template-columns: 1.05fr 1fr; gap: 56px;
+  }
+  .hero h1 {
+    font-size: 60px; line-height: 1.02; letter-spacing: -0.035em;
+    margin: 16px 0 18px;
+    background: linear-gradient(180deg, oklch(99% 0.005 264), oklch(78% 0.07 88));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--mono); font-size: 11px; color: var(--muted);
+    border: 1px solid var(--line); border-radius: 999px;
+    padding: 5px 10px; background: var(--panel);
+  }
+  .hero .eyebrow b { color: var(--accent); font-weight: 600; }
+  .hero p.lede { color: var(--muted); font-size: 17px; line-height: 1.55; max-width: 540px; margin: 0 0 26px; }
+  .hero .cta-row { display: flex; gap: 10px; margin-bottom: 32px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 14px; border-radius: 8px;
+    font: 500 13px/1 system-ui, sans-serif; cursor: pointer; border: 1px solid var(--line);
+    background: var(--panel); color: var(--text);
+  }
+  .btn.primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .btn .kbd { font-family: var(--mono); font-size: 11px; padding: 2px 5px; border-radius: 4px;
+    background: oklch(20% 0.022 264 / .6); border: 1px solid var(--line); color: var(--muted); }
+  .stack-strip { display: flex; gap: 18px; flex-wrap: wrap; font-family: var(--mono); font-size: 11px; color: var(--dim); }
+  .stack-strip span { display: inline-flex; align-items: center; gap: 5px; }
+  .stack-strip i { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+  /* ---------------- Hero right: live generative UI panel ---------------- */
+  .gen-panel {
+    border: 1px solid var(--line); border-radius: 14px;
+    background: linear-gradient(180deg, var(--panel), var(--bg-2));
+    overflow: hidden;
+    box-shadow: 0 24px 60px -28px oklch(0% 0 0 / .6);
+  }
+  .gp-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 14px; border-bottom: 1px solid var(--line);
+    font-family: var(--mono); font-size: 11px; color: var(--muted);
+    background: var(--panel-2);
+  }
+  .gp-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--dim); }
+  .gp-dot.r { background: oklch(70% 0.18 28); } .gp-dot.y { background: oklch(85% 0.16 88); } .gp-dot.g { background: oklch(75% 0.16 155); }
+  .gp-title { margin-left: 8px; color: var(--text); }
+  .gp-body { padding: 14px; font-family: var(--mono); font-size: 12px; line-height: 1.7; }
+  .gp-row { display: grid; grid-template-columns: 100px 1fr 60px; gap: 10px; align-items: center; padding: 4px 0; }
+  .gp-tag { color: var(--muted); font-size: 11px; }
+  .gp-bar { height: 6px; border-radius: 4px; background: oklch(28% 0.028 264); position: relative; overflow: hidden; }
+  .gp-bar > i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); width: 0; transition: width 1s cubic-bezier(.3,.7,.2,1); }
+  .gp-bar.b > i { background: oklch(60% 0.04 264); }
+  .gp-bar.r > i { background: var(--accent-2); }
+  .gp-score { text-align: right; color: var(--text); font-feature-settings: "tnum"; }
+  .gp-score s { text-decoration: line-through; color: var(--dim); margin-right: 6px; font-size: 11px; }
+  .gp-tokens { color: var(--dim); font-size: 11px; min-height: 60px; padding-top: 10px; border-top: 1px dashed var(--line); margin-top: 8px; }
+  .gp-tokens b { color: var(--text); font-weight: 500; }
+  .gp-caret { display: inline-block; width: 7px; height: 13px; background: var(--accent); vertical-align: -2px; margin-left: 1px; animation: caret 1s steps(2) infinite; }
+  @keyframes caret { 50% { opacity: 0; } }
+
+  .gp-foot { padding: 8px 14px; border-top: 1px solid var(--line); background: var(--bg);
+    font-family: var(--mono); font-size: 10px; color: var(--dim); display: flex; gap: 14px; }
+  .gp-foot span b { color: var(--ok); font-weight: 600; }
+
+  /* ---------------- Sticky split scroll demo ---------------- */
+  section.scroller {
+    max-width: 1240px; margin: 60px auto 80px; padding: 0 22px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 56px;
+  }
+  .scroller .steps { display: flex; flex-direction: column; gap: 36px; }
+  .step {
+    border-left: 2px solid var(--line); padding: 18px 22px;
+    transition: border-color .3s, background .3s;
+  }
+  .step.active { border-left-color: var(--accent); background: linear-gradient(90deg, oklch(78% 0.16 88 / .04), transparent); }
+  .step .stp { font-family: var(--mono); font-size: 11px; color: var(--accent); margin-bottom: 6px; }
+  .step h3 { margin: 0 0 8px; font-size: 22px; letter-spacing: -0.01em; }
+  .step p { margin: 0; color: var(--muted); }
+  .step pre {
+    margin: 12px 0 0; padding: 10px 12px; border-radius: 8px;
+    background: var(--bg-2); border: 1px solid var(--line);
+    font: 11px/1.6 var(--mono); color: var(--muted); overflow-x: auto;
+  }
+  .step pre b { color: var(--accent); font-weight: 500; }
+  .scroller .sticky-side { position: sticky; top: 90px; align-self: start; height: calc(100vh - 110px); }
+
+  /* ---------------- Phoenix trace panel ---------------- */
+  .phx {
+    border: 1px solid var(--line); border-radius: 14px;
+    background: var(--panel); overflow: hidden;
+    height: 100%;
+    display: flex; flex-direction: column;
+  }
+  .phx-head { padding: 10px 14px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px;
+    background: var(--panel-2); font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  .phx-head .px-logo { width: 14px; height: 14px; color: var(--accent-2); }
+  .phx-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--line); font-family: var(--mono); font-size: 11px; }
+  .phx-tabs div { padding: 8px 14px; color: var(--muted); cursor: pointer; border-right: 1px solid var(--line); }
+  .phx-tabs div.on { color: var(--text); background: var(--bg-2); border-bottom: 2px solid var(--accent); }
+  .phx-body { flex: 1; overflow: auto; padding: 6px 0; font-family: var(--mono); font-size: 11px; }
+  .span-row {
+    display: grid; grid-template-columns: 1fr 80px 90px;
+    padding: 5px 14px; gap: 8px; align-items: center;
+    border-bottom: 1px solid oklch(28% 0.028 264 / .4);
+    cursor: pointer; transition: background .15s;
+  }
+  .span-row:hover { background: var(--bg-2); }
+  .span-row.flagged { background: oklch(72% 0.18 28 / .08); }
+  .span-name { color: var(--text); display: flex; align-items: center; gap: 5px; }
+  .span-name i { color: var(--dim); }
+  .span-kind { font-size: 10px; padding: 1px 5px; border-radius: 3px; background: var(--bg);
+    color: var(--info); border: 1px solid oklch(78% 0.14 235 / .25); }
+  .span-kind.tool { color: var(--violet); border-color: oklch(72% 0.18 295 / .25); }
+  .span-kind.chain { color: var(--ok); border-color: oklch(78% 0.16 155 / .25); }
+  .span-kind.agent { color: var(--accent); border-color: oklch(78% 0.16 88 / .25); }
+  .span-dur { color: var(--muted); text-align: right; font-feature-settings: "tnum"; }
+  .span-status { font-size: 10px; text-align: right; }
+  .span-status.ok { color: var(--ok); } .span-status.warn { color: var(--warn); } .span-status.err { color: var(--accent-2); }
+  .indent-1 { padding-left: 26px; }  .indent-2 { padding-left: 46px; }
+  .indent-3 { padding-left: 66px; }  .indent-4 { padding-left: 86px; }
+  .span-name .caret { display: inline-block; width: 9px; color: var(--dim); }
+
+  /* span detail (OpenInference attrs) */
+  .span-detail {
+    border-top: 1px solid var(--line); background: var(--bg-2);
+    padding: 12px 16px; font-family: var(--mono); font-size: 11px; color: var(--muted);
+    max-height: 240px; overflow: auto;
+  }
+  .span-detail h4 { color: var(--text); font: 600 11px/1.4 var(--mono); margin: 10px 0 4px; }
+  .span-detail h4:first-child { margin-top: 0; }
+  .span-detail .attr { display: grid; grid-template-columns: 220px 1fr; gap: 8px; padding: 2px 0; }
+  .span-detail .attr span:first-child { color: var(--dim); }
+  .span-detail .attr span.k-acc { color: var(--accent); }
+
+  /* ---------------- Prompt console (NOT a chatbot — calibration query surface) ---------------- */
+  section.console {
+    max-width: 1240px; margin: 40px auto 80px; padding: 0 22px;
+  }
+  .console-card {
+    border: 1px solid var(--line); border-radius: 16px;
+    background: linear-gradient(180deg, var(--panel), var(--bg-2));
+    overflow: hidden;
+  }
+  .console-head {
+    padding: 18px 22px; border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 14px;
+  }
+  .console-head h2 { margin: 0; font-size: 20px; letter-spacing: -0.01em; }
+  .console-head .sub { color: var(--muted); font-size: 13px; }
+  .console-head .scope { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  .console-head .scope b { color: var(--accent); }
+  .console-body { padding: 18px 22px; display: grid; grid-template-columns: 1.05fr 1fr; gap: 22px; }
+  .qbox {
+    border: 1px solid var(--line); border-radius: 10px; background: var(--bg);
+    padding: 12px 14px; font: 13px/1.55 var(--mono); color: var(--text);
+    min-height: 96px;
+  }
+  .qbox .at { color: var(--accent); }
+  .qbox .arg { color: var(--info); }
+  .qbox .str { color: var(--ok); }
+  .qbox-foot { display: flex; gap: 10px; margin-top: 10px; align-items: center; }
+  .qbox-foot .chip {
+    font: 10px var(--mono); padding: 3px 7px; border-radius: 999px;
+    border: 1px solid var(--line); color: var(--muted); background: var(--panel);
+  }
+  .qbox-foot .chip b { color: var(--accent); }
+  .qbox-foot .send { margin-left: auto; }
+
+  .stream {
+    border: 1px solid var(--line); border-radius: 10px; background: var(--bg);
+    padding: 14px; font-family: var(--mono); font-size: 12px; line-height: 1.65;
+    min-height: 220px; color: var(--muted); position: relative;
+  }
+  .stream .head { color: var(--dim); font-size: 10px; margin-bottom: 8px; display: flex; gap: 12px; }
+  .stream .head b { color: var(--text); }
+  .stream .tok { color: var(--text); }
+  .stream .meta { color: var(--violet); }
+  .stream .ev { color: var(--ok); }
+  .stream .num { color: var(--accent); }
+  .stream pre.json { margin: 8px 0 0; padding: 10px; border-radius: 8px; background: var(--bg-2); border: 1px solid var(--line); color: var(--muted); font-size: 11px; line-height: 1.55; white-space: pre-wrap; }
+  .stream pre.json b { color: var(--accent); font-weight: 500; }
+  .stream pre.json s { color: var(--dim); text-decoration: line-through; }
+  .stream .ev-row { display: flex; gap: 8px; font-size: 11px; margin: 2px 0; }
+  .stream .ev-row i { color: var(--dim); width: 38px; }
+
+  /* example prompts */
+  .examples { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 22px 18px; border-top: 1px solid var(--line); background: var(--bg-2); }
+  .examples .ex {
+    font: 11px var(--mono); padding: 6px 10px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--panel); color: var(--muted); cursor: pointer;
+  }
+  .examples .ex:hover { color: var(--text); border-color: var(--accent); }
+
+  /* ---------------- Footer / footer-rail ---------------- */
+  .footer-rail {
+    max-width: 1240px; margin: 0 auto 60px; padding: 0 22px;
+    display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 32px;
+    font-size: 13px; color: var(--muted);
+  }
+  .footer-rail h5 { color: var(--text); font: 600 12px var(--mono); margin: 0 0 8px; letter-spacing: 0.04em; text-transform: uppercase; }
+  .footer-rail a { display: block; padding: 2px 0; color: var(--muted); }
+  .footer-rail a:hover { color: var(--text); }
+  footer.bot {
+    border-top: 1px solid var(--line); padding: 18px 22px; text-align: center;
+    font-family: var(--mono); font-size: 11px; color: var(--dim);
+  }
+
+  /* MCP tool icon */
+  .ico { display: inline-block; vertical-align: -2px; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <svg class="brand-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+      <path d="M4 13.5h16M5 13.5c1-4 4-6.5 7-6.5s6 2.5 7 6.5" stroke="oklch(78% 0.16 88)"/>
+      <ellipse cx="12" cy="16" rx="3" ry=".7" fill="oklch(78% 0.16 88)" stroke="none" opacity=".6"/>
+    </svg>
+    Glasshat
+    <span style="color: var(--dim); font-weight: 400; font-size: 12px; margin-left: 4px;">/ agent</span>
+  </div>
+  <nav class="nav">
+    <span>Docs</span><span>Traces</span><span>Rubrics</span><span>Calibration</span><span>Pricing</span>
+  </nav>
+  <div class="top-right">
+    <span class="pill live">phoenix-cloud · us-west2</span>
+    <span class="pill">v0.3.1-rc</span>
+    <button class="btn" style="padding: 6px 10px;"><span class="kbd">⌘ K</span> Run agent</button>
+  </div>
+</header>
+
+<!-- ============= HERO ============= -->
+<section class="hero">
+  <div>
+    <span class="eyebrow">
+      <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);"></span>
+      <b>v0.3</b> · ADK · Phoenix MCP · Qdrant 1.10
+    </span>
+    <h1>The agent that audits<br/>the judge.</h1>
+    <p class="lede">
+      An autonomous evaluation pipeline. Ingest a pitch + repo + the evaluator's rules,
+      synthesize the rubric, run a six-perspective panel, and watch it
+      <b style="color:var(--accent);">catch its own bias</b> via Phoenix MCP and a 503-project Qdrant
+      anchor constellation — score self-corrects on screen.
+    </p>
+    <div class="cta-row">
+      <button class="btn primary">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-14 9V3z"/></svg>
+        Run on submission
+      </button>
+      <button class="btn"><span class="kbd">⌘ K</span> Command palette</button>
+      <button class="btn">View trace</button>
+    </div>
+    <div class="stack-strip">
+      <span><i></i>gemini-3.1-pro · thinking_level=high</span>
+      <span><i style="background:var(--violet);"></i>google-adk · LoopAgent / ParallelAgent[6]</span>
+      <span><i style="background:var(--info);"></i>arize-phoenix · MCP 27 tools</span>
+      <span><i style="background:var(--ok);"></i>qdrant · hybrid + RRF + recommend</span>
+    </div>
+  </div>
+
+  <!-- live generative UI -->
+  <div class="gen-panel" id="genPanel">
+    <div class="gp-head">
+      <span class="gp-dot r"></span><span class="gp-dot y"></span><span class="gp-dot g"></span>
+      <span class="gp-title">audit_loop · iteration 1/2</span>
+      <span style="margin-left:auto;">streaming · 312 t/s</span>
+    </div>
+    <div class="gp-body">
+      <div style="font-size:11px;color:var(--dim);margin-bottom:8px;">submission ▸ acme-vsearch · rubric ▸ qdrant-vsd-2026</div>
+
+      <div class="gp-row"><span class="gp-tag">⚪ White</span><div class="gp-bar b"><i id="bar-w"></i></div><span class="gp-score" id="sc-w">—</span></div>
+      <div class="gp-row"><span class="gp-tag">🔴 Red</span><div class="gp-bar r"><i id="bar-r"></i></div><span class="gp-score" id="sc-r">—</span></div>
+      <div class="gp-row"><span class="gp-tag">🟡 Yellow</span><div class="gp-bar"><i id="bar-y"></i></div><span class="gp-score" id="sc-y">—</span></div>
+      <div class="gp-row"><span class="gp-tag">⚫ Black</span><div class="gp-bar b"><i id="bar-k"></i></div><span class="gp-score" id="sc-k">—</span></div>
+      <div class="gp-row"><span class="gp-tag">🟢 Green</span><div class="gp-bar b"><i id="bar-g"></i></div><span class="gp-score" id="sc-g">—</span></div>
+      <div class="gp-row"><span class="gp-tag">🔵 Blue</span><div class="gp-bar b"><i id="bar-b"></i></div><span class="gp-score" id="sc-b">—</span></div>
+
+      <div class="gp-tokens" id="tokens">
+        <span style="color:var(--dim);">awaiting first token…</span>
+      </div>
+    </div>
+    <div class="gp-foot">
+      <span>spans <b>+47</b></span>
+      <span>mcp.calls <b>4</b></span>
+      <span>tokens <b>3,212 in</b> / <b>1,847 out</b></span>
+      <span style="margin-left:auto;">$0.018</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============= SCROLLER ============= -->
+<section class="scroller">
+  <div class="steps">
+    <div class="step active" data-step="0">
+      <div class="stp">01 · synthesize</div>
+      <h3>Rubric becomes data, not opinion.</h3>
+      <p>A <b style="color:var(--text);">RubricSynthesizer</b> agent parses the evaluator's official rules into a typed
+      rubric with weights, criteria, evidence requirements, and a hash. Same engine, different rubric, different (correct) score.</p>
+      <pre><b>tool</b> qdrant.upsert  · collection=<b>rubric_definitions</b>
+  rubric_id=qdrant-vsd-2026 · weights_hash=0x9a4f2c…
+  criteria=[func, originality, ux, presentation]</pre>
+    </div>
+    <div class="step" data-step="1">
+      <div class="stp">02 · panel</div>
+      <h3>Six perspectives, in parallel, with tools.</h3>
+      <p>ADK <b style="color:var(--text);">ParallelAgent[6]</b> dispatches the Six Thinking Hats.
+      White grounds with Vertex search; Black must cite a precedent or the run aborts via a Plugin guard.</p>
+      <pre><b>ParallelAgent</b>(name="HatsPanel", children=[
+  WhiteAgent, RedAgent, YellowAgent,
+  BlackAgent(<b>must_cite_precedent=True</b>),
+  GreenAgent, BlueSynthesisAgent,
+])</pre>
+    </div>
+    <div class="step" data-step="2">
+      <div class="stp">03 · detect</div>
+      <h3>Triple-redundant detection.</h3>
+      <p>Phoenix Online Eval (LLM-as-judge) + Phoenix Custom Evaluator (deterministic) + Black hat counter-claim all
+      converge on <b style="color:var(--accent-2);">yellow.A1 over_confident</b>. Any one fires the AuditLoop.</p>
+      <pre><b>eval.calibration.label</b> = "over_confident"
+  yellow.score = 9.0 · evidence_depth = 0.31
+  threshold = 0.40 · violated by 0.09</pre>
+    </div>
+    <div class="step" data-step="3">
+      <div class="stp">04 · consult</div>
+      <h3>Phoenix MCP. Four calls in parallel.</h3>
+      <p>The <b style="color:var(--text);">PhoenixConsultantAgent</b> queries the calibration experiment, fetches span annotations,
+      and pulls 3 anchor profiles. Then Qdrant's <b style="color:var(--text);">Recommendation API</b> picks the anti-pattern negatives.</p>
+      <pre><b>mcp.call</b> get-experiment-by-id("glasshat-calibration-v1")
+  filter={hat:"yellow", criterion:"A1", depth_bkt:"&lt;0.4"}
+  → {mean_delta: -1.2, n: 14, CI: [0.9, 1.5]}</pre>
+    </div>
+    <div class="step" data-step="4">
+      <div class="stp">05 · correct</div>
+      <h3>Score self-corrects, on screen.</h3>
+      <p>ScoreCalibrationAgent applies <b style="color:var(--text);">clip(score − 0.8·Δ, p25, p75)</b> with a ±2.0 cap,
+      writes back to session state, signals loop convergence. The number animates. The 3D graph reshapes.</p>
+      <pre>session.state["hat_yellow_score_a1"] = <s style="color:var(--dim);text-decoration:line-through;">9.0</s> → <b>7.6</b>
+tool_context.actions.escalate = True
+→ <b>SSE</b> { type: "score_corrected", anchors: [3] }</pre>
+    </div>
+  </div>
+
+  <div class="sticky-side">
+    <div class="phx">
+      <div class="phx-head">
+        <svg class="px-logo" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l-2 6h4l-2-6zm-8 8l6 2v-4l-6 2zm16 0l-6 -2v4l6 -2zm-8 12l2-6h-4l2 6zm-7-7l5-3-5-3v6zm14 0v-6l-5 3 5 3z"/></svg>
+        Arize Phoenix · trace
+        <span style="margin-left:auto;">trace_id <span style="color:var(--text);">7af9c2…b1</span></span>
+      </div>
+      <div class="phx-tabs">
+        <div class="on">Spans (47)</div><div>Attributes</div><div>Events</div><div>Annotations (3)</div>
+      </div>
+      <div class="phx-body" id="phxBody">
+        <div class="span-row"><div class="span-name"><span class="caret">▾</span>GlasshatRootAgent <i>· custom</i></div><div class="span-kind agent">AGENT</div><div class="span-dur">14.20s</div></div>
+        <div class="span-row indent-1"><div class="span-name"><span class="caret">▾</span>RubricSynthesizerAgent.run <i>· LLM</i></div><div class="span-kind">LLM</div><div class="span-dur">1.81s</div></div>
+        <div class="span-row indent-2"><div class="span-name">vertex.generate_content</div><div class="span-kind tool">TOOL</div><div class="span-dur">1.62s</div></div>
+        <div class="span-row indent-1"><div class="span-name"><span class="caret">▾</span>HatsPanel <i>· ParallelAgent[6]</i></div><div class="span-kind chain">CHAIN</div><div class="span-dur">4.92s</div></div>
+        <div class="span-row indent-2"><div class="span-name">white.score · A1</div><div class="span-kind agent">AGENT</div><div class="span-dur">2.10s</div></div>
+        <div class="span-row indent-2"><div class="span-name">red.score · A1</div><div class="span-kind agent">AGENT</div><div class="span-dur">1.41s</div></div>
+        <div class="span-row indent-2 flagged" id="rowYellow"><div class="span-name">yellow.score · A1 <i style="color:var(--accent-2);">· flagged</i></div><div class="span-kind agent">AGENT</div><div class="span-dur">2.04s</div></div>
+        <div class="span-row indent-2"><div class="span-name">black.score · A1</div><div class="span-kind agent">AGENT</div><div class="span-dur">2.81s</div></div>
+        <div class="span-row indent-2"><div class="span-name">green.score · A1</div><div class="span-kind agent">AGENT</div><div class="span-dur">1.92s</div></div>
+        <div class="span-row indent-2"><div class="span-name">blue.synthesis</div><div class="span-kind agent">AGENT</div><div class="span-dur">2.71s</div></div>
+
+        <div class="span-row indent-1"><div class="span-name"><span class="caret">▾</span>AuditLoop · LoopAgent <i>· iter 1/2</i></div><div class="span-kind chain">CHAIN</div><div class="span-dur">5.81s</div></div>
+        <div class="span-row indent-2"><div class="span-name">InconsistencyDetectorAgent</div><div class="span-kind agent">AGENT</div><div class="span-dur">0.41s</div></div>
+        <div class="span-row indent-3"><div class="span-name">phoenix.online_eval.calibration</div><div class="span-kind tool">EVAL</div><div class="span-dur">0.62s</div><div class="span-status warn">over_conf</div></div>
+        <div class="span-row indent-3"><div class="span-name">phoenix.custom_eval.evidence_depth</div><div class="span-kind tool">EVAL</div><div class="span-dur">0.04s</div><div class="span-status warn">flag</div></div>
+        <div class="span-row indent-2"><div class="span-name"><span class="caret">▾</span>PhoenixConsultantAgent <i>· mcp</i></div><div class="span-kind agent">AGENT</div><div class="span-dur">0.78s</div></div>
+        <div class="span-row indent-3"><div class="span-name">mcp.tool · get-experiment-by-id</div><div class="span-kind tool">MCP</div><div class="span-dur">0.21s</div><div class="span-status ok">200</div></div>
+        <div class="span-row indent-3"><div class="span-name">mcp.tool · get-span-annotations</div><div class="span-kind tool">MCP</div><div class="span-dur">0.18s</div><div class="span-status ok">200</div></div>
+        <div class="span-row indent-3"><div class="span-name">mcp.tool · get-dataset-examples</div><div class="span-kind tool">MCP</div><div class="span-dur">0.24s</div><div class="span-status ok">200</div></div>
+        <div class="span-row indent-3"><div class="span-name">qdrant.recommend · past_evals</div><div class="span-kind tool">VECTOR</div><div class="span-dur">0.19s</div><div class="span-status ok">3 hits</div></div>
+        <div class="span-row indent-2"><div class="span-name">ScoreCalibrationAgent · clip</div><div class="span-kind agent">AGENT</div><div class="span-dur">0.31s</div><div class="span-status ok">escalate</div></div>
+      </div>
+      <div class="span-detail" id="spanDetail">
+        <h4>openinference.span_kind</h4>
+        <div class="attr"><span>span.id</span><span class="k-acc">7af9c2…yellow_a1</span></div>
+        <div class="attr"><span>openinference.span.kind</span><span>AGENT</span></div>
+        <div class="attr"><span>agent.name</span><span>YellowAgent</span></div>
+        <div class="attr"><span>llm.model_name</span><span>gemini-3-flash-preview</span></div>
+        <div class="attr"><span>llm.token_count.prompt</span><span>2,041</span></div>
+        <div class="attr"><span>llm.token_count.completion</span><span>318</span></div>
+        <h4>glasshat.attributes</h4>
+        <div class="attr"><span>glasshat.hat</span><span class="k-acc">yellow</span></div>
+        <div class="attr"><span>glasshat.criterion</span><span class="k-acc">A1</span></div>
+        <div class="attr"><span>glasshat.score.predicted</span><span class="k-acc">9.0</span></div>
+        <div class="attr"><span>glasshat.evidence.depth</span><span style="color:var(--accent-2);">0.31  (&lt; threshold 0.40)</span></div>
+        <div class="attr"><span>glasshat.rubric.hash</span><span>0x9a4f2c…</span></div>
+        <h4>annotations · 1 of 1</h4>
+        <div class="attr"><span>eval.calibration.label</span><span style="color:var(--accent-2);">"over_confident"</span></div>
+        <div class="attr"><span>eval.calibration.score</span><span>0.82</span></div>
+        <div class="attr"><span>annotator_kind</span><span>LLM</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============= CALIBRATION QUERY CONSOLE ============= -->
+<section class="console">
+  <div class="console-card">
+    <div class="console-head">
+      <div>
+        <h2>Calibration query console</h2>
+        <div class="sub">Not a chatbot. A typed surface for issuing structured queries against the running agent.</div>
+      </div>
+      <div class="scope">scope · <b>run/7af9c2b1</b> · iteration 1</div>
+    </div>
+    <div class="console-body">
+      <div>
+        <div class="qbox" id="qbox" contenteditable="true" spellcheck="false">
+<span class="at">@audit</span> why was <span class="arg">yellow.score.A1</span> corrected from <span class="str">9.0</span> to <span class="str">7.6</span>? show <span class="arg">anchors</span> + <span class="arg">phoenix.delta</span>.</div>
+        <div class="qbox-foot">
+          <span class="chip">scope <b>run/7af9c2b1</b></span>
+          <span class="chip">tools <b>phoenix.mcp</b>, <b>qdrant.recommend</b></span>
+          <span class="chip">temp <b>0.0</b> · structured</span>
+          <button class="btn primary send" id="runBtn">Run query <span class="kbd">↵</span></button>
+        </div>
+        <div style="margin-top:14px;font-size:12px;color:var(--muted);">
+          The console issues structured tool calls — not free-form chat. Every query is a typed
+          intent against the run's span tree, the rubric, and the vector collections. Output is
+          generative UI (cards, score deltas, anchor lists, JSON receipts) — not prose.
+        </div>
+      </div>
+
+      <div class="stream" id="stream">
+        <div class="head">
+          <span>model · <b>gemini-3.1-pro</b></span>
+          <span>thinking · <b>high</b></span>
+          <span>stream · <b>on</b></span>
+          <span style="margin-left:auto;color:var(--ok);">● streaming</span>
+        </div>
+        <div id="streamOut">
+          <span style="color:var(--dim);">// click Run query to stream a calibration verdict</span>
+        </div>
+      </div>
+    </div>
+    <div class="examples">
+      <span style="font-family:var(--mono);font-size:11px;color:var(--dim);align-self:center;">try ·</span>
+      <span class="ex" data-q="@anchors top 3 winners similar to current run.weights_vector">@anchors top 3 winners similar to current run</span>
+      <span class="ex" data-q="@variance compare current submission under rubric=qdrant-vsd-2026 vs rubric=rapid-agent-2026">@variance qdrant vs rapid-agent</span>
+      <span class="ex" data-q="@trace span yellow.score.A1 attributes openinference">@trace yellow.A1 OpenInference attrs</span>
+      <span class="ex" data-q="@override score yellow.A1=8.2 reason=demo-fluency">@override yellow.A1 = 8.2</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============= FOOTER RAIL ============= -->
+<div class="footer-rail">
+  <div>
+    <h5>Glasshat</h5>
+    <div style="color:var(--muted);max-width:340px;line-height:1.6;">
+      Artifact-ingesting evaluation pipeline. Six-perspective panel.
+      Live transparent fairness monitor. Not a chatbot.
+    </div>
+    <div style="font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:14px;">
+      © 2026 Two-Weeks-Team · Apache-2.0
+    </div>
+  </div>
+  <div>
+    <h5>Engine</h5>
+    <a>RubricSynthesizer</a><a>HatsPanel</a><a>AuditLoop</a><a>BMADScorer</a>
+  </div>
+  <div>
+    <h5>Surfaces</h5>
+    <a>/judge — batch</a><a>/participate — iterate</a><a>/traces</a><a>/3d</a>
+  </div>
+  <div>
+    <h5>Integrations</h5>
+    <a>Arize Phoenix MCP</a><a>Qdrant Cloud</a><a>Vertex AI · Gemini 3</a><a>Google ADK</a>
+  </div>
+</div>
+
+<footer class="bot">
+  built during qdrant-vsd-2026 + rapid-agent-2026 · scaffold 2026-05-13 · v0.3 reveal 2026-05-17
+</footer>
+
+<script>
+  // ---------- Hero generative UI: stream scores + tokens ----------
+  const finalScores = { w:8.2, r:6.4, y:7.6, k:7.1, g:7.9, b:7.8 };
+  const initialY = 9.0;
+  const ids = ['w','r','y','k','g','b'];
+  function setBar(id, v) {
+    document.getElementById('bar-'+id).style.width = (v/10*100) + '%';
+    const el = document.getElementById('sc-'+id);
+    if (id === 'y' && v >= 8.9) el.innerHTML = '<s>9.0</s> ' + v.toFixed(1);
+    else if (id === 'y' && v < 8.5) el.innerHTML = '<s>9.0</s> ' + v.toFixed(1);
+    else el.textContent = v.toFixed(1);
+  }
+  const tokens = [
+    {t: '[plan] ', cls: 'meta'},
+    {t: 'route → ParallelAgent[6]'},
+    {t: '\n[white] '}, {t: 'evidence found (n=4, depth=0.74)'},
+    {t: '\n[yellow] '}, {t: 'high impact ', cls: 'tok'},{t: '→ '}, {t: 'score=', cls:'tok'},{t:'9.0', cls:'num'},
+    {t: '\n[detect] ', cls: 'meta'},
+    {t: 'eval.calibration.label='},{t:'"over_confident"', cls:'ev'},
+    {t: '\n[mcp] ', cls: 'meta'},{t: 'get-experiment-by-id '},{t:'→ mean_delta=-1.2 (n=14)', cls:'ev'},
+    {t: '\n[qdrant] ', cls: 'meta'},{t: 'recommend(past_evals) '},{t:'→ 3 anchors @ p25=7.4 / p75=7.9', cls:'ev'},
+    {t: '\n[calibrate] ', cls: 'meta'},{t: 'clip(9.0 − 0.8·1.2, 7.4, 7.9) = '},{t:'7.56 → 7.6', cls:'num'},
+    {t: '\n[escalate] ', cls: 'meta'},{t:'loop_exit · iter=1 · ', cls:''},{t:'audit_corrections[1]', cls:'ev'},
+  ];
+  function streamHero() {
+    ids.forEach((id,i) => setTimeout(()=>setBar(id, id==='y'? initialY : finalScores[id]), 350 + i*220));
+    const out = document.getElementById('tokens');
+    out.innerHTML = '<b>blue.synthesis</b> · ';
+    let i = 0;
+    function next() {
+      if (i >= tokens.length) {
+        out.innerHTML += '<span class="gp-caret"></span>';
+        // self-correct yellow at end
+        setTimeout(()=>setBar('y', finalScores.y), 400);
+        setTimeout(streamHero, 6500);
+        return;
+      }
+      const t = tokens[i++];
+      const span = document.createElement('span');
+      if (t.cls) span.className = t.cls;
+      span.textContent = t.t;
+      out.appendChild(span);
+      setTimeout(next, 60 + Math.random()*80);
+    }
+    setTimeout(next, 800);
+  }
+  streamHero();
+
+  // ---------- Scroller: activate steps on scroll ----------
+  const steps = document.querySelectorAll('.step');
+  const detail = document.getElementById('spanDetail');
+  const phxBody = document.getElementById('phxBody');
+  const onScroll = () => {
+    const mid = window.innerHeight * 0.45;
+    let active = 0;
+    steps.forEach((s, i) => {
+      const r = s.getBoundingClientRect();
+      if (r.top < mid) active = i;
+    });
+    steps.forEach((s,i) => s.classList.toggle('active', i===active));
+    // scroll phoenix panel sync
+    const targetTop = [0, 100, 300, 480, 600][active] || 0;
+    phxBody.scrollTo({ top: targetTop, behavior: 'smooth' });
+    // highlight flagged row at step 2+
+    const row = document.getElementById('rowYellow');
+    if (active >= 2) row.classList.add('flagged'); else row.classList.remove('flagged');
+  };
+  document.addEventListener('scroll', onScroll, { passive: true });
+
+  // ---------- Calibration console: stream a structured verdict ----------
+  const verdictTokens = [
+    { t: '// resolved: ', cls: 'meta' },
+    { t: 'audit_corrections[0]\n' },
+    { t: 'event ', cls: 'meta' }, { t: 'inconsistency_flagged ', cls: 'ev' },
+    { t: '\nevent ', cls: 'meta' }, { t: 'phoenix_consultation ', cls: 'ev' },
+    { t: '\nevent ', cls: 'meta' }, { t: 'anchor_retrieval ', cls: 'ev' },
+    { t: '\nevent ', cls: 'meta' }, { t: 'score_corrected\n', cls: 'ev' },
+  ];
+  const verdictJSON = `<pre class="json">{
+  "hat": "yellow",
+  "criterion": "A1",
+  "score": { "before": <s>9.0</s>, "after": <b>7.6</b>, "delta": -1.4 },
+  "detection": [
+    { "path": "phoenix.online_eval",   "label": "over_confident", "score": 0.82 },
+    { "path": "phoenix.custom_eval",   "label": "evidence_low",   "score": 0.31 },
+    { "path": "black.counter_claim",   "label": "missing_metric"                }
+  ],
+  "consultation": {
+    "experiment_id": "glasshat-calibration-v1",
+    "mean_delta": -1.2, "n": 14, "ci_95": [0.9, 1.5],
+    "evidence_depth_bucket": "<0.4"
+  },
+  "anchors": [
+    { "project_id": "g3-0214-vsd-helio",    "a1": 7.4, "outcome": "non_winner" },
+    { "project_id": "g3-0177-mcp-sentinel", "a1": 7.6, "outcome": "honorable"  },
+    { "project_id": "g3-0319-ragdrift",     "a1": 7.9, "outcome": "non_winner" }
+  ],
+  "policy": "clip(score − 0.8·Δ, p25, p75)  · cap=±2.0",
+  "annotation": { "annotator_kind": "LLM", "trace_id": "7af9c2…b1" }
+}</pre>`;
+  document.getElementById('runBtn').addEventListener('click', runConsole);
+  document.querySelectorAll('.ex').forEach(e=>e.addEventListener('click', ()=>{
+    document.getElementById('qbox').textContent = e.dataset.q;
+    runConsole();
+  }));
+  function runConsole() {
+    const out = document.getElementById('streamOut');
+    out.innerHTML = '';
+    let i = 0;
+    function nextLine() {
+      if (i >= verdictTokens.length) {
+        const j = document.createElement('div');
+        j.innerHTML = verdictJSON;
+        out.appendChild(j);
+        return;
+      }
+      const t = verdictTokens[i++];
+      const span = document.createElement('span');
+      if (t.cls) span.className = t.cls;
+      span.textContent = t.t;
+      out.appendChild(span);
+      setTimeout(nextLine, 220);
+    }
+    nextLine();
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,850 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>GLASSHAT · Stenographic Record · run #qd-2026-06-01-001</title>
+<style>
+  /* ============================================================
+     CONTRARIAN DEMO — P01
+     Viewport: live court reporter's typewriter feed.
+     The whole 3-min wow moment renders as a transcript being
+     typed in real time, with corrections struck through and
+     re-typed in red. No bento, no glass, no Three.js orb.
+     ============================================================ */
+
+  :root {
+    --paper:        oklch(95% 0.022 86);
+    --paper-2:      oklch(92% 0.028 84);
+    --paper-cold:   oklch(94% 0.014 220);   /* the steno paper feels colder */
+    --ink:          oklch(20% 0.012 60);
+    --ink-faded:    oklch(40% 0.014 60);
+    --ink-ghost:    oklch(60% 0.014 60);
+    --rule:         oklch(72% 0.020 60);
+    --red:          oklch(45% 0.180 28);
+    --red-faded:    oklch(55% 0.140 28);
+    --green-stamp:  oklch(40% 0.110 145);   /* "CORRECTED" approval green */
+    --highlight:    oklch(88% 0.110 90);
+    --bar:          oklch(28% 0.012 60);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Courier New", "Courier", "Lucida Console", monospace;
+    font-size: 13px;
+    line-height: 22px;
+  }
+
+  /* The "courtroom header" — fixed control bar */
+  .control-bar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    gap: 16px;
+    align-items: center;
+    padding: 10px 18px;
+    background: var(--ink);
+    color: var(--paper);
+    border-bottom: 2px solid var(--ink);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+  }
+  .control-bar .title { font-weight: 800; letter-spacing: 0.22em; }
+  .control-bar .meta  { color: oklch(85% 0.012 60); font-size: 10px; }
+  .control-bar button {
+    background: transparent;
+    color: var(--paper);
+    border: 1px solid var(--paper);
+    padding: 6px 12px;
+    font-family: "Courier New", monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.12s ease;
+  }
+  .control-bar button:hover { background: var(--paper); color: var(--ink); }
+  .control-bar .timecode {
+    font-family: "Courier New", monospace;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: oklch(88% 0.150 90);
+    min-width: 110px;
+    text-align: right;
+  }
+  .control-bar .timecode::before { content: "T+ "; color: oklch(70% 0.06 90); margin-right: 6px; }
+
+  /* Progress as a strip of perforations */
+  .perforation {
+    height: 6px;
+    background:
+      repeating-linear-gradient(to right,
+        var(--ink) 0 8px,
+        var(--paper) 8px 12px
+      );
+    position: sticky;
+    top: 40px;
+    z-index: 29;
+  }
+  .progress-fill {
+    height: 6px;
+    background: var(--red);
+    width: 0%;
+    transition: width 0.6s linear;
+  }
+
+  /* The transcript canvas */
+  .stage {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 28px 32px 96px;
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 28px;
+  }
+
+  /* Main transcript column */
+  .transcript {
+    background:
+      repeating-linear-gradient(to bottom, transparent 0 21px, oklch(78% 0.014 220 / 0.4) 21px 22px),
+      var(--paper-cold);
+    border: 1px solid var(--ink);
+    padding: 18px 22px;
+    min-height: 480px;
+    position: relative;
+    overflow: hidden;
+  }
+  .transcript h2 {
+    font-family: "Courier New", monospace;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    margin: 0 0 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px dashed var(--ink-faded);
+    color: var(--ink-faded);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* Each line of the transcript */
+  .line {
+    display: grid;
+    grid-template-columns: 64px 110px 1fr auto;
+    gap: 12px;
+    align-items: baseline;
+    padding: 2px 0;
+    border-bottom: 1px solid oklch(78% 0.014 220 / 0.5);
+    opacity: 0;
+    transform: translateY(2px);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+  }
+  .line.visible { opacity: 1; transform: translateY(0); }
+
+  .line .t {
+    color: var(--ink-faded);
+    font-variant-numeric: tabular-nums;
+  }
+  .line .actor {
+    font-weight: 700;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    font-size: 11px;
+  }
+  .line.actor-yellow .actor { color: oklch(45% 0.13 90); }
+  .line.actor-black  .actor { color: var(--ink); }
+  .line.actor-blue   .actor { color: oklch(40% 0.10 240); }
+  .line.actor-white  .actor { color: var(--ink-faded); }
+  .line.actor-red    .actor { color: var(--red); }
+  .line.actor-green  .actor { color: oklch(40% 0.10 145); }
+  .line.actor-phx    .actor { color: oklch(40% 0.14 320); }
+  .line.actor-qdrant .actor { color: oklch(40% 0.14 200); }
+  .line.actor-system .actor { color: var(--ink-faded); font-style: italic; }
+  .line.actor-reporter .actor { color: var(--red-faded); font-style: italic; }
+
+  .line .body { font-size: 13px; }
+  .line .body code {
+    font-family: "Courier New", monospace;
+    background: oklch(90% 0.010 220);
+    padding: 1px 4px;
+    border-radius: 0;
+    font-size: 12px;
+  }
+  .line .score {
+    font-family: "Courier New", monospace;
+    font-size: 13px;
+    font-weight: 700;
+    text-align: right;
+    min-width: 80px;
+    color: var(--ink);
+  }
+  .line .score .strike { text-decoration: line-through; text-decoration-thickness: 2px; color: var(--ink-ghost); }
+  .line .score .red   { color: var(--red); }
+
+  mark.hi {
+    background: linear-gradient(180deg, transparent 0 35%, var(--highlight) 35% 90%, transparent 90%);
+    color: var(--ink);
+    padding: 0 2px;
+  }
+
+  /* Section divider — a typed dashed line */
+  .divider {
+    margin: 14px 0;
+    color: var(--ink-faded);
+    font-family: "Courier New", monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  .divider.visible { opacity: 1; }
+
+  /* The corrections sidebar — looks like a margin slip */
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    position: sticky;
+    top: 64px;
+    align-self: start;
+  }
+
+  .panel {
+    background: var(--paper);
+    border: 1px solid var(--ink);
+    padding: 12px 14px;
+    font-size: 11px;
+    line-height: 18px;
+  }
+  .panel h3 {
+    font-family: "Courier New", monospace;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    margin: 0 0 8px;
+    padding-bottom: 4px;
+    border-bottom: 2px solid var(--ink);
+    color: var(--ink);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* Hat status — looks like a roll-call */
+  .hat-row {
+    display: grid;
+    grid-template-columns: 22px 1fr auto;
+    gap: 8px;
+    padding: 3px 0;
+    border-bottom: 1px dotted var(--rule);
+    align-items: baseline;
+  }
+  .hat-row .chip {
+    width: 14px; height: 14px;
+    border: 1px solid var(--ink);
+    background: var(--paper);
+    display: inline-block;
+    position: relative;
+    top: 2px;
+  }
+  .hat-row.h-w .chip { background: oklch(96% 0.005 60); }
+  .hat-row.h-r .chip { background: oklch(70% 0.16 28); }
+  .hat-row.h-y .chip { background: oklch(85% 0.16 90); }
+  .hat-row.h-k .chip { background: var(--ink); }
+  .hat-row.h-g .chip { background: oklch(70% 0.12 145); }
+  .hat-row.h-b .chip { background: oklch(60% 0.14 240); }
+  .hat-row .name { font-weight: 700; letter-spacing: 0.08em; font-size: 10px; text-transform: uppercase; }
+  .hat-row .state { font-size: 10px; color: var(--ink-faded); }
+  .hat-row.flagged .state { color: var(--red); font-weight: 700; }
+  .hat-row.corrected .state { color: var(--green-stamp); font-weight: 700; }
+
+  /* Live MCP/Qdrant call inspector */
+  .call-row {
+    padding: 6px 0;
+    border-bottom: 1px dotted var(--rule);
+    font-family: "Courier New", monospace;
+    font-size: 10px;
+    line-height: 14px;
+    color: var(--ink-faded);
+    opacity: 0;
+    transform: translateY(2px);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+  }
+  .call-row.visible { opacity: 1; transform: translateY(0); }
+  .call-row .verb {
+    color: var(--ink); font-weight: 700;
+    display: inline-block; min-width: 60px;
+  }
+  .call-row .lat {
+    color: var(--green-stamp); float: right;
+  }
+
+  /* The "score ledger" — left margin runs an actual score column */
+  .ledger {
+    display: grid;
+    grid-template-columns: 1fr 60px 60px;
+    gap: 6px;
+    font-size: 10px;
+  }
+  .ledger .head { font-weight: 700; letter-spacing: 0.12em; color: var(--ink-faded); padding-bottom: 4px; border-bottom: 1px solid var(--ink); text-transform: uppercase; }
+  .ledger .crit { padding: 3px 0; border-bottom: 1px dotted var(--rule); }
+  .ledger .num  { text-align: right; font-family: "Courier New", monospace; font-weight: 700; }
+  .ledger .num.was { color: var(--ink-ghost); text-decoration: line-through; text-decoration-thickness: 1.5px; }
+  .ledger .num.now { color: var(--red); }
+  .ledger .crit.changed { background: oklch(98% 0.04 90); }
+
+  /* Mini print scatter — appears at the end */
+  .scatter-box {
+    border: 1px solid var(--ink);
+    padding: 8px;
+    background: var(--paper);
+  }
+  .scatter {
+    width: 100%;
+    height: 140px;
+    background:
+      repeating-linear-gradient(to right, transparent 0 19px, oklch(75% 0.020 60 / 0.35) 19px 20px),
+      repeating-linear-gradient(to bottom, transparent 0 13px, oklch(75% 0.020 60 / 0.35) 13px 14px),
+      var(--paper);
+    position: relative;
+    border: 1px solid var(--ink-faded);
+  }
+  .dot { position: absolute; width: 5px; height: 5px; border-radius: 50%; transform: translate(-50%, -50%); }
+  .dot.miss   { background: oklch(60% 0.018 60); width: 3px; height: 3px; }
+  .dot.honor  { background: var(--ink); }
+  .dot.winner { background: var(--red); }
+  .dot.you {
+    width: 12px; height: 12px;
+    background: transparent;
+    border: 2px solid var(--ink);
+    box-shadow: 0 0 0 2px var(--paper);
+    transition: left 1.2s ease, top 1.2s ease, background 0.6s ease;
+  }
+  .dot.you.corrected { background: var(--red); }
+
+  /* The rubber-stamp callout when the audit completes */
+  .stamp-overlay {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) rotate(-8deg) scale(0.9);
+    font-family: "Courier New", monospace;
+    font-weight: 900;
+    color: var(--green-stamp);
+    border: 5px double var(--green-stamp);
+    padding: 18px 38px;
+    letter-spacing: 0.32em;
+    font-size: 38px;
+    text-transform: uppercase;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease, transform 0.6s ease;
+    z-index: 50;
+    background: oklch(95% 0.022 86 / 0.0);
+  }
+  .stamp-overlay.show {
+    opacity: 0.92;
+    transform: translate(-50%, -50%) rotate(-8deg) scale(1);
+  }
+
+  .stamp-overlay.red {
+    color: var(--red);
+    border-color: var(--red);
+  }
+
+  /* The dual-rubric panel — appears at end */
+  .dual-rubric {
+    margin-top: 18px;
+    border: 2px solid var(--ink);
+    padding: 0;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  .dual-rubric.visible { opacity: 1; }
+  .dual-rubric .head {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 6px 12px;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .dual-rubric .body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+  .dual-rubric .col {
+    padding: 12px 14px;
+    border-right: 1px dashed var(--ink-faded);
+  }
+  .dual-rubric .col:last-child { border-right: 0; }
+  .dual-rubric .label {
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-faded);
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .dual-rubric .big {
+    font-family: "Times New Roman", serif;
+    font-size: 36px;
+    font-weight: 900;
+    line-height: 38px;
+  }
+  .dual-rubric .big .sub { font-size: 14px; color: var(--ink-faded); font-weight: 400; }
+  .dual-rubric .caption {
+    grid-column: 1 / -1;
+    padding: 10px 14px;
+    background: oklch(98% 0.012 86);
+    font-style: italic;
+    font-size: 12px;
+    border-top: 1px solid var(--ink-faded);
+    text-align: center;
+  }
+
+  /* Closing tagline — looks like the last typed line on the page */
+  .closing {
+    margin: 28px 0 0;
+    font-family: "Times New Roman", serif;
+    font-size: 22px;
+    line-height: 30px;
+    font-style: italic;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+  }
+  .closing.visible { opacity: 1; }
+  .closing strong { font-style: normal; font-weight: 800; }
+
+  /* Disclaimer */
+  .footer-note {
+    margin-top: 24px;
+    padding: 8px 12px;
+    border-left: 3px solid var(--red);
+    background: oklch(98% 0.012 86);
+    font-size: 11px;
+    line-height: 16px;
+    color: var(--ink-faded);
+    font-style: italic;
+  }
+
+  @media (max-width: 880px) {
+    .stage { grid-template-columns: 1fr; padding: 18px; }
+    .sidebar { position: static; }
+    .line { grid-template-columns: 50px 80px 1fr auto; gap: 8px; }
+    .line .body { font-size: 12px; }
+    .stamp-overlay { font-size: 22px; padding: 12px 22px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Control bar -->
+<header class="control-bar">
+  <div class="title">GLASSHAT · STENOGRAPHIC RECORD</div>
+  <div class="meta">run #qd-2026-06-01-001 · rubric: Qdrant VSD (3-axis) · audit-the-judge</div>
+  <button id="restart-btn">↻ Replay</button>
+  <button id="pause-btn">⏸ Pause</button>
+  <div class="timecode" id="timecode">00:00.0</div>
+</header>
+<div class="perforation"><div class="progress-fill" id="progress"></div></div>
+
+<main class="stage">
+
+  <!-- Transcript -->
+  <section class="transcript" id="transcript">
+    <h2>
+      <span>page 1 of 1 — verbatim record</span>
+      <span>court reporter: GLASSHAT-RPT-v0.4</span>
+    </h2>
+    <div id="lines"></div>
+
+    <!-- Closing tagline -->
+    <p class="closing" id="closing">
+      <strong>Same engine. Different rubric. Different (correct) score.</strong><br/>
+      <span style="font-size: 16px;">And the auditor is the vector space.</span>
+    </p>
+
+    <!-- Dual-rubric panel -->
+    <div class="dual-rubric" id="dual-rubric">
+      <div class="head">Exhibit B — same submission, two rubrics</div>
+      <div class="body">
+        <div class="col">
+          <div class="label">Under Qdrant rubric (3-axis)</div>
+          <div class="big">87<span class="sub"> / 100</span></div>
+          <div style="font-size:11px; color:var(--ink-faded); margin-top:6px;">Functionality 30 · Originality 30 · UX 27</div>
+        </div>
+        <div class="col">
+          <div class="label">Under Rapid Agent rubric (4-axis)</div>
+          <div class="big">73<span class="sub"> / 100</span></div>
+          <div style="font-size:11px; color:var(--ink-faded); margin-top:6px;">Tech 30 · Inn 22 · Imp 14 · Pres 7</div>
+        </div>
+        <div class="caption">
+          “Correct rubric-aware variance, not bias.”
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      UI prototype · numbers real (drawn from the locked 503-project Gemini 3
+      calibration corpus and the agreed calibration policy) · agent calls
+      simulated for static replay.
+    </div>
+  </section>
+
+  <!-- Right column: live state -->
+  <aside class="sidebar">
+
+    <div class="panel">
+      <h3><span>Six-Hat Panel</span><span id="audit-state">idle</span></h3>
+      <div class="hat-row h-w" data-hat="white">    <span class="chip"></span><span class="name">White · facts</span><span class="state" id="st-white">—</span></div>
+      <div class="hat-row h-r" data-hat="red">      <span class="chip"></span><span class="name">Red · intuition</span><span class="state" id="st-red">—</span></div>
+      <div class="hat-row h-y" data-hat="yellow">   <span class="chip"></span><span class="name">Yellow · value</span><span class="state" id="st-yellow">—</span></div>
+      <div class="hat-row h-k" data-hat="black">    <span class="chip"></span><span class="name">Black · risk</span><span class="state" id="st-black">—</span></div>
+      <div class="hat-row h-g" data-hat="green">    <span class="chip"></span><span class="name">Green · creative</span><span class="state" id="st-green">—</span></div>
+      <div class="hat-row h-b" data-hat="blue">     <span class="chip"></span><span class="name">Blue · synthesis</span><span class="state" id="st-blue">—</span></div>
+    </div>
+
+    <div class="panel">
+      <h3><span>MCP / Vector calls</span><span id="call-count">0</span></h3>
+      <div id="calls"></div>
+    </div>
+
+    <div class="panel">
+      <h3><span>Score ledger · A1 only</span><span>live</span></h3>
+      <div class="ledger" id="ledger">
+        <div class="head">Criterion</div><div class="head num">was</div><div class="head num">now</div>
+        <div class="crit" id="crit-row">A1 · Problem Clarity</div>
+        <div class="num was" id="crit-was">—</div>
+        <div class="num now" id="crit-now">—</div>
+      </div>
+    </div>
+
+    <div class="panel scatter-box">
+      <h3><span>Anchor space · n=503</span><span>fig. 1</span></h3>
+      <div class="scatter" id="scatter">
+        <!-- background dots -->
+        <span class="dot miss" style="left:12%; top:62%"></span>
+        <span class="dot miss" style="left:18%; top:74%"></span>
+        <span class="dot miss" style="left:22%; top:48%"></span>
+        <span class="dot miss" style="left:26%; top:80%"></span>
+        <span class="dot miss" style="left:31%; top:65%"></span>
+        <span class="dot miss" style="left:34%; top:88%"></span>
+        <span class="dot miss" style="left:38%; top:55%"></span>
+        <span class="dot miss" style="left:42%; top:72%"></span>
+        <span class="dot miss" style="left:48%; top:81%"></span>
+        <span class="dot miss" style="left:52%; top:64%"></span>
+        <span class="dot miss" style="left:56%; top:78%"></span>
+        <span class="dot miss" style="left:62%; top:54%"></span>
+        <span class="dot miss" style="left:66%; top:69%"></span>
+        <span class="dot miss" style="left:70%; top:82%"></span>
+        <span class="dot miss" style="left:74%; top:60%"></span>
+        <span class="dot miss" style="left:78%; top:74%"></span>
+        <span class="dot honor" style="left:60%; top:32%"></span>
+        <span class="dot honor" style="left:64%; top:38%"></span>
+        <span class="dot honor" style="left:68%; top:28%"></span>
+        <span class="dot honor" style="left:72%; top:34%"></span>
+        <span class="dot winner" style="left:78%; top:20%"></span>
+        <span class="dot winner" style="left:82%; top:16%"></span>
+        <span class="dot winner" style="left:86%; top:24%"></span>
+        <!-- you -->
+        <span class="dot you" id="you-dot" style="left:50%; top:22%"></span>
+      </div>
+      <div style="font-size: 9px; color: var(--ink-faded); margin-top: 4px; letter-spacing: 0.06em;">
+        red = winners · ink = honorable · grey = non-winners · ring = current
+      </div>
+    </div>
+
+  </aside>
+
+</main>
+
+<!-- Stamp overlays -->
+<div class="stamp-overlay" id="stamp-corrected">CORRECTED · ON · THE · RECORD</div>
+<div class="stamp-overlay red" id="stamp-audit">AUDIT · IN · PROGRESS</div>
+
+<script>
+/* ============================================================
+   Demo conductor: emits the wow moment as a typewritten transcript.
+   No external deps. Pauses between beats are deliberate.
+   ============================================================ */
+
+const SCRIPT = [
+  // [t_seconds, actor, body_html, score_html_or_null, side_effect_key]
+  [  0.5, "system",   "── BEGIN RECORD — court is in session ──", null, "begin"],
+  [  2.0, "system",   "Submission ingested: <code>deck.pdf</code> · <code>github.com/team-x/proj</code> · rubric <code>qdrant-vsd-2026</code>.", null, null],
+  [  3.5, "blue",     "RubricSynthesizer parsed 3 axes from official rules. Plan ready.", null, "plan_ready"],
+  [  5.0, "system",   "User approves plan (human gate 1).", null, null],
+  [  6.5, "system",   "── ParallelAgent dispatches six perspectives ──", null, "panel_start"],
+
+  [  8.0, "white",    "Facts retrieved. 12 deck chunks + 9 repo chunks via hybrid (dense+sparse, RRF).", "—", "white_done"],
+  [  9.0, "red",      "Intuition: deck reads polished but generic.", "—", "red_done"],
+  [ 10.0, "yellow",   "<mark class='hi'>A1 Problem Clarity — strong vision statement; ambitious framing.</mark>", "9.0 /10", "yellow_done"],
+  [ 11.2, "black",    "Risk: evidence_depth 0.31 — vision claim NOT grounded in repo. Filing counter-claim.", "—", "black_done"],
+  [ 12.0, "green",    "Creative: could pivot to vertical SaaS angle.", "—", "green_done"],
+  [ 13.2, "blue",     "Synthesis suspended pending audit.", "—", "blue_done"],
+
+  [ 15.0, "system",   "── LoopAgent enters AuditLoop (max_iterations=2) ──", null, "audit_start"],
+  [ 16.5, "phx",      "Phoenix Online Eval (LLM judge) auto-fired on Yellow.A1 span.", null, "phx_call_1"],
+  [ 17.0, "phx",      "→ annotation: <code>eval.calibration.label = \"over_confident\"</code>", null, null],
+  [ 18.2, "phx",      "Phoenix Custom Evaluator (Python) — deterministic backup confirms.", null, "phx_call_2"],
+  [ 19.0, "system",   "Inconsistency flagged. Three independent detectors agree.", null, "flagged"],
+
+  [ 20.8, "blue",     "Opening MCP channel to Phoenix (stdio).", null, "mcp_open"],
+  [ 21.8, "phx",      "<code>get-experiment-by-id(\"glasshat-calibration-v1\")</code>", null, "phx_call_3"],
+  [ 22.6, "phx",      "→ <code>{ mean_delta: −1.2, sample_size: 14, CI: [0.9, 1.5] }</code>", null, null],
+  [ 23.6, "phx",      "<code>get-span-annotations(yellow_a1_span_id)</code>", null, "phx_call_4"],
+  [ 24.4, "phx",      "→ proof chain returned.", null, null],
+  [ 25.4, "phx",      "<code>get-dataset-examples(\"calibration_corpus_v1\", limit=3)</code>", null, "phx_call_5"],
+  [ 26.2, "phx",      "→ anchor profiles 0x7a2 · 0x9c1 · 0xb04 returned.", null, null],
+
+  [ 27.5, "qdrant",   "<code>recommend(positive=[over_confident_anchors], negative=[accurate_anchors], strategy=\"average_vector\")</code>", null, "qdr_call_1"],
+  [ 28.5, "qdrant",   "→ anti-pattern anchors: 37 of 503 past submissions match this profile.", null, null],
+  [ 29.3, "qdrant",   "→ <mark class='hi'>Winners among matches: 0.</mark>", null, "anti_pattern"],
+  [ 30.2, "qdrant",   "Anchor scores on A1: 7.2 · 7.5 · 7.8.", "p25=7.4 · p75=7.9", null],
+
+  [ 31.8, "system",   "ScoreCalibrationAgent applies: <code>clip(9.0 − 0.8·1.2, 7.4, 7.9) = 7.6</code>", null, "calibrating"],
+  [ 33.0, "yellow",   "A1 corrected.", "<span class='strike'>9.0</span> <span class='red'>7.6</span>", "corrected"],
+  [ 34.0, "reporter", "Let the record reflect the correction.", null, "reporter"],
+  [ 35.2, "system",   "Loop signals <code>escalate=True</code>. AuditLoop exits at iteration 1.", null, "loop_exit"],
+
+  [ 36.8, "blue",     "Final synthesis with audited scores.", null, "synthesis"],
+  [ 38.0, "system",   "Composite score under Qdrant 3-axis rubric: <strong>87 / 100</strong>.", null, "score_qdrant"],
+  [ 39.4, "system",   "Same submission, re-scored under Rapid Agent 4-axis rubric: <strong>73 / 100</strong>.", null, "score_rapid"],
+  [ 41.0, "system",   "── Dual-rubric variance display rendered (Exhibit B) ──", null, "dual_visible"],
+
+  [ 43.5, "reporter", "Closing on the record:", null, null],
+  [ 44.8, "system",   "<em>Same engine. Different rubric. Different (correct) score.</em>", null, "closing_visible"],
+  [ 46.5, "system",   "<em>And the auditor is the vector space.</em>", null, null],
+  [ 48.0, "system",   "── END OF RECORD — pages signed and sealed ──", null, "end"],
+];
+
+const TOTAL_T = 50.0;
+
+const linesEl = document.getElementById("lines");
+const tcEl = document.getElementById("timecode");
+const progressEl = document.getElementById("progress");
+const callsEl = document.getElementById("calls");
+const callCountEl = document.getElementById("call-count");
+const auditStateEl = document.getElementById("audit-state");
+const closingEl = document.getElementById("closing");
+const dualEl = document.getElementById("dual-rubric");
+const stampCorrected = document.getElementById("stamp-corrected");
+const stampAudit = document.getElementById("stamp-audit");
+const youDot = document.getElementById("you-dot");
+const critRow = document.getElementById("crit-row");
+const critWas = document.getElementById("crit-was");
+const critNow = document.getElementById("crit-now");
+const restartBtn = document.getElementById("restart-btn");
+const pauseBtn = document.getElementById("pause-btn");
+
+let startedAt = null;
+let pausedAt = null;
+let pauseOffset = 0;
+let raf = null;
+let firedKeys = new Set();
+let callIdx = 0;
+
+function addLine(t, actor, body, score) {
+  const div = document.createElement("div");
+  div.className = `line actor-${actor}`;
+  const actorLabel = {
+    white: "White hat", red: "Red hat", yellow: "Yellow hat",
+    black: "Black hat", green: "Green hat", blue: "Blue / orch",
+    phx: "Phoenix MCP", qdrant: "Qdrant", system: "[system]",
+    reporter: "[reporter]"
+  }[actor] || actor;
+  const tStr = t.toFixed(1).padStart(5, "0");
+  div.innerHTML = `
+    <span class="t">${tStr}</span>
+    <span class="actor">${actorLabel}</span>
+    <span class="body">${body}</span>
+    <span class="score">${score || ""}</span>
+  `;
+  linesEl.appendChild(div);
+  // animate in
+  requestAnimationFrame(() => div.classList.add("visible"));
+  // auto-scroll within the transcript section
+  div.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function addCall(verb, detail) {
+  callIdx += 1;
+  const div = document.createElement("div");
+  div.className = "call-row";
+  div.innerHTML = `
+    <span class="verb">${verb}</span>
+    ${detail}
+    <span class="lat">✓ ${Math.round(150 + Math.random() * 350)}ms</span>
+  `;
+  callsEl.appendChild(div);
+  requestAnimationFrame(() => div.classList.add("visible"));
+  callCountEl.textContent = callIdx;
+}
+
+function setHat(hat, state, cls) {
+  const el = document.getElementById("st-" + hat);
+  if (el) el.textContent = state;
+  const row = document.querySelector(`.hat-row[data-hat="${hat}"]`);
+  if (row) {
+    row.classList.remove("flagged", "corrected");
+    if (cls) row.classList.add(cls);
+  }
+}
+
+function applySideEffect(key) {
+  switch (key) {
+    case "begin": auditStateEl.textContent = "ingest"; break;
+    case "plan_ready": auditStateEl.textContent = "planning"; break;
+    case "panel_start":
+      auditStateEl.textContent = "panel · 6 parallel";
+      ["white","red","yellow","black","green","blue"].forEach(h => setHat(h, "running…"));
+      break;
+    case "white_done":  setHat("white",  "ok · facts"); break;
+    case "red_done":    setHat("red",    "ok · intuition"); break;
+    case "yellow_done":
+      setHat("yellow", "A1: 9.0 ⚠");
+      critWas.textContent = "9.0";
+      critNow.textContent = "—";
+      break;
+    case "black_done":
+      setHat("black",  "counter-claim filed", "flagged");
+      break;
+    case "green_done":  setHat("green",  "ok · creative"); break;
+    case "blue_done":   setHat("blue",   "synthesis ⏸"); break;
+    case "audit_start":
+      auditStateEl.textContent = "AUDITING";
+      stampAudit.classList.add("show");
+      break;
+    case "phx_call_1": addCall("PHX-EVAL", "<code>online-eval (LLM judge)</code> → over_confident"); break;
+    case "phx_call_2": addCall("PHX-EVAL", "<code>custom-py-evaluator</code> → over_confident"); break;
+    case "flagged":
+      setHat("yellow", "flagged · over_confident", "flagged");
+      break;
+    case "mcp_open":   addCall("MCP OPEN", "<code>npx @arizeai/phoenix-mcp@latest</code>"); break;
+    case "phx_call_3": addCall("MCP", "<code>get-experiment-by-id(glasshat-calibration-v1)</code>"); break;
+    case "phx_call_4": addCall("MCP", "<code>get-span-annotations(span_id)</code>"); break;
+    case "phx_call_5": addCall("MCP", "<code>get-dataset-examples(limit=3)</code>"); break;
+    case "qdr_call_1": addCall("QDRANT", "<code>recommend(strategy=\"average_vector\")</code>"); break;
+    case "anti_pattern":
+      critRow.classList.add("changed");
+      break;
+    case "calibrating":
+      auditStateEl.textContent = "calibrating";
+      stampAudit.classList.remove("show");
+      break;
+    case "corrected":
+      setHat("yellow", "corrected · 7.6", "corrected");
+      critWas.textContent = "9.0";
+      critNow.textContent = "7.6";
+      stampCorrected.classList.add("show");
+      // animate the "you" dot from "before audit" → "after audit"
+      youDot.style.left = "67%";
+      youDot.style.top = "30%";
+      youDot.classList.add("corrected");
+      setTimeout(() => stampCorrected.classList.remove("show"), 2200);
+      break;
+    case "loop_exit": auditStateEl.textContent = "audit done"; break;
+    case "synthesis": auditStateEl.textContent = "final synthesis"; break;
+    case "dual_visible":
+      dualEl.classList.add("visible");
+      break;
+    case "closing_visible":
+      closingEl.classList.add("visible");
+      break;
+    case "end":
+      auditStateEl.textContent = "sealed";
+      break;
+  }
+}
+
+function tick(ts) {
+  if (!startedAt) startedAt = ts;
+  const elapsed = ((ts - startedAt) / 1000) - pauseOffset;
+  const tcMin = Math.floor(elapsed / 60).toString().padStart(2, "0");
+  const tcSec = (elapsed % 60).toFixed(1).padStart(4, "0");
+  tcEl.textContent = `${tcMin}:${tcSec}`;
+  progressEl.style.width = Math.min(100, (elapsed / TOTAL_T) * 100) + "%";
+
+  for (const [t, actor, body, score, key] of SCRIPT) {
+    const fireKey = `${t}-${actor}-${key || ""}`;
+    if (elapsed >= t && !firedKeys.has(fireKey)) {
+      firedKeys.add(fireKey);
+      // dividers
+      if (actor === "system" && body.includes("──")) {
+        const d = document.createElement("div");
+        d.className = "divider";
+        d.textContent = body.replace(/<[^>]+>/g, "");
+        linesEl.appendChild(d);
+        requestAnimationFrame(() => d.classList.add("visible"));
+        d.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      } else {
+        addLine(t, actor, body, score);
+      }
+      if (key) applySideEffect(key);
+    }
+  }
+
+  if (elapsed < TOTAL_T + 2) {
+    raf = requestAnimationFrame(tick);
+  }
+}
+
+function reset() {
+  cancelAnimationFrame(raf);
+  startedAt = null;
+  pausedAt = null;
+  pauseOffset = 0;
+  firedKeys = new Set();
+  callIdx = 0;
+  linesEl.innerHTML = "";
+  callsEl.innerHTML = "";
+  callCountEl.textContent = "0";
+  closingEl.classList.remove("visible");
+  dualEl.classList.remove("visible");
+  stampCorrected.classList.remove("show");
+  stampAudit.classList.remove("show");
+  youDot.style.left = "50%";
+  youDot.style.top = "22%";
+  youDot.classList.remove("corrected");
+  critWas.textContent = "—";
+  critNow.textContent = "—";
+  critRow.classList.remove("changed");
+  ["white","red","yellow","black","green","blue"].forEach(h => setHat(h, "—"));
+  auditStateEl.textContent = "idle";
+  progressEl.style.width = "0%";
+  tcEl.textContent = "00:00.0";
+  pauseBtn.textContent = "⏸ Pause";
+  raf = requestAnimationFrame(tick);
+}
+
+let paused = false;
+pauseBtn.addEventListener("click", () => {
+  if (!paused) {
+    paused = true;
+    pausedAt = performance.now();
+    cancelAnimationFrame(raf);
+    pauseBtn.textContent = "▶ Resume";
+  } else {
+    paused = false;
+    pauseOffset += (performance.now() - pausedAt) / 1000;
+    pauseBtn.textContent = "⏸ Pause";
+    raf = requestAnimationFrame(tick);
+  }
+});
+restartBtn.addEventListener("click", reset);
+
+// kickoff
+raf = requestAnimationFrame(tick);
+</script>
+
+</body>
+</html>

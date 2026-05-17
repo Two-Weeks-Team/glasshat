@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>GLASSHAT // Match in Session — Six Hats vs The Submission</title>
+<style>
+/* ============================================================
+ * GLASSHAT — DEMO MATCH (P23 The Game Designer)
+ * Party-RPG / Fighting-game HUD. Combo + crit feedback.
+ * Phoenix = meta-judge. Final reveal = score screen with grade.
+ * ============================================================ */
+:root{
+  --bg-0: oklch(7% 0.02 260);
+  --bg-1: oklch(12% 0.03 260);
+  --bg-2: oklch(17% 0.04 260);
+  --ink: oklch(98% 0 0);
+  --ink-2: oklch(78% 0.02 260);
+  --ink-3: oklch(55% 0.02 260);
+  --line: oklch(40% 0.05 260 / .5);
+
+  --accent: oklch(82% 0.18 195);
+  --xp: oklch(85% 0.20 90);
+  --crit: oklch(72% 0.22 30);
+  --combo: oklch(76% 0.20 320);
+  --good: oklch(78% 0.20 145);
+
+  --hat-white: oklch(96% 0 0);
+  --hat-red: oklch(72% 0.20 25);
+  --hat-yellow: oklch(85% 0.15 95);
+  --hat-black: oklch(45% 0 0);
+  --hat-green: oklch(76% 0.18 150);
+  --hat-blue: oklch(72% 0.20 245);
+
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --ease-spring: cubic-bezier(0.34,1.56,0.64,1);
+  --ease-out: cubic-bezier(0.22,1,0.36,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:var(--bg-0);color:var(--ink);font-family:var(--sans);overflow-x:hidden;min-height:100vh}
+body{
+  background:
+    radial-gradient(ellipse 60% 40% at 10% 0%, oklch(20% 0.10 245 / .25), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 90% 100%, oklch(20% 0.10 320 / .22), transparent 60%),
+    var(--bg-0);
+}
+
+/* ===== HUD top ===== */
+.hud-top{
+  position:sticky;top:0;z-index:30;height:56px;
+  background:linear-gradient(180deg, oklch(8% 0.02 260 / .95), oklch(8% 0.02 260 / .8));
+  border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 22px;backdrop-filter:blur(8px);
+}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-weight:700;letter-spacing:.16em;font-size:12px}
+.brand-mark{width:22px;height:22px;border:2px solid var(--accent);border-radius:4px;display:grid;place-items:center;font-size:11px;color:var(--accent);box-shadow:0 0 14px oklch(82% 0.18 195 / .5)}
+.timer{
+  font-family:var(--mono);font-size:18px;font-weight:800;letter-spacing:.1em;color:var(--accent);
+  text-shadow:0 0 14px oklch(82% 0.18 195 / .6);
+}
+.hud-right{display:flex;gap:14px;align-items:center;font-family:var(--mono);font-size:11px;color:var(--ink-2)}
+.combo-pill{
+  padding:5px 11px;border-radius:99px;background:oklch(20% 0.10 320 / .35);
+  border:1px solid var(--combo);color:var(--combo);font-weight:700;letter-spacing:.15em;
+  transition:transform .25s var(--ease-spring);
+}
+.combo-pill.pulse{transform:scale(1.18)}
+
+/* ===== Layout ===== */
+main{padding:18px;max-width:1500px;margin:0 auto;display:grid;grid-template-columns:1fr 280px;gap:16px}
+.left{display:flex;flex-direction:column;gap:14px}
+.right{display:flex;flex-direction:column;gap:14px}
+
+/* ===== Submission banner ===== */
+.submission{
+  display:flex;align-items:center;gap:14px;padding:14px 16px;
+  background:linear-gradient(90deg, oklch(14% 0.04 260 / .95), oklch(10% 0.02 260 / .9));
+  border:1px solid var(--line);border-radius:8px;
+}
+.sub-art{
+  width:64px;height:64px;border-radius:8px;flex-shrink:0;
+  background:linear-gradient(135deg, oklch(40% 0.20 245), oklch(50% 0.20 320));
+  display:grid;place-items:center;font-size:24px;color:var(--ink);font-weight:800;
+  border:1px solid oklch(60% 0.10 245 / .5);box-shadow:0 4px 14px oklch(0% 0 0 / .5);
+}
+.sub-body{flex:1;min-width:0}
+.sub-meta{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--accent);margin-bottom:3px}
+.sub-name{font-size:18px;font-weight:800;line-height:1.1}
+.sub-tags{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.tag{font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:99px;background:oklch(25% 0.04 260);color:var(--ink-2);letter-spacing:.05em}
+
+/* ===== Party panel ===== */
+.party-row{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.member{
+  position:relative;padding:12px 10px;border-radius:8px;
+  background:linear-gradient(180deg, oklch(16% 0.03 260), oklch(11% 0.02 260));
+  border:1px solid var(--line);
+  transition:transform .2s var(--ease-spring), border-color .2s, box-shadow .3s;
+  cursor:pointer;
+}
+.member.active{border-color:var(--accent);box-shadow:0 0 20px oklch(82% 0.18 195 / .35), 0 6px 20px oklch(0% 0 0 / .5);transform:translateY(-2px)}
+.member.crit{
+  animation:critShake .4s var(--ease-spring);
+  border-color:var(--crit);box-shadow:0 0 22px oklch(72% 0.22 30 / .5);
+}
+@keyframes critShake{
+  0%,100%{transform:translateY(-2px) translateX(0)}
+  20%{transform:translateY(-2px) translateX(-4px) rotate(-1deg)}
+  40%{transform:translateY(-2px) translateX(4px) rotate(1deg)}
+  60%{transform:translateY(-2px) translateX(-3px)}
+  80%{transform:translateY(-2px) translateX(3px)}
+}
+.m-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.m-avatar{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:800;border:2px solid currentColor;flex-shrink:0}
+.m-avatar.white{color:var(--hat-white);background:oklch(96% 0 0 / .1)}
+.m-avatar.red{color:var(--hat-red);background:oklch(72% 0.20 25 / .15)}
+.m-avatar.yellow{color:var(--hat-yellow);background:oklch(85% 0.15 95 / .15)}
+.m-avatar.black{color:oklch(75% 0 0);background:oklch(20% 0 0 / .5);border-color:oklch(50% 0 0)}
+.m-avatar.green{color:var(--hat-green);background:oklch(76% 0.18 150 / .15)}
+.m-avatar.blue{color:var(--hat-blue);background:oklch(72% 0.20 245 / .15)}
+.m-name{font-size:11px;font-weight:700;letter-spacing:.05em}
+.m-class{font-family:var(--mono);font-size:8px;letter-spacing:.12em;color:var(--ink-3)}
+.m-score-row{display:flex;align-items:baseline;gap:4px;margin-top:6px;font-family:var(--mono)}
+.m-score{font-size:22px;font-weight:800;color:var(--ink)}
+.m-cap{font-size:11px;color:var(--ink-3)}
+.m-score.over{color:var(--crit);text-shadow:0 0 10px oklch(72% 0.22 30 / .5)}
+.m-score.calibrated{color:var(--good);text-shadow:0 0 10px oklch(78% 0.20 145 / .5)}
+.m-hp{height:5px;background:oklch(20% 0.02 260);border-radius:99px;overflow:hidden;margin-top:6px}
+.m-hp-fill{height:100%;background:linear-gradient(90deg, var(--accent), var(--good));transition:width .8s var(--ease-out)}
+.m-bias{
+  position:absolute;top:8px;right:8px;
+  font-family:var(--mono);font-size:9px;padding:2px 5px;border-radius:3px;
+  background:oklch(20% 0.10 30 / .5);color:var(--crit);
+  opacity:0;transition:opacity .3s;
+}
+.m-bias.show{opacity:1;animation:flash 1.2s infinite}
+@keyframes flash{0%,100%{opacity:.5}50%{opacity:1}}
+
+/* ===== Center stage (Audit boss-fight) ===== */
+.stage{
+  position:relative;min-height:300px;border-radius:10px;overflow:hidden;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 30%, oklch(20% 0.10 320 / .35), transparent 60%),
+    linear-gradient(180deg, oklch(11% 0.02 260), oklch(8% 0.02 260));
+  border:1px solid var(--line);
+  padding:20px;
+}
+.stage-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.stage-title{font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--accent)}
+.stage-phase{font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.15em}
+
+.event-log{
+  font-family:var(--mono);font-size:11px;line-height:1.5;
+  max-height:140px;overflow:hidden;position:relative;
+  padding:10px 14px;background:oklch(10% 0.02 260 / .5);border-radius:6px;border:1px solid var(--line);
+}
+.event{display:flex;gap:10px;margin-bottom:5px;opacity:0;transform:translateY(6px);transition:opacity .4s, transform .4s var(--ease-out)}
+.event.show{opacity:1;transform:none}
+.event .t{color:var(--ink-3);width:54px;flex-shrink:0}
+.event .m{color:var(--ink-2);flex:1}
+.event .m b{color:var(--accent)}
+.event.flag .m b{color:var(--crit)}
+.event.heal .m b{color:var(--good)}
+
+/* Damage / heal numbers */
+.fx-layer{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.fx-num{
+  position:absolute;font-family:var(--mono);font-weight:800;font-size:32px;
+  text-shadow:0 0 12px currentColor;
+  animation:floatUp 1.4s var(--ease-out) forwards;
+}
+.fx-num.crit{font-size:42px;color:var(--crit)}
+.fx-num.heal{color:var(--good)}
+.fx-num.combo{color:var(--combo)}
+@keyframes floatUp{0%{transform:translate(-50%,0) scale(.4);opacity:0}15%{transform:translate(-50%,-10px) scale(1.2);opacity:1}80%{opacity:1}100%{transform:translate(-50%,-80px) scale(.9);opacity:0}}
+
+/* CRIT splash */
+.crit-splash{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  font-family:var(--mono);font-weight:800;font-size:46px;letter-spacing:.15em;
+  color:var(--crit);text-shadow:0 0 22px oklch(72% 0.22 30 / .9), 0 0 40px oklch(72% 0.22 30 / .6);
+  opacity:0;pointer-events:none;
+}
+.crit-splash.fire{animation:critSplash .9s var(--ease-spring)}
+@keyframes critSplash{0%{opacity:0;transform:translate(-50%,-50%) scale(.3) rotate(-8deg)}30%{opacity:1;transform:translate(-50%,-50%) scale(1.1) rotate(2deg)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.4) rotate(0)}}
+
+/* ===== Constellation map (playable mini-game) ===== */
+.map{
+  position:relative;height:300px;border-radius:10px;overflow:hidden;
+  background:
+    radial-gradient(circle at 30% 40%, oklch(20% 0.06 245 / .3), transparent 50%),
+    radial-gradient(circle at 70% 60%, oklch(18% 0.08 320 / .25), transparent 50%),
+    oklch(8% 0.02 260);
+  border:1px solid var(--line);
+}
+.map-head{position:absolute;top:12px;left:14px;right:14px;display:flex;justify-content:space-between;z-index:3}
+.map-tooltip{
+  position:absolute;background:oklch(14% 0.04 260 / .96);border:1px solid var(--accent);
+  border-radius:6px;padding:8px 10px;font-family:var(--mono);font-size:10px;
+  color:var(--ink);pointer-events:none;z-index:5;transform:translate(-50%,-100%);
+  display:none;min-width:160px;box-shadow:0 6px 18px oklch(0% 0 0 / .6);
+}
+.map-tooltip.show{display:block}
+.map-tooltip b{color:var(--accent);display:block;margin-bottom:2px}
+.map-tooltip .gold{color:var(--xp)}
+.map-tooltip .red{color:var(--crit)}
+canvas#mapCanvas{width:100%;height:100%;display:block}
+.map-legend{
+  position:absolute;bottom:10px;left:14px;display:flex;gap:14px;font-family:var(--mono);font-size:9px;color:var(--ink-3);z-index:3;
+}
+.leg{display:flex;align-items:center;gap:5px}
+.leg-dot{width:8px;height:8px;border-radius:50%}
+
+/* ===== Right column ===== */
+.panel{
+  background:linear-gradient(180deg, oklch(14% 0.03 260 / .9), oklch(10% 0.02 260 / .95));
+  border:1px solid var(--line);border-radius:8px;padding:14px;
+}
+.panel h4{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--accent);margin-bottom:10px}
+
+.phoenix-card{position:relative}
+.phoenix-avatar{
+  width:60px;height:60px;margin:0 auto 8px;border-radius:50%;
+  background:radial-gradient(circle, oklch(75% 0.22 30), oklch(60% 0.20 15));
+  display:grid;place-items:center;font-size:26px;color:var(--bg-0);font-weight:800;
+  box-shadow:0 0 28px oklch(72% 0.22 30 / .6);
+  animation:bob 2.5s ease-in-out infinite;
+}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.phoenix-name{text-align:center;font-weight:700;font-size:13px}
+.phoenix-title{text-align:center;font-family:var(--mono);font-size:9px;color:var(--ink-3);letter-spacing:.15em;margin-top:2px}
+.phoenix-stats{margin-top:10px;display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--ink-2)}
+.phoenix-stats b{color:var(--ink)}
+
+.mcp-call{
+  font-family:var(--mono);font-size:10px;color:var(--ink-2);
+  padding:6px 8px;background:oklch(18% 0.03 260);border-radius:4px;
+  margin-top:6px;display:flex;justify-content:space-between;
+  border-left:2px solid var(--accent);
+}
+.mcp-call.done{border-left-color:var(--good)}
+.mcp-call .ok{color:var(--good)}
+.mcp-call .pending{color:var(--xp)}
+
+.quest-mini{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.qrow{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-2)}
+.qrow .check{width:14px;height:14px;border-radius:3px;border:1px solid var(--ink-3);display:grid;place-items:center;flex-shrink:0;font-size:10px}
+.qrow.done .check{background:var(--good);border-color:var(--good);color:var(--bg-0)}
+.qrow.done{color:var(--ink)}
+
+/* ===== Bottom controls ===== */
+.controls{
+  display:flex;gap:10px;align-items:center;padding:14px;
+  background:oklch(12% 0.03 260 / .9);border:1px solid var(--line);border-radius:8px;
+}
+.btn{
+  font-family:var(--mono);font-weight:700;font-size:11px;letter-spacing:.15em;
+  padding:11px 18px;border-radius:5px;cursor:pointer;border:none;
+  transition:transform .15s var(--ease-spring);text-transform:uppercase;
+}
+.btn-primary{background:linear-gradient(135deg, var(--accent), oklch(72% 0.18 215));color:var(--bg-0);box-shadow:0 0 20px oklch(82% 0.18 195 / .4)}
+.btn-primary:hover{transform:translateY(-2px)}
+.btn-ghost{background:transparent;color:var(--ink-2);border:1px solid var(--ink-3)}
+.btn-ghost:hover{color:var(--ink);border-color:var(--accent)}
+.match-progress{flex:1;height:6px;background:oklch(20% 0.02 260);border-radius:99px;overflow:hidden}
+.match-progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), var(--xp));width:0%;transition:width .6s var(--ease-out)}
+
+/* ===== Score screen ===== */
+.score-screen{
+  position:fixed;inset:0;z-index:100;display:none;
+  background:radial-gradient(ellipse at center, oklch(14% 0.06 260 / .98), oklch(5% 0.02 260 / .99));
+  align-items:center;justify-content:center;padding:24px;
+  animation:fadein .5s var(--ease-out);
+}
+.score-screen.show{display:flex}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.score-card{
+  width:min(820px, 96vw);
+  background:linear-gradient(180deg, oklch(16% 0.04 260 / .98), oklch(11% 0.02 260 / .98));
+  border:1px solid var(--accent);border-radius:14px;padding:32px;
+  box-shadow:0 24px 80px oklch(0% 0 0 / .7), 0 0 80px oklch(82% 0.18 195 / .3);
+}
+.score-head{text-align:center;margin-bottom:20px}
+.score-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.3em;color:var(--accent);margin-bottom:6px}
+.score-title{font-size:28px;font-weight:800;letter-spacing:-.01em}
+
+.grade-row{display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:center;margin-bottom:24px;padding:20px;background:oklch(10% 0.02 260 / .6);border-radius:10px;border:1px solid var(--line)}
+.grade-badge{
+  width:120px;height:120px;border-radius:50%;
+  background:radial-gradient(circle, var(--xp), oklch(70% 0.20 60));
+  display:grid;place-items:center;
+  font-family:var(--mono);font-size:64px;font-weight:800;color:var(--bg-0);
+  box-shadow:0 0 36px oklch(85% 0.20 90 / .6), inset 0 0 20px oklch(0% 0 0 / .2);
+  animation:gradePop .8s var(--ease-spring);
+}
+@keyframes gradePop{0%{transform:scale(0) rotate(-180deg);opacity:0}60%{transform:scale(1.15) rotate(10deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+.grade-info .grade-name{font-size:22px;font-weight:800;margin-bottom:4px}
+.grade-info .grade-desc{color:var(--ink-2);font-size:14px;line-height:1.4}
+
+.score-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.score-stat{padding:14px;background:oklch(13% 0.03 260 / .7);border:1px solid var(--line);border-radius:8px;text-align:center}
+.score-stat-label{font-family:var(--mono);font-size:10px;letter-spacing:.15em;color:var(--ink-3);margin-bottom:6px}
+.score-stat-val{font-family:var(--mono);font-size:22px;font-weight:800;color:var(--ink)}
+.score-stat-val .unit{font-size:11px;color:var(--ink-3);font-weight:400;margin-left:2px}
+
+.variance-card{
+  padding:16px;border-radius:8px;
+  background:linear-gradient(90deg, oklch(20% 0.10 245 / .35), oklch(20% 0.10 320 / .35));
+  border:1px solid var(--combo);margin-bottom:20px;
+}
+.variance-head{font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--combo);margin-bottom:10px}
+.variance-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px dashed oklch(40% 0.04 260 / .5)}
+.variance-row:last-child{border-bottom:none}
+.variance-rubric{font-size:13px;color:var(--ink-2)}
+.variance-rubric b{color:var(--ink)}
+.variance-score{font-family:var(--mono);font-size:18px;font-weight:800;color:var(--accent)}
+.variance-caption{margin-top:10px;text-align:center;font-size:12px;color:var(--ink-2);font-style:italic}
+
+.score-actions{display:flex;gap:10px;justify-content:center}
+
+/* ===== Responsive ===== */
+@media (max-width:1100px){
+  main{grid-template-columns:1fr}
+  .right{order:-1}
+  .party-row{grid-template-columns:repeat(3,1fr)}
+}
+@media (max-width:600px){
+  .party-row{grid-template-columns:repeat(2,1fr)}
+  .score-stats{grid-template-columns:repeat(2,1fr)}
+  .grade-row{grid-template-columns:1fr;text-align:center}
+  .grade-badge{margin:0 auto}
+}
+</style>
+</head>
+<body>
+
+<header class="hud-top">
+  <div class="brand">
+    <span class="brand-mark">▣</span>
+    <span>GLASSHAT // MATCH IN SESSION</span>
+  </div>
+  <div class="timer" id="timer">00:00</div>
+  <div class="hud-right">
+    <span>RUBRIC: <b style="color:var(--ink)" id="rubricName">QDRANT VSD</b></span>
+    <span class="combo-pill" id="comboPill">COMBO ×<b id="comboVal">0</b></span>
+  </div>
+</header>
+
+<main>
+  <div class="left">
+
+    <!-- Submission banner -->
+    <div class="submission">
+      <div class="sub-art">VB</div>
+      <div class="sub-body">
+        <div class="sub-meta">⌬ TONIGHT'S CHALLENGER</div>
+        <div class="sub-name">VectorBard — AI Lyric Generator</div>
+        <div class="sub-tags">
+          <span class="tag">pitch.pdf · 12 pages</span>
+          <span class="tag">github.com/team/vectorbard</span>
+          <span class="tag">stack: Gemini 3 + Qdrant</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Party row (six hats as members) -->
+    <section class="party-row" id="partyRow">
+      <div class="member" data-hat="white">
+        <div class="m-head"><div class="m-avatar white">W</div>
+          <div><div class="m-name">WHITE</div><div class="m-class">SCOUT</div></div>
+        </div>
+        <div class="m-score-row"><span class="m-score" id="scoreWhite">—</span><span class="m-cap">/10</span></div>
+        <div class="m-hp"><div class="m-hp-fill" id="hpWhite" style="width:0%"></div></div>
+      </div>
+      <div class="member" data-hat="red">
+        <div class="m-head"><div class="m-avatar red">R</div>
+          <div><div class="m-name">RED</div><div class="m-class">ROGUE</div></div>
+        </div>
+        <div class="m-score-row"><span class="m-score" id="scoreRed">—</span><span class="m-cap">/10</span></div>
+        <div class="m-hp"><div class="m-hp-fill" id="hpRed" style="width:0%"></div></div>
+      </div>
+      <div class="member" data-hat="yellow">
+        <div class="m-bias" id="biasYellow">⚠ BIAS</div>
+        <div class="m-head"><div class="m-avatar yellow">Y</div>
+          <div><div class="m-name">YELLOW</div><div class="m-class">BARD</div></div>
+        </div>
+        <div class="m-score-row"><span class="m-score" id="scoreYellow">—</span><span class="m-cap">/10</span></div>
+        <div class="m-hp"><div class="m-hp-fill" id="hpYellow" style="width:0%"></div></div>
+      </div>
+      <div class="member" data-hat="black">
+        <div class="m-head"><div class="m-avatar black">B</div>
+          <div><div class="m-name">BLACK</div><div class="m-class">WARRIOR</div></div>
+        </div>
+        <div class="m-score-row"><span class="m-score" id="scoreBlack">—</span><span class="m-cap">/10</span></div>
+        <div class="m-hp"><div class="m-hp-fill" id="hpBlack" style="width:0%"></div></div>
+      </div>
+      <div class="member" data-hat="green">
+        <div class="m-head"><div class="m-avatar green">G</div>
+          <div><div class="m-name">GREEN</div><div class="m-class">MAGE</div></div>
+        </div>
+        <div class="m-score-row"><span class="m-score" id="scoreGreen">—</span><span class="m-cap">/10</span></div>
+        <div class="m-hp"><div class="m-hp-fill" id="hpGreen" style="width:0%"></div></div>
+      </div>
+      <div class="member" data-hat="blue">
+        <div class="m-head"><div class="m-avatar blue">⌬</div>
+          <div><div class="m-name">BLUE</div><div class="m-class">PLANNER</div></div>
+        </div>
+        <div class="m-score-row"><span class="m-score" id="scoreBlue">—</span><span class="m-cap">/10</span></div>
+        <div class="m-hp"><div class="m-hp-fill" id="hpBlue" style="width:0%"></div></div>
+      </div>
+    </section>
+
+    <!-- Boss-fight stage -->
+    <section class="stage" id="stage">
+      <div class="stage-head">
+        <div class="stage-title">⚔ AUDIT ARENA · BOSS-FIGHT</div>
+        <div class="stage-phase" id="stagePhase">PHASE 1 · PANEL EVAL</div>
+      </div>
+      <div class="event-log" id="eventLog"></div>
+      <div class="fx-layer" id="fxLayer">
+        <div class="crit-splash" id="critSplash">CRITICAL HIT!</div>
+      </div>
+    </section>
+
+    <!-- Playable constellation map -->
+    <section class="map" id="map">
+      <div class="map-head">
+        <div class="stage-title">⌖ 3D CONSTELLATION · 503 ANCHORS</div>
+        <div class="stage-phase">CLICK A STAR · S=WINNER · ▼=NON-WINNER</div>
+      </div>
+      <canvas id="mapCanvas" width="900" height="280"></canvas>
+      <div class="map-tooltip" id="mapTip"></div>
+      <div class="map-legend">
+        <div class="leg"><div class="leg-dot" style="background:var(--xp)"></div>WINNER</div>
+        <div class="leg"><div class="leg-dot" style="background:var(--ink-3)"></div>NON-WINNER</div>
+        <div class="leg"><div class="leg-dot" style="background:var(--crit)"></div>YOU · PRE</div>
+        <div class="leg"><div class="leg-dot" style="background:var(--good)"></div>YOU · POST</div>
+      </div>
+    </section>
+
+    <!-- Bottom controls -->
+    <div class="controls">
+      <button class="btn btn-primary" id="startBtn" onclick="startMatch()">▶ START MATCH</button>
+      <button class="btn btn-ghost" onclick="resetMatch()">↺ RESET</button>
+      <div class="match-progress"><div class="match-progress-fill" id="matchProgress"></div></div>
+      <button class="btn btn-ghost" onclick="showScore()">⌗ SCORE</button>
+    </div>
+  </div>
+
+  <!-- Right column -->
+  <aside class="right">
+
+    <div class="panel phoenix-card">
+      <h4>⌑ META-JUDGE</h4>
+      <div class="phoenix-avatar">⚘</div>
+      <div class="phoenix-name">PHOENIX</div>
+      <div class="phoenix-title">LV 99 · MCP ORACLE</div>
+      <div class="phoenix-stats"><span>HP <b>∞</b></span><span>MANA <b>503</b></span></div>
+      <div id="mcpCalls" style="margin-top:10px"></div>
+    </div>
+
+    <div class="panel">
+      <h4>⚑ QUEST CHECKLIST</h4>
+      <div class="quest-mini" id="questList">
+        <div class="qrow" data-q="panel"><span class="check">·</span>All six hats score</div>
+        <div class="qrow" data-q="detect"><span class="check">·</span>Triple-redundant detect fires</div>
+        <div class="qrow" data-q="phoenix"><span class="check">·</span>Phoenix MCP returns drift</div>
+        <div class="qrow" data-q="anchor"><span class="check">·</span>Qdrant Recommend API combo</div>
+        <div class="qrow" data-q="correct"><span class="check">·</span>Score self-corrects (boss defeat)</div>
+        <div class="qrow" data-q="variance"><span class="check">·</span>Dual-rubric variance reveal</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h4>★ RUN STATS</h4>
+      <div class="phoenix-stats" style="flex-direction:column;gap:6px">
+        <span>HATS DEPLOYED <b id="hatCount">0</b></span>
+        <span>EVIDENCE PULLED <b id="evCount">0</b></span>
+        <span>ANCHORS QUERIED <b id="anchorCount">0</b></span>
+        <span>XP EARNED <b id="xpVal" style="color:var(--xp)">0</b></span>
+      </div>
+    </div>
+
+  </aside>
+</main>
+
+<!-- SCORE SCREEN -->
+<div class="score-screen" id="scoreScreen">
+  <div class="score-card">
+    <div class="score-head">
+      <div class="score-eyebrow">⌗ MATCH COMPLETE · AUDIT CLEARED</div>
+      <div class="score-title">VectorBard · Final Verdict</div>
+    </div>
+
+    <div class="grade-row">
+      <div class="grade-badge" id="gradeBadge">A</div>
+      <div class="grade-info">
+        <div class="grade-name" id="gradeName">A-Rank · Calibrated</div>
+        <div class="grade-desc" id="gradeDesc">
+          Yellow's A1 over-confidence was caught and corrected mid-run.
+          The submission lands in the upper non-winner cluster — close but
+          not yet over the bar. Strong tech, evidence gap on user persona.
+        </div>
+      </div>
+    </div>
+
+    <div class="score-stats">
+      <div class="score-stat">
+        <div class="score-stat-label">FINAL</div>
+        <div class="score-stat-val" id="finalScore">76<span class="unit">/100</span></div>
+      </div>
+      <div class="score-stat">
+        <div class="score-stat-label">CORRECTIONS</div>
+        <div class="score-stat-val">2</div>
+      </div>
+      <div class="score-stat">
+        <div class="score-stat-label">COMBO MAX</div>
+        <div class="score-stat-val">×4</div>
+      </div>
+      <div class="score-stat">
+        <div class="score-stat-label">XP</div>
+        <div class="score-stat-val" id="finalXp" style="color:var(--xp)">1,240</div>
+      </div>
+    </div>
+
+    <div class="variance-card">
+      <div class="variance-head">⚡ DUAL-RUBRIC VARIANCE REVEAL</div>
+      <div class="variance-row">
+        <div class="variance-rubric"><b>QDRANT VSD</b> · 3-axis (Originality / Material Vector Use / Functionality)</div>
+        <div class="variance-score">87 / 100</div>
+      </div>
+      <div class="variance-row">
+        <div class="variance-rubric"><b>RAPID AGENT</b> · Tech 40 · Inn 30 · Imp 20 · Pres 10</div>
+        <div class="variance-score">73 / 100</div>
+      </div>
+      <div class="variance-caption">"Same engine. Different rubric. <b style="color:var(--combo)">Different (correct) score.</b>"</div>
+    </div>
+
+    <div class="score-actions">
+      <button class="btn btn-primary" onclick="rematch()">↻ REMATCH · NEW RUBRIC</button>
+      <button class="btn btn-ghost" onclick="hideScore()">CLOSE</button>
+      <button class="btn btn-ghost" onclick="window.location.href='./landing.html'">⌂ LAUNCHER</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ state ============
+let running = false;
+let timer = 0;
+let combo = 0;
+let xp = 0;
+let phaseIdx = 0;
+const phases = [
+  "PHASE 1 · PANEL EVAL",
+  "PHASE 2 · TRIPLE DETECT",
+  "PHASE 3 · PHOENIX CONSULT",
+  "PHASE 4 · BOSS DEFEATED",
+  "PHASE 5 · DUAL-RUBRIC REVEAL"
+];
+const quests = {};
+
+// ============ sound (subtle web audio) ============
+let audioCtx = null;
+function getCtx(){
+  if(!audioCtx){ try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+  return audioCtx;
+}
+function blip(freq, dur, type){
+  const ctx = getCtx(); if(!ctx) return;
+  // Off by default; respect user gesture rule via try
+  try{
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type||"square"; o.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.08, ctx.currentTime + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
+    o.connect(g).connect(ctx.destination);
+    o.start(); o.stop(ctx.currentTime + dur);
+  }catch(e){}
+}
+
+// ============ event log ============
+function logEvent(t, msg, cls){
+  const log = document.getElementById('eventLog');
+  const e = document.createElement('div');
+  e.className = 'event ' + (cls||'');
+  e.innerHTML = `<span class="t">${t}</span><span class="m">${msg}</span>`;
+  log.appendChild(e);
+  setTimeout(()=>e.classList.add('show'), 30);
+  // keep only last 5
+  while(log.children.length > 5){ log.removeChild(log.firstChild); }
+}
+
+// ============ FX numbers ============
+function fxNumber(x, y, text, kind){
+  const layer = document.getElementById('fxLayer');
+  const n = document.createElement('div');
+  n.className = 'fx-num ' + (kind||'');
+  n.style.left = x + 'px';
+  n.style.top = y + 'px';
+  n.textContent = text;
+  layer.appendChild(n);
+  setTimeout(()=>n.remove(), 1500);
+}
+function critSplash(){
+  const s = document.getElementById('critSplash');
+  s.classList.remove('fire'); void s.offsetWidth; s.classList.add('fire');
+}
+function bumpCombo(){
+  combo++;
+  document.getElementById('comboVal').textContent = combo;
+  const p = document.getElementById('comboPill');
+  p.classList.add('pulse');
+  setTimeout(()=>p.classList.remove('pulse'), 280);
+  blip(880+combo*60, 0.05, 'triangle');
+}
+function addXp(n){
+  xp += n;
+  document.getElementById('xpVal').textContent = xp.toLocaleString();
+  document.getElementById('finalXp').textContent = xp.toLocaleString();
+}
+function completeQuest(key){
+  const row = document.querySelector(`.qrow[data-q="${key}"]`);
+  if(row && !row.classList.contains('done')){
+    row.classList.add('done');
+    row.querySelector('.check').textContent = '✓';
+    addXp(80);
+  }
+}
+
+// ============ score hatfills ============
+function setHat(hat, score, cls){
+  document.getElementById('score'+cap(hat)).textContent = score.toFixed(1);
+  document.getElementById('score'+cap(hat)).className = 'm-score' + (cls?' '+cls:'');
+  document.getElementById('hp'+cap(hat)).style.width = (score*10) + '%';
+}
+function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+function activateMember(hat){
+  document.querySelectorAll('.member').forEach(m=>m.classList.remove('active'));
+  document.querySelector(`.member[data-hat="${hat}"]`).classList.add('active');
+}
+function critMember(hat){
+  const m = document.querySelector(`.member[data-hat="${hat}"]`);
+  m.classList.add('crit');
+  setTimeout(()=>m.classList.remove('crit'), 700);
+}
+
+// ============ MCP calls ============
+function addMcpCall(name, status){
+  const wrap = document.getElementById('mcpCalls');
+  const d = document.createElement('div');
+  d.className = 'mcp-call' + (status==='done'?' done':'');
+  d.innerHTML = `<span>${name}</span><span class="${status==='done'?'ok':'pending'}">${status==='done'?'✓':'⟳'}</span>`;
+  wrap.appendChild(d);
+  return d;
+}
+function clearMcp(){ document.getElementById('mcpCalls').innerHTML = ''; }
+
+// ============ stats ============
+let hatCount=0, evCount=0, anchorCount=0;
+function bumpStat(which){
+  if(which==='hat'){ hatCount++; document.getElementById('hatCount').textContent=hatCount; }
+  if(which==='ev'){ evCount+=Math.floor(Math.random()*3)+1; document.getElementById('evCount').textContent=evCount; }
+  if(which==='anchor'){ anchorCount++; document.getElementById('anchorCount').textContent=anchorCount; }
+}
+function setProgress(pct){ document.getElementById('matchProgress').style.width = pct+'%'; }
+function setPhase(i){ phaseIdx=i; document.getElementById('stagePhase').textContent = phases[i]; }
+
+// ============ timer ============
+let timerInt;
+function tick(){
+  timer += 0.1;
+  const m = Math.floor(timer/60), s = Math.floor(timer%60);
+  document.getElementById('timer').textContent =
+    String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+
+// ============ match runner ============
+function startMatch(){
+  if(running) return;
+  running = true;
+  document.getElementById('startBtn').textContent = '⏸ RUNNING';
+  timer = 0; combo = 0; xp = 0; phaseIdx = 0;
+  hatCount=0; evCount=0; anchorCount=0;
+  document.getElementById('hatCount').textContent='0';
+  document.getElementById('evCount').textContent='0';
+  document.getElementById('anchorCount').textContent='0';
+  document.getElementById('xpVal').textContent='0';
+  document.getElementById('comboVal').textContent='0';
+  document.querySelectorAll('.qrow').forEach(r=>{ r.classList.remove('done'); r.querySelector('.check').textContent='·'; });
+  clearMcp();
+  ['white','red','yellow','black','green','blue'].forEach(h=>{
+    setHat(h, 0, ''); document.getElementById('hp'+cap(h)).style.width='0%';
+  });
+  document.getElementById('biasYellow').classList.remove('show');
+  document.getElementById('eventLog').innerHTML='';
+  timerInt = setInterval(tick, 100);
+  runSequence();
+}
+
+function resetMatch(){
+  running = false;
+  clearInterval(timerInt);
+  document.getElementById('startBtn').textContent = '▶ START MATCH';
+  setProgress(0);
+  setPhase(0);
+  logEvent('--:--','match reset','');
+}
+
+async function runSequence(){
+  // PHASE 1: panel
+  setPhase(0); setProgress(8);
+  logEvent('00:01','▶ <b>BLUE</b> emits inspectable plan','');
+  await sleep(700);
+  const hatSeq = [
+    {h:'white', s:8.2, msg:'facts retrieved · Vertex Grounding hit'},
+    {h:'red',   s:7.8, msg:'intuition: clean lyrics demo'},
+    {h:'yellow',s:9.0, msg:'value: <b>over-confident</b> · evidence_depth 0.31', flag:true},
+    {h:'black', s:6.4, msg:'risk: persona ambiguity flagged'},
+    {h:'green', s:8.6, msg:'creative: novel anchor blend'},
+    {h:'blue',  s:7.9, msg:'synthesis: panel ready'}
+  ];
+  for(const x of hatSeq){
+    activateMember(x.h);
+    setHat(x.h, x.s, x.flag?'over':'');
+    fxNumber(120 + Math.random()*640, 60 + Math.random()*60, '+'+Math.round(x.s*10), 'combo');
+    if(x.flag){ document.getElementById('biasYellow').classList.add('show'); }
+    logEvent(timeStr(), '<b>'+x.h.toUpperCase()+'</b>: '+x.msg, x.flag?'flag':'');
+    bumpCombo(); bumpStat('hat'); bumpStat('ev'); addXp(40);
+    await sleep(520);
+  }
+  completeQuest('panel');
+  setProgress(28);
+
+  // PHASE 2: triple detect
+  setPhase(1); await sleep(400);
+  logEvent(timeStr(), '⚠ <b>DETECT 1/3</b> · Phoenix Online Eval flagged Yellow A1', 'flag');
+  bumpCombo(); addXp(60);
+  await sleep(550);
+  logEvent(timeStr(), '⚠ <b>DETECT 2/3</b> · Phoenix Custom Evaluator (Python) agrees', 'flag');
+  bumpCombo(); addXp(60);
+  await sleep(550);
+  logEvent(timeStr(), '⚠ <b>DETECT 3/3</b> · BLACK counter-claim: "persona ambiguous"', 'flag');
+  bumpCombo(); addXp(60);
+  completeQuest('detect');
+  setProgress(44);
+  await sleep(500);
+
+  // PHASE 3: phoenix MCP
+  setPhase(2);
+  logEvent(timeStr(), '⌑ <b>PHOENIX</b> 4 parallel MCP calls fired', '');
+  const c1 = addMcpCall('get-experiment-by-id','pending');
+  const c2 = addMcpCall('get-span-annotations','pending');
+  const c3 = addMcpCall('get-dataset-examples','pending');
+  const c4 = addMcpCall('qdrant.recommend(±)','pending');
+  await sleep(280);
+  c1.classList.add('done'); c1.querySelector('span:last-child').className='ok'; c1.querySelector('span:last-child').textContent='✓';
+  await sleep(140);
+  c2.classList.add('done'); c2.querySelector('span:last-child').className='ok'; c2.querySelector('span:last-child').textContent='✓';
+  await sleep(140);
+  c3.classList.add('done'); c3.querySelector('span:last-child').className='ok'; c3.querySelector('span:last-child').textContent='✓';
+  bumpStat('anchor'); bumpStat('anchor'); bumpStat('anchor');
+  await sleep(160);
+  c4.classList.add('done'); c4.querySelector('span:last-child').className='ok'; c4.querySelector('span:last-child').textContent='✓';
+  logEvent(timeStr(), '⌑ mean_delta = <b>−1.2</b> over 14 past runs', '');
+  completeQuest('phoenix');
+  completeQuest('anchor');
+  bumpCombo(); bumpCombo(); addXp(140);
+  setProgress(64);
+  await sleep(500);
+
+  // PHASE 4: boss defeat / score correction
+  setPhase(3);
+  logEvent(timeStr(), '⚔ <b>SCORE CALIBRATION</b> · Yellow A1 9.0 → 7.6', 'heal');
+  critMember('yellow');
+  fxNumber(420, 110, '−1.4', 'crit');
+  critSplash();
+  blip(120, 0.20, 'sawtooth'); setTimeout(()=>blip(880,0.10,'triangle'),200);
+  await sleep(400);
+  setHat('yellow', 7.6, 'calibrated');
+  document.getElementById('biasYellow').classList.remove('show');
+  bumpCombo(); addXp(300);
+  await sleep(450);
+  logEvent(timeStr(), '✦ <b>BLACK</b> 6.4 → 7.0 (under-confidence corrected)', 'heal');
+  critMember('black');
+  fxNumber(540, 130, '+0.6', 'heal');
+  setHat('black', 7.0, 'calibrated');
+  bumpCombo(); addXp(180);
+  completeQuest('correct');
+  setProgress(82);
+  await sleep(600);
+
+  // PHASE 5: dual-rubric reveal
+  setPhase(4);
+  logEvent(timeStr(), '⚡ <b>DUAL-RUBRIC REVEAL</b> · Qdrant 87 · Rapid 73', '');
+  bumpCombo(); addXp(200);
+  completeQuest('variance');
+  setProgress(100);
+  await sleep(800);
+
+  // open score screen
+  logEvent(timeStr(), '⌗ <b>MATCH COMPLETE</b> · grade computed', 'heal');
+  clearInterval(timerInt);
+  running = false;
+  document.getElementById('startBtn').textContent = '▶ START MATCH';
+  setTimeout(showScore, 900);
+}
+
+function timeStr(){
+  const m = Math.floor(timer/60), s = Math.floor(timer%60);
+  return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+// ============ score screen ============
+function showScore(){
+  // compute grade from xp
+  let grade = 'B', name = 'B-Rank · Solid', desc = 'Panel converged. Score is honest.', final = 73;
+  if(xp >= 1200){ grade='S'; name='S-Rank · Perfect Audit'; desc='All quests complete. Boss defeated cleanly. The auditor caught itself.'; final=87; }
+  else if(xp >= 900){ grade='A'; name='A-Rank · Calibrated'; desc="Yellow's over-confidence was caught and corrected mid-run."; final=76; }
+  else if(xp >= 500){ grade='B'; name='B-Rank · Solid'; desc='Panel ran. Some quests skipped.'; final=70; }
+  else { grade='C'; name='C-Rank · Incomplete'; desc='Match cut short. Run the full audit for a real score.'; final=62; }
+  document.getElementById('gradeBadge').textContent = grade;
+  document.getElementById('gradeName').textContent = name;
+  document.getElementById('gradeDesc').textContent = desc;
+  document.getElementById('finalScore').innerHTML = final+'<span class="unit">/100</span>';
+  document.getElementById('scoreScreen').classList.add('show');
+  blip(440,0.10,'triangle'); setTimeout(()=>blip(660,0.12,'triangle'),120); setTimeout(()=>blip(880,0.16,'triangle'),260);
+}
+function hideScore(){ document.getElementById('scoreScreen').classList.remove('show'); }
+function rematch(){
+  hideScore();
+  // cycle rubric
+  const r = document.getElementById('rubricName');
+  r.textContent = r.textContent === 'QDRANT VSD' ? 'RAPID AGENT' : (r.textContent === 'RAPID AGENT' ? 'CMUX × AIM' : 'QDRANT VSD');
+  resetMatch();
+  setTimeout(startMatch, 300);
+}
+
+// ============ playable constellation map ============
+const cv = document.getElementById('mapCanvas');
+const ctx = cv.getContext('2d');
+const tip = document.getElementById('mapTip');
+let stars = [];
+function genStars(){
+  stars = [];
+  const w = cv.width, h = cv.height;
+  for(let i=0;i<140;i++){
+    const winner = Math.random() < 0.18;
+    stars.push({
+      x: 40 + Math.random()*(w-80),
+      y: 40 + Math.random()*(h-80),
+      r: winner ? (Math.random()*2 + 2.5) : (Math.random()*1.4 + 0.8),
+      winner,
+      id: 'P-'+(1000+i),
+      sim: (Math.random()*0.3 + 0.6).toFixed(2),
+      score: winner ? (8 + Math.random()*1.4).toFixed(1) : (5.5 + Math.random()*2).toFixed(1)
+    });
+  }
+  // YOU pre/post
+  stars.push({x:cv.width*0.62, y:cv.height*0.62, r:8, you:'pre', id:'YOU · PRE', sim:'1.00', score:'9.0'});
+  stars.push({x:cv.width*0.40, y:cv.height*0.48, r:8, you:'post', id:'YOU · POST', sim:'1.00', score:'7.6'});
+}
+function drawMap(){
+  const w = cv.width, h = cv.height;
+  ctx.clearRect(0,0,w,h);
+  // grid
+  ctx.strokeStyle = 'oklch(40% 0.04 260 / .15)';
+  ctx.lineWidth = 1;
+  for(let x=0;x<w;x+=40){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
+  for(let y=0;y<h;y+=40){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
+  // connection from pre to post
+  const pre = stars.find(s=>s.you==='pre');
+  const post = stars.find(s=>s.you==='post');
+  if(pre && post){
+    ctx.strokeStyle = 'oklch(82% 0.18 195 / .6)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(pre.x,pre.y); ctx.lineTo(post.x,post.y); ctx.stroke();
+    ctx.setLineDash([]);
+    // arrow
+    ctx.fillStyle = 'oklch(82% 0.18 195 / .8)';
+    ctx.beginPath();
+    ctx.arc((pre.x+post.x)/2, (pre.y+post.y)/2, 3, 0, Math.PI*2);
+    ctx.fill();
+  }
+  stars.forEach(s=>{
+    if(s.you==='pre'){
+      ctx.fillStyle = 'oklch(72% 0.22 30 / .9)';
+      ctx.shadowColor = 'oklch(72% 0.22 30 / .8)'; ctx.shadowBlur = 16;
+    } else if(s.you==='post'){
+      ctx.fillStyle = 'oklch(78% 0.20 145 / .95)';
+      ctx.shadowColor = 'oklch(78% 0.20 145 / .8)'; ctx.shadowBlur = 18;
+    } else if(s.winner){
+      ctx.fillStyle = 'oklch(85% 0.20 90 / .85)';
+      ctx.shadowColor = 'oklch(85% 0.20 90 / .6)'; ctx.shadowBlur = 8;
+    } else {
+      ctx.fillStyle = 'oklch(58% 0.04 260 / .65)';
+      ctx.shadowBlur = 0;
+    }
+    ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill();
+    ctx.shadowBlur = 0;
+  });
+}
+function onMove(e){
+  const rect = cv.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (cv.width / rect.width);
+  const y = (e.clientY - rect.top) * (cv.height / rect.height);
+  let hit = null;
+  for(const s of stars){
+    const d = Math.hypot(s.x-x, s.y-y);
+    if(d < Math.max(s.r+4, 8)){ hit = s; break; }
+  }
+  if(hit){
+    const cssX = (hit.x / cv.width) * rect.width;
+    const cssY = (hit.y / cv.height) * rect.height;
+    tip.style.left = cssX + 'px';
+    tip.style.top = (cssY - 8) + 'px';
+    tip.classList.add('show');
+    const tier = hit.winner ? '<span class="gold">★ WINNER</span>' : (hit.you==='pre' ? '<span class="red">⚠ YOU · PRE</span>' : (hit.you==='post' ? '<span style="color:var(--good)">✓ YOU · POST</span>' : 'NON-WINNER'));
+    tip.innerHTML = `<b>${hit.id}</b>${tier}<br/>sim: ${hit.sim} · score: ${hit.score}`;
+    cv.style.cursor = 'pointer';
+  } else {
+    tip.classList.remove('show');
+    cv.style.cursor = 'default';
+  }
+}
+cv.addEventListener('mousemove', onMove);
+cv.addEventListener('mouseleave', ()=>tip.classList.remove('show'));
+cv.addEventListener('click', (e)=>{
+  const rect = cv.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (cv.width / rect.width);
+  const y = (e.clientY - rect.top) * (cv.height / rect.height);
+  for(const s of stars){
+    const d = Math.hypot(s.x-x, s.y-y);
+    if(d < Math.max(s.r+4, 8)){
+      bumpCombo(); addXp(20);
+      logEvent(timeStr(), '⌖ inspected anchor <b>'+s.id+'</b>', '');
+      return;
+    }
+  }
+});
+
+function resizeCanvas(){
+  const r = cv.getBoundingClientRect();
+  cv.width = Math.max(600, Math.floor(r.width));
+  cv.height = Math.max(220, Math.floor(r.height));
+  genStars(); drawMap();
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// shortcuts
+document.addEventListener('keydown', (e)=>{
+  if(e.code === 'Space'){ e.preventDefault(); if(!running) startMatch(); }
+  if(e.key === 'r' || e.key === 'R'){ resetMatch(); }
+  if(e.key === 's' || e.key === 'S'){ showScore(); }
+  if(e.key === 'Escape'){ hideScore(); }
+});
+
+// preload first event
+logEvent('00:00','press <b>START MATCH</b> or <b>SPACE</b> to begin','');
+</script>
+</body>
+</html>

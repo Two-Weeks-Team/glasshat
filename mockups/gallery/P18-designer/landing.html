@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Glasshat — Audit the Judge. The Story.</title>
+<style>
+/* ============================================================
+ * GLASSHAT — THE DESIGNER (P18) · LANDING
+ * Visual storytelling. Scene-first. Six Hats as characters.
+ * OKLCH · system fonts · SVG only · no external deps.
+ * ============================================================ */
+:root {
+  --ink:        oklch(11% 0.02 260);
+  --paper:      oklch(96% 0.01 80);
+  --paper-warm: oklch(92% 0.04 75);
+  --dusk:       oklch(28% 0.06 270);
+  --night:      oklch(15% 0.03 265);
+  --sun:        oklch(82% 0.18 75);
+  --rose:       oklch(72% 0.18 25);
+  --emerald:    oklch(70% 0.16 155);
+  --azure:      oklch(70% 0.17 245);
+  --violet:     oklch(60% 0.20 305);
+  --phoenix:    oklch(78% 0.22 35);
+  --qdrant:     oklch(72% 0.17 200);
+  --grid:       oklch(95% 0 0 / 0.06);
+  --text:       oklch(96% 0 0);
+  --text-mute:  oklch(72% 0 0);
+  --hat-white:  oklch(96% 0 0);
+  --hat-red:    oklch(72% 0.17 25);
+  --hat-yellow: oklch(80% 0.13 95);
+  --hat-black:  oklch(28% 0 0);
+  --hat-green:  oklch(72% 0.17 150);
+  --hat-blue:   oklch(72% 0.17 245);
+  --ease-emp:   cubic-bezier(0.2, 0, 0, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--ink);
+  color: var(--text);
+  line-height: 1.5;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ================= NAV ================= */
+.nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 18px 36px;
+  background: linear-gradient(180deg, oklch(11% 0.02 260 / 0.85), oklch(11% 0.02 260 / 0));
+  backdrop-filter: blur(14px);
+}
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: 0.02em; }
+.brand-mark { width: 24px; height: 24px; }
+.nav-links { display: flex; gap: 24px; font-size: 13px; color: var(--text-mute); }
+.nav-links a { color: inherit; text-decoration: none; }
+.nav-cta {
+  padding: 8px 18px; border-radius: 999px;
+  background: var(--paper); color: var(--ink);
+  font-size: 13px; font-weight: 600;
+  text-decoration: none;
+}
+
+/* ================= ACT I — HERO SCENE ================= */
+.hero {
+  position: relative;
+  height: 100vh; min-height: 720px;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 90%, var(--dusk) 0%, var(--ink) 65%);
+}
+.hero-stage {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.hero-scene { width: 100%; height: 100%; }
+
+/* twinkling stars */
+@keyframes twinkle { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
+.star { animation: twinkle 3s ease-in-out infinite; }
+.star:nth-child(2n) { animation-delay: 0.6s; }
+.star:nth-child(3n) { animation-delay: 1.2s; }
+.star:nth-child(5n) { animation-delay: 1.8s; }
+
+/* the eye blinks awake */
+@keyframes blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  94%, 98% { transform: scaleY(0.04); }
+}
+.eye-lid { animation: blink 6s ease-in-out infinite; transform-origin: center; }
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+.eye-iris { animation: pulse-soft 4s ease-in-out infinite; transform-origin: center; }
+
+/* gentle float */
+@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+.float-1 { animation: float 5s ease-in-out infinite; }
+.float-2 { animation: float 6s ease-in-out infinite 0.5s; }
+.float-3 { animation: float 7s ease-in-out infinite 1s; }
+
+/* arc beam from Yellow to Eye */
+@keyframes beam-flow {
+  0% { stroke-dashoffset: 200; opacity: 0; }
+  20% { opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 0.6; }
+}
+.beam { stroke-dasharray: 4 6; animation: beam-flow 4s ease-in-out infinite; }
+
+.hero-copy {
+  position: absolute;
+  bottom: 12vh; left: 50%; transform: translateX(-50%);
+  text-align: center; max-width: 880px;
+  padding: 0 24px;
+  z-index: 10;
+}
+.hero-eyebrow {
+  display: inline-block;
+  font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--phoenix);
+  padding: 6px 14px; border: 1px solid oklch(78% 0.22 35 / 0.4);
+  border-radius: 999px;
+  margin-bottom: 22px;
+}
+.hero-title {
+  font-size: clamp(36px, 6vw, 64px);
+  font-weight: 800; line-height: 1.05;
+  letter-spacing: -0.025em;
+  margin-bottom: 20px;
+}
+.hero-title em {
+  font-style: normal;
+  background: linear-gradient(110deg, var(--phoenix), var(--sun));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.hero-sub {
+  font-size: 17px; color: var(--text-mute);
+  max-width: 560px; margin: 0 auto 28px;
+}
+.hero-cta {
+  display: inline-flex; gap: 14px;
+}
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 13px 24px; border-radius: 999px;
+  font-size: 14px; font-weight: 600;
+  text-decoration: none; cursor: pointer;
+  border: none;
+  transition: transform 0.25s var(--ease-spring);
+}
+.btn:hover { transform: translateY(-2px); }
+.btn-primary { background: var(--paper); color: var(--ink); }
+.btn-ghost { background: oklch(95% 0 0 / 0.08); color: var(--text); border: 1px solid oklch(95% 0 0 / 0.2); }
+
+.scroll-hint {
+  position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase;
+  color: var(--text-mute); opacity: 0.6;
+}
+@keyframes scroll-bob { 0%,100% { transform: translateY(0); opacity: 0.6; } 50% { transform: translateY(6px); opacity: 1; } }
+.scroll-hint svg { animation: scroll-bob 2s ease-in-out infinite; }
+
+/* ================= ACTS — common section ================= */
+.act {
+  position: relative;
+  min-height: 100vh;
+  padding: 140px 8vw 100px;
+  display: flex; flex-direction: column;
+  justify-content: center;
+}
+.act-label {
+  font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase;
+  color: var(--text-mute); margin-bottom: 18px;
+  display: flex; align-items: center; gap: 12px;
+}
+.act-label::before {
+  content: ''; width: 32px; height: 1px; background: var(--text-mute);
+}
+.act-title {
+  font-size: clamp(32px, 4.5vw, 52px);
+  font-weight: 800; letter-spacing: -0.025em; line-height: 1.08;
+  margin-bottom: 24px; max-width: 900px;
+}
+.act-title em { font-style: normal; color: var(--sun); }
+.act-lead {
+  font-size: 18px; color: var(--text-mute);
+  max-width: 640px; margin-bottom: 64px;
+}
+
+/* ================= ACT II — CHARACTERS ================= */
+.act-2 {
+  background: linear-gradient(180deg, var(--ink), oklch(13% 0.02 260));
+}
+.cast {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 20px;
+}
+@media (max-width: 1000px) { .cast { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 600px)  { .cast { grid-template-columns: repeat(2, 1fr); } }
+
+.hat-card {
+  position: relative;
+  aspect-ratio: 3/4;
+  padding: 20px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, oklch(18% 0.02 260), oklch(13% 0.02 260));
+  border: 1px solid oklch(95% 0 0 / 0.08);
+  overflow: hidden;
+  transition: transform 0.4s var(--ease-emp), border-color 0.3s;
+  display: flex; flex-direction: column; justify-content: space-between;
+}
+.hat-card:hover {
+  transform: translateY(-6px) scale(1.02);
+  border-color: oklch(95% 0 0 / 0.22);
+}
+.hat-portrait {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  margin: -10px 0;
+}
+.hat-portrait svg { width: 100%; height: auto; max-height: 160px; }
+.hat-name {
+  font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--text-mute); margin-bottom: 4px;
+}
+.hat-role {
+  font-size: 15px; font-weight: 700; line-height: 1.2;
+}
+.hat-quote {
+  font-size: 11px; color: var(--text-mute); margin-top: 10px;
+  font-style: italic; line-height: 1.4;
+}
+.hat-dot {
+  position: absolute; top: 16px; right: 16px;
+  width: 8px; height: 8px; border-radius: 50%;
+}
+
+/* ================= ACT III — THE MOMENT ================= */
+.act-3 {
+  background:
+    radial-gradient(circle at 70% 30%, oklch(28% 0.06 270 / 0.6), transparent 50%),
+    radial-gradient(circle at 30% 70%, oklch(28% 0.06 200 / 0.5), transparent 50%),
+    var(--night);
+}
+.moment-stage {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 40px;
+  align-items: center;
+}
+@media (max-width: 900px) { .moment-stage { grid-template-columns: 1fr; } }
+
+.moment-text { max-width: 460px; }
+.moment-step {
+  display: flex; gap: 16px; margin-bottom: 28px;
+  opacity: 0; transform: translateX(-20px);
+  animation: slide-in 0.8s var(--ease-emp) forwards;
+}
+.moment-step:nth-child(1) { animation-delay: 0.1s; }
+.moment-step:nth-child(2) { animation-delay: 0.3s; }
+.moment-step:nth-child(3) { animation-delay: 0.5s; }
+.moment-step:nth-child(4) { animation-delay: 0.7s; }
+@keyframes slide-in { to { opacity: 1; transform: translateX(0); } }
+
+.step-num {
+  flex-shrink: 0;
+  width: 32px; height: 32px; border-radius: 50%;
+  background: oklch(95% 0 0 / 0.08);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700;
+  border: 1px solid oklch(95% 0 0 / 0.18);
+}
+.step-body h4 {
+  font-size: 15px; margin-bottom: 4px; font-weight: 700;
+}
+.step-body p {
+  font-size: 13px; color: var(--text-mute); line-height: 1.5;
+}
+
+.scene-frame {
+  position: relative;
+  aspect-ratio: 4/3;
+  border-radius: 24px;
+  background: linear-gradient(180deg, oklch(18% 0.03 260), oklch(11% 0.02 260));
+  border: 1px solid oklch(95% 0 0 / 0.1);
+  overflow: hidden;
+  box-shadow: 0 30px 80px oklch(0% 0 0 / 0.6);
+}
+.scene-frame svg { width: 100%; height: 100%; display: block; }
+
+/* score gets struck through */
+@keyframes score-cross { 0% { width: 0; } 100% { width: 100%; } }
+.cross-line { animation: score-cross 1.4s ease-out forwards 1.5s; }
+@keyframes fade-in { to { opacity: 1; } }
+.new-score { opacity: 0; animation: fade-in 0.6s ease-out forwards 2.8s; }
+
+/* ================= ACT IV — THE PROOF ================= */
+.act-4 {
+  background: linear-gradient(180deg, var(--night), oklch(11% 0.02 260));
+}
+.proof-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+@media (max-width: 800px) { .proof-grid { grid-template-columns: 1fr; } }
+.proof-card {
+  padding: 32px;
+  border-radius: 20px;
+  background: linear-gradient(160deg, oklch(20% 0.03 260), oklch(14% 0.02 260));
+  border: 1px solid oklch(95% 0 0 / 0.1);
+  position: relative; overflow: hidden;
+}
+.proof-card svg.bg-illu {
+  position: absolute; bottom: -20px; right: -20px;
+  width: 180px; height: 180px; opacity: 0.18;
+}
+.proof-rubric {
+  font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--text-mute); margin-bottom: 12px;
+}
+.proof-score {
+  font-size: 72px; font-weight: 800; line-height: 1; letter-spacing: -0.04em;
+  margin-bottom: 6px;
+}
+.proof-q .proof-score { color: var(--qdrant); }
+.proof-r .proof-score { color: var(--phoenix); }
+.proof-name { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.proof-weights { font-size: 12px; color: var(--text-mute); font-family: ui-monospace, monospace; }
+.proof-caption {
+  margin-top: 56px; text-align: center;
+  font-size: 18px; color: var(--text-mute);
+  max-width: 600px; margin-left: auto; margin-right: auto;
+}
+.proof-caption em {
+  font-style: normal; color: var(--text); font-weight: 600;
+}
+
+/* ================= FINALE ================= */
+.finale {
+  height: 80vh; min-height: 600px;
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 50% 50%, oklch(20% 0.04 260), var(--ink) 70%);
+}
+.finale-content { text-align: center; z-index: 5; padding: 0 24px; }
+.finale h2 {
+  font-size: clamp(36px, 6vw, 72px);
+  font-weight: 800; letter-spacing: -0.03em; line-height: 1.05;
+  margin-bottom: 28px;
+}
+.finale h2 em {
+  font-style: normal;
+  background: linear-gradient(110deg, var(--phoenix), var(--qdrant));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.finale p {
+  font-size: 17px; color: var(--text-mute);
+  max-width: 540px; margin: 0 auto 36px;
+}
+.finale-constellation {
+  position: absolute; inset: 0;
+  z-index: 1; opacity: 0.5;
+}
+
+/* ================= FOOTER ================= */
+footer {
+  padding: 60px 8vw 40px;
+  display: flex; justify-content: space-between; align-items: center;
+  border-top: 1px solid oklch(95% 0 0 / 0.06);
+  font-size: 12px; color: var(--text-mute);
+}
+@media (max-width: 600px) { footer { flex-direction: column; gap: 16px; text-align: center; } }
+footer a { color: inherit; text-decoration: none; margin-left: 18px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- ===================== NAV ===================== -->
+<nav class="nav">
+  <div class="brand">
+    <svg class="brand-mark" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="10" stroke="var(--paper)" stroke-width="1.5"/>
+      <ellipse cx="12" cy="12" rx="9" ry="3.5" stroke="var(--paper)" stroke-width="1.5"/>
+      <circle cx="12" cy="12" r="2" fill="var(--phoenix)"/>
+    </svg>
+    Glasshat
+  </div>
+  <div class="nav-links">
+    <a href="#act-2">Cast</a>
+    <a href="#act-3">The Moment</a>
+    <a href="#act-4">Proof</a>
+    <a href="demo.html">Demo Film</a>
+  </div>
+  <a class="nav-cta" href="demo.html">Watch the Demo →</a>
+</nav>
+
+<!-- ===================== HERO SCENE ===================== -->
+<section class="hero">
+  <div class="hero-stage">
+    <svg class="hero-scene" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs>
+        <radialGradient id="skyGlow" cx="50%" cy="80%" r="60%">
+          <stop offset="0%" stop-color="oklch(40% 0.10 270)" stop-opacity="0.6"/>
+          <stop offset="100%" stop-color="oklch(11% 0.02 260)" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="eyeGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="var(--phoenix)" stop-opacity="0.8"/>
+          <stop offset="60%" stop-color="var(--phoenix)" stop-opacity="0.1"/>
+          <stop offset="100%" stop-color="var(--phoenix)" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="yellowGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="var(--hat-yellow)" stop-opacity="0.45"/>
+          <stop offset="100%" stop-color="var(--hat-yellow)" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="horizon" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stop-color="oklch(28% 0.06 270)"/>
+          <stop offset="100%" stop-color="oklch(15% 0.03 265)"/>
+        </linearGradient>
+      </defs>
+
+      <!-- sky -->
+      <rect width="1200" height="800" fill="url(#skyGlow)"/>
+
+      <!-- constellation (Qdrant) -->
+      <g class="constellation" stroke="var(--qdrant)" stroke-width="0.5" opacity="0.35" fill="none">
+        <line x1="200" y1="180" x2="280" y2="220"/>
+        <line x1="280" y1="220" x2="350" y2="170"/>
+        <line x1="350" y1="170" x2="420" y2="230"/>
+        <line x1="280" y1="220" x2="330" y2="290"/>
+        <line x1="900" y1="160" x2="980" y2="210"/>
+        <line x1="980" y1="210" x2="1050" y2="180"/>
+        <line x1="900" y1="160" x2="930" y2="240"/>
+      </g>
+
+      <!-- stars -->
+      <g fill="var(--paper)">
+        <circle class="star" cx="200" cy="180" r="2.2"/>
+        <circle class="star" cx="280" cy="220" r="1.8"/>
+        <circle class="star" cx="350" cy="170" r="2.4"/>
+        <circle class="star" cx="420" cy="230" r="1.5"/>
+        <circle class="star" cx="330" cy="290" r="1.6"/>
+        <circle class="star" cx="900" cy="160" r="2.2"/>
+        <circle class="star" cx="980" cy="210" r="1.9"/>
+        <circle class="star" cx="1050" cy="180" r="2.5"/>
+        <circle class="star" cx="930" cy="240" r="1.5"/>
+        <circle class="star" cx="120" cy="120" r="1.2"/>
+        <circle class="star" cx="600" cy="90" r="1.6"/>
+        <circle class="star" cx="720" cy="130" r="1.4"/>
+        <circle class="star" cx="1100" cy="110" r="1.8"/>
+        <circle class="star" cx="60" cy="260" r="1.1"/>
+        <circle class="star" cx="1150" cy="320" r="1.3"/>
+      </g>
+
+      <!-- horizon -->
+      <rect x="0" y="560" width="1200" height="240" fill="url(#horizon)" opacity="0.7"/>
+
+      <!-- distant podium (the stage) -->
+      <ellipse cx="600" cy="600" rx="380" ry="30" fill="oklch(20% 0.03 260)" opacity="0.7"/>
+      <ellipse cx="600" cy="595" rx="380" ry="6" fill="oklch(25% 0.04 270)" opacity="0.8"/>
+
+      <!-- THE EYE (Phoenix) — center, awake -->
+      <g transform="translate(600 400)">
+        <circle r="180" fill="url(#eyeGlow)"/>
+        <ellipse rx="120" ry="80" fill="var(--paper)" opacity="0.92"/>
+        <g class="eye-iris">
+          <circle r="55" fill="var(--phoenix)"/>
+          <circle r="42" fill="oklch(60% 0.20 30)"/>
+          <circle r="22" fill="var(--ink)"/>
+          <circle cx="-10" cy="-12" r="8" fill="var(--paper)" opacity="0.9"/>
+        </g>
+        <!-- eyelid (blink) -->
+        <ellipse class="eye-lid" rx="124" ry="84" fill="var(--ink)" opacity="0"/>
+        <!-- eyelash arcs -->
+        <path d="M -120 0 Q -60 -100 0 -82 Q 60 -100 120 0" fill="none" stroke="var(--paper)" stroke-width="2" opacity="0.4"/>
+      </g>
+
+      <!-- YELLOW HAT character — over-confident, leaning forward -->
+      <g class="float-1" transform="translate(280 540)">
+        <circle r="80" fill="url(#yellowGlow)"/>
+        <!-- body (rounded shape) -->
+        <ellipse cx="0" cy="20" rx="48" ry="56" fill="var(--hat-yellow)"/>
+        <!-- hat brim -->
+        <ellipse cx="0" cy="-28" rx="52" ry="6" fill="oklch(70% 0.14 90)"/>
+        <ellipse cx="0" cy="-30" rx="36" ry="22" fill="var(--hat-yellow)"/>
+        <!-- face -->
+        <circle cx="-12" cy="6" r="3.5" fill="var(--ink)"/>
+        <circle cx="12" cy="6" r="3.5" fill="var(--ink)"/>
+        <!-- confident smirk -->
+        <path d="M -10 22 Q 0 30 10 22" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/>
+        <!-- exclamation aura -->
+        <text x="50" y="-20" fill="var(--sun)" font-size="22" font-weight="800">!</text>
+        <text x="62" y="-8" fill="var(--sun)" font-size="14" font-weight="800" opacity="0.7">!</text>
+      </g>
+
+      <!-- BEAM from Yellow to Eye -->
+      <path class="beam" d="M 340 510 Q 480 380 600 410" stroke="var(--phoenix)" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+      <!-- QDRANT constellation — right side, larger -->
+      <g class="float-2" transform="translate(920 540)">
+        <g stroke="var(--qdrant)" stroke-width="0.8" opacity="0.6" fill="none">
+          <line x1="-40" y1="-20" x2="0" y2="-50"/>
+          <line x1="0" y1="-50" x2="40" y2="-25"/>
+          <line x1="40" y1="-25" x2="50" y2="20"/>
+          <line x1="-40" y1="-20" x2="-20" y2="20"/>
+          <line x1="-20" y1="20" x2="20" y2="40"/>
+          <line x1="20" y1="40" x2="50" y2="20"/>
+          <line x1="0" y1="-50" x2="-20" y2="20"/>
+          <line x1="0" y1="-50" x2="20" y2="40"/>
+        </g>
+        <g fill="var(--qdrant)">
+          <circle cx="-40" cy="-20" r="4"/>
+          <circle cx="0" cy="-50" r="6"/>
+          <circle cx="40" cy="-25" r="4"/>
+          <circle cx="50" cy="20" r="4"/>
+          <circle cx="-20" cy="20" r="5"/>
+          <circle cx="20" cy="40" r="6" fill="var(--sun)"/>
+        </g>
+        <text x="0" y="80" text-anchor="middle" fill="var(--qdrant)" font-size="10" letter-spacing="0.3em" font-family="ui-monospace, monospace">503 ANCHORS</text>
+      </g>
+
+      <!-- foreground silhouettes (audience) -->
+      <g opacity="0.6">
+        <ellipse cx="100" cy="800" rx="60" ry="20" fill="var(--ink)"/>
+        <ellipse cx="200" cy="800" rx="50" ry="18" fill="var(--ink)"/>
+        <ellipse cx="1000" cy="800" rx="55" ry="20" fill="var(--ink)"/>
+        <ellipse cx="1100" cy="800" rx="60" ry="22" fill="var(--ink)"/>
+        <path d="M 70 800 Q 70 740 100 730 Q 130 740 130 800 Z" fill="oklch(8% 0 0)"/>
+        <path d="M 170 800 Q 170 745 200 735 Q 230 745 230 800 Z" fill="oklch(8% 0 0)"/>
+        <path d="M 970 800 Q 970 740 1000 730 Q 1030 740 1030 800 Z" fill="oklch(8% 0 0)"/>
+        <path d="M 1070 800 Q 1070 742 1100 732 Q 1130 742 1130 800 Z" fill="oklch(8% 0 0)"/>
+      </g>
+    </svg>
+  </div>
+
+  <div class="hero-copy">
+    <span class="hero-eyebrow">A film about fairness · 3 min</span>
+    <h1 class="hero-title">The moment the judge <em>audits itself.</em></h1>
+    <p class="hero-sub">Glasshat doesn't just judge projects. It catches its own bias mid-evaluation, anchored to 503 past submissions in Qdrant's vector space.</p>
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="demo.html">▶ Watch the 3-min film</a>
+      <a class="btn btn-ghost" href="#act-2">Meet the cast</a>
+    </div>
+  </div>
+
+  <div class="scroll-hint">
+    <span>Scroll · Act I begins</span>
+    <svg width="14" height="20" viewBox="0 0 14 20" fill="none">
+      <path d="M7 2 L7 16 M2 11 L7 16 L12 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+</section>
+
+<!-- ===================== ACT II — THE CAST ===================== -->
+<section class="act act-2" id="act-2">
+  <div class="act-label">Act I · The Cast</div>
+  <h2 class="act-title">Six perspectives, <em>one panel.</em><br/>None of them are <em>right</em> on their own.</h2>
+  <p class="act-lead">Edward de Bono's Six Thinking Hats — reborn as Gemini 3 sub-agents. Each one sees what the others miss. The drama begins when they disagree.</p>
+
+  <div class="cast">
+    <!-- WHITE -->
+    <div class="hat-card">
+      <span class="hat-dot" style="background: var(--hat-white)"></span>
+      <div class="hat-portrait">
+        <svg viewBox="0 0 120 140" fill="none">
+          <ellipse cx="60" cy="110" rx="42" ry="6" fill="var(--hat-white)" opacity="0.3"/>
+          <ellipse cx="60" cy="60" rx="38" ry="44" fill="var(--hat-white)" opacity="0.95"/>
+          <ellipse cx="60" cy="28" rx="32" ry="14" fill="oklch(88% 0 0)"/>
+          <ellipse cx="60" cy="22" rx="42" ry="5" fill="oklch(80% 0 0)"/>
+          <circle cx="48" cy="56" r="2.5" fill="var(--ink)"/>
+          <circle cx="72" cy="56" r="2.5" fill="var(--ink)"/>
+          <line x1="52" y1="72" x2="68" y2="72" stroke="var(--ink)" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <div>
+        <div class="hat-name">White</div>
+        <div class="hat-role">The Fact Keeper</div>
+        <div class="hat-quote">"What does the evidence actually say?"</div>
+      </div>
+    </div>
+
+    <!-- RED -->
+    <div class="hat-card">
+      <span class="hat-dot" style="background: var(--hat-red)"></span>
+      <div class="hat-portrait">
+        <svg viewBox="0 0 120 140" fill="none">
+          <ellipse cx="60" cy="110" rx="42" ry="6" fill="var(--hat-red)" opacity="0.3"/>
+          <ellipse cx="60" cy="60" rx="38" ry="44" fill="var(--hat-red)"/>
+          <ellipse cx="60" cy="28" rx="32" ry="14" fill="oklch(62% 0.18 25)"/>
+          <ellipse cx="60" cy="22" rx="42" ry="5" fill="oklch(55% 0.16 25)"/>
+          <circle cx="48" cy="56" r="2.8" fill="var(--ink)"/>
+          <circle cx="72" cy="56" r="2.8" fill="var(--ink)"/>
+          <path d="M 48 74 Q 60 82 72 74" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/>
+          <path d="M 36 50 L 28 42 M 84 50 L 92 42" stroke="var(--paper)" stroke-width="2" opacity="0.6"/>
+        </svg>
+      </div>
+      <div>
+        <div class="hat-name">Red</div>
+        <div class="hat-role">The Gut Feeler</div>
+        <div class="hat-quote">"Something feels off. I can't say why yet."</div>
+      </div>
+    </div>
+
+    <!-- YELLOW — protagonist/antagonist -->
+    <div class="hat-card" style="border-color: oklch(80% 0.13 95 / 0.5)">
+      <span class="hat-dot" style="background: var(--hat-yellow)"></span>
+      <div class="hat-portrait">
+        <svg viewBox="0 0 120 140" fill="none">
+          <ellipse cx="60" cy="110" rx="42" ry="6" fill="var(--hat-yellow)" opacity="0.3"/>
+          <ellipse cx="60" cy="60" rx="38" ry="44" fill="var(--hat-yellow)"/>
+          <ellipse cx="60" cy="28" rx="32" ry="14" fill="oklch(70% 0.14 90)"/>
+          <ellipse cx="60" cy="22" rx="42" ry="5" fill="oklch(62% 0.12 90)"/>
+          <circle cx="48" cy="56" r="2.8" fill="var(--ink)"/>
+          <circle cx="72" cy="56" r="2.8" fill="var(--ink)"/>
+          <path d="M 46 72 Q 60 80 74 72" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/>
+          <text x="92" y="48" fill="var(--sun)" font-size="20" font-weight="800">!</text>
+        </svg>
+      </div>
+      <div>
+        <div class="hat-name" style="color: var(--hat-yellow)">Yellow · lead role</div>
+        <div class="hat-role">The Optimist</div>
+        <div class="hat-quote">"This is brilliant. 9 out of 10." (is it though?)</div>
+      </div>
+    </div>
+
+    <!-- BLACK -->
+    <div class="hat-card">
+      <span class="hat-dot" style="background: var(--hat-black); border: 1px solid var(--text-mute)"></span>
+      <div class="hat-portrait">
+        <svg viewBox="0 0 120 140" fill="none">
+          <ellipse cx="60" cy="110" rx="42" ry="6" fill="var(--hat-black)" opacity="0.4"/>
+          <ellipse cx="60" cy="60" rx="38" ry="44" fill="var(--hat-black)"/>
+          <ellipse cx="60" cy="28" rx="32" ry="14" fill="oklch(18% 0 0)"/>
+          <ellipse cx="60" cy="22" rx="42" ry="5" fill="oklch(12% 0 0)"/>
+          <circle cx="48" cy="56" r="2.8" fill="var(--paper)"/>
+          <circle cx="72" cy="56" r="2.8" fill="var(--paper)"/>
+          <path d="M 46 76 Q 60 70 74 76" fill="none" stroke="var(--paper)" stroke-width="2" stroke-linecap="round"/>
+          <line x1="40" y1="50" x2="50" y2="48" stroke="var(--paper)" stroke-width="1.5"/>
+          <line x1="80" y1="50" x2="70" y2="48" stroke="var(--paper)" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <div>
+        <div class="hat-name">Black</div>
+        <div class="hat-role">The Skeptic</div>
+        <div class="hat-quote">"Where's the precedent? Cite it."</div>
+      </div>
+    </div>
+
+    <!-- GREEN -->
+    <div class="hat-card">
+      <span class="hat-dot" style="background: var(--hat-green)"></span>
+      <div class="hat-portrait">
+        <svg viewBox="0 0 120 140" fill="none">
+          <ellipse cx="60" cy="110" rx="42" ry="6" fill="var(--hat-green)" opacity="0.3"/>
+          <ellipse cx="60" cy="60" rx="38" ry="44" fill="var(--hat-green)"/>
+          <ellipse cx="60" cy="28" rx="32" ry="14" fill="oklch(62% 0.16 150)"/>
+          <ellipse cx="60" cy="22" rx="42" ry="5" fill="oklch(55% 0.14 150)"/>
+          <circle cx="48" cy="54" r="3" fill="var(--ink)"/>
+          <circle cx="72" cy="54" r="3" fill="var(--ink)"/>
+          <path d="M 44 70 Q 60 84 76 70" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="48" cy="50" r="5" fill="var(--paper)" opacity="0.3"/>
+          <circle cx="72" cy="50" r="5" fill="var(--paper)" opacity="0.3"/>
+        </svg>
+      </div>
+      <div>
+        <div class="hat-name">Green</div>
+        <div class="hat-role">The Wild Card</div>
+        <div class="hat-quote">"What if we flipped the question?"</div>
+      </div>
+    </div>
+
+    <!-- BLUE -->
+    <div class="hat-card">
+      <span class="hat-dot" style="background: var(--hat-blue)"></span>
+      <div class="hat-portrait">
+        <svg viewBox="0 0 120 140" fill="none">
+          <ellipse cx="60" cy="110" rx="42" ry="6" fill="var(--hat-blue)" opacity="0.3"/>
+          <ellipse cx="60" cy="60" rx="38" ry="44" fill="var(--hat-blue)"/>
+          <ellipse cx="60" cy="28" rx="32" ry="14" fill="oklch(62% 0.17 245)"/>
+          <ellipse cx="60" cy="22" rx="42" ry="5" fill="oklch(55% 0.16 245)"/>
+          <circle cx="48" cy="56" r="2.8" fill="var(--paper)"/>
+          <circle cx="72" cy="56" r="2.8" fill="var(--paper)"/>
+          <line x1="50" y1="74" x2="70" y2="74" stroke="var(--paper)" stroke-width="2" stroke-linecap="round"/>
+          <path d="M 36 38 Q 60 32 84 38" fill="none" stroke="var(--paper)" stroke-width="1.5" opacity="0.7"/>
+        </svg>
+      </div>
+      <div>
+        <div class="hat-name">Blue</div>
+        <div class="hat-role">The Conductor</div>
+        <div class="hat-quote">"Let me reconcile what you all just said."</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== ACT III — THE MOMENT ===================== -->
+<section class="act act-3" id="act-3">
+  <div class="act-label">Act II · The Turn</div>
+  <h2 class="act-title">Then Yellow says <em>"9 out of 10"</em>… <br/>and the room goes quiet.</h2>
+  <p class="act-lead">The detector flags it. Phoenix consults the past. Qdrant pulls anchors from 503 prior submissions. Watch the score correct itself, in front of you.</p>
+
+  <div class="moment-stage">
+    <div class="moment-text">
+      <div class="moment-step">
+        <div class="step-num" style="color: var(--rose)">1</div>
+        <div class="step-body">
+          <h4>Detection · Triple-redundant</h4>
+          <p>Phoenix Online Eval, Custom Evaluator, and Black hat's counter-claim all fire at once. Three independent witnesses.</p>
+        </div>
+      </div>
+      <div class="moment-step">
+        <div class="step-num" style="color: var(--phoenix)">2</div>
+        <div class="step-body">
+          <h4>Consultation · Phoenix MCP</h4>
+          <p>Blue planner pauses. Calls <code style="font-family: ui-monospace, monospace; font-size: 11px; color: var(--phoenix);">get-experiment-by-id</code>. Returns: <em>Yellow over-confident on A1 by avg 1.2 pts when evidence_depth &lt; 0.4.</em></p>
+        </div>
+      </div>
+      <div class="moment-step">
+        <div class="step-num" style="color: var(--qdrant)">3</div>
+        <div class="step-body">
+          <h4>Anchoring · Qdrant constellation</h4>
+          <p>Recommendation API returns 3 anchor projects from 503 past submissions, scored 7.2 / 7.5 / 7.8. Yellow was at 9.0.</p>
+        </div>
+      </div>
+      <div class="moment-step">
+        <div class="step-num" style="color: var(--emerald)">4</div>
+        <div class="step-body">
+          <h4>Correction · On screen</h4>
+          <p>Score animates from 9.0 → 7.6. The 3D evaluation graph reshapes. Contradicting evidence chunks highlight. The audience exhales.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="scene-frame">
+      <svg viewBox="0 0 600 450" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <linearGradient id="cardBg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="oklch(22% 0.03 95 / 0.3)"/>
+            <stop offset="100%" stop-color="oklch(15% 0.02 260 / 0.6)"/>
+          </linearGradient>
+        </defs>
+
+        <!-- the card under judgment -->
+        <rect x="60" y="80" width="480" height="290" rx="16" fill="url(#cardBg)" stroke="oklch(80% 0.13 95 / 0.4)" stroke-width="1"/>
+
+        <!-- header label -->
+        <text x="80" y="110" fill="var(--text-mute)" font-size="10" letter-spacing="0.3em" font-family="system-ui">CRITERION A1 · PROBLEM CLARITY</text>
+        <line x1="80" y1="120" x2="520" y2="120" stroke="oklch(95% 0 0 / 0.1)"/>
+
+        <!-- Yellow hat speaks -->
+        <g transform="translate(120 180)">
+          <circle r="32" fill="var(--hat-yellow)"/>
+          <ellipse cx="0" cy="-18" rx="22" ry="9" fill="oklch(70% 0.14 90)"/>
+          <circle cx="-7" cy="-2" r="2" fill="var(--ink)"/>
+          <circle cx="7" cy="-2" r="2" fill="var(--ink)"/>
+          <path d="M -6 10 Q 0 15 6 10" fill="none" stroke="var(--ink)" stroke-width="1.5" stroke-linecap="round"/>
+        </g>
+        <text x="175" y="170" fill="var(--text)" font-size="13" font-weight="600">Yellow hat asserts:</text>
+        <text x="175" y="190" fill="var(--text-mute)" font-size="11">"Clear problem, sharp users, big market."</text>
+
+        <!-- THE SCORE -->
+        <g transform="translate(370 220)">
+          <text class="old-score" font-size="84" font-weight="800" fill="var(--hat-yellow)" letter-spacing="-0.04em">9.0</text>
+          <line class="cross-line" x1="-10" y1="-30" x2="0" y2="-30" stroke="var(--rose)" stroke-width="3" stroke-linecap="round" style="width: 100px;"/>
+          <line x1="-10" y1="-30" x2="110" y2="-30" stroke="var(--rose)" stroke-width="3" stroke-linecap="round" opacity="0">
+            <animate attributeName="opacity" from="0" to="1" begin="1.5s" dur="0.3s" fill="freeze"/>
+            <animate attributeName="x2" from="-10" to="110" begin="1.5s" dur="1s" fill="freeze"/>
+          </line>
+          <text class="new-score" x="0" y="50" font-size="42" font-weight="800" fill="var(--emerald)" letter-spacing="-0.04em">7.6</text>
+        </g>
+
+        <!-- evidence_depth bar -->
+        <text x="80" y="270" fill="var(--text-mute)" font-size="10" letter-spacing="0.2em">EVIDENCE DEPTH</text>
+        <rect x="80" y="280" width="200" height="6" rx="3" fill="oklch(95% 0 0 / 0.1)"/>
+        <rect x="80" y="280" width="62" height="6" rx="3" fill="var(--rose)"/>
+        <text x="290" y="289" fill="var(--rose)" font-size="11" font-family="ui-monospace, monospace">0.31 ⚠</text>
+
+        <!-- mini anchor constellation -->
+        <text x="80" y="320" fill="var(--text-mute)" font-size="10" letter-spacing="0.2em">QDRANT ANCHORS · 3 OF 503</text>
+        <g transform="translate(80 340)">
+          <g>
+            <circle cx="0" cy="0" r="14" fill="var(--qdrant)" opacity="0.7"/>
+            <text x="0" y="4" text-anchor="middle" font-size="10" font-weight="700" fill="var(--ink)">7.2</text>
+          </g>
+          <g transform="translate(50 0)">
+            <circle cx="0" cy="0" r="14" fill="var(--qdrant)" opacity="0.85"/>
+            <text x="0" y="4" text-anchor="middle" font-size="10" font-weight="700" fill="var(--ink)">7.5</text>
+          </g>
+          <g transform="translate(100 0)">
+            <circle cx="0" cy="0" r="14" fill="var(--qdrant)"/>
+            <text x="0" y="4" text-anchor="middle" font-size="10" font-weight="700" fill="var(--ink)">7.8</text>
+          </g>
+          <line x1="14" y1="0" x2="36" y2="0" stroke="var(--qdrant)" stroke-width="0.6" opacity="0.4"/>
+          <line x1="64" y1="0" x2="86" y2="0" stroke="var(--qdrant)" stroke-width="0.6" opacity="0.4"/>
+        </g>
+
+        <!-- caption -->
+        <text x="300" y="410" text-anchor="middle" fill="var(--text-mute)" font-size="11" font-style="italic">"And the auditor is the vector space."</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== ACT IV — THE PROOF ===================== -->
+<section class="act act-4" id="act-4">
+  <div class="act-label">Act III · The Proof</div>
+  <h2 class="act-title">Same submission. <em>Two rubrics.</em><br/>Two correct scores.</h2>
+  <p class="act-lead">Glasshat synthesizes the evaluator's actual rules into a per-evaluation rubric. The same project scores 87 under Qdrant's weights and 73 under Rapid Agent's weights — and both are right. <em>Fairness is rubric-relative.</em></p>
+
+  <div class="proof-grid">
+    <!-- Qdrant rubric -->
+    <div class="proof-card proof-q">
+      <svg class="bg-illu" viewBox="0 0 120 120" fill="none">
+        <g stroke="var(--qdrant)" stroke-width="1" fill="var(--qdrant)">
+          <circle cx="20" cy="40" r="3"/><circle cx="60" cy="20" r="4"/>
+          <circle cx="100" cy="50" r="3"/><circle cx="80" cy="90" r="4"/>
+          <circle cx="30" cy="100" r="3"/>
+          <line x1="20" y1="40" x2="60" y2="20"/>
+          <line x1="60" y1="20" x2="100" y2="50"/>
+          <line x1="100" y1="50" x2="80" y2="90"/>
+          <line x1="80" y1="90" x2="30" y2="100"/>
+          <line x1="30" y1="100" x2="20" y2="40"/>
+        </g>
+      </svg>
+      <div class="proof-rubric">Qdrant VSD Rubric</div>
+      <div class="proof-score">87</div>
+      <div class="proof-name">Originality · Functionality · UX · Material Vector Use</div>
+      <div class="proof-weights">weights: orig 30 · func 30 · ux 20 · vector 20</div>
+    </div>
+
+    <!-- Rapid rubric -->
+    <div class="proof-card proof-r">
+      <svg class="bg-illu" viewBox="0 0 120 120" fill="none">
+        <path d="M 60 10 Q 95 40 80 80 Q 60 100 40 80 Q 25 40 60 10 Z" fill="var(--phoenix)" opacity="0.7"/>
+        <path d="M 60 25 Q 80 50 70 75 Q 60 85 50 75 Q 40 50 60 25 Z" fill="var(--sun)"/>
+        <circle cx="60" cy="55" r="6" fill="var(--paper)"/>
+      </svg>
+      <div class="proof-rubric">Rapid Agent / Arize Rubric</div>
+      <div class="proof-score">73</div>
+      <div class="proof-name">Technical Execution · Innovation · Impact · Presentation</div>
+      <div class="proof-weights">weights: tech 40 · innov 30 · impact 20 · pres 10</div>
+    </div>
+  </div>
+
+  <p class="proof-caption">"Correct rubric-aware variance, <em>not bias.</em>" — the dual-rubric reveal at 2:30.</p>
+</section>
+
+<!-- ===================== FINALE ===================== -->
+<section class="finale">
+  <svg class="finale-constellation" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <defs>
+      <radialGradient id="finaleGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="var(--phoenix)" stop-opacity="0.3"/>
+        <stop offset="100%" stop-color="var(--phoenix)" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <circle cx="600" cy="300" r="280" fill="url(#finaleGlow)"/>
+    <!-- final constellation of 503 -->
+    <g fill="var(--qdrant)" opacity="0.7">
+      <circle class="star" cx="180" cy="180" r="1.4"/><circle class="star" cx="240" cy="220" r="1.8"/>
+      <circle class="star" cx="320" cy="160" r="1.2"/><circle class="star" cx="380" cy="240" r="2.2"/>
+      <circle class="star" cx="450" cy="200" r="1.5"/><circle class="star" cx="510" cy="280" r="1.8"/>
+      <circle class="star" cx="600" cy="180" r="2.4"/><circle class="star" cx="690" cy="240" r="1.6"/>
+      <circle class="star" cx="760" cy="180" r="1.4"/><circle class="star" cx="820" cy="260" r="2"/>
+      <circle class="star" cx="900" cy="200" r="1.5"/><circle class="star" cx="960" cy="280" r="1.8"/>
+      <circle class="star" cx="1020" cy="200" r="1.3"/><circle class="star" cx="160" cy="320" r="1.5"/>
+      <circle class="star" cx="280" cy="380" r="1.8"/><circle class="star" cx="400" cy="420" r="2"/>
+      <circle class="star" cx="520" cy="380" r="1.4"/><circle class="star" cx="680" cy="420" r="1.7"/>
+      <circle class="star" cx="800" cy="400" r="1.5"/><circle class="star" cx="920" cy="380" r="2"/>
+      <circle class="star" cx="1040" cy="340" r="1.3"/>
+    </g>
+    <!-- winner node, gold, glowing -->
+    <g>
+      <circle cx="600" cy="300" r="20" fill="var(--sun)" opacity="0.2">
+        <animate attributeName="r" values="20;30;20" dur="3s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.2;0.5;0.2" dur="3s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="600" cy="300" r="8" fill="var(--sun)"/>
+    </g>
+  </svg>
+
+  <div class="finale-content">
+    <h2>Same engine. Different rubric.<br/><em>Different (correct) score.</em></h2>
+    <p>One agentic pipeline. Two viewports. Both hackathons. The final frame.</p>
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="demo.html">▶ Watch the demo film</a>
+      <a class="btn btn-ghost" href="https://github.com/Two-Weeks-Team/glasshat" target="_blank" rel="noopener">View on GitHub →</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div>Glasshat · An audit layer for AI evaluation · Apache-2.0</div>
+  <div>
+    <a href="demo.html">Demo</a>
+    <a href="https://github.com/Two-Weeks-Team/glasshat" target="_blank" rel="noopener">GitHub</a>
+    <a href="_proposal.md">Proposal</a>
+  </div>
+</footer>
+
+</body>
+</html>
