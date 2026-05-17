@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#0d1320" />
+<title>Glasshat Playground — Boss-fight the auditor (voxel)</title>
+<meta name="description" content="Play Glasshat as a turn-based audit RPG. Six voxel hats vs Phoenix the LV-99 meta-judge. Three scenarios. Score grade S/A/B/C. Apply to your own deck." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;500;700&family=Press+Start+2P&display=swap" rel="stylesheet" />
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js" defer></script>
+
+<style>
+:root {
+  --bg-base:        oklch(11% 0.020 250);
+  --bg-elevated:    oklch(15% 0.020 250);
+  --bg-glass:       oklch(95% 0 0 / 0.06);
+  --border-subtle:  oklch(95% 0 0 / 0.12);
+  --border-strong:  oklch(95% 0 0 / 0.30);
+  --text-primary:   oklch(98% 0 0);
+  --text-secondary: oklch(78% 0 0);
+  --text-muted:     oklch(62% 0 0);
+  --primary:        oklch(75% 0.16 215);
+  --accent:         oklch(78% 0.20 350);
+  --gold:           oklch(82% 0.16 88);
+  --success:        oklch(78% 0.18 150);
+  --warning:        oklch(82% 0.18 80);
+  --danger:         oklch(70% 0.22 28);
+  --hat-white:  oklch(96% 0 0);
+  --hat-red:    oklch(72% 0.17 25);
+  --hat-yellow: oklch(80% 0.13 95);
+  --hat-black:  oklch(28% 0 0);
+  --hat-green:  oklch(72% 0.17 150);
+  --hat-blue:   oklch(72% 0.17 245);
+  --pixel: 'Press Start 2P', 'JetBrains Mono', monospace;
+  --sans: 'Inter', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: var(--sans);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  image-rendering: pixelated;
+}
+body::before {
+  content: ''; position: fixed; top: 0; left: 0; right: 0; height: 3px;
+  background: var(--gold); z-index: 200;
+}
+
+/* APP layout */
+#app { display: grid; grid-template-rows: 56px 1fr 96px; height: 100vh; }
+
+/* HEADER */
+header.bar {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 16px; padding: 0 20px;
+  background: oklch(11% 0.020 250 / 0.85);
+  backdrop-filter: blur(14px);
+  border-bottom: 2px solid var(--border-subtle);
+  z-index: 30;
+}
+.brand {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--pixel); font-weight: 400; font-size: 12px;
+  letter-spacing: 0;
+  color: var(--gold);
+}
+.brand-back { color: var(--text-muted); font-family: var(--mono); font-size: 11px; text-decoration: none; }
+.brand-back:hover { color: var(--text-primary); }
+.scenario-pills { display: flex; gap: 6px; justify-content: center; }
+.scenario-pill {
+  appearance: none; border: 1px solid var(--border-strong); background: var(--bg-glass);
+  color: var(--text-secondary); padding: 6px 12px; border-radius: 0;
+  font-family: var(--mono); font-size: 11px; font-weight: 600;
+  cursor: pointer; transition: all .15s ease;
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.scenario-pill:hover { background: oklch(95% 0 0 / 0.10); color: var(--text-primary); }
+.scenario-pill[aria-pressed="true"] {
+  background: var(--gold); color: var(--bg-base); border-color: var(--gold); font-weight: 700;
+}
+.ctrl-btn {
+  appearance: none; border: 1px solid var(--border-strong); background: var(--bg-glass);
+  color: var(--text-primary); padding: 8px 14px; border-radius: 0;
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  cursor: pointer; transition: all .15s ease; display: inline-flex; align-items: center; gap: 6px;
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.ctrl-btn:hover { background: oklch(95% 0 0 / 0.10); border-color: var(--primary); }
+.ctrl-btn.primary { background: var(--primary); color: var(--bg-base); border-color: var(--primary); }
+.ctrl-btn.gold { background: var(--gold); color: var(--bg-base); border-color: var(--gold); }
+
+/* ARENA (main 3D scene + HUD) */
+main.arena {
+  position: relative;
+  display: grid; grid-template-columns: 240px 1fr 240px; gap: 0;
+  min-height: 0;
+  background: oklch(8% 0.018 250);
+}
+#world-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.left-rail, .right-rail {
+  position: relative; z-index: 5;
+  background: oklch(11% 0.020 250 / 0.78);
+  backdrop-filter: blur(8px);
+  border-right: 2px solid var(--border-subtle);
+  padding: 14px;
+  overflow-y: auto;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.right-rail { border-right: none; border-left: 2px solid var(--border-subtle); }
+.rail-title {
+  font-family: var(--pixel); font-size: 9px; color: var(--gold);
+  text-transform: uppercase; letter-spacing: 0.1em;
+  padding-bottom: 6px; border-bottom: 1px solid var(--border-subtle); margin-bottom: 6px;
+}
+
+/* Party cards */
+.party-card {
+  background: var(--bg-elevated); border: 2px solid var(--border-subtle);
+  padding: 8px 10px; transition: all .2s ease;
+  position: relative;
+}
+.party-card.active { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), 0 0 12px oklch(82% 0.16 88 / 0.3); }
+.party-card.attacking { animation: shake .4s ease-in-out; border-color: var(--accent); }
+@keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-3px);} 75%{transform:translateX(3px);} }
+.party-head {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
+}
+.party-icon { width: 18px; height: 18px; image-rendering: pixelated; }
+.party-name { font-family: var(--mono); font-weight: 700; font-size: 11px; }
+.party-role { font-family: var(--mono); font-size: 9px; color: var(--text-muted); }
+.hp-row { display: flex; align-items: center; gap: 6px; }
+.hp-bar { flex: 1; height: 6px; background: oklch(0% 0 0 / 0.6); border: 1px solid var(--border-subtle); position: relative; overflow: hidden; }
+.hp-fill { position: absolute; inset: 0; background: var(--success); transform-origin: left; transition: transform .4s var(--ease-out); }
+.hp-fill.warn { background: var(--warning); }
+.hp-fill.crit { background: var(--danger); }
+.hp-text { font-family: var(--mono); font-size: 9px; min-width: 36px; text-align: right; color: var(--text-secondary); }
+.mana-row { display: flex; align-items: center; gap: 6px; margin-top: 3px; }
+.mana-bar { flex: 1; height: 4px; background: oklch(0% 0 0 / 0.6); border: 1px solid var(--border-subtle); position: relative; overflow: hidden; }
+.mana-fill { position: absolute; inset: 0; background: var(--primary); transform-origin: left; transition: transform .4s var(--ease-out); }
+.mana-text { font-family: var(--mono); font-size: 9px; min-width: 36px; text-align: right; color: var(--text-muted); }
+
+/* Boss panel */
+.boss-card {
+  background: linear-gradient(180deg, oklch(78% 0.20 350 / 0.10), var(--bg-elevated));
+  border: 2px solid var(--accent);
+  padding: 12px;
+}
+.boss-name { font-family: var(--pixel); font-size: 11px; color: var(--accent); text-transform: uppercase; }
+.boss-sub { font-family: var(--mono); font-size: 9px; color: var(--text-muted); margin-bottom: 8px; }
+.boss-hp { height: 10px; }
+.boss-text { font-size: 11px; }
+
+/* Event log (right rail) */
+.event-log {
+  flex: 1; min-height: 0; overflow-y: auto;
+  background: oklch(0% 0 0 / 0.4); padding: 8px;
+  border: 1px solid var(--border-subtle);
+  font-family: var(--mono); font-size: 10.5px; line-height: 1.5;
+  color: var(--text-secondary);
+}
+.ev {
+  padding: 3px 4px; margin: 0 -4px 1px;
+  border-left: 2px solid transparent;
+  animation: evIn .25s var(--ease-out);
+}
+.ev.crit { color: var(--accent); border-left-color: var(--accent); background: oklch(78% 0.20 350 / 0.08); }
+.ev.dmg { color: var(--danger); }
+.ev.heal { color: var(--success); }
+.ev.qdrant { color: var(--primary); border-left-color: var(--primary); }
+.ev.mcp { color: var(--accent); }
+@keyframes evIn { from{opacity:0; transform:translateX(-4px);} to{opacity:1; transform:translateX(0);} }
+
+/* Combat HUD overlay */
+.combo {
+  position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+  font-family: var(--pixel); font-size: 14px; color: var(--gold);
+  background: oklch(0% 0 0 / 0.7); padding: 6px 14px;
+  border: 2px solid var(--gold);
+  z-index: 8;
+  display: none;
+}
+.combo.show { display: block; animation: comboPulse .8s ease-in-out infinite; }
+@keyframes comboPulse { 0%,100%{transform:translateX(-50%) scale(1);} 50%{transform:translateX(-50%) scale(1.06);} }
+.combo-num { font-family: var(--pixel); font-weight: 400; color: var(--accent); }
+
+.crit-splash {
+  position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0.4);
+  font-family: var(--pixel); font-size: 38px; color: var(--accent);
+  text-shadow: 0 0 20px oklch(78% 0.20 350 / 0.8), 4px 4px 0 oklch(15% 0 0);
+  z-index: 9; opacity: 0; pointer-events: none;
+}
+.crit-splash.show { animation: critSplash 1s var(--ease-spring); }
+@keyframes critSplash {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4) rotate(-10deg); }
+  35% { opacity: 1; transform: translate(-50%, -50%) scale(1.15) rotate(0); }
+  65% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1) rotate(0); }
+}
+
+.damage-num {
+  position: absolute; font-family: var(--pixel); font-size: 14px;
+  color: var(--danger); text-shadow: 2px 2px 0 oklch(15% 0 0);
+  pointer-events: none; z-index: 9;
+  animation: dmgFloat 1.2s ease-out forwards;
+}
+.damage-num.heal { color: var(--success); }
+.damage-num.gold { color: var(--gold); }
+@keyframes dmgFloat {
+  0% { opacity: 1; transform: translateY(0) scale(0.8); }
+  20% { opacity: 1; transform: translateY(-10px) scale(1.1); }
+  100% { opacity: 0; transform: translateY(-50px) scale(1); }
+}
+
+/* Bottom action bar */
+footer.actions {
+  display: grid; grid-template-columns: 1fr auto;
+  align-items: center; gap: 16px; padding: 0 20px;
+  background: oklch(11% 0.020 250 / 0.85);
+  backdrop-filter: blur(14px);
+  border-top: 2px solid var(--border-subtle);
+  z-index: 30;
+}
+.dialog-box {
+  font-family: var(--mono); font-size: 12.5px; color: var(--text-primary);
+  background: oklch(0% 0 0 / 0.45); padding: 10px 16px;
+  border: 1px solid var(--border-subtle);
+  font-variant-numeric: tabular-nums;
+}
+.dialog-box .who { font-family: var(--pixel); font-size: 10px; color: var(--gold); margin-right: 8px; }
+.action-row { display: flex; gap: 8px; }
+
+/* Intro curtain */
+.curtain {
+  position: fixed; inset: 0;
+  background: linear-gradient(180deg, oklch(8% 0.018 250), oklch(11% 0.020 250));
+  z-index: 1000; display: grid; place-items: center; padding: 40px 20px;
+  text-align: center; transition: opacity .5s ease;
+}
+.curtain.hide { opacity: 0; pointer-events: none; }
+.curtain-inner { max-width: 720px; }
+.curtain h1 {
+  font-family: var(--pixel); font-size: clamp(22px, 4vw, 36px); line-height: 1.5;
+  color: var(--gold); margin-bottom: 16px;
+}
+.curtain .sub {
+  font-family: var(--mono); font-size: 13px; color: var(--text-secondary);
+  margin: 0 auto 14px; max-width: 540px; line-height: 1.55;
+}
+.curtain .meta {
+  font-family: var(--mono); font-size: 11px; color: var(--text-muted);
+  margin: 16px auto 24px; max-width: 540px; line-height: 1.6;
+}
+.curtain-cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.curtain-cta .ctrl-btn { padding: 14px 22px; font-size: 12px; }
+
+/* Score screen */
+.score-screen {
+  position: fixed; inset: 0; z-index: 500;
+  background: oklch(11% 0.020 250 / 0.95);
+  backdrop-filter: blur(20px);
+  display: none; place-items: center; padding: 24px; text-align: center;
+}
+.score-screen.show { display: grid; animation: scoreIn .5s ease-out; }
+@keyframes scoreIn { from{opacity:0;} to{opacity:1;} }
+.score-grade {
+  font-family: var(--pixel); font-size: clamp(90px, 14vw, 180px);
+  color: var(--gold); line-height: 1;
+  text-shadow: 0 0 40px oklch(82% 0.16 88 / 0.6), 6px 6px 0 oklch(15% 0 0);
+  margin-bottom: 16px;
+  animation: gradePop .8s var(--ease-spring);
+}
+@keyframes gradePop { 0%{transform:scale(0.3);} 60%{transform:scale(1.15);} 100%{transform:scale(1);} }
+.score-label { font-family: var(--pixel); font-size: 14px; color: var(--text-primary); margin-bottom: 8px; letter-spacing: 0.05em; }
+.score-stats { font-family: var(--mono); font-size: 13px; color: var(--text-secondary); margin-bottom: 28px; }
+.score-stats .row { display: flex; justify-content: space-between; padding: 4px 0; max-width: 360px; margin: 0 auto; gap: 24px; border-bottom: 1px solid var(--border-subtle); }
+.score-stats .row .lbl { color: var(--text-muted); }
+.score-stats .row .v { color: var(--text-primary); font-weight: 700; }
+.dual-rubric-row { display: flex; gap: 18px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
+.dr-block { background: var(--bg-elevated); padding: 14px 22px; border: 2px solid var(--border-subtle); min-width: 140px; }
+.dr-block.q { border-color: var(--primary); }
+.dr-block.r { border-color: var(--accent); }
+.dr-name { font-family: var(--pixel); font-size: 9px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px; }
+.dr-num { font-family: var(--pixel); font-size: 28px; color: var(--text-primary); }
+.score-cta { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 24px; }
+
+@media (max-width: 980px) {
+  main.arena { grid-template-columns: 1fr; }
+  .left-rail, .right-rail { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+</style>
+</head>
+
+<body>
+
+<!-- INTRO -->
+<div class="curtain" id="curtain">
+  <div class="curtain-inner">
+    <h1>GLASSHAT<br/>: THE AUDIT</h1>
+    <div class="sub">Six voxel Hats vs <strong style="color:var(--accent)">Phoenix the LV-99 meta-judge</strong>. Pick a deck. Audit it. Get an S/A/B/C grade. The vector space tells the truth.</div>
+    <div class="meta">⚙ Voxel game prototype · same Glasshat engine, different framing · same scoring rules, same calibration corpus, same audit-the-judge wow · for participants who want to feel the loop</div>
+    <div class="curtain-cta">
+      <button class="ctrl-btn primary" onclick="startGame('globot')">▶ Start with Globot (winner deck)</button>
+      <button class="ctrl-btn" onclick="startGame('aegis')">Start with Aegis (finalist)</button>
+      <button class="ctrl-btn" onclick="startGame('weak')">Start with weak deck (challenge)</button>
+    </div>
+    <div class="meta" style="margin-top: 18px;">⌨ controls · click anywhere to advance · spacebar = next action · 1-6 = pick a hat to attack with</div>
+  </div>
+</div>
+
+<!-- SCORE SCREEN -->
+<div class="score-screen" id="score-screen">
+  <div>
+    <div class="score-label">VERDICT</div>
+    <div class="score-grade" id="grade">A</div>
+    <div class="score-stats">
+      <div class="row"><span class="lbl">SUBMISSION</span><span class="v" id="ss-sub">—</span></div>
+      <div class="row"><span class="lbl">TURNS USED</span><span class="v" id="ss-turns">—</span></div>
+      <div class="row"><span class="lbl">PHOENIX AUDITS</span><span class="v" id="ss-audits">—</span></div>
+      <div class="row"><span class="lbl">QDRANT QUERIES</span><span class="v" id="ss-qdrant">—</span></div>
+      <div class="row"><span class="lbl">CRITICAL HITS</span><span class="v" id="ss-crits">—</span></div>
+    </div>
+    <div class="dual-rubric-row">
+      <div class="dr-block q">
+        <div class="dr-name">Qdrant rubric</div>
+        <div class="dr-num" id="ss-q">—</div>
+      </div>
+      <div class="dr-block r">
+        <div class="dr-name">Rapid Agent</div>
+        <div class="dr-num" id="ss-r">—</div>
+      </div>
+    </div>
+    <div class="score-stats" style="font-style: italic; color: var(--text-muted);" id="ss-msg">Same engine. Different rubric. Rubric-faithful variance.</div>
+    <div class="score-cta">
+      <button class="ctrl-btn primary" onclick="restartGame()">↻ Replay</button>
+      <button class="ctrl-btn gold" onclick="alert('In production this opens an upload dialog. The same engine evaluates your deck under both rubrics.')">📤 Apply to your deck</button>
+      <a class="ctrl-btn" href="demo.html">← Watch the standard demo</a>
+      <a class="ctrl-btn" href="landing.html">Home</a>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+
+  <header class="bar">
+    <div style="display:flex; align-items:center; gap:14px;">
+      <div class="brand">▍ GLASSHAT</div>
+      <a class="brand-back" href="landing.html">← landing</a>
+      <a class="brand-back" href="demo.html">← standard demo</a>
+    </div>
+    <div class="scenario-pills" role="group" aria-label="Scenario">
+      <button class="scenario-pill" id="sc-globot"  aria-pressed="true"  onclick="switchScenario('globot')">Globot · winner</button>
+      <button class="scenario-pill" id="sc-aegis"   aria-pressed="false" onclick="switchScenario('aegis')">Aegis · finalist</button>
+      <button class="scenario-pill" id="sc-weak"    aria-pressed="false" onclick="switchScenario('weak')">Weak deck · hard</button>
+    </div>
+    <div class="action-row">
+      <button class="ctrl-btn" onclick="toggleAuto()" id="auto-btn">▶ AUTO</button>
+      <button class="ctrl-btn" onclick="endGame()">⊗ END</button>
+    </div>
+  </header>
+
+  <main class="arena">
+
+    <!-- LEFT RAIL: Party -->
+    <aside class="left-rail">
+      <div class="rail-title">▍ PARTY</div>
+      <div id="party-list"></div>
+    </aside>
+
+    <!-- CENTER: 3D arena -->
+    <div style="position: relative; min-width: 0;">
+      <canvas id="world-canvas" aria-hidden="true"></canvas>
+      <div class="combo" id="combo"><span class="combo-num" id="combo-n">2</span> × COMBO</div>
+      <div class="crit-splash" id="crit-splash">CRITICAL HIT!</div>
+    </div>
+
+    <!-- RIGHT RAIL: Boss + event log -->
+    <aside class="right-rail">
+      <div class="boss-card">
+        <div class="boss-name">PHOENIX</div>
+        <div class="boss-sub">LV.99 · META-JUDGE · Phoenix MCP</div>
+        <div class="hp-row">
+          <div class="hp-bar boss-hp"><div class="hp-fill" id="boss-hp-fill"></div></div>
+          <span class="hp-text" id="boss-hp-text">100/100</span>
+        </div>
+        <div class="boss-text" style="font-family:var(--mono); font-size:10px; color:var(--text-muted); margin-top:6px;">
+          AUDIT BUDGET: <span id="boss-budget" style="color:var(--accent);">800</span> ms
+        </div>
+      </div>
+      <div class="rail-title" style="margin-top:8px;">▍ EVENT LOG</div>
+      <div class="event-log" id="log"></div>
+    </aside>
+
+  </main>
+
+  <footer class="actions">
+    <div class="dialog-box" id="dialog">
+      <span class="who">BLUE:</span> Pick a hat to attack with. Yellow has best damage. Black has best critical chance.
+    </div>
+    <div class="action-row">
+      <button class="ctrl-btn" onclick="nextTurn()">▶ NEXT TURN</button>
+      <button class="ctrl-btn primary" onclick="autoAttack()">⚔ ATTACK</button>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+/* =========================================================
+ * GLASSHAT PLAYGROUND — Minecraft pixel-block boss-fight
+ *
+ * 6 Hats party vs Phoenix the LV-99 meta-judge.
+ * Three scenarios (winner/finalist/weak deck) with different boss HP.
+ * Same calibration corpus, same audit-the-judge wow, same score rules.
+ * Score screen = S/A/B/C grade + dual-rubric variance.
+ * ========================================================= */
+
+const HATS = {
+  white:  { color: 'oklch(96% 0 0)',      label: 'WHITE',  role: 'facts',         atk: 9,  crit: 0.15 },
+  red:    { color: 'oklch(72% 0.17 25)',  label: 'RED',    role: 'intuition',     atk: 7,  crit: 0.20 },
+  yellow: { color: 'oklch(80% 0.13 95)',  label: 'YELLOW', role: 'value',         atk: 12, crit: 0.10 },
+  black:  { color: 'oklch(28% 0 0)',      label: 'BLACK',  role: 'risk',          atk: 8,  crit: 0.30 },
+  green:  { color: 'oklch(72% 0.17 150)', label: 'GREEN',  role: 'alternatives',  atk: 8,  crit: 0.18 },
+  blue:   { color: 'oklch(72% 0.17 245)', label: 'BLUE',   role: 'synthesis',     atk: 10, crit: 0.12 }
+};
+
+const SCENARIOS = {
+  globot: {
+    name: 'Globot · winner deck',
+    bossHP: 100,
+    description: 'A real Gemini 3 hackathon winner. Strong deck. Phoenix should not flag anything serious.',
+    qdrant_final: 87, rapid_final: 82, expected_grade: 'A'
+  },
+  aegis: {
+    name: 'Aegis · finalist',
+    bossHP: 130,
+    description: 'A finalist deck. Strong tech but missing impact section. Phoenix will likely flag Yellow over-confidence.',
+    qdrant_final: 76, rapid_final: 71, expected_grade: 'B'
+  },
+  weak: {
+    name: 'Weak deck · challenge',
+    bossHP: 180,
+    description: 'A demo deck with vague user, weak repo evidence, no working demo. Multiple Phoenix audits likely.',
+    qdrant_final: 52, rapid_final: 48, expected_grade: 'C'
+  }
+};
+
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+let game = {
+  scenario: 'globot',
+  party: {},
+  bossHP: 100,
+  bossMaxHP: 100,
+  bossBudget: 800,
+  turn: 1,
+  combo: 0,
+  audits: 0,
+  qdrantQueries: 0,
+  crits: 0,
+  autoMode: false,
+  autoTimer: null,
+  ended: false
+};
+
+function startGame(scenario) {
+  document.getElementById('curtain').classList.add('hide');
+  document.getElementById('score-screen').classList.remove('show');
+  switchScenario(scenario);
+  ensureWorld();
+  log('▍ ' + SCENARIOS[scenario].name + ' loaded', '');
+  log('PHOENIX awaiting first move. Pick a hat (1-6) or AUTO.', 'mcp');
+  setDialog('BLUE', 'New deck loaded. Pick your opening attack. Yellow=value, Black=risk, White=facts.');
+}
+
+function switchScenario(s) {
+  game.scenario = s;
+  ['globot','aegis','weak'].forEach(k => {
+    document.getElementById('sc-' + k).setAttribute('aria-pressed', k === s);
+  });
+  const sc = SCENARIOS[s];
+  game.bossHP = sc.bossHP;
+  game.bossMaxHP = sc.bossHP;
+  game.bossBudget = 800;
+  game.turn = 1;
+  game.combo = 0;
+  game.audits = 0;
+  game.qdrantQueries = 0;
+  game.crits = 0;
+  game.ended = false;
+  // Reset party
+  Object.keys(HATS).forEach(id => {
+    game.party[id] = { hp: 50, maxHP: 50, mana: 20, maxMana: 30 };
+  });
+  renderParty();
+  renderBoss();
+  document.getElementById('log').innerHTML = '';
+  setDialog('SYSTEM', sc.description);
+}
+
+function renderParty() {
+  const c = document.getElementById('party-list');
+  c.innerHTML = '';
+  Object.entries(HATS).forEach(([id, h]) => {
+    const p = game.party[id];
+    if (!p) return;
+    const card = document.createElement('div');
+    card.className = 'party-card';
+    card.id = 'pc-' + id;
+    const hpPct = p.hp / p.maxHP;
+    const hpClass = hpPct < 0.3 ? 'crit' : hpPct < 0.6 ? 'warn' : '';
+    card.innerHTML = `
+      <div class="party-head">
+        <span class="party-icon" style="background:${h.color}; display:inline-block; width:14px; height:14px;"></span>
+        <span class="party-name">${h.label}</span>
+        <span class="party-role">· ${h.role}</span>
+      </div>
+      <div class="hp-row">
+        <div class="hp-bar"><div class="hp-fill ${hpClass}" style="transform:scaleX(${hpPct})"></div></div>
+        <span class="hp-text">${p.hp}/${p.maxHP}</span>
+      </div>
+      <div class="mana-row">
+        <div class="mana-bar"><div class="mana-fill" style="transform:scaleX(${p.mana / p.maxMana})"></div></div>
+        <span class="mana-text">MP ${p.mana}/${p.maxMana}</span>
+      </div>
+    `;
+    card.addEventListener('click', () => attackWithHat(id));
+    c.appendChild(card);
+  });
+}
+
+function renderBoss() {
+  const pct = Math.max(0, game.bossHP / game.bossMaxHP);
+  document.getElementById('boss-hp-fill').style.transform = 'scaleX(' + pct + ')';
+  const fill = document.getElementById('boss-hp-fill');
+  fill.className = 'hp-fill ' + (pct < 0.3 ? 'crit' : pct < 0.6 ? 'warn' : '');
+  document.getElementById('boss-hp-text').textContent = Math.max(0, game.bossHP) + '/' + game.bossMaxHP;
+  document.getElementById('boss-budget').textContent = game.bossBudget;
+}
+
+function log(text, kind) {
+  const c = document.getElementById('log');
+  const line = document.createElement('div');
+  line.className = 'ev ' + (kind || '');
+  line.textContent = text;
+  c.appendChild(line);
+  c.scrollTop = c.scrollHeight;
+  while (c.children.length > 30) c.removeChild(c.firstChild);
+}
+
+function setDialog(who, text) {
+  document.getElementById('dialog').innerHTML = `<span class="who">${who}:</span> ${text}`;
+}
+
+function attackWithHat(id) {
+  if (game.ended) return;
+  const hat = HATS[id];
+  const p = game.party[id];
+  if (!p || p.hp <= 0) { log(`${hat.label} is KO'd`, 'warn'); return; }
+  if (p.mana < 5) { log(`${hat.label} needs more MP`, 'warn'); return; }
+  // Highlight
+  document.getElementById('pc-' + id).classList.add('active','attacking');
+  setTimeout(() => document.getElementById('pc-' + id).classList.remove('attacking'), 400);
+
+  // Roll damage
+  const isCrit = Math.random() < hat.crit;
+  let dmg = hat.atk + Math.floor(Math.random() * 4);
+  if (isCrit) {
+    dmg *= 2;
+    game.combo++;
+    game.crits++;
+    showCritSplash();
+    log(`${hat.label} hits CRITICAL — ${dmg} dmg`, 'crit');
+    setDialog(hat.label, `Got 'em! ${dmg} damage. Phoenix is checking my math now.`);
+  } else {
+    game.combo++;
+    log(`${hat.label} attacks · ${dmg} dmg`, '');
+    setDialog(hat.label, `${dmg} damage. ${hat.role} is the angle.`);
+  }
+  showDamageNum(dmg, isCrit ? 'gold' : '');
+  game.bossHP = Math.max(0, game.bossHP - dmg);
+  p.mana = Math.max(0, p.mana - 5);
+
+  // Boss audit response (Phoenix MCP queries Qdrant on a percentage of attacks)
+  if (game.combo >= 2 && Math.random() < 0.5 && game.bossHP > 0) {
+    setTimeout(() => phoenixAudit(id, isCrit), 600);
+  }
+
+  // Combo HUD
+  if (game.combo >= 2) {
+    document.getElementById('combo-n').textContent = game.combo;
+    document.getElementById('combo').classList.add('show');
+    if (game.combo >= 4) {
+      setTimeout(() => document.getElementById('combo').classList.remove('show'), 1800);
+    }
+  }
+
+  renderParty();
+  renderBoss();
+
+  if (game.bossHP <= 0) {
+    setTimeout(endGame, 800);
+  } else {
+    // Phoenix counter (boss turn) — every 2-3 attacks
+    if (game.turn % 2 === 0) {
+      setTimeout(bossCounter, 1200);
+    }
+    game.turn++;
+  }
+}
+
+function phoenixAudit(hatId, wasCrit) {
+  game.audits++;
+  game.qdrantQueries += 3;
+  log(`PHOENIX MCP query: phoenix.get-experiment-by-id("calib-v1") → mean_delta=+${(Math.random()*0.8+0.4).toFixed(2)}`, 'mcp');
+  log(`QDRANT recommend(positive=[winner_anchors], negative=[over_confident], strategy="average_vector", limit=3)`, 'qdrant');
+  if (wasCrit && Math.random() < 0.4) {
+    const reduce = Math.floor(Math.random() * 4 + 2);
+    log(`  → Calibration check: ${HATS[hatId].label}'s last hit reduced by ${reduce} (over-confident on shallow evidence)`, 'mcp');
+    game.bossHP += reduce;
+    renderBoss();
+    setDialog('PHOENIX', `Glasshat's own audit caught you. ${reduce} damage rolled back. Receipts in the trace log.`);
+  } else {
+    log(`  → 3 winner anchors confirm: [Globot:8.2, Aegis:7.5, Netra:7.2] · attack confirmed`, 'qdrant');
+  }
+  game.bossBudget = Math.max(120, game.bossBudget - 80);
+  renderBoss();
+}
+
+function bossCounter() {
+  if (game.bossHP <= 0 || game.ended) return;
+  // Boss attacks random hat
+  const ids = Object.keys(HATS);
+  const pid = ids[Math.floor(Math.random() * ids.length)];
+  const p = game.party[pid];
+  const dmg = 8 + Math.floor(Math.random() * 6);
+  p.hp = Math.max(0, p.hp - dmg);
+  log(`PHOENIX questions ${HATS[pid].label} → ${dmg} dmg (evidence challenge)`, 'dmg');
+  setDialog('PHOENIX', `Where's your evidence for that ${HATS[pid].role}-axis claim?`);
+  document.getElementById('pc-' + pid).classList.add('attacking');
+  setTimeout(() => document.getElementById('pc-' + pid).classList.remove('attacking'), 400);
+  renderParty();
+}
+
+function showDamageNum(n, klass) {
+  const div = document.createElement('div');
+  div.className = 'damage-num ' + (klass || '');
+  div.textContent = '-' + n;
+  const cw = document.querySelector('.arena').clientWidth;
+  const ch = document.querySelector('.arena').clientHeight;
+  div.style.left = (cw/2 + (Math.random()-0.5) * 60) + 'px';
+  div.style.top = (ch/2 - 20 + (Math.random()-0.5) * 30) + 'px';
+  document.querySelector('main.arena').appendChild(div);
+  setTimeout(() => div.remove(), 1200);
+}
+function showCritSplash() {
+  const el = document.getElementById('crit-splash');
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 1000);
+}
+
+function nextTurn() {
+  if (game.ended) return;
+  // Restore MP
+  Object.values(game.party).forEach(p => { p.mana = Math.min(p.maxMana, p.mana + 3); });
+  renderParty();
+  setDialog('SYSTEM', 'Turn ' + game.turn + '. MP regen +3 each. Phoenix audit budget: ' + game.bossBudget + 'ms.');
+}
+
+function autoAttack() {
+  if (game.ended) return;
+  // Pick highest MP hat
+  let best = null, bm = -1;
+  Object.entries(game.party).forEach(([id, p]) => {
+    if (p.mana >= 5 && p.hp > 0 && p.mana > bm) { bm = p.mana; best = id; }
+  });
+  if (best) attackWithHat(best);
+}
+
+function toggleAuto() {
+  game.autoMode = !game.autoMode;
+  document.getElementById('auto-btn').textContent = game.autoMode ? '⏸ MANUAL' : '▶ AUTO';
+  if (game.autoMode) {
+    game.autoTimer = setInterval(() => { if (!game.ended) autoAttack(); else { clearInterval(game.autoTimer); game.autoMode = false; document.getElementById('auto-btn').textContent = '▶ AUTO'; } }, 1800);
+  } else if (game.autoTimer) {
+    clearInterval(game.autoTimer);
+  }
+}
+
+function endGame() {
+  if (game.ended) return;
+  game.ended = true;
+  if (game.autoTimer) clearInterval(game.autoTimer);
+  const sc = SCENARIOS[game.scenario];
+  // Determine grade
+  let grade = sc.expected_grade;
+  if (game.turn < 6 && game.crits >= 2) grade = 'S';
+  else if (game.turn > 14) grade = grade === 'A' ? 'B' : grade === 'B' ? 'C' : 'D';
+  document.getElementById('grade').textContent = grade;
+  document.getElementById('ss-sub').textContent = sc.name;
+  document.getElementById('ss-turns').textContent = game.turn;
+  document.getElementById('ss-audits').textContent = game.audits;
+  document.getElementById('ss-qdrant').textContent = game.qdrantQueries;
+  document.getElementById('ss-crits').textContent = game.crits;
+  document.getElementById('ss-q').textContent = sc.qdrant_final;
+  document.getElementById('ss-r').textContent = sc.rapid_final;
+  const delta = Math.abs(sc.qdrant_final - sc.rapid_final);
+  document.getElementById('ss-msg').textContent = `Δ ${delta} points between rubrics. Rubric-faithful variance — both scores trace to verbatim clauses.`;
+  document.getElementById('score-screen').classList.add('show');
+}
+
+function restartGame() {
+  document.getElementById('score-screen').classList.remove('show');
+  startGame(game.scenario);
+}
+
+// ============================================================
+// 3D ARENA (Three.js voxel scene)
+// ============================================================
+let world = null;
+function ensureWorld() {
+  if (typeof THREE === 'undefined') { setTimeout(ensureWorld, 80); return; }
+  if (world && world.renderer) return;
+  const canvas = document.getElementById('world-canvas');
+  const wrap = canvas.parentElement;
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  world = {};
+  world.scene = new THREE.Scene();
+  world.scene.fog = new THREE.Fog(0x0c1320, 14, 40);
+  world.camera = new THREE.PerspectiveCamera(50, w/h, 0.1, 200);
+  world.camera.position.set(0, 4, 12);
+  world.camera.lookAt(0, 1.6, 0);
+  world.renderer = new THREE.WebGLRenderer({canvas, antialias: false, alpha: false});
+  world.renderer.setSize(w, h, false);
+  world.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  world.scene.add(new THREE.AmbientLight(0xffffff, 0.45));
+  const dir = new THREE.DirectionalLight(0xffffff, 0.85); dir.position.set(4, 8, 6); world.scene.add(dir);
+
+  // Floor 16x16 checker pattern
+  const f1 = new THREE.MeshLambertMaterial({color: 0x1a2540});
+  const f2 = new THREE.MeshLambertMaterial({color: 0x202d4a});
+  for (let x = -8; x < 8; x++) for (let z = -8; z < 8; z++) {
+    const b = new THREE.Mesh(new THREE.BoxGeometry(1, 0.2, 1), (x+z)%2===0?f1:f2);
+    b.position.set(x + 0.5, 0, z + 0.5);
+    world.scene.add(b);
+  }
+  // Floating winner anchors (gold blocks) behind boss
+  const anchorMat = new THREE.MeshLambertMaterial({color: 0xfbbf24, emissive: 0x4a3812});
+  world.anchors = [];
+  for (let i = 0; i < 13; i++) {
+    const a = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), anchorMat);
+    a.position.set((Math.sin(i*1.7)-0.5)*7, 5 + (i%3)*0.8, -6 - (i%4)*0.5);
+    a.userData = {phase: i * 0.7};
+    world.scene.add(a);
+    world.anchors.push(a);
+  }
+
+  // Phoenix boss (giant eye block in center-back)
+  const eyeMat = new THREE.MeshLambertMaterial({color: 0xff5fb1, emissive: 0x4a1840});
+  const eye = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.5, 1.5), eyeMat);
+  eye.position.set(0, 3.5, -4);
+  world.scene.add(eye);
+  const irisMat = new THREE.MeshBasicMaterial({color: 0xffffff});
+  const iris = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.1), irisMat);
+  iris.position.set(0, 3.5, -3.2);
+  world.scene.add(iris);
+  const pupilMat = new THREE.MeshBasicMaterial({color: 0x0c1320});
+  const pupil = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.05), pupilMat);
+  pupil.position.set(0.05, 3.55, -3.15);
+  world.scene.add(pupil);
+  world.boss = {eye, iris, pupil};
+
+  // 6 voxel hat characters in party row
+  const positions = [
+    {id:'white',  x:-3.5},
+    {id:'red',    x:-2.0},
+    {id:'yellow', x:-0.5, big: true},
+    {id:'black',  x: 1.0},
+    {id:'green',  x: 2.5},
+    {id:'blue',   x: 4.0}
+  ];
+  world.party = {};
+  positions.forEach(p => {
+    const h = HATS[p.id];
+    const grp = new THREE.Group();
+    grp.position.set(p.x, 0.3, 3);
+    const colorHex = {white:0xf0f0f0,red:0xef4444,yellow:0xfbbf24,black:0x1f2937,green:0x10b981,blue:0x3b82f6}[p.id];
+    const skinTone = p.id==='black' ? 0x2d2520 : 0xf4c8a4;
+    // body
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.9, 0.45), new THREE.MeshLambertMaterial({color: colorHex}));
+    body.position.y = 0.45;
+    grp.add(body);
+    // head
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.55, 0.55), new THREE.MeshLambertMaterial({color: skinTone}));
+    head.position.y = 1.18;
+    grp.add(head);
+    // eyes
+    const eyeM = new THREE.MeshBasicMaterial({color: 0x000000});
+    const eL = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.04), eyeM);
+    eL.position.set(-0.12, 1.22, 0.28); grp.add(eL);
+    const eR = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.04), eyeM);
+    eR.position.set(0.12, 1.22, 0.28); grp.add(eR);
+    // hat (top hat)
+    const hatM = new THREE.MeshLambertMaterial({color: colorHex});
+    const brim = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.08, 0.85), hatM);
+    brim.position.y = 1.5;
+    const crown = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.4, 0.5), hatM);
+    crown.position.y = 1.74;
+    const hatGroup = new THREE.Group();
+    hatGroup.add(brim); hatGroup.add(crown);
+    grp.add(hatGroup);
+    if (p.big) grp.scale.set(1.15, 1.15, 1.15);
+    grp.userData = { hatGroup, baseY: 0.3, pid: p.id };
+    world.scene.add(grp);
+    world.party[p.id] = grp;
+  });
+
+  world.t0 = performance.now();
+  animateWorld();
+}
+function animateWorld() {
+  if (!world || !world.renderer) return;
+  const t = (performance.now() - world.t0) / 1000;
+  // Anchor bob
+  world.anchors.forEach(a => {
+    a.position.y = 5 + Math.sin(t * 1.2 + a.userData.phase) * 0.25 + (a.userData.phase % 1) * 0.4;
+    a.rotation.y = t * 0.4 + a.userData.phase;
+  });
+  // Phoenix slow rotation
+  if (world.boss) {
+    world.boss.eye.rotation.y = Math.sin(t * 0.4) * 0.3;
+    world.boss.iris.position.x = Math.sin(t * 0.5) * 0.1;
+    world.boss.pupil.position.x = 0.05 + Math.sin(t * 0.5) * 0.08;
+  }
+  // Party idle bob
+  Object.values(world.party).forEach((grp, i) => {
+    grp.position.y = grp.userData.baseY + Math.sin(t * 1.5 + i * 0.5) * 0.06;
+  });
+  // Camera slow dolly
+  world.camera.position.x = Math.sin(t * 0.2) * 2;
+  world.camera.lookAt(0, 1.8, 0);
+  world.renderer.render(world.scene, world.camera);
+  world.raf = requestAnimationFrame(animateWorld);
+}
+
+window.addEventListener('resize', () => {
+  if (!world || !world.renderer) return;
+  const wrap = world.renderer.domElement.parentElement;
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  world.camera.aspect = w/h; world.camera.updateProjectionMatrix();
+  world.renderer.setSize(w, h, false);
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (game.ended) return;
+  const map = {'1':'white','2':'red','3':'yellow','4':'black','5':'green','6':'blue'};
+  if (map[e.key]) attackWithHat(map[e.key]);
+  else if (e.code === 'Space') { e.preventDefault(); autoAttack(); }
+});
+</script>
+
+</body>
+</html>

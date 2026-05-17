@@ -287,6 +287,46 @@ main.stage {
 .kanban-foot .num { font-family: var(--display); font-weight: 800; font-size: 18px; background: linear-gradient(135deg, var(--primary), var(--accent)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .kanban-foot .l { color: var(--text-muted); font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; }
 
+/* Voxel cutaway (1:45-2:00) — Minecraft pixel-block judge chamber */
+.voxel-cutaway {
+  position: absolute; inset: 0; z-index: 7;
+  background: radial-gradient(circle at 50% 40%, oklch(25% 0.04 250), oklch(10% 0.018 250));
+  display: none;
+  overflow: hidden;
+}
+.voxel-cutaway.show { display: block; animation: voxelIn .5s var(--ease-cinema); }
+@keyframes voxelIn { from { opacity: 0; transform: scale(1.05); } to { opacity: 1; transform: scale(1); } }
+#voxel-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.voxel-label {
+  position: absolute; top: 16px; left: 16px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--gold);
+  background: oklch(0% 0 0 / 0.65); padding: 4px 10px; border-radius: 999px;
+  border: 1px solid var(--gold);
+  z-index: 8;
+}
+.voxel-score {
+  position: absolute; top: 36%; left: 50%; transform: translate(-50%, -50%);
+  font-family: var(--display); font-weight: 900;
+  font-size: clamp(64px, 9vw, 110px); letter-spacing: -0.03em;
+  color: var(--hat-yellow); z-index: 9;
+  text-shadow: 0 0 20px oklch(80% 0.13 95 / 0.6), 0 4px 0 oklch(50% 0.10 95);
+  font-variant-numeric: tabular-nums;
+  transition: color .4s var(--ease-out);
+  pointer-events: none;
+}
+.voxel-score.corrected { color: var(--success); text-shadow: 0 0 20px oklch(78% 0.18 150 / 0.6), 0 4px 0 oklch(40% 0.10 150); }
+.voxel-score.struck { position: relative; }
+.voxel-score.struck::after { content: ''; position: absolute; top: 50%; left: -8%; right: -8%; height: 6px; background: var(--danger); transform: translateY(-50%) rotate(-8deg); border-radius: 3px; box-shadow: 0 0 12px var(--danger); }
+.voxel-caption {
+  position: absolute; bottom: 22px; left: 50%; transform: translateX(-50%);
+  font-family: var(--serif); font-style: italic; font-weight: 500;
+  font-size: clamp(16px, 1.8vw, 22px); color: var(--text-primary);
+  background: oklch(0% 0 0 / 0.55); padding: 10px 24px; border-radius: 999px;
+  z-index: 9; max-width: 90%; text-align: center;
+  border: 1px solid var(--border-subtle);
+}
+
 /* Critical hit overlay (in-canvas only, NOT fullscreen — Chair veto) */
 .crit-hit {
   position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%) scale(0.6);
@@ -723,6 +763,14 @@ footer.bar {
         <!-- CRITICAL HIT (in-canvas only, NOT fullscreen — Chair veto applied) -->
         <div class="crit-hit" id="crit">CRITICAL</div>
 
+        <!-- VOXEL CUTAWAY (1:45-2:00 climax · Minecraft pixel-block) -->
+        <div class="voxel-cutaway" id="voxel-cutaway">
+          <canvas id="voxel-canvas" aria-hidden="true"></canvas>
+          <div class="voxel-label">▍ Voxel cutaway · audit chamber</div>
+          <div class="voxel-score" id="voxel-score">9.0</div>
+          <div class="voxel-caption" id="voxel-caption">The optimist scored 9. The vector space had three winners say otherwise.</div>
+        </div>
+
         <!-- Reveal overlay (3:00) -->
         <div class="reveal" id="reveal" role="dialog" aria-labelledby="rev-h" aria-modal="true">
           <div>
@@ -1033,8 +1081,12 @@ function buildScenario(vp) {
     {t:83,  fn:()=>{ /* climax pre-roll: dim peripheral cards */ dimExcept(['card-hats','card-canvas','card-trace']); }},
     {t:84,  fn:()=>{ critHit(); }},
     {t:85,  fn:()=>{ correctYellow(7.6); setHatBias('yellow','med'); flashHat('yellow','corrected'); showWhy(); }},
-    {t:89,  fn:()=>{ undimAll(); }},
-    {t:95,  fn:()=>{ setStage('viz'); fillRubric('q', isJ?87:87); flyTo(); }},
+    {t:88,  fn:()=>{ /* VOXEL CUTAWAY begin · 12s scene */ showVoxelCutaway(); }},
+    {t:92,  fn:()=>{ /* Yellow voxel hat brim tilts forward */ voxelTiltYellow(); }},
+    {t:94,  fn:()=>{ /* Score number strikes through 9.0 */ document.getElementById('voxel-score').classList.add('struck'); }},
+    {t:96,  fn:()=>{ /* Score animates to 7.6 corrected */ voxelScoreChange('7.6'); document.getElementById('voxel-score').classList.remove('struck'); document.getElementById('voxel-score').classList.add('corrected'); }},
+    {t:98,  fn:()=>{ /* Caption update */ document.getElementById('voxel-caption').textContent = 'Yellow tipped its hat. The score is now anchored to past winners.'; }},
+    {t:100, fn:()=>{ /* hide cutaway, return to main 3D */ hideVoxelCutaway(); undimAll(); setStage('viz'); fillRubric('q', isJ?87:87); flyTo(); }},
     {t:110, fn:()=>{ showGravity(); }},
     {t:124, fn:()=>{ hideGravity(); }},
     {t:125, fn:()=>{ showAntipat(); }},
@@ -1498,6 +1550,202 @@ function flyTo() {
     three.cur.position.x = s.x + (tgt.x-s.x)*e;
     three.cur.position.y = s.y + (tgt.y-s.y)*e;
     three.cur.position.z = s.z + (tgt.z-s.z)*e;
+    if (k < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+// ============================================================
+// VOXEL CUTAWAY (Three.js Minecraft-style scene)
+// ============================================================
+let voxel = null;
+function ensureVoxel() {
+  if (typeof THREE === 'undefined') { setTimeout(ensureVoxel, 80); return; }
+  if (voxel && voxel.renderer) return;
+  const canvas = document.getElementById('voxel-canvas');
+  const wrap = canvas.parentElement;
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  voxel = {};
+  voxel.scene = new THREE.Scene();
+  voxel.scene.fog = new THREE.Fog(0x0c1320, 12, 36);
+  voxel.camera = new THREE.PerspectiveCamera(48, w/h, 0.1, 200);
+  voxel.camera.position.set(0, 3.2, 11);
+  voxel.camera.lookAt(0, 1.5, 0);
+  voxel.renderer = new THREE.WebGLRenderer({canvas, antialias: false, alpha: false});
+  voxel.renderer.setSize(w, h, false);
+  voxel.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  // ambient + directional for chiseled voxel look
+  voxel.scene.add(new THREE.AmbientLight(0xffffff, 0.45));
+  const dir = new THREE.DirectionalLight(0xffffff, 0.85); dir.position.set(4, 8, 6); voxel.scene.add(dir);
+
+  // Floor (pixel-block grid, 12x12)
+  const floorMat = new THREE.MeshLambertMaterial({color: 0x1a2540});
+  const floorMat2 = new THREE.MeshLambertMaterial({color: 0x202d4a});
+  for (let x = -6; x < 6; x++) {
+    for (let z = -6; z < 6; z++) {
+      const block = new THREE.Mesh(new THREE.BoxGeometry(1, 0.2, 1), (x+z)%2===0 ? floorMat : floorMat2);
+      block.position.set(x + 0.5, 0, z + 0.5);
+      voxel.scene.add(block);
+    }
+  }
+  // Audit pedestal (3x3 raised block)
+  const pedMat = new THREE.MeshLambertMaterial({color: 0x303d5c});
+  for (let x = -1; x <= 1; x++) for (let z = -1; z <= 1; z++) {
+    const b = new THREE.Mesh(new THREE.BoxGeometry(1, 0.3, 1), pedMat);
+    b.position.set(x, 0.25, z);
+    voxel.scene.add(b);
+  }
+
+  // 6 voxel hat characters
+  const hatColors = {
+    white:  0xf0f0f0, red: 0xef4444, yellow: 0xfbbf24,
+    black:  0x1f2937, green: 0x10b981, blue: 0x3b82f6
+  };
+  const skinTone = 0xf4c8a4;
+  // positions around pedestal
+  const positions = {
+    yellow: {x: 0,    z: 0,    facing: 0,     scale: 1.15},  // center, big — focus
+    white:  {x: -2.5, z: -1.5, facing: 0.5},
+    red:    {x: -3,   z: 1,    facing: 0.9},
+    black:  {x: 2.5,  z: -1.5, facing: -0.5},
+    green:  {x: 3,    z: 1,    facing: -0.9},
+    blue:   {x: 0,    z: 3,    facing: Math.PI}    // behind pedestal
+  };
+  voxel.characters = {};
+  Object.entries(positions).forEach(([id, p]) => {
+    const grp = new THREE.Group();
+    grp.position.set(p.x, 0.4, p.z);
+    grp.rotation.y = p.facing;
+    const scl = p.scale || 1.0;
+    grp.scale.set(scl, scl, scl);
+
+    // body (1 wide x 1.4 tall x 0.6 deep block)
+    const bodyMat = new THREE.MeshLambertMaterial({color: hatColors[id]});
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.0, 0.5), bodyMat);
+    body.position.y = 0.5;
+    grp.add(body);
+
+    // head (skin block)
+    const headMat = new THREE.MeshLambertMaterial({color: id==='black' ? 0x2d2520 : skinTone});
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.7, 0.7), headMat);
+    head.position.y = 1.4;
+    grp.add(head);
+
+    // eyes
+    const eyeMat = new THREE.MeshBasicMaterial({color: 0x000000});
+    const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 0.05), eyeMat);
+    eyeL.position.set(-0.16, 1.45, 0.36); grp.add(eyeL);
+    const eyeR = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 0.05), eyeMat);
+    eyeR.position.set(0.16, 1.45, 0.36); grp.add(eyeR);
+
+    // hat (top hat: brim + crown)
+    const hatMat = new THREE.MeshLambertMaterial({color: hatColors[id]});
+    const brim = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.1, 1.0), hatMat);
+    brim.position.y = 1.85;
+    const crown = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.5, 0.6), hatMat);
+    crown.position.y = 2.15;
+    const hatGroup = new THREE.Group();
+    hatGroup.add(brim); hatGroup.add(crown);
+    hatGroup.position.y = 0;
+    grp.add(hatGroup);
+    grp.userData = { hat: hatGroup, id: id };
+
+    voxel.scene.add(grp);
+    voxel.characters[id] = grp;
+  });
+
+  // Phoenix eye floating above (orange gradient cube)
+  const eyeBodyMat = new THREE.MeshLambertMaterial({color: 0xff5fb1});
+  const eyeBody = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 0.8), eyeBodyMat);
+  eyeBody.position.set(0, 4.2, -1);
+  voxel.scene.add(eyeBody);
+  const pupilMat = new THREE.MeshBasicMaterial({color: 0x0c1320});
+  const pupil = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.1), pupilMat);
+  pupil.position.set(0, 4.2, -0.6);
+  voxel.scene.add(pupil);
+  const irisMat = new THREE.MeshBasicMaterial({color: 0xffffff});
+  const iris = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 0.05), irisMat);
+  iris.position.set(0.05, 4.22, -0.55);
+  voxel.scene.add(iris);
+  voxel.phoenix = {body: eyeBody, pupil, iris};
+
+  // Floating anchor blocks (3 winners — Globot, Aegis, Netra) above on shelves
+  const anchorMat = new THREE.MeshLambertMaterial({color: 0xfbbf24, emissive: 0x4a3812});
+  voxel.anchors = [];
+  [-3, 0, 3].forEach((x, i) => {
+    const a = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), anchorMat);
+    a.position.set(x, 5.0, -3);
+    a.userData = {phase: i * 1.2};
+    voxel.scene.add(a);
+    voxel.anchors.push(a);
+  });
+
+  voxel.startTime = performance.now();
+}
+function animateVoxel() {
+  if (!voxel || !voxel.renderer) return;
+  const t = (performance.now() - (voxel.startTime || performance.now())) / 1000;
+  // Anchor float bob
+  voxel.anchors.forEach(a => {
+    a.position.y = 5.0 + Math.sin(t * 1.4 + a.userData.phase) * 0.18;
+    a.rotation.y = t * 0.5;
+  });
+  // Phoenix eye micro-blink + slow rotate
+  if (voxel.phoenix) {
+    voxel.phoenix.body.rotation.y = Math.sin(t * 0.3) * 0.4;
+    const blink = (Math.sin(t * 1.2) > 0.95) ? 0.1 : 1;
+    voxel.phoenix.iris.scale.y = blink;
+  }
+  // Camera slow dolly
+  voxel.camera.position.x = Math.sin(t * 0.3) * 1.5;
+  voxel.camera.lookAt(0, 1.5, 0);
+  voxel.renderer.render(voxel.scene, voxel.camera);
+  voxel.raf = requestAnimationFrame(animateVoxel);
+}
+function showVoxelCutaway() {
+  els['voxel-cutaway'] = els['voxel-cutaway'] || document.getElementById('voxel-cutaway');
+  els['voxel-cutaway'].classList.add('show');
+  ensureVoxel();
+  setTimeout(()=>{ if (voxel) { voxel.startTime = performance.now(); animateVoxel(); } }, 60);
+  document.getElementById('voxel-score').textContent = '9.0';
+  document.getElementById('voxel-score').classList.remove('struck','corrected');
+  document.getElementById('voxel-caption').textContent = 'The optimist scored 9. The vector space had three winners say otherwise.';
+}
+function hideVoxelCutaway() {
+  if (els['voxel-cutaway']) els['voxel-cutaway'].classList.remove('show');
+  if (voxel && voxel.raf) cancelAnimationFrame(voxel.raf);
+}
+function voxelTiltYellow() {
+  if (!voxel || !voxel.characters || !voxel.characters.yellow) return;
+  const grp = voxel.characters.yellow;
+  const hatGroup = grp.userData.hat;
+  if (!hatGroup) return;
+  const start = performance.now();
+  const dur = reducedMotion ? 1 : 800;
+  function step() {
+    const k = Math.min(1, (performance.now() - start) / dur);
+    const e = 1 - Math.pow(1 - k, 3);
+    // Tip hat forward (rotate around X axis at base of hat)
+    hatGroup.rotation.x = e * 0.45;     // up to ~26°
+    hatGroup.position.z = e * 0.15;     // slide forward as it tips
+    hatGroup.position.y = -e * 0.05;
+    // Head also slightly down
+    if (k < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+function voxelScoreChange(newVal) {
+  const el = document.getElementById('voxel-score');
+  if (!el) return;
+  const from = parseFloat(el.textContent) || 9.0;
+  const to = parseFloat(newVal);
+  const dur = reducedMotion ? 1 : 1200;
+  const start = performance.now();
+  function step() {
+    const k = Math.min(1, (performance.now() - start) / dur);
+    const e = 1 - Math.pow(1 - k, 3);
+    const v = from + (to - from) * e;
+    el.textContent = v.toFixed(1);
     if (k < 1) requestAnimationFrame(step);
   }
   requestAnimationFrame(step);
