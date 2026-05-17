@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Glasshat · Phoenix Cloud — run 7af9c2…b1</title>
+<style>
+  :root {
+    --bg: oklch(13% 0.012 264);
+    --bg-2: oklch(16% 0.018 264);
+    --panel: oklch(19% 0.022 264);
+    --panel-2: oklch(22% 0.026 264);
+    --rail: oklch(15% 0.014 264);
+    --line: oklch(27% 0.028 264);
+    --line-2: oklch(32% 0.03 264);
+    --text: oklch(96% 0.01 264);
+    --muted: oklch(70% 0.02 264);
+    --dim: oklch(54% 0.025 264);
+    --phoenix: oklch(72% 0.18 28);
+    --accent: oklch(78% 0.16 88);
+    --ok: oklch(78% 0.16 155);
+    --info: oklch(78% 0.14 235);
+    --warn: oklch(82% 0.16 75);
+    --violet: oklch(72% 0.18 295);
+    --pink: oklch(76% 0.16 350);
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font: 13px/1.5 system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased; }
+  ::selection { background: oklch(72% 0.18 28 / .35); }
+
+  /* ===== Layout: Phoenix-style 3 column ===== */
+  .app { display: grid; grid-template-rows: 44px 36px 1fr; min-height: 100vh; }
+
+  /* top bar */
+  .topbar {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--rail); border-bottom: 1px solid var(--line); padding: 0 14px;
+    font-size: 12px;
+  }
+  .px-brand { display: flex; align-items: center; gap: 8px; font-weight: 600; letter-spacing: -0.01em; }
+  .px-brand svg { width: 18px; height: 18px; color: var(--phoenix); }
+  .px-brand span.sub { color: var(--dim); font-weight: 400; margin-left: 2px; font-family: var(--mono); font-size: 11px; }
+  .crumbs { display: flex; align-items: center; gap: 6px; color: var(--muted); font-family: var(--mono); font-size: 11px; margin-left: 12px; }
+  .crumbs b { color: var(--text); font-weight: 500; }
+  .crumbs i { color: var(--dim); }
+  .top-right { margin-left: auto; display: flex; gap: 10px; align-items: center; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  .pill { padding: 3px 8px; border-radius: 999px; background: var(--panel); border: 1px solid var(--line); }
+  .pill.ok { color: var(--ok); border-color: oklch(78% 0.16 155 / .35); }
+  .pill.live::before { content:"●"; color: var(--ok); margin-right: 5px; animation: blink 1.4s infinite; }
+  @keyframes blink { 50% { opacity: .3; } }
+
+  /* sub-tabs (phoenix-style) */
+  .subtabs {
+    display: flex; align-items: stretch; background: var(--bg-2); border-bottom: 1px solid var(--line);
+    font-size: 12px; font-family: var(--mono);
+  }
+  .subtabs .tab { padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; color: var(--muted); cursor: pointer; border-right: 1px solid var(--line); }
+  .subtabs .tab.on { color: var(--text); background: var(--bg); border-bottom: 2px solid var(--phoenix); margin-bottom: -1px; }
+  .subtabs .tab .n { background: var(--panel); border: 1px solid var(--line); padding: 0 5px; border-radius: 4px; font-size: 10px; color: var(--muted); }
+  .subtabs .right { margin-left: auto; padding: 0 14px; color: var(--dim); display: flex; align-items: center; gap: 10px; }
+
+  /* main grid */
+  .main { display: grid; grid-template-columns: 260px 1fr 380px; min-height: 0; }
+  .left, .right { background: var(--rail); border-right: 1px solid var(--line); overflow: auto; }
+  .right { border-right: 0; border-left: 1px solid var(--line); }
+  .center { background: var(--bg); overflow: auto; }
+
+  /* ===== LEFT: span tree ===== */
+  .left h4 { font: 600 10px var(--mono); color: var(--dim); letter-spacing: 0.1em; text-transform: uppercase; margin: 14px 14px 8px; }
+  .left .filter { margin: 8px 12px 6px; padding: 5px 8px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  .left .filter::before { content: "⌕  "; color: var(--dim); }
+  .span-tree { font-family: var(--mono); font-size: 11px; padding: 4px 0; }
+  .tnode {
+    display: grid; grid-template-columns: 1fr auto auto; padding: 4px 12px 4px 6px;
+    gap: 8px; align-items: center; cursor: pointer; border-left: 2px solid transparent;
+  }
+  .tnode:hover { background: var(--bg-2); }
+  .tnode.on { background: var(--bg-2); border-left-color: var(--phoenix); }
+  .tnode .nm { display: flex; align-items: center; gap: 5px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tnode .nm .ic { color: var(--dim); font-size: 10px; width: 10px; }
+  .tnode .nm .kd { font-size: 9px; padding: 0 4px; border-radius: 3px; background: var(--panel); color: var(--info); border: 1px solid oklch(78% 0.14 235 / .25); margin-right: 4px; }
+  .tnode .nm .kd.tool { color: var(--violet); border-color: oklch(72% 0.18 295 / .25); }
+  .tnode .nm .kd.chain { color: var(--ok); border-color: oklch(78% 0.16 155 / .25); }
+  .tnode .nm .kd.agent { color: var(--accent); border-color: oklch(78% 0.16 88 / .25); }
+  .tnode .nm .kd.eval { color: var(--phoenix); border-color: oklch(72% 0.18 28 / .25); }
+  .tnode .du { color: var(--muted); font-size: 10px; font-feature-settings: "tnum"; }
+  .tnode .st { font-size: 9px; padding: 0 4px; border-radius: 3px; background: oklch(78% 0.16 155 / .15); color: var(--ok); }
+  .tnode .st.warn { background: oklch(82% 0.16 75 / .15); color: var(--warn); }
+  .tnode .st.err { background: oklch(72% 0.18 28 / .15); color: var(--phoenix); }
+  .l1 { padding-left: 18px; }
+  .l2 { padding-left: 36px; }
+  .l3 { padding-left: 54px; }
+  .l4 { padding-left: 72px; }
+  .tnode.flagged { background: oklch(72% 0.18 28 / .08); border-left-color: var(--phoenix); }
+
+  /* ===== CENTER: panels stacked ===== */
+  .center-pad { padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
+  }
+  .card-h { padding: 10px 14px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px;
+    font: 11px var(--mono); color: var(--muted); background: var(--panel-2); }
+  .card-h b { color: var(--text); font-weight: 600; font-size: 12px; }
+  .card-h .right { margin-left: auto; display: flex; gap: 8px; }
+  .card-body { padding: 14px; }
+
+  /* gantt waterfall */
+  .waterfall { font-family: var(--mono); font-size: 11px; }
+  .wf-row { display: grid; grid-template-columns: 180px 1fr 60px; padding: 3px 14px; gap: 10px; align-items: center;
+    border-bottom: 1px solid oklch(27% 0.028 264 / .35); }
+  .wf-row:hover { background: var(--bg-2); }
+  .wf-row.flagged { background: oklch(72% 0.18 28 / .07); }
+  .wf-name { color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
+  .wf-name i { color: var(--dim); font-style: normal; margin-right: 4px; }
+  .wf-track { position: relative; height: 14px; background: oklch(20% 0.022 264); border-radius: 3px; }
+  .wf-bar { position: absolute; top: 1px; bottom: 1px; background: var(--info); border-radius: 2px; transition: width .5s; }
+  .wf-bar.a { background: var(--accent); }
+  .wf-bar.t { background: var(--violet); }
+  .wf-bar.c { background: var(--ok); }
+  .wf-bar.e { background: var(--phoenix); }
+  .wf-dur { color: var(--muted); font-size: 10px; text-align: right; font-feature-settings: "tnum"; }
+  .wf-axis { display: grid; grid-template-columns: 180px 1fr 60px; padding: 4px 14px 6px; gap: 10px; color: var(--dim); font-size: 10px; }
+  .wf-axis .ax { display: flex; justify-content: space-between; }
+
+  /* topology diagram */
+  .topo { padding: 14px; }
+  .topo svg { width: 100%; height: 360px; display: block; }
+  .topo-legend { display: flex; gap: 14px; padding: 0 14px 12px; font-family: var(--mono); font-size: 10px; color: var(--muted); flex-wrap: wrap; }
+  .topo-legend span i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+
+  /* score-correction live JSON */
+  .json-stream { font-family: var(--mono); font-size: 11px; line-height: 1.7; color: var(--muted); padding: 14px; background: var(--bg); border-radius: 8px; margin: 0 14px 14px; border: 1px solid var(--line); }
+  .json-stream .k { color: var(--info); }
+  .json-stream .s { color: var(--ok); }
+  .json-stream .n { color: var(--accent); }
+  .json-stream .old { color: var(--dim); text-decoration: line-through; margin-right: 6px; }
+  .json-stream .new { color: var(--phoenix); font-weight: 600; animation: pulseColor 1.4s ease-out; }
+  .json-stream .new.amber { color: var(--accent); }
+  @keyframes pulseColor { 0% { background: oklch(72% 0.18 28 / .35); } 100% { background: transparent; } }
+  .json-stream .cmt { color: var(--dim); font-style: italic; }
+  .json-stream .ev { color: var(--phoenix); }
+  .json-stream .caret { display: inline-block; width: 6px; height: 12px; background: var(--accent); vertical-align: -1px; animation: car 1s steps(2) infinite; }
+  @keyframes car { 50% { opacity: 0; } }
+
+  /* hat reasoning stream cards */
+  .hats { padding: 0 14px 14px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .hat {
+    background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px;
+    min-height: 130px;
+  }
+  .hat-h { display: flex; align-items: center; gap: 6px; font: 600 11px var(--mono); margin-bottom: 6px; }
+  .hat-h .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .hat-h .score { margin-left: auto; font-family: var(--mono); color: var(--text); }
+  .hat-h .score s { color: var(--dim); margin-right: 4px; }
+  .hat-body { color: var(--muted); font-family: var(--mono); font-size: 11px; line-height: 1.55; }
+  .hat-body b { color: var(--text); font-weight: 500; }
+  .hat-body .ref { color: var(--info); }
+  .hat-body .caret { display: inline-block; width: 5px; height: 11px; background: var(--accent); vertical-align: -1px; animation: car 1s steps(2) infinite; }
+
+  /* ===== RIGHT: attribute inspector ===== */
+  .ins-head { padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--panel-2);
+    font: 11px var(--mono); color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  .ins-head b { color: var(--text); font-weight: 600; }
+  .ins-tabs { display: flex; border-bottom: 1px solid var(--line); font-family: var(--mono); font-size: 11px; }
+  .ins-tabs div { padding: 7px 12px; border-right: 1px solid var(--line); color: var(--muted); cursor: pointer; }
+  .ins-tabs div.on { color: var(--text); background: var(--bg-2); border-bottom: 2px solid var(--phoenix); }
+  .ins-section { padding: 12px 14px; border-bottom: 1px solid var(--line); font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  .ins-section h5 { color: var(--text); font: 600 10px var(--mono); letter-spacing: 0.06em; text-transform: uppercase; margin: 0 0 8px; }
+  .kv { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; }
+  .kv > span:nth-child(odd) { color: var(--dim); }
+  .kv > span:nth-child(even) { color: var(--text); }
+  .kv > span .hl { color: var(--phoenix); }
+  .anno {
+    background: oklch(72% 0.18 28 / .08); border: 1px solid oklch(72% 0.18 28 / .3);
+    padding: 8px 10px; border-radius: 6px; margin-top: 6px; font-size: 11px;
+  }
+  .anno .lab { color: var(--phoenix); font-weight: 600; }
+  .anno .meta { color: var(--dim); font-size: 10px; margin-top: 3px; }
+
+  .mcp-call {
+    background: var(--bg-2); border: 1px solid var(--line); border-radius: 6px;
+    padding: 8px 10px; margin: 4px 0; font-size: 11px;
+  }
+  .mcp-call .h { display: flex; gap: 8px; align-items: center; }
+  .mcp-call .h .nm { color: var(--violet); font-weight: 500; }
+  .mcp-call .h .du { margin-left: auto; color: var(--muted); font-size: 10px; }
+  .mcp-call .args { color: var(--muted); margin-top: 4px; }
+  .mcp-call .res { color: var(--ok); margin-top: 4px; }
+
+  /* footer status bar */
+  .statusbar {
+    grid-row: 4;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ===== TOP BAR ===== -->
+  <div class="topbar">
+    <div class="px-brand">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l-1.5 5.5L5 8l4 3.5L7.5 17 12 14l4.5 3-1.5-5.5L19 8l-5.5-.5L12 2z"/></svg>
+      Phoenix <span class="sub">· glasshat-prod</span>
+    </div>
+    <div class="crumbs">
+      <span>projects</span><i>/</i><b>glasshat-prod</b><i>/</i>
+      <span>traces</span><i>/</i><b>7af9c2…b1</b>
+    </div>
+    <div class="top-right">
+      <span class="pill live">live</span>
+      <span class="pill">env <b style="color:var(--text);">prod</b></span>
+      <span class="pill">model <b style="color:var(--text);">gemini-3.1-pro</b></span>
+      <span class="pill">user <b style="color:var(--text);">judge_42</b></span>
+    </div>
+  </div>
+
+  <!-- ===== SUB TABS ===== -->
+  <div class="subtabs">
+    <div class="tab on">Spans <span class="n">47</span></div>
+    <div class="tab">Datasets <span class="n">3</span></div>
+    <div class="tab">Experiments <span class="n">1</span></div>
+    <div class="tab">Prompts</div>
+    <div class="tab">Evaluators <span class="n">2</span></div>
+    <div class="tab">Annotations <span class="n">3</span></div>
+    <div class="right">
+      <span>run · 7af9c2…b1</span>
+      <span>started · 2026-05-17 14:22:08 UTC</span>
+      <span>14.20s</span>
+    </div>
+  </div>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+
+    <!-- ===== LEFT: span tree ===== -->
+    <div class="left">
+      <h4>filter</h4>
+      <div class="filter">name:* span.kind:AGENT|TOOL</div>
+      <h4>span tree</h4>
+      <div class="span-tree">
+        <div class="tnode"><div class="nm"><span class="ic">▾</span><span class="kd agent">AGT</span>GlasshatRootAgent</div><div class="du">14.20s</div><div class="st">ok</div></div>
+        <div class="tnode l1"><div class="nm"><span class="ic">▸</span><span class="kd agent">AGT</span>IngestAgent</div><div class="du">0.74s</div><div class="st">ok</div></div>
+        <div class="tnode l1"><div class="nm"><span class="ic">▾</span><span class="kd agent">AGT</span>RubricSynthesizer</div><div class="du">1.81s</div><div class="st">ok</div></div>
+        <div class="tnode l2"><div class="nm"><span class="kd tool">TL</span>vertex.generate_content</div><div class="du">1.62s</div><div class="st">ok</div></div>
+        <div class="tnode l1"><div class="nm"><span class="ic">▸</span><span class="kd agent">AGT</span>BluePlannerAgent</div><div class="du">0.82s</div><div class="st">ok</div></div>
+        <div class="tnode l1"><div class="nm"><span class="ic">▾</span><span class="kd chain">CHN</span>HatsPanel · Parallel[6]</div><div class="du">4.92s</div><div class="st">ok</div></div>
+        <div class="tnode l2"><div class="nm"><span class="kd agent">AGT</span>WhiteAgent.score · A1</div><div class="du">2.10s</div><div class="st">ok</div></div>
+        <div class="tnode l2"><div class="nm"><span class="kd agent">AGT</span>RedAgent.score · A1</div><div class="du">1.41s</div><div class="st">ok</div></div>
+        <div class="tnode l2 flagged on" id="rowSelected"><div class="nm"><span class="kd agent">AGT</span>YellowAgent.score · A1</div><div class="du">2.04s</div><div class="st err">flag</div></div>
+        <div class="tnode l2"><div class="nm"><span class="kd agent">AGT</span>BlackAgent.score · A1</div><div class="du">2.81s</div><div class="st">ok</div></div>
+        <div class="tnode l2"><div class="nm"><span class="kd agent">AGT</span>GreenAgent.score · A1</div><div class="du">1.92s</div><div class="st">ok</div></div>
+        <div class="tnode l2"><div class="nm"><span class="kd agent">AGT</span>BlueSynthesisAgent</div><div class="du">2.71s</div><div class="st">ok</div></div>
+        <div class="tnode l1"><div class="nm"><span class="ic">▾</span><span class="kd chain">CHN</span>AuditLoop · iter 1/2</div><div class="du">5.81s</div><div class="st">ok</div></div>
+        <div class="tnode l2"><div class="nm"><span class="kd agent">AGT</span>InconsistencyDetector</div><div class="du">0.41s</div><div class="st warn">3 flags</div></div>
+        <div class="tnode l3"><div class="nm"><span class="kd eval">EV</span>phoenix.online_eval</div><div class="du">0.62s</div><div class="st warn">over</div></div>
+        <div class="tnode l3"><div class="nm"><span class="kd eval">EV</span>phoenix.custom_eval</div><div class="du">0.04s</div><div class="st warn">low</div></div>
+        <div class="tnode l3"><div class="nm"><span class="kd agent">AGT</span>black.counter_claim</div><div class="du">0.01s</div><div class="st warn">miss</div></div>
+        <div class="tnode l2"><div class="nm"><span class="ic">▾</span><span class="kd agent">AGT</span>PhoenixConsultant</div><div class="du">0.78s</div><div class="st">ok</div></div>
+        <div class="tnode l3"><div class="nm"><span class="kd tool">MCP</span>get-experiment-by-id</div><div class="du">0.21s</div><div class="st">200</div></div>
+        <div class="tnode l3"><div class="nm"><span class="kd tool">MCP</span>get-span-annotations</div><div class="du">0.18s</div><div class="st">200</div></div>
+        <div class="tnode l3"><div class="nm"><span class="kd tool">MCP</span>get-dataset-examples</div><div class="du">0.24s</div><div class="st">200</div></div>
+        <div class="tnode l3"><div class="nm"><span class="kd tool">VEC</span>qdrant.recommend</div><div class="du">0.19s</div><div class="st">3hit</div></div>
+        <div class="tnode l2"><div class="nm"><span class="kd agent">AGT</span>ScoreCalibration · clip</div><div class="du">0.31s</div><div class="st">escl</div></div>
+        <div class="tnode l1"><div class="nm"><span class="ic">▸</span><span class="kd agent">AGT</span>BMADScorerAgent</div><div class="du">1.92s</div><div class="st">ok</div></div>
+        <div class="tnode l1"><div class="nm"><span class="ic">▸</span><span class="kd agent">AGT</span>ReportAssembler</div><div class="du">0.18s</div><div class="st">ok</div></div>
+      </div>
+    </div>
+
+    <!-- ===== CENTER ===== -->
+    <div class="center">
+      <div class="center-pad">
+
+        <!-- Topology -->
+        <div class="card">
+          <div class="card-h">
+            <b>agent topology</b> · GlasshatRootAgent
+            <span style="color:var(--dim);">· ADK · Cloud Run · us-west2</span>
+            <div class="right">
+              <span style="font-family:var(--mono);font-size:10px;color:var(--ok);">● iter 1/2 complete</span>
+            </div>
+          </div>
+          <div class="topo">
+            <svg viewBox="0 0 920 360" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                  <path d="M0,0 L10,5 L0,10 z" fill="oklch(54% 0.025 264)"/>
+                </marker>
+                <marker id="arrowA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                  <path d="M0,0 L10,5 L0,10 z" fill="oklch(78% 0.16 88)"/>
+                </marker>
+              </defs>
+
+              <!-- Root -->
+              <g>
+                <rect x="20" y="160" width="150" height="40" rx="8" fill="oklch(20% 0.022 264)" stroke="oklch(78% 0.16 88)" stroke-width="1.2"/>
+                <text x="95" y="178" text-anchor="middle" fill="oklch(96% 0.01 264)" font-family="ui-monospace,monospace" font-size="11" font-weight="600">GlasshatRootAgent</text>
+                <text x="95" y="192" text-anchor="middle" fill="oklch(54% 0.025 264)" font-family="ui-monospace,monospace" font-size="9">CustomAgent</text>
+              </g>
+              <line x1="170" y1="180" x2="220" y2="180" stroke="oklch(78% 0.16 88)" stroke-width="1.2" marker-end="url(#arrowA)"/>
+
+              <!-- ParallelAgent[6] -->
+              <g>
+                <rect x="220" y="40" width="170" height="280" rx="10" fill="oklch(19% 0.022 264)" stroke="oklch(72% 0.18 295 / .5)" stroke-width="1" stroke-dasharray="3,3"/>
+                <text x="305" y="60" text-anchor="middle" fill="oklch(72% 0.18 295)" font-family="ui-monospace,monospace" font-size="10" font-weight="600">ParallelAgent[6]</text>
+                <text x="305" y="74" text-anchor="middle" fill="oklch(54% 0.025 264)" font-family="ui-monospace,monospace" font-size="9">HatsPanel</text>
+              </g>
+              <!-- 6 hats -->
+              <g font-family="ui-monospace,monospace" font-size="10" fill="oklch(96% 0.01 264)">
+                <g><circle cx="240" cy="100" r="6" fill="oklch(95% 0.005 264)"/><text x="252" y="103">White</text><text x="375" y="103" text-anchor="end" fill="oklch(70% 0.02 264)" font-size="9">8.2</text></g>
+                <g><circle cx="240" cy="130" r="6" fill="oklch(70% 0.18 28)"/><text x="252" y="133">Red</text><text x="375" y="133" text-anchor="end" fill="oklch(70% 0.02 264)" font-size="9">6.4</text></g>
+                <g class="yellow-hat-row">
+                  <circle cx="240" cy="160" r="6" fill="oklch(85% 0.16 88)"/>
+                  <text x="252" y="163">Yellow</text>
+                  <text id="topo-yellow" x="375" y="163" text-anchor="end" fill="oklch(72% 0.18 28)" font-size="9" font-weight="600">9.0 ▸</text>
+                </g>
+                <g><circle cx="240" cy="190" r="6" fill="oklch(20% 0.02 264)" stroke="oklch(70% 0.02 264)"/><text x="252" y="193">Black</text><text x="375" y="193" text-anchor="end" fill="oklch(70% 0.02 264)" font-size="9">7.1</text></g>
+                <g><circle cx="240" cy="220" r="6" fill="oklch(75% 0.16 155)"/><text x="252" y="223">Green</text><text x="375" y="223" text-anchor="end" fill="oklch(70% 0.02 264)" font-size="9">7.9</text></g>
+                <g><circle cx="240" cy="250" r="6" fill="oklch(70% 0.16 235)"/><text x="252" y="253">Blue</text><text x="375" y="253" text-anchor="end" fill="oklch(70% 0.02 264)" font-size="9">syn</text></g>
+                <text x="305" y="290" text-anchor="middle" fill="oklch(54% 0.025 264)" font-size="9">4.92s · 6 spans</text>
+              </g>
+
+              <line x1="390" y1="180" x2="440" y2="180" stroke="oklch(54% 0.025 264)" stroke-width="1" marker-end="url(#arrow)"/>
+
+              <!-- AuditLoop -->
+              <g>
+                <rect x="440" y="80" width="220" height="200" rx="10" fill="oklch(19% 0.022 264)" stroke="oklch(72% 0.18 28 / .55)" stroke-width="1.2"/>
+                <text x="550" y="100" text-anchor="middle" fill="oklch(72% 0.18 28)" font-family="ui-monospace,monospace" font-size="10" font-weight="600">LoopAgent · max_iter=2</text>
+                <text x="550" y="114" text-anchor="middle" fill="oklch(54% 0.025 264)" font-family="ui-monospace,monospace" font-size="9">AuditLoop</text>
+
+                <rect x="458" y="128" width="184" height="30" rx="5" fill="oklch(22% 0.026 264)" stroke="oklch(27% 0.028 264)"/>
+                <text x="550" y="147" text-anchor="middle" fill="oklch(96% 0.01 264)" font-family="ui-monospace,monospace" font-size="10">InconsistencyDetector</text>
+
+                <rect x="458" y="166" width="184" height="30" rx="5" fill="oklch(22% 0.026 264)" stroke="oklch(72% 0.18 295 / .4)"/>
+                <text x="550" y="185" text-anchor="middle" fill="oklch(72% 0.18 295)" font-family="ui-monospace,monospace" font-size="10">PhoenixConsultant ◊ mcp</text>
+
+                <rect x="458" y="204" width="184" height="30" rx="5" fill="oklch(22% 0.026 264)" stroke="oklch(27% 0.028 264)"/>
+                <text x="550" y="223" text-anchor="middle" fill="oklch(96% 0.01 264)" font-family="ui-monospace,monospace" font-size="10">ScoreCalibration · clip()</text>
+
+                <text x="550" y="258" text-anchor="middle" fill="oklch(54% 0.025 264)" font-family="ui-monospace,monospace" font-size="9">escalate=True · exit iter 1</text>
+              </g>
+
+              <line x1="660" y1="180" x2="710" y2="180" stroke="oklch(54% 0.025 264)" stroke-width="1" marker-end="url(#arrow)"/>
+
+              <!-- MCPToolset -->
+              <g>
+                <rect x="710" y="100" width="190" height="160" rx="10" fill="oklch(19% 0.022 264)" stroke="oklch(72% 0.18 295 / .5)" stroke-dasharray="3,3"/>
+                <text x="805" y="120" text-anchor="middle" fill="oklch(72% 0.18 295)" font-family="ui-monospace,monospace" font-size="10" font-weight="600">MCPToolset · stdio</text>
+                <text x="805" y="134" text-anchor="middle" fill="oklch(54% 0.025 264)" font-family="ui-monospace,monospace" font-size="9">npx @arizeai/phoenix-mcp</text>
+                <g font-family="ui-monospace,monospace" font-size="10" fill="oklch(96% 0.01 264)">
+                  <text x="722" y="158">▸ get-experiment-by-id</text>
+                  <text x="722" y="178">▸ get-span-annotations</text>
+                  <text x="722" y="198">▸ get-dataset-examples</text>
+                  <text x="722" y="218">▸ add-dataset-examples</text>
+                  <text x="722" y="240" fill="oklch(78% 0.16 155)">+ qdrant.recommend()</text>
+                </g>
+              </g>
+
+              <!-- pulsing edge from yellow → audit loop -->
+              <line x1="305" y1="160" x2="440" y2="160" stroke="oklch(72% 0.18 28)" stroke-width="1.4" stroke-dasharray="4,4" marker-end="url(#arrow)">
+                <animate attributeName="stroke-dashoffset" from="0" to="-16" dur="0.8s" repeatCount="indefinite"/>
+              </line>
+              <text x="370" y="152" text-anchor="middle" fill="oklch(72% 0.18 28)" font-family="ui-monospace,monospace" font-size="9">flag</text>
+            </svg>
+          </div>
+          <div class="topo-legend">
+            <span><i style="background:oklch(78% 0.16 88);"></i>CustomAgent</span>
+            <span><i style="background:oklch(72% 0.18 295);"></i>ParallelAgent / MCPToolset</span>
+            <span><i style="background:oklch(72% 0.18 28);"></i>LoopAgent · audit path</span>
+            <span><i style="background:oklch(78% 0.16 155);"></i>Qdrant tool</span>
+          </div>
+        </div>
+
+        <!-- Waterfall -->
+        <div class="card">
+          <div class="card-h">
+            <b>waterfall</b> · 47 spans · 14.20s total
+            <div class="right">
+              <span style="color:var(--dim);">scale</span>
+              <span style="color:var(--text);">1ms = 0.7px</span>
+            </div>
+          </div>
+          <div class="waterfall">
+            <div class="wf-axis"><div></div><div class="ax"><span>0s</span><span>3s</span><span>6s</span><span>9s</span><span>12s</span><span>15s</span></div><div></div></div>
+            <div class="wf-row"><div class="wf-name"><i>▾</i>GlasshatRootAgent</div><div class="wf-track"><div class="wf-bar a" style="left:0;width:100%;"></div></div><div class="wf-dur">14.20s</div></div>
+            <div class="wf-row"><div class="wf-name" style="padding-left:14px;"><i>▸</i>IngestAgent</div><div class="wf-track"><div class="wf-bar t" style="left:0%;width:5.2%;"></div></div><div class="wf-dur">740ms</div></div>
+            <div class="wf-row"><div class="wf-name" style="padding-left:14px;"><i>▸</i>RubricSynthesizer</div><div class="wf-track"><div class="wf-bar a" style="left:5.2%;width:12.7%;"></div></div><div class="wf-dur">1.81s</div></div>
+            <div class="wf-row"><div class="wf-name" style="padding-left:14px;"><i>▸</i>BluePlannerAgent</div><div class="wf-track"><div class="wf-bar a" style="left:17.9%;width:5.8%;"></div></div><div class="wf-dur">820ms</div></div>
+            <div class="wf-row"><div class="wf-name" style="padding-left:14px;"><i>▾</i>HatsPanel · Parallel[6]</div><div class="wf-track"><div class="wf-bar c" style="left:23.7%;width:34.6%;"></div></div><div class="wf-dur">4.92s</div></div>
+            <div class="wf-row"><div class="wf-name" style="padding-left:28px;">white.score · A1</div><div class="wf-track"><div class="wf-bar" style="left:23.7%;width:14.8%;"></div></div><div class="wf-dur">2.10s</div></div>
+            <div class="wf-row"><div class="wf-name" style="padding-left:28px;">red.score · A1</div><div class="wf-track"><div class="wf-bar" style="left:23.7%;width:9.9%;"></div></div><div class="wf-dur">1.41s</div></div>
+            <div class="wf-row flagged"><div class="wf-name" style="padding-left:28px;">yellow.score · A1</div><div class="wf-track"><div class="wf-bar e" style="left:23.7%;width:14.4%;"></div></div><div class="wf-dur">2.04s</div></div>
+            <div class="wf-row"><div class="wf-name" style="padding-left:28px;">black.score · A1</div><div class="wf-track"><div class="wf-bar" style="left:23.7%;width:19.8%;"></div></div><div class="wf-dur">2.81s</div></div>
+            <div class="wf-row"><div class="wf-name" style="padding-left:28px;">green.score · A1</div><div class="wf-track"><div class="wf-bar" style="left:23.7%;width:13.5%;"></div></div><div class="wf-dur">1.92s</div></div>
+            <div class="wf-row"><div class="wf-name" style="padding-left:28px;">blue.synthesis</div><div class="wf-track"><div class="wf-bar" style="left:43.5%;width:19.1%;"></div></div><div class="wf-dur">2.71s</div></div>
+            <div class="wf-row"><div class="wf-name" style="padding-left:14px;"><i>▾</i>AuditLoop · iter 1/2</div><div class="wf-track"><div class="wf-bar e" style="left:58.3%;width:40.9%;"></div></div><div class="wf-dur">5.81s</div></div>
+            <div class="wf-row"><div class="wf-name" style="padding-left:28px;">InconsistencyDetector</div><div class="wf-track"><div class="wf-bar" style="left:58.3%;width:2.9%;"></div></div><div class="wf-dur">410ms</div></div>
+            <div class="wf-row"><div class="wf-name" style="padding-left:28px;">phoenix.online_eval</div><div class="wf-track"><div class="wf-bar e" style="left:58.3%;width:4.4%;"></div></div><div class="wf-dur">620ms</div></div>
+            <div class="wf-row"><div class="wf-name" style="padding-left:28px;">phoenix.custom_eval</div><div class="wf-track"><div class="wf-bar e" style="left:58.3%;width:0.3%;"></div></div><div class="wf-dur">40ms</div></div>
+            <div class="wf-row"><div class="wf-name" style="padding-left:28px;">PhoenixConsultant</div><div class="wf-track"><div class="wf-bar a" style="left:61.2%;width:5.5%;"></div></div><div class="wf-dur">780ms</div></div>
+            <div class="wf-row"><div class="wf-name" style="padding-left:42px;">mcp · get-experiment-by-id</div><div class="wf-track"><div class="wf-bar t" style="left:61.2%;width:1.5%;"></div></div><div class="wf-dur">210ms</div></div>
+            <div class="wf-row"><div class="wf-name" style="padding-left:42px;">mcp · get-span-annotations</div><div class="wf-track"><div class="wf-bar t" style="left:62.5%;width:1.3%;"></div></div><div class="wf-dur">180ms</div></div>
+            <div class="wf-row"><div class="wf-name" style="padding-left:42px;">mcp · get-dataset-examples</div><div class="wf-track"><div class="wf-bar t" style="left:63.8%;width:1.7%;"></div></div><div class="wf-dur">240ms</div></div>
+            <div class="wf-row"><div class="wf-name" style="padding-left:42px;">qdrant · recommend</div><div class="wf-track"><div class="wf-bar c" style="left:65.0%;width:1.3%;"></div></div><div class="wf-dur">190ms</div></div>
+            <div class="wf-row"><div class="wf-name" style="padding-left:28px;">ScoreCalibration · clip</div><div class="wf-track"><div class="wf-bar a" style="left:66.7%;width:2.2%;"></div></div><div class="wf-dur">310ms</div></div>
+            <div class="wf-row"><div class="wf-name" style="padding-left:14px;"><i>▸</i>BMADScorerAgent</div><div class="wf-track"><div class="wf-bar a" style="left:84.7%;width:13.5%;"></div></div><div class="wf-dur">1.92s</div></div>
+            <div class="wf-row"><div class="wf-name" style="padding-left:14px;"><i>▸</i>ReportAssembler</div><div class="wf-track"><div class="wf-bar t" style="left:98.7%;width:1.3%;"></div></div><div class="wf-dur">180ms</div></div>
+          </div>
+        </div>
+
+        <!-- Hat reasoning streams (generative tokens) -->
+        <div class="card">
+          <div class="card-h">
+            <b>hat reasoning streams</b> · structured tokens · gemini-3 flash
+            <div class="right">
+              <span style="color:var(--dim);">criterion · </span>
+              <span style="color:var(--text);">A1 — Problem clarity</span>
+            </div>
+          </div>
+          <div class="hats" id="hats"></div>
+        </div>
+
+        <!-- Score correction live JSON -->
+        <div class="card">
+          <div class="card-h">
+            <b>score · live mutation</b> · session.state["hat_yellow_score_a1"]
+            <div class="right">
+              <span style="color:var(--phoenix);" id="patchStatus">● applying patch · 4/5</span>
+            </div>
+          </div>
+          <div class="json-stream" id="jsonStream">{
+  <span class="k">"run_id"</span>: <span class="s">"7af9c2…b1"</span>,
+  <span class="k">"rubric"</span>: { <span class="k">"id"</span>: <span class="s">"qdrant-vsd-2026"</span>, <span class="k">"hash"</span>: <span class="s">"0x9a4f2c"</span> },
+  <span class="k">"hat"</span>: <span class="s">"yellow"</span>,
+  <span class="k">"criterion"</span>: <span class="s">"A1"</span>,
+  <span class="k">"score"</span>: <span id="scoreVal" class="n">9.0</span><span class="caret"></span>,
+  <span class="k">"detection"</span>: [ <span class="cmt">// streaming…</span>
+    <span id="det1"></span><span id="det2"></span><span id="det3"></span>
+  ],
+  <span class="k">"consultation"</span>: <span id="consultBlock"></span>,
+  <span class="k">"anchors"</span>: <span id="anchorBlock"></span>,
+  <span class="k">"policy"</span>: <span class="s">"clip(score − 0.8·Δ, p25, p75) · cap=±2.0"</span>,
+  <span class="k">"annotation"</span>: { <span class="k">"annotator_kind"</span>: <span class="s">"LLM"</span> }
+}</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===== RIGHT INSPECTOR ===== -->
+    <div class="right">
+      <div class="ins-head"><b>YellowAgent.score · A1</b><span style="margin-left:auto;color:var(--phoenix);">● flagged</span></div>
+      <div class="ins-tabs">
+        <div class="on">attributes</div>
+        <div>I/O</div>
+        <div>events</div>
+        <div>annotations <span class="n" style="font-size:9px;color:var(--phoenix);">3</span></div>
+      </div>
+      <div class="ins-section">
+        <h5>openinference</h5>
+        <div class="kv">
+          <span>span.id</span><span>7af9c2…ylw_a1</span>
+          <span>span.kind</span><span>AGENT</span>
+          <span>parent.id</span><span>7af9c2…hats</span>
+          <span>llm.model_name</span><span>gemini-3-flash-preview</span>
+          <span>llm.token_count.prompt</span><span>2,041</span>
+          <span>llm.token_count.completion</span><span>318</span>
+          <span>llm.invocation_parameters</span><span><span class="hl">thinking_level=med</span></span>
+          <span>session.id</span><span>sess_judge42_v3</span>
+          <span>user.id</span><span>judge_42</span>
+        </div>
+      </div>
+      <div class="ins-section">
+        <h5>glasshat</h5>
+        <div class="kv">
+          <span>glasshat.hat</span><span>yellow</span>
+          <span>glasshat.criterion</span><span>A1</span>
+          <span>glasshat.rubric.id</span><span>qdrant-vsd-2026</span>
+          <span>glasshat.rubric.hash</span><span>0x9a4f2c…</span>
+          <span>glasshat.score.predicted</span><span><span class="hl">9.0</span></span>
+          <span>glasshat.score.calibrated</span><span style="color:var(--ok);">7.6</span>
+          <span>glasshat.evidence.depth</span><span style="color:var(--phoenix);">0.31</span>
+          <span>glasshat.evidence.refs</span><span>[deck#p3, repo:README]</span>
+          <span>glasshat.iteration</span><span>1</span>
+        </div>
+      </div>
+      <div class="ins-section">
+        <h5>annotations</h5>
+        <div class="anno">
+          <div class="lab">eval.calibration.label = "over_confident"</div>
+          <div>score: 0.82 · annotator: phoenix.online_eval</div>
+          <div class="meta">2026-05-17 14:22:14 UTC · auto-fired on span emit</div>
+        </div>
+        <div class="anno">
+          <div class="lab">eval.evidence_depth.flag = "low"</div>
+          <div>score: 0.31 · annotator: phoenix.custom_eval (deterministic)</div>
+          <div class="meta">2026-05-17 14:22:14 UTC · parallel path</div>
+        </div>
+        <div class="anno">
+          <div class="lab">black.counter_claim = "missing quantitative impact metric"</div>
+          <div>annotator: black.hat · ParallelAgent</div>
+          <div class="meta">2026-05-17 14:22:13 UTC · from session.state</div>
+        </div>
+      </div>
+      <div class="ins-section">
+        <h5>mcp · tool calls</h5>
+        <div class="mcp-call">
+          <div class="h"><span class="nm">@arizeai/phoenix-mcp · get-experiment-by-id</span><span class="du">210ms · 200</span></div>
+          <div class="args">args · {experiment_id: "glasshat-calibration-v1", filter: {hat:"yellow", criterion:"A1", depth_bkt:"&lt;0.4"}}</div>
+          <div class="res">→ {mean_delta: -1.2, n: 14, ci_95: [0.9, 1.5]}</div>
+        </div>
+        <div class="mcp-call">
+          <div class="h"><span class="nm">@arizeai/phoenix-mcp · get-span-annotations</span><span class="du">180ms · 200</span></div>
+          <div class="args">args · {span_id: "yellow_a1"}</div>
+          <div class="res">→ [over_confident, evidence_low]</div>
+        </div>
+        <div class="mcp-call">
+          <div class="h"><span class="nm">@arizeai/phoenix-mcp · get-dataset-examples</span><span class="du">240ms · 200</span></div>
+          <div class="args">args · {dataset_id: "calibration_corpus_v1", limit: 3}</div>
+          <div class="res">→ [g3-0214, g3-0177, g3-0319]</div>
+        </div>
+        <div class="mcp-call">
+          <div class="h"><span class="nm" style="color:var(--ok);">qdrant.recommend · past_evals</span><span class="du">190ms · 3 hits</span></div>
+          <div class="args">positive=[g3-0214, g3-0177, g3-0319]<br/>negative=[over-confident yellow anchors]<br/>strategy="average_vector" · using="rubric_weights"</div>
+          <div class="res">→ a1_p25=7.4 · a1_p75=7.9</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ===== Stream hat reasoning into 6 cards =====
+  const hatDefs = [
+    { id:'white', name:'White · facts',     color:'oklch(95% 0.005 264)', stroke:'oklch(70% 0.02 264)', score:'8.2',
+      tokens:['evidence found: ',{r:'deck#p3'},' · ',{r:'repo:README'},' ', 'n=4 · ', 'depth=0.74 · ', 'no gaps detected'] },
+    { id:'red', name:'Red · intuition',     color:'oklch(70% 0.18 28)', stroke:'oklch(70% 0.18 28)', score:'6.4',
+      tokens:['emotional pull: ', 'medium-low · ', 'pitch feels rehearsed · ', 'demo video flat · ', 'no surprise'] },
+    { id:'yellow', name:'Yellow · value',   color:'oklch(85% 0.16 88)', stroke:'oklch(85% 0.16 88)', score:'9.0', corrected:'7.6',
+      tokens:['high upside · ', 'TAM = ', {b:'$2.1B'}, ' · ', 'first-mover ', {r:'deck#p7'}, ' · ', 'BUT only ', {b:'2 refs'}, ' → ', 'depth=', {b:'0.31'} ] },
+    { id:'black', name:'Black · risk',      color:'oklch(20% 0.02 264)', stroke:'oklch(70% 0.02 264)', score:'7.1',
+      tokens:['counter-claim: ', {b:'missing quantitative impact'}, ' · ', 'precedent ', {r:'g3-0214'}, ' (non-winner) shows similar pattern · ', 'risk: ', {b:'over-confidence'}] },
+    { id:'green', name:'Green · creative',  color:'oklch(75% 0.16 155)', stroke:'oklch(75% 0.16 155)', score:'7.9',
+      tokens:['alt framing: ', 'reposition as ', {b:'B2B'}, ' → ', 'cleaner narrative · ', 'novel: ', {b:'rubric-aware retrieval'}] },
+    { id:'blue', name:'Blue · synthesis',   color:'oklch(70% 0.16 235)', stroke:'oklch(70% 0.16 235)', score:'—',
+      tokens:['integrating ', {b:'5 hats'}, ' · ', 'consensus: ', {b:'7.7 / 10'}, ' · ', 'audit will fire on ', {r:'yellow.A1'}] },
+  ];
+  const hatsEl = document.getElementById('hats');
+  hatDefs.forEach(h => {
+    const div = document.createElement('div'); div.className = 'hat'; div.id = 'hat-'+h.id;
+    div.innerHTML = `
+      <div class="hat-h">
+        <span class="dot" style="background:${h.color};border:1px solid ${h.stroke};"></span>
+        ${h.name}
+        <span class="score" id="hatScore-${h.id}">${h.corrected ? '<s>'+h.score+'</s> ' + h.corrected : h.score}</span>
+      </div>
+      <div class="hat-body" id="hatBody-${h.id}"></div>
+    `;
+    hatsEl.appendChild(div);
+  });
+
+  function streamHat(h, doneCb) {
+    const body = document.getElementById('hatBody-'+h.id);
+    body.innerHTML = '';
+    let i = 0;
+    function next() {
+      if (i >= h.tokens.length) {
+        body.innerHTML += '<span class="caret"></span>';
+        doneCb && doneCb();
+        return;
+      }
+      const t = h.tokens[i++];
+      if (typeof t === 'string') body.append(document.createTextNode(t));
+      else if (t.b) { const s = document.createElement('b'); s.textContent = t.b; body.appendChild(s); }
+      else if (t.r) { const s = document.createElement('span'); s.className = 'ref'; s.textContent = t.r; body.appendChild(s); }
+      setTimeout(next, 40 + Math.random()*80);
+    }
+    next();
+  }
+  function streamAllHats() {
+    hatDefs.forEach((h, i) => setTimeout(() => streamHat(h), i*450));
+    // schedule score correction
+    setTimeout(animateCorrection, 4500);
+    setTimeout(streamAllHats, 12000);
+  }
+  streamAllHats();
+
+  // ===== Animate JSON score correction =====
+  function setHTML(id, html) { document.getElementById(id).innerHTML = html; }
+  function pulse(id) {
+    const el = document.getElementById(id);
+    el.classList.remove('new'); void el.offsetWidth; el.classList.add('new');
+  }
+
+  function animateCorrection() {
+    // reset
+    setHTML('scoreVal', '9.0');
+    document.getElementById('scoreVal').className = 'n';
+    setHTML('det1', ''); setHTML('det2', ''); setHTML('det3', '');
+    setHTML('consultBlock', '{ <span style="color:var(--dim);font-style:italic;">// awaiting…</span> }');
+    setHTML('anchorBlock', '[ <span style="color:var(--dim);font-style:italic;">// awaiting…</span> ]');
+    document.getElementById('patchStatus').textContent = '● applying patch · 0/5';
+    document.getElementById('topo-yellow').textContent = '9.0 ▸';
+    document.getElementById('topo-yellow').setAttribute('fill', 'oklch(72% 0.18 28)');
+
+    const steps = [
+      () => { setHTML('det1', '\n    { "path": "phoenix.online_eval", "label": <span class="s">"over_confident"</span>, "score": <span class="n">0.82</span> },'); pulse('det1'); document.getElementById('patchStatus').textContent = '● applying patch · 1/5'; },
+      () => { setHTML('det2', '\n    { "path": "phoenix.custom_eval", "label": <span class="s">"evidence_low"</span>,   "score": <span class="n">0.31</span> },'); pulse('det2'); document.getElementById('patchStatus').textContent = '● applying patch · 2/5'; },
+      () => { setHTML('det3', '\n    { "path": "black.counter_claim", "label": <span class="s">"missing_metric"</span> }\n  '); pulse('det3'); document.getElementById('patchStatus').textContent = '● applying patch · 3/5'; },
+      () => { setHTML('consultBlock', '{\n    <span class="k">"experiment_id"</span>: <span class="s">"glasshat-calibration-v1"</span>,\n    <span class="k">"mean_delta"</span>: <span class="n">-1.2</span>, <span class="k">"n"</span>: <span class="n">14</span>, <span class="k">"ci_95"</span>: [<span class="n">0.9</span>, <span class="n">1.5</span>]\n  }'); pulse('consultBlock'); document.getElementById('patchStatus').textContent = '● applying patch · 4/5'; },
+      () => { setHTML('anchorBlock', '[\n    { "project_id": <span class="s">"g3-0214-vsd-helio"</span>,    "a1": <span class="n">7.4</span> },\n    { "project_id": <span class="s">"g3-0177-mcp-sentinel"</span>, "a1": <span class="n">7.6</span> },\n    { "project_id": <span class="s">"g3-0319-ragdrift"</span>,     "a1": <span class="n">7.9</span> }\n  ]'); pulse('anchorBlock'); },
+      () => {
+        setHTML('scoreVal', '<span class="old">9.0</span><span class="new">7.6</span>');
+        document.getElementById('topo-yellow').textContent = '7.6 ✓';
+        document.getElementById('topo-yellow').setAttribute('fill', 'oklch(78% 0.16 155)');
+        document.getElementById('patchStatus').textContent = '● patch applied · escalate=true';
+        document.getElementById('patchStatus').style.color = 'var(--ok)';
+      },
+    ];
+    steps.forEach((s, i) => setTimeout(s, 600 + i*900));
+    setTimeout(() => { document.getElementById('patchStatus').style.color = 'var(--phoenix)'; }, 7000);
+  }
+</script>
+</body>
+</html>

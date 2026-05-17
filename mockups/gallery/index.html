@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#0d1320" />
+<title>Glasshat — Gallery (9 angles · pick one)</title>
+<meta name="description" content="9 advocate-driven design proposals for the Glasshat hackathon submission. Each persona owns its bias. Compare landing + demo for each, then pick the winner." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --bg-base:        oklch(13% 0.018 250);
+  --bg-elevated:    oklch(17% 0.020 250);
+  --bg-elevated-hi: oklch(20% 0.024 250);
+  --bg-glass-hi:    oklch(95% 0 0 / 0.06);
+  --border-subtle:  oklch(95% 0 0 / 0.10);
+  --border-strong:  oklch(95% 0 0 / 0.22);
+  --text-primary:   oklch(98% 0 0);
+  --text-secondary: oklch(78% 0 0);
+  --text-muted:     oklch(62% 0 0);
+  --primary:        oklch(75% 0.16 215);
+  --accent:         oklch(78% 0.20 350);
+  --gold:           oklch(82% 0.16 88);
+  --success:        oklch(78% 0.18 150);
+  --warning:        oklch(82% 0.18 80);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  background-image:
+    radial-gradient(circle at 18% 12%, oklch(75% 0.16 215 / 0.08), transparent 50%),
+    radial-gradient(circle at 82% 78%, oklch(78% 0.20 350 / 0.06), transparent 50%);
+}
+.shell { max-width: 1280px; margin: 0 auto; padding: 32px 24px 80px; }
+
+/* HERO */
+.hero {
+  text-align: center;
+  padding: 48px 0 56px;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 40px;
+}
+.hero-eyebrow {
+  display: inline-block;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--primary);
+  background: oklch(75% 0.16 215 / 0.10);
+  border: 1px solid oklch(75% 0.16 215 / 0.30);
+  padding: 4px 12px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+.hero h1 {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-weight: 800;
+  font-size: clamp(36px, 5vw, 60px);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, var(--text-primary) 30%, var(--primary) 65%, var(--accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.hero p.lead {
+  color: var(--text-secondary);
+  font-size: 17px;
+  max-width: 720px;
+  margin: 0 auto 12px;
+}
+.hero p.sub {
+  color: var(--text-muted);
+  font-size: 14px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  max-width: 760px;
+  margin: 12px auto 0;
+}
+
+/* HOW-TO STRIP */
+.howto {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 40px;
+}
+.howto-step {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 16px;
+}
+.howto-step .n {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 24px;
+  color: var(--primary);
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.howto-step .t {
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+.howto-step .d {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* SECTION HEADER */
+.sec-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  margin-bottom: 20px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.sec-head h2 {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: -0.01em;
+}
+.sec-head .filter {
+  display: flex;
+  gap: 6px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12px;
+}
+.sec-head .filter button {
+  appearance: none;
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--text-secondary);
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  transition: all .2s ease;
+}
+.sec-head .filter button:hover { background: var(--bg-glass-hi); }
+.sec-head .filter button[aria-pressed="true"] {
+  background: var(--primary);
+  color: var(--bg-base);
+  border-color: var(--primary);
+  font-weight: 700;
+}
+
+/* GRID */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 20px;
+}
+.card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: all .25s ease;
+  position: relative;
+}
+.card:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px oklch(0% 0 0 / 0.4), 0 0 24px oklch(75% 0.16 215 / 0.18);
+}
+.card-thumb {
+  height: 180px;
+  background: var(--bg-elevated-hi);
+  border-bottom: 1px solid var(--border-subtle);
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+.card-thumb-id {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 72px;
+  color: oklch(95% 0 0 / 0.10);
+  letter-spacing: -0.04em;
+  user-select: none;
+}
+.card-thumb-tag {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: oklch(0% 0 0 / 0.55);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+.card-thumb-status {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+.card-thumb-status.ready { background: oklch(78% 0.18 150 / 0.20); color: var(--success); border: 1px solid var(--success); }
+.card-thumb-status.pending { background: oklch(82% 0.18 80 / 0.18); color: var(--warning); border: 1px solid var(--warning); }
+.card-body { padding: 18px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+.card-title {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+}
+.card-bias {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--accent);
+}
+.card-pitch {
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+  flex: 1;
+  margin: 4px 0;
+}
+.card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.card-actions a {
+  flex: 1;
+  text-align: center;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 12px;
+  text-decoration: none;
+  transition: all .15s ease;
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
+  background: var(--bg-glass-hi);
+}
+.card-actions a:hover {
+  background: oklch(95% 0 0 / 0.09);
+  border-color: var(--primary);
+}
+.card-actions a.primary {
+  background: var(--primary);
+  color: var(--bg-base);
+  border-color: var(--primary);
+}
+.card-actions a.primary:hover { filter: brightness(1.1); }
+.card-actions a.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+.card-meta {
+  display: flex;
+  gap: 8px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10px;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+}
+.card-meta span {
+  padding: 2px 6px;
+  background: var(--bg-glass-hi);
+  border-radius: 4px;
+  border: 1px solid var(--border-subtle);
+}
+
+/* CHOOSE FOOTER */
+.choose {
+  margin-top: 56px;
+  padding: 32px;
+  background: linear-gradient(135deg, oklch(75% 0.16 215 / 0.10), oklch(78% 0.20 350 / 0.08));
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  text-align: center;
+}
+.choose h3 {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: -0.01em;
+  margin-bottom: 8px;
+}
+.choose p {
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.choose code {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 13px;
+  background: oklch(0% 0 0 / 0.45);
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border-subtle);
+}
+.choose a.cta {
+  display: inline-block;
+  margin-top: 18px;
+  background: var(--primary);
+  color: var(--bg-base);
+  padding: 12px 24px;
+  border-radius: 999px;
+  font-weight: 700;
+  text-decoration: none;
+  font-family: inherit;
+}
+
+/* PERSONA DETAIL BLOCK */
+.personas {
+  margin-top: 60px;
+  padding-top: 40px;
+  border-top: 1px solid var(--border-subtle);
+}
+.personas h2 {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+.personas-lead {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-bottom: 24px;
+  max-width: 720px;
+}
+.persona-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+.persona-list .pl-item {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 13px;
+}
+.persona-list .pl-item code {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--accent);
+  background: var(--bg-glass-hi);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+.persona-list .pl-item b {
+  display: block;
+  margin: 4px 0;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+}
+.persona-list .pl-item .bias {
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: 12px;
+}
+
+footer {
+  margin-top: 60px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-size: 12px;
+  text-align: center;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+footer a { color: var(--primary); text-decoration: none; }
+
+@media (max-width: 720px) {
+  .howto { grid-template-columns: 1fr 1fr; }
+  .grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<header class="hero">
+  <div class="hero-eyebrow">PreviewDD Gallery · v0.4</div>
+  <h1>Same engine. 9 different visions.<br/>Pick one for the hackathon submission.</h1>
+  <p class="lead">Nine independent advocate agents — each with a distinct, declared bias — produced their own <strong>landing.html</strong> + <strong>demo.html</strong> proposal for Glasshat. Compare them side by side. Pick the one to ship.</p>
+  <p class="sub">All proposals preserve: audit-the-judge wow · Qdrant load-bearing · Phoenix MCP visible · rubric-faithful · dual-rubric variance · "It audits the judge" callback close.</p>
+</header>
+
+<section class="howto">
+  <div class="howto-step"><div class="n">1</div><div class="t">Browse 9 cards</div><div class="d">Each card = one persona's proposal. Open Landing + Demo links.</div></div>
+  <div class="howto-step"><div class="n">2</div><div class="t">Read _proposal.md</div><div class="d">6-tuple decision: who/what/why each advocate picked.</div></div>
+  <div class="howto-step"><div class="n">3</div><div class="t">Pick a winner</div><div class="d">Or pick best landing + best demo from different personas.</div></div>
+  <div class="howto-step"><div class="n">4</div><div class="t">Lock chosen</div><div class="d">Tell the team — backend (Phase 1 D) starts shaped to chosen narrative.</div></div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <h2>9 proposals · landing + demo per persona</h2>
+    <div class="filter" role="group" aria-label="Filter">
+      <button aria-pressed="true">All (9)</button>
+      <button>Ready</button>
+      <button>Pending</button>
+    </div>
+  </div>
+
+  <div class="grid" id="proposal-grid">
+    <!-- P01 Contrarian -->
+    <article class="card">
+      <div class="card-thumb" style="background: linear-gradient(135deg, oklch(25% 0.05 25), oklch(15% 0.02 250));">
+        <span class="card-thumb-tag">P01 · contrarian</span>
+        <span class="card-thumb-status pending">building…</span>
+        <span class="card-thumb-id">01</span>
+      </div>
+      <div class="card-body">
+        <div class="card-bias">bias: unfashionable choices</div>
+        <div class="card-title">The Contrarian</div>
+        <p class="card-pitch">Reject 2026 OKLCH-bento-glass entirely. Brutalist / print / 90s-terminal aesthetic to make Glasshat unmissable in a sea of identical SaaS demos.</p>
+        <div class="card-meta"><span>aesthetic counter</span><span>distinctive</span><span>risk: polarizing</span></div>
+        <div class="card-actions">
+          <a href="P01-contrarian/landing.html">Landing →</a>
+          <a href="P01-contrarian/demo.html">Demo →</a>
+          <a href="P01-contrarian/_proposal.md">Proposal</a>
+        </div>
+      </div>
+    </article>
+
+    <!-- P05 Design-Forward -->
+    <article class="card">
+      <div class="card-thumb" style="background: linear-gradient(135deg, oklch(30% 0.10 215), oklch(15% 0.02 250));">
+        <span class="card-thumb-tag">P05 · design-forward</span>
+        <span class="card-thumb-status pending">building…</span>
+        <span class="card-thumb-id">05</span>
+      </div>
+      <div class="card-body">
+        <div class="card-bias">bias: UX first · award-target</div>
+        <div class="card-title">The Design-Forward</div>
+        <p class="card-pitch">Push v0.3 two steps further: Linear/Vercel-grade craft, kinetic typography, layered depth, choreographed motion. Awwwards SOTD target.</p>
+        <div class="card-meta"><span>polish 10x</span><span>kinetic type</span><span>risk: time</span></div>
+        <div class="card-actions">
+          <a href="P05-design-forward/landing.html">Landing →</a>
+          <a href="P05-design-forward/demo.html">Demo →</a>
+          <a href="P05-design-forward/_proposal.md">Proposal</a>
+        </div>
+      </div>
+    </article>
+
+    <!-- P07 Mobile-First -->
+    <article class="card">
+      <div class="card-thumb" style="background: linear-gradient(135deg, oklch(28% 0.08 150), oklch(15% 0.02 250));">
+        <span class="card-thumb-tag">P07 · mobile-first</span>
+        <span class="card-thumb-status pending">building…</span>
+        <span class="card-thumb-id">07</span>
+      </div>
+      <div class="card-body">
+        <div class="card-bias">bias: phone frame primary</div>
+        <div class="card-title">The Mobile-First</div>
+        <p class="card-pitch">Judges check Devpost on iPhone Safari. Founders share via iMessage. 375px primary viewport with bottom-sheet UI and swipe storytelling.</p>
+        <div class="card-meta"><span>mobile primary</span><span>swipe UX</span><span>shareability</span></div>
+        <div class="card-actions">
+          <a href="P07-mobile-first/landing.html">Landing →</a>
+          <a href="P07-mobile-first/demo.html">Demo →</a>
+          <a href="P07-mobile-first/_proposal.md">Proposal</a>
+        </div>
+      </div>
+    </article>
+
+    <!-- P11 Pragmatist -->
+    <article class="card">
+      <div class="card-thumb" style="background: linear-gradient(135deg, oklch(25% 0.03 250), oklch(15% 0.02 250));">
+        <span class="card-thumb-tag">P11 · pragmatist</span>
+        <span class="card-thumb-status pending">building…</span>
+        <span class="card-thumb-id">11</span>
+      </div>
+      <div class="card-body">
+        <div class="card-bias">bias: ship today</div>
+        <div class="card-title">The Pragmatist</div>
+        <p class="card-pitch">Minimum-viable submission. Every Stage-1 checklist item visibly green. Boring is good. Docs-page aesthetic. Compliance table front and center.</p>
+        <div class="card-meta"><span>MVS</span><span>checklist green</span><span>boring = safe</span></div>
+        <div class="card-actions">
+          <a href="P11-pragmatist/landing.html">Landing →</a>
+          <a href="P11-pragmatist/demo.html">Demo →</a>
+          <a href="P11-pragmatist/_proposal.md">Proposal</a>
+        </div>
+      </div>
+    </article>
+
+    <!-- P13 Data Nerd -->
+    <article class="card">
+      <div class="card-thumb" style="background: linear-gradient(135deg, oklch(28% 0.10 200), oklch(15% 0.02 250));">
+        <span class="card-thumb-tag">P13 · data-nerd</span>
+        <span class="card-thumb-status pending">building…</span>
+        <span class="card-thumb-id">13</span>
+      </div>
+      <div class="card-body">
+        <div class="card-bias">bias: analytics first · paper-rigor</div>
+        <div class="card-title">The Data Nerd</div>
+        <p class="card-pitch">Distill.pub / Anthropic blog aesthetic. Every claim has a chart, every chart has a methodology. Precision@K + ECE + bias delta histograms + CIs.</p>
+        <div class="card-meta"><span>chart-heavy</span><span>SVG inline</span><span>reproducible</span></div>
+        <div class="card-actions">
+          <a href="P13-data-nerd/landing.html">Landing →</a>
+          <a href="P13-data-nerd/demo.html">Demo →</a>
+          <a href="P13-data-nerd/_proposal.md">Proposal</a>
+        </div>
+      </div>
+    </article>
+
+    <!-- P17 Enterprise Buyer -->
+    <article class="card">
+      <div class="card-thumb" style="background: linear-gradient(135deg, oklch(25% 0.04 280), oklch(15% 0.02 250));">
+        <span class="card-thumb-tag">P17 · enterprise-buyer</span>
+        <span class="card-thumb-status pending">building…</span>
+        <span class="card-thumb-id">17</span>
+      </div>
+      <div class="card-body">
+        <div class="card-bias">bias: SSO/SAML/audit · compliance</div>
+        <div class="card-title">The Enterprise Buyer</div>
+        <p class="card-pitch">Reframe as enterprise eval platform that happens to also be a hackathon entry. SOC2/EU AI Act/NIST RMF strip. T&S/ML Platform use cases.</p>
+        <div class="card-meta"><span>B2B framing</span><span>compliance vocab</span><span>moat narrative</span></div>
+        <div class="card-actions">
+          <a href="P17-enterprise-buyer/landing.html">Landing →</a>
+          <a href="P17-enterprise-buyer/demo.html">Demo →</a>
+          <a href="P17-enterprise-buyer/_proposal.md">Proposal</a>
+        </div>
+      </div>
+    </article>
+
+    <!-- P18 Designer -->
+    <article class="card">
+      <div class="card-thumb" style="background: linear-gradient(135deg, oklch(28% 0.10 350), oklch(15% 0.02 250));">
+        <span class="card-thumb-tag">P18 · designer</span>
+        <span class="card-thumb-status pending">building…</span>
+        <span class="card-thumb-id">18</span>
+      </div>
+      <div class="card-body">
+        <div class="card-bias">bias: visual storytelling · character</div>
+        <div class="card-title">The Designer</div>
+        <p class="card-pitch">Make every viewer FEEL the audit. SVG illustration heavy. Six Hats as characters. Pixar / Apple keynote design language. Hero is a scene, not text.</p>
+        <div class="card-meta"><span>SVG illust</span><span>characters</span><span>cinematic</span></div>
+        <div class="card-actions">
+          <a href="P18-designer/landing.html">Landing →</a>
+          <a href="P18-designer/demo.html">Demo →</a>
+          <a href="P18-designer/_proposal.md">Proposal</a>
+        </div>
+      </div>
+    </article>
+
+    <!-- P23 Game Designer -->
+    <article class="card">
+      <div class="card-thumb" style="background: linear-gradient(135deg, oklch(28% 0.13 90), oklch(15% 0.02 250));">
+        <span class="card-thumb-tag">P23 · game-designer</span>
+        <span class="card-thumb-status pending">building…</span>
+        <span class="card-thumb-id">23</span>
+      </div>
+      <div class="card-body">
+        <div class="card-bias">bias: playful · shareable</div>
+        <div class="card-title">The Game Designer</div>
+        <p class="card-pitch">Make Glasshat shareable. Game-feel in every interaction. Score correction = boss-defeat. Steam/Death Stranding launcher feel. Achievement toasts.</p>
+        <div class="card-meta"><span>game-feel</span><span>replayable</span><span>viral surface</span></div>
+        <div class="card-actions">
+          <a href="P23-game-designer/landing.html">Landing →</a>
+          <a href="P23-game-designer/demo.html">Demo →</a>
+          <a href="P23-game-designer/_proposal.md">Proposal</a>
+        </div>
+      </div>
+    </article>
+
+    <!-- P25 AI-Native -->
+    <article class="card">
+      <div class="card-thumb" style="background: linear-gradient(135deg, oklch(28% 0.10 270), oklch(15% 0.02 250));">
+        <span class="card-thumb-tag">P25 · ai-native</span>
+        <span class="card-thumb-status pending">building…</span>
+        <span class="card-thumb-id">25</span>
+      </div>
+      <div class="card-body">
+        <div class="card-bias">bias: LLM-centric · generative UI</div>
+        <div class="card-title">The AI-Native</div>
+        <p class="card-pitch">Vercel ai.com / Claude.ai aesthetic. Live-streaming generative UI panel. Phoenix Cloud UI replica. ADK topology live-animated. Stays non-chatbot per Qdrant rule.</p>
+        <div class="card-meta"><span>generative UI</span><span>Phoenix replica</span><span>ADK live</span></div>
+        <div class="card-actions">
+          <a href="P25-ai-native/landing.html">Landing →</a>
+          <a href="P25-ai-native/demo.html">Demo →</a>
+          <a href="P25-ai-native/_proposal.md">Proposal</a>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<section class="choose">
+  <h3>Decide before backend starts</h3>
+  <p>Each card builds independently. When all 9 turn <strong>ready</strong>, browse them. Pick one (or mix — best landing + best demo). Tell the team. Phase 1 D backend then locks to that narrative.</p>
+  <a class="cta" href="https://two-weeks-team.github.io/glasshat/prototype.html">← Back to v0.3 base prototype</a>
+</section>
+
+<section class="personas">
+  <h2>The 9 personas (selected for spread)</h2>
+  <p class="personas-lead">Picked from the 26-persona advocate roster (<code>pf:ideation:advocates:*</code>) to cover orthogonal angles: aesthetic counter · craft maximalism · device · ship-pressure · rigor · enterprise · storytelling · play · LLM-native. Each agent saw the same source docs and v0.3 prototype, then output its own 3 files.</p>
+  <div class="persona-list">
+    <div class="pl-item"><code>P01</code><b>The Contrarian</b><div class="bias">unfashionable choices</div></div>
+    <div class="pl-item"><code>P05</code><b>The Design-Forward</b><div class="bias">UX first</div></div>
+    <div class="pl-item"><code>P07</code><b>The Mobile-First</b><div class="bias">phone frame</div></div>
+    <div class="pl-item"><code>P11</code><b>The Pragmatist</b><div class="bias">ship today</div></div>
+    <div class="pl-item"><code>P13</code><b>The Data Nerd</b><div class="bias">analytics first</div></div>
+    <div class="pl-item"><code>P17</code><b>The Enterprise Buyer</b><div class="bias">SSO/SAML/audit</div></div>
+    <div class="pl-item"><code>P18</code><b>The Designer</b><div class="bias">visual storytelling</div></div>
+    <div class="pl-item"><code>P23</code><b>The Game Designer</b><div class="bias">playful, fun</div></div>
+    <div class="pl-item"><code>P25</code><b>The AI-Native</b><div class="bias">LLM-centric workflow</div></div>
+  </div>
+</section>
+
+<footer>
+  glasshat · gallery v0.4 · generated 2026-05-17 KST · source: <a href="https://github.com/Two-Weeks-Team/glasshat/tree/main/mockups/gallery">github.com/Two-Weeks-Team/glasshat/mockups/gallery</a>
+</footer>
+
+</div>
+
+<script>
+// Status badge: poll if files exist (rough heuristic — fetch HEAD)
+(async function() {
+  const slugs = ['P01-contrarian','P05-design-forward','P07-mobile-first','P11-pragmatist','P13-data-nerd','P17-enterprise-buyer','P18-designer','P23-game-designer','P25-ai-native'];
+  for (const slug of slugs) {
+    try {
+      const r = await fetch(`${slug}/landing.html`, {method:'HEAD'});
+      const card = document.querySelector(`[href="${slug}/landing.html"]`)?.closest('article');
+      if (!card) continue;
+      const badge = card.querySelector('.card-thumb-status');
+      if (r.ok) { badge.textContent = 'ready'; badge.className = 'card-thumb-status ready'; }
+    } catch(e) { /* keep building… */ }
+  }
+})();
+</script>
+
+</body>
+</html>

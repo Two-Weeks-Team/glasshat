@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Glasshat · Live Audit Trace · submission #418 (Globot)</title>
+<style>
+:root{
+  --bg: oklch(97.5% 0.005 260);
+  --paper: oklch(100% 0 0);
+  --panel: oklch(99% 0.004 260);
+  --ink: oklch(18% 0.02 260);
+  --ink-2: oklch(38% 0.02 260);
+  --ink-3: oklch(58% 0.015 260);
+  --rule: oklch(88% 0.01 260);
+  --rule-2: oklch(94% 0.008 260);
+  --accent: oklch(52% 0.18 28);
+  --accent-2: oklch(56% 0.14 250);
+  --accent-3: oklch(62% 0.16 195);
+  --good: oklch(58% 0.14 155);
+  --bad:  oklch(58% 0.18 28);
+  --warn: oklch(72% 0.14 75);
+  --chip: oklch(95% 0.012 260);
+  --hat-white: oklch(78% 0.005 260);
+  --hat-red:   oklch(60% 0.18 28);
+  --hat-yel:   oklch(78% 0.14 95);
+  --hat-blk:   oklch(28% 0.02 260);
+  --hat-grn:   oklch(60% 0.14 155);
+  --hat-blu:   oklch(56% 0.14 250);
+  --mono: ui-monospace, "SF Mono", "Menlo", monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0; padding:0; background:var(--bg); color:var(--ink);
+  font-family: system-ui,-apple-system,sans-serif; font-size:13px; line-height:1.5;
+  -webkit-font-smoothing:antialiased; font-variant-numeric: tabular-nums}
+
+/* ─── top bar ─── */
+.top{display:flex; align-items:center; justify-content:space-between;
+  padding:8px 18px; background:var(--paper); border-bottom:1px solid var(--rule);
+  font-family:var(--mono); font-size:11.5px; color:var(--ink-2);
+  letter-spacing:.04em; text-transform:uppercase}
+.top .left{display:flex; gap:14px; align-items:center}
+.top .brand{font-weight:700; color:var(--ink); letter-spacing:.1em}
+.top .pill{background:var(--chip); padding:2px 8px; border-radius:3px}
+.top .right{display:flex; gap:14px; align-items:center}
+.top .led{display:inline-block; width:6px; height:6px; border-radius:50%;
+  background:var(--good); margin-right:5px; box-shadow:0 0 0 0 var(--good);
+  animation:pulse 1.6s ease-out infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 oklch(58% 0.14 155 / .6)}
+  70%{box-shadow:0 0 0 6px oklch(58% 0.14 155 / 0)}
+  100%{box-shadow:0 0 0 0 oklch(58% 0.14 155 / 0)}}
+
+/* ─── 3-col layout ─── */
+.layout{display:grid; grid-template-columns:240px 1fr 320px;
+  gap:1px; background:var(--rule); min-height: calc(100vh - 36px)}
+.col{background:var(--paper); padding:18px; overflow-y:auto}
+
+/* ─── left rail: scrubber + step legend ─── */
+.scrub-head{font-family:var(--mono); font-size:10.5px; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--ink-3); margin-bottom:10px}
+.scrub{position:relative; padding:8px 0 18px}
+.scrub .track{position:absolute; left:11px; top:18px; bottom:18px; width:2px;
+  background:var(--rule)}
+.scrub .step{position:relative; padding:6px 0 6px 30px; cursor:pointer;
+  font-size:12.5px; color:var(--ink-2)}
+.scrub .step .dot{position:absolute; left:6px; top:9px; width:12px; height:12px;
+  border-radius:50%; background:var(--paper); border:2px solid var(--rule);
+  z-index:1}
+.scrub .step.done .dot{background:var(--accent); border-color:var(--accent)}
+.scrub .step.active .dot{background:var(--accent); border-color:var(--accent);
+  box-shadow:0 0 0 4px oklch(52% 0.18 28 / .2)}
+.scrub .step.active{color:var(--ink); font-weight:600}
+.scrub .step .ms{font-family:var(--mono); font-size:10.5px; color:var(--ink-3);
+  display:block; margin-top:2px}
+.scrub .step.active .ms{color:var(--accent)}
+
+.meta{margin-top:24px; font-family:var(--mono); font-size:11px; color:var(--ink-3);
+  border-top:1px solid var(--rule); padding-top:14px}
+.meta div{margin-bottom:4px}
+.meta b{color:var(--ink-2); font-weight:600}
+
+/* ─── center: panels ─── */
+.center{padding:0}
+.panel{background:var(--paper); border-bottom:1px solid var(--rule);
+  padding:16px 22px 20px}
+.panel-head{display:flex; align-items:baseline; justify-content:space-between;
+  margin-bottom:10px}
+.panel-head .label{font-family:var(--mono); font-size:10.5px;
+  letter-spacing:.1em; text-transform:uppercase; color:var(--accent)}
+.panel-head .title{font-size:15px; font-weight:600; color:var(--ink);
+  margin-left:8px}
+.panel-head .right{font-family:var(--mono); font-size:11px; color:var(--ink-3)}
+.panel-body{display:grid; grid-template-columns:1.4fr 1fr; gap:18px;
+  align-items:start}
+.panel-body.single{grid-template-columns:1fr}
+.panel-cap{font-size:12px; color:var(--ink-2); margin-top:8px; line-height:1.55}
+.panel-cap b{color:var(--ink); font-weight:600}
+.stats-grid{display:grid; grid-template-columns:repeat(2, 1fr); gap:6px 12px;
+  font-family:var(--mono); font-size:11.5px}
+.stats-grid .k{color:var(--ink-3)}
+.stats-grid .v{color:var(--ink); text-align:right}
+.stats-grid .v.good{color:var(--good)}
+.stats-grid .v.bad{color:var(--bad)}
+
+/* ─── right rail: trace ─── */
+.trace-head{font-family:var(--mono); font-size:10.5px; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--ink-3); margin-bottom:10px}
+table.trace{width:100%; border-collapse:collapse; font-family:var(--mono);
+  font-size:10.5px}
+table.trace th{text-align:left; padding:4px 6px; background:var(--chip);
+  color:var(--ink-2); font-weight:600; border-bottom:1px solid var(--rule)}
+table.trace td{padding:4px 6px; border-bottom:1px solid var(--rule-2);
+  color:var(--ink)}
+table.trace td.num{text-align:right}
+table.trace tr.added td{background:oklch(96% 0.04 155 / .35); animation:flashGreen 1.2s}
+table.trace tr.changed td{background:oklch(96% 0.04 75 / .35)}
+@keyframes flashGreen{0%{background:oklch(85% 0.1 155 / .6)}100%{background:oklch(96% 0.04 155 / .35)}}
+
+/* tags / chips */
+.chip{display:inline-block; padding:1px 6px; font-family:var(--mono); font-size:10.5px;
+  background:var(--chip); color:var(--ink-2); border-radius:3px; margin-right:4px}
+.chip.ok{background:oklch(94% 0.06 155); color:var(--good)}
+.chip.bad{background:oklch(94% 0.06 28); color:var(--bad)}
+.chip.warn{background:oklch(94% 0.06 75); color:oklch(38% 0.1 75)}
+
+@media (max-width: 1100px){
+  .layout{grid-template-columns:200px 1fr}
+  .col.right{display:none}
+}
+@media (max-width: 760px){
+  .layout{grid-template-columns:1fr}
+  .col.left{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ─── top bar ─── -->
+<div class="top">
+  <div class="left">
+    <span class="brand">GLASSHAT</span>
+    <span class="pill">live audit</span>
+    <span>submission #418 · Globot</span>
+  </div>
+  <div class="right">
+    <span><span class="led"></span>tracing → Phoenix</span>
+    <span>seed 42 · t = 00:11.4 / 00:18.2</span>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- ─── LEFT: scrubber ─── -->
+  <aside class="col left">
+    <div class="scrub-head">audit timeline</div>
+    <div class="scrub">
+      <div class="track"></div>
+      <div class="step done"><span class="dot"></span>1. Anchor retrieval<span class="ms">t = 00:00 · 1.8s</span></div>
+      <div class="step done"><span class="dot"></span>2. Panel scoring (6 hats)<span class="ms">t = 00:02 · 4.1s</span></div>
+      <div class="step active"><span class="dot"></span>3. Bias detection (ROC)<span class="ms">t = 00:06 · 2.2s</span></div>
+      <div class="step"><span class="dot"></span>4. Score correction (posterior)<span class="ms">t = 00:08 · est 3.4s</span></div>
+      <div class="step"><span class="dot"></span>5. 3D constellation<span class="ms">t = 00:11 · est 2.8s</span></div>
+    </div>
+
+    <div class="meta">
+      <div><b>rubric</b> bmad-17 v1.0</div>
+      <div><b>schema_hash</b> a3f1c9e7…</div>
+      <div><b>model</b> gemini-3.1-pro</div>
+      <div><b>anchors</b> 12 / 503</div>
+      <div><b>p_winner_raw</b> 0.31</div>
+      <div><b>p_winner_post</b> 0.68 ↑</div>
+      <div style="margin-top:10px"><b>budget</b> tokens 18,420 / 32k</div>
+      <div><b>traces</b> 47 spans</div>
+    </div>
+  </aside>
+
+  <!-- ─── CENTER: panels ─── -->
+  <main class="col center" style="padding:0">
+
+    <!-- ── STEP 1 ─ Anchor retrieval ── -->
+    <section class="panel">
+      <div class="panel-head">
+        <div><span class="label">Step 1 / 5</span><span class="title">Anchor retrieval &mdash; cosine distribution over 503 past_evals</span></div>
+        <div class="right">qdrant.search(hybrid+RRF, k=12)</div>
+      </div>
+      <div class="panel-body">
+        <div>
+        <svg viewBox="0 0 540 230" width="100%" font-family="ui-monospace, monospace" font-size="10">
+          <rect x="40" y="14" width="490" height="160" fill="oklch(99% 0.003 260)" stroke="oklch(88% 0.01 260)"/>
+          <!-- y ticks -->
+          <g fill="oklch(58% 0.015 260)" text-anchor="end">
+            <text x="36" y="178">0</text><text x="36" y="138">20</text>
+            <text x="36" y="98">40</text><text x="36" y="58">60</text>
+            <text x="36" y="18">80</text>
+          </g>
+          <!-- x ticks (cosine 0.0..1.0) -->
+          <g fill="oklch(58% 0.015 260)" text-anchor="middle">
+            <text x="40"  y="192">0.0</text><text x="138" y="192">0.2</text>
+            <text x="236" y="192">0.4</text><text x="334" y="192">0.6</text>
+            <text x="432" y="192">0.8</text><text x="530" y="192">1.0</text>
+          </g>
+          <text x="285" y="212" text-anchor="middle" fill="oklch(38% 0.02 260)">cosine similarity (submission → anchor)</text>
+
+          <!-- histogram bars: 25 bins of width 19.6 px, varied heights forming a right-skewed dist -->
+          <g fill="oklch(56% 0.14 250)">
+            <rect x="40"  y="170" width="18" height="4"/>
+            <rect x="60"  y="166" width="18" height="8"/>
+            <rect x="80"  y="160" width="18" height="14"/>
+            <rect x="100" y="156" width="18" height="18"/>
+            <rect x="120" y="150" width="18" height="24"/>
+            <rect x="140" y="146" width="18" height="28"/>
+            <rect x="160" y="140" width="18" height="34"/>
+            <rect x="180" y="134" width="18" height="40"/>
+            <rect x="200" y="124" width="18" height="50"/>
+            <rect x="220" y="112" width="18" height="62"/>
+            <rect x="240" y="98"  width="18" height="76"/>
+            <rect x="260" y="84"  width="18" height="90"/>
+            <rect x="280" y="70"  width="18" height="104"/>
+            <rect x="300" y="58"  width="18" height="116"/>
+            <rect x="320" y="48"  width="18" height="126"/>
+            <rect x="340" y="40"  width="18" height="134"/>
+            <rect x="360" y="36"  width="18" height="138"/>
+            <rect x="380" y="46"  width="18" height="128"/>
+            <rect x="400" y="58"  width="18" height="116"/>
+            <rect x="420" y="76"  width="18" height="98"/>
+            <rect x="440" y="98"  width="18" height="76"/>
+            <rect x="460" y="120" width="18" height="54"/>
+            <rect x="480" y="142" width="18" height="32"/>
+            <rect x="500" y="158" width="18" height="16"/>
+          </g>
+          <!-- highlight: top-12 selected (right tail) -->
+          <g fill="oklch(52% 0.18 28)">
+            <rect x="400" y="58"  width="18" height="116" opacity=".85"/>
+            <rect x="420" y="76"  width="18" height="98" opacity=".85"/>
+            <rect x="440" y="98"  width="18" height="76" opacity=".85"/>
+          </g>
+          <!-- percentile lines -->
+          <line x1="240" y1="14" x2="240" y2="174" stroke="oklch(38% 0.02 260)" stroke-dasharray="2 3"/>
+          <text x="244" y="22" fill="oklch(38% 0.02 260)">p25 = 0.41</text>
+          <line x1="340" y1="14" x2="340" y2="174" stroke="oklch(38% 0.02 260)" stroke-dasharray="2 3"/>
+          <text x="344" y="22" fill="oklch(38% 0.02 260)">p50 = 0.58</text>
+          <line x1="430" y1="14" x2="430" y2="174" stroke="oklch(38% 0.02 260)" stroke-dasharray="2 3"/>
+          <text x="384" y="22" fill="oklch(38% 0.02 260)">p75 = 0.74</text>
+
+          <text x="285" y="228" text-anchor="middle" fill="oklch(58% 0.015 260)">n = 503 candidates · selected top-12 (red)</text>
+        </svg>
+        </div>
+        <div>
+          <div class="stats-grid">
+            <span class="k">candidates</span><span class="v">503</span>
+            <span class="k">selected</span><span class="v">12</span>
+            <span class="k">median cos</span><span class="v">0.582</span>
+            <span class="k">selected median</span><span class="v good">0.793</span>
+            <span class="k">min cos (sel)</span><span class="v">0.712</span>
+            <span class="k">max cos (sel)</span><span class="v">0.886</span>
+            <span class="k">rrf k</span><span class="v">60</span>
+            <span class="k">latency</span><span class="v">1.8s</span>
+          </div>
+          <div class="panel-cap" style="margin-top:14px">
+            <b>Anchor selection passed gate</b>: 12 / 12 anchors have cos &geq; 0.60
+            (<code>weak-anchor</code> threshold). No fallback to <code>past_evals_broad</code> needed.
+            Anchors span 3 outcome tiers: <span class="chip ok">winner ×2</span>
+            <span class="chip">HM ×4</span> <span class="chip">non-winner ×6</span>.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── STEP 2 ─ Panel scoring ── -->
+    <section class="panel">
+      <div class="panel-head">
+        <div><span class="label">Step 2 / 5</span><span class="title">Panel sub-scores per hat &mdash; box-plot over 17 BMAD items</span></div>
+        <div class="right">ParallelAgent · 6 hats · 4.1s</div>
+      </div>
+      <div class="panel-body">
+        <div>
+        <svg viewBox="0 0 540 230" width="100%" font-family="ui-monospace, monospace" font-size="10">
+          <rect x="40" y="14" width="490" height="160" fill="oklch(99% 0.003 260)" stroke="oklch(88% 0.01 260)"/>
+          <!-- y axis (0..100) -->
+          <g fill="oklch(58% 0.015 260)" text-anchor="end">
+            <text x="36" y="178">0</text><text x="36" y="138">25</text>
+            <text x="36" y="98">50</text><text x="36" y="58">75</text>
+            <text x="36" y="18">100</text>
+          </g>
+          <g stroke="oklch(94% 0.008 260)">
+            <line x1="40" y1="138" x2="530" y2="138"/>
+            <line x1="40" y1="98"  x2="530" y2="98"/>
+            <line x1="40" y1="58"  x2="530" y2="58"/>
+          </g>
+
+          <!-- 6 box plots, one per hat. each at fixed x. box=Q1-Q3, line=median, whiskers=1.5IQR, dot=outlier -->
+          <!-- White hat: tight, median ~72 -->
+          <g>
+            <line x1="120" y1="68" x2="120" y2="106" stroke="oklch(38% 0.02 260)"/>
+            <rect x="108" y="74" width="24" height="26" fill="oklch(78% 0.005 260)" stroke="oklch(38% 0.02 260)"/>
+            <line x1="108" y1="86" x2="132" y2="86" stroke="oklch(38% 0.02 260)" stroke-width="2"/>
+            <line x1="114" y1="68" x2="126" y2="68" stroke="oklch(38% 0.02 260)"/>
+            <line x1="114" y1="106" x2="126" y2="106" stroke="oklch(38% 0.02 260)"/>
+            <text x="120" y="194" text-anchor="middle" fill="oklch(38% 0.02 260)">White</text>
+            <text x="120" y="208" text-anchor="middle" fill="oklch(58% 0.015 260)">72 ±6</text>
+          </g>
+          <!-- Red hat -->
+          <g>
+            <line x1="200" y1="50" x2="200" y2="110" stroke="oklch(38% 0.02 260)"/>
+            <rect x="188" y="60" width="24" height="38" fill="oklch(60% 0.18 28 / .35)" stroke="oklch(38% 0.02 260)"/>
+            <line x1="188" y1="78" x2="212" y2="78" stroke="oklch(38% 0.02 260)" stroke-width="2"/>
+            <line x1="194" y1="50" x2="206" y2="50" stroke="oklch(38% 0.02 260)"/>
+            <line x1="194" y1="110" x2="206" y2="110" stroke="oklch(38% 0.02 260)"/>
+            <text x="200" y="194" text-anchor="middle" fill="oklch(38% 0.02 260)">Red</text>
+            <text x="200" y="208" text-anchor="middle" fill="oklch(58% 0.015 260)">78 ±10</text>
+          </g>
+          <!-- Yellow hat: high -->
+          <g>
+            <line x1="280" y1="34" x2="280" y2="80" stroke="oklch(38% 0.02 260)"/>
+            <rect x="268" y="42" width="24" height="28" fill="oklch(78% 0.14 95 / .45)" stroke="oklch(38% 0.02 260)"/>
+            <line x1="268" y1="58" x2="292" y2="58" stroke="oklch(38% 0.02 260)" stroke-width="2"/>
+            <line x1="274" y1="34" x2="286" y2="34" stroke="oklch(38% 0.02 260)"/>
+            <line x1="274" y1="80" x2="286" y2="80" stroke="oklch(38% 0.02 260)"/>
+            <text x="280" y="194" text-anchor="middle" fill="oklch(38% 0.02 260)">Yellow</text>
+            <text x="280" y="208" text-anchor="middle" fill="oklch(58% 0.015 260)">85 ±7</text>
+          </g>
+          <!-- Black hat: LOW with outlier -->
+          <g>
+            <line x1="360" y1="120" x2="360" y2="166" stroke="oklch(38% 0.02 260)"/>
+            <rect x="348" y="130" width="24" height="28" fill="oklch(28% 0.02 260 / .55)" stroke="oklch(38% 0.02 260)"/>
+            <line x1="348" y1="144" x2="372" y2="144" stroke="oklch(38% 0.02 260)" stroke-width="2"/>
+            <line x1="354" y1="120" x2="366" y2="120" stroke="oklch(38% 0.02 260)"/>
+            <line x1="354" y1="166" x2="366" y2="166" stroke="oklch(38% 0.02 260)"/>
+            <!-- outlier dot -->
+            <circle cx="360" cy="40" r="3.5" fill="oklch(58% 0.18 28)"/>
+            <text x="370" y="44" fill="oklch(58% 0.18 28)">z = 2.31 ⚠</text>
+            <text x="360" y="194" text-anchor="middle" fill="oklch(38% 0.02 260)">Black</text>
+            <text x="360" y="208" text-anchor="middle" fill="oklch(58% 0.015 260)">38 ±9</text>
+          </g>
+          <!-- Green -->
+          <g>
+            <line x1="440" y1="62" x2="440" y2="108" stroke="oklch(38% 0.02 260)"/>
+            <rect x="428" y="72" width="24" height="28" fill="oklch(60% 0.14 155 / .35)" stroke="oklch(38% 0.02 260)"/>
+            <line x1="428" y1="86" x2="452" y2="86" stroke="oklch(38% 0.02 260)" stroke-width="2"/>
+            <line x1="434" y1="62" x2="446" y2="62" stroke="oklch(38% 0.02 260)"/>
+            <line x1="434" y1="108" x2="446" y2="108" stroke="oklch(38% 0.02 260)"/>
+            <text x="440" y="194" text-anchor="middle" fill="oklch(38% 0.02 260)">Green</text>
+            <text x="440" y="208" text-anchor="middle" fill="oklch(58% 0.015 260)">76 ±7</text>
+          </g>
+          <!-- Blue (synthesis) -->
+          <g>
+            <line x1="510" y1="64" x2="510" y2="98" stroke="oklch(38% 0.02 260)"/>
+            <rect x="498" y="70" width="24" height="20" fill="oklch(56% 0.14 250 / .45)" stroke="oklch(38% 0.02 260)"/>
+            <line x1="498" y1="80" x2="522" y2="80" stroke="oklch(38% 0.02 260)" stroke-width="2"/>
+            <line x1="504" y1="64" x2="516" y2="64" stroke="oklch(38% 0.02 260)"/>
+            <line x1="504" y1="98" x2="516" y2="98" stroke="oklch(38% 0.02 260)"/>
+            <text x="510" y="194" text-anchor="middle" fill="oklch(38% 0.02 260)">Blue</text>
+            <text x="510" y="208" text-anchor="middle" fill="oklch(58% 0.015 260)">80 ±5</text>
+          </g>
+        </svg>
+        </div>
+        <div>
+          <div class="stats-grid">
+            <span class="k">panel mean</span><span class="v">71.5</span>
+            <span class="k">panel σ</span><span class="v">17.4</span>
+            <span class="k">inter-hat corr</span><span class="v">0.43</span>
+            <span class="k">Black z-score</span><span class="v bad">+2.31</span>
+            <span class="k">items scored</span><span class="v">17 / 17</span>
+            <span class="k">evidence refs</span><span class="v">94</span>
+          </div>
+          <div class="panel-cap" style="margin-top:14px">
+            Black hat outlier on item <code>A3-differentiation</code> (z = 2.31, p = 0.021).
+            This crosses the <span class="chip warn">audit-trigger threshold</span> &mdash;
+            advancing to Step 3.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── STEP 3 ─ Bias detection ROC ── -->
+    <section class="panel" style="background:oklch(99% 0.012 28 / .35); border-left:3px solid var(--accent)">
+      <div class="panel-head">
+        <div><span class="label" style="color:var(--accent)">Step 3 / 5 · active</span><span class="title">Bias detection &mdash; ROC of triple-redundant evaluator</span></div>
+        <div class="right">phoenix online-eval + custom + counter</div>
+      </div>
+      <div class="panel-body">
+        <div>
+        <svg viewBox="0 0 540 290" width="100%" font-family="ui-monospace, monospace" font-size="10">
+          <rect x="40" y="14" width="240" height="240" fill="oklch(99% 0.003 260)" stroke="oklch(88% 0.01 260)"/>
+          <!-- diagonal -->
+          <line x1="40" y1="254" x2="280" y2="14" stroke="oklch(58% 0.015 260)" stroke-dasharray="3 3"/>
+          <text x="270" y="28" text-anchor="end" fill="oklch(58% 0.015 260)">random</text>
+          <!-- ROC curve approximating AUC ~ 0.84 -->
+          <path d="M 40,254 C 60,180 90,120 130,80 C 170,52 215,32 280,14"
+                fill="none" stroke="oklch(52% 0.18 28)" stroke-width="2.5"/>
+          <!-- CI envelope (lighter) -->
+          <path d="M 40,254 C 70,200 105,150 145,108 C 185,80 225,55 280,30
+                   L 280,14 C 215,30 175,50 138,72 C 95,108 60,160 40,236 Z"
+                fill="oklch(52% 0.18 28 / .12)" stroke="none"/>
+          <!-- operating point -->
+          <circle cx="118" cy="90" r="5" fill="oklch(52% 0.18 28)"/>
+          <line x1="118" y1="90" x2="158" y2="60" stroke="oklch(38% 0.02 260)"/>
+          <text x="162" y="58" fill="oklch(18% 0.02 260)" font-weight="600">operating</text>
+          <text x="162" y="70" fill="oklch(38% 0.02 260)">tpr 0.81 fpr 0.16</text>
+
+          <!-- axis labels -->
+          <g fill="oklch(58% 0.015 260)" text-anchor="middle">
+            <text x="40" y="270">0.0</text><text x="160" y="270">0.5</text><text x="280" y="270">1.0</text>
+          </g>
+          <g fill="oklch(58% 0.015 260)" text-anchor="end">
+            <text x="36" y="258">0.0</text><text x="36" y="134">0.5</text><text x="36" y="18">1.0</text>
+          </g>
+          <text x="160" y="284" text-anchor="middle" fill="oklch(38% 0.02 260)">FPR &mdash; false bias-flags / non-biased scores</text>
+          <text x="-130" y="14" transform="rotate(-90)" text-anchor="middle" fill="oklch(38% 0.02 260)">TPR &mdash; caught biased scores</text>
+
+          <!-- right panel: contribution by detector -->
+          <g transform="translate(320,14)">
+            <text x="0" y="0" fill="oklch(18% 0.02 260)" font-weight="600">detector contribution (AUC)</text>
+            <!-- 3 horizontal bars -->
+            <text x="0" y="30">Phoenix online-eval</text>
+            <rect x="0" y="36" width="140" height="10" fill="oklch(56% 0.14 250 / .25)"/>
+            <rect x="0" y="36" width="118" height="10" fill="oklch(56% 0.14 250)"/>
+            <text x="148" y="44" fill="oklch(18% 0.02 260)">0.79</text>
+
+            <text x="0" y="68">Phoenix custom evaluator</text>
+            <rect x="0" y="74" width="140" height="10" fill="oklch(56% 0.14 250 / .25)"/>
+            <rect x="0" y="74" width="108" height="10" fill="oklch(56% 0.14 250)"/>
+            <text x="148" y="82" fill="oklch(18% 0.02 260)">0.72</text>
+
+            <text x="0" y="106">Black-hat counter-claim</text>
+            <rect x="0" y="112" width="140" height="10" fill="oklch(56% 0.14 250 / .25)"/>
+            <rect x="0" y="112" width="92"  height="10" fill="oklch(56% 0.14 250)"/>
+            <text x="148" y="120" fill="oklch(18% 0.02 260)">0.61</text>
+
+            <text x="0" y="144" font-weight="600">Ensemble (this run)</text>
+            <rect x="0" y="150" width="140" height="10" fill="oklch(52% 0.18 28 / .25)"/>
+            <rect x="0" y="150" width="126" height="10" fill="oklch(52% 0.18 28)"/>
+            <text x="148" y="158" fill="oklch(18% 0.02 260)" font-weight="600">0.84</text>
+
+            <text x="0" y="190" fill="oklch(58% 0.015 260)">CI: [0.79, 0.88]</text>
+            <text x="0" y="204" fill="oklch(58% 0.015 260)">bootstrap n=1000</text>
+
+            <text x="0" y="230" fill="oklch(18% 0.02 260)" font-weight="600">flag decision</text>
+            <text x="0" y="246" fill="oklch(58% 0.18 28)">⚑ BIAS DETECTED on A3</text>
+            <text x="0" y="260" fill="oklch(38% 0.02 260)">posterior P(bias) = 0.83</text>
+          </g>
+        </svg>
+        </div>
+        <div>
+          <div class="stats-grid">
+            <span class="k">AUC ensemble</span><span class="v">0.84</span>
+            <span class="k">95% CI</span><span class="v">[0.79, 0.88]</span>
+            <span class="k">tpr @ op</span><span class="v good">0.81</span>
+            <span class="k">fpr @ op</span><span class="v">0.16</span>
+            <span class="k">flagged item</span><span class="v">A3-diff</span>
+            <span class="k">action</span><span class="v bad">consult MCP</span>
+          </div>
+          <div class="panel-cap" style="margin-top:14px">
+            All three independent detectors fire on Black hat&rsquo;s claim that
+            <i>&ldquo;differentiation is weak&rdquo;</i> &mdash; but the evidence depth (3 retrieved
+            anchors all rate the same pattern as <i>strong</i>) contradicts it.
+            <span class="chip bad">recency-bias suspected</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── STEP 4 ─ Posterior shift ── -->
+    <section class="panel">
+      <div class="panel-head">
+        <div><span class="label">Step 4 / 5</span><span class="title">Score correction &mdash; posterior shift after anchor shrinkage</span></div>
+        <div class="right">new = clip(pred − 0.8·μΔ, p25, p75)</div>
+      </div>
+      <div class="panel-body">
+        <div>
+        <svg viewBox="0 0 540 230" width="100%" font-family="ui-monospace, monospace" font-size="10">
+          <rect x="40" y="14" width="490" height="160" fill="oklch(99% 0.003 260)" stroke="oklch(88% 0.01 260)"/>
+          <!-- x axis 0..100 -->
+          <g stroke="oklch(94% 0.008 260)">
+            <line x1="138" y1="14" x2="138" y2="174"/>
+            <line x1="236" y1="14" x2="236" y2="174"/>
+            <line x1="334" y1="14" x2="334" y2="174"/>
+            <line x1="432" y1="14" x2="432" y2="174"/>
+          </g>
+          <g fill="oklch(58% 0.015 260)" text-anchor="middle">
+            <text x="40" y="192">0</text><text x="138" y="192">20</text>
+            <text x="236" y="192">40</text><text x="334" y="192">60</text>
+            <text x="432" y="192">80</text><text x="530" y="192">100</text>
+          </g>
+          <text x="285" y="212" text-anchor="middle" fill="oklch(38% 0.02 260)">score (BMAD 0..100)</text>
+
+          <!-- prior density (vanilla panel): peak near 60 -->
+          <path d="M 40,174 Q 160,174 220,160 Q 280,140 320,80 Q 360,20 400,80 Q 440,140 480,170 Q 510,174 530,174"
+                fill="oklch(58% 0.18 28 / .25)" stroke="oklch(58% 0.18 28)" stroke-width="2"/>
+          <!-- posterior density (shrunk toward anchor median ~78): peak shifted right -->
+          <path d="M 40,174 Q 200,174 280,168 Q 340,160 380,120 Q 410,60 450,30 Q 480,60 510,130 Q 525,170 530,174"
+                fill="oklch(52% 0.18 28 / .25)" stroke="oklch(52% 0.18 28)" stroke-width="2.5"/>
+
+          <!-- markers -->
+          <line x1="320" y1="14" x2="320" y2="174" stroke="oklch(58% 0.015 260)" stroke-dasharray="3 3"/>
+          <text x="324" y="26" fill="oklch(58% 0.015 260)">μ prior = 62</text>
+          <line x1="430" y1="14" x2="430" y2="174" stroke="oklch(52% 0.18 28)" stroke-dasharray="3 3"/>
+          <text x="434" y="26" fill="oklch(52% 0.18 28)">μ post = 78</text>
+
+          <!-- arrow Δ -->
+          <path d="M 320,150 L 430,150" stroke="oklch(18% 0.02 260)" stroke-width="1.5" marker-end="url(#arr)"/>
+          <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="oklch(18% 0.02 260)"/></marker></defs>
+          <text x="375" y="144" text-anchor="middle" fill="oklch(18% 0.02 260)" font-weight="600">Δ = +16</text>
+
+          <!-- legend -->
+          <g transform="translate(54,28)">
+            <rect width="120" height="40" fill="oklch(100% 0 0)" stroke="oklch(88% 0.01 260)"/>
+            <rect x="8" y="10" width="12" height="6" fill="oklch(58% 0.18 28 / .55)"/>
+            <text x="26" y="16">prior (raw panel)</text>
+            <rect x="8" y="26" width="12" height="6" fill="oklch(52% 0.18 28)"/>
+            <text x="26" y="32">posterior (audited)</text>
+          </g>
+        </svg>
+        </div>
+        <div>
+          <div class="stats-grid">
+            <span class="k">prior μ</span><span class="v">62</span>
+            <span class="k">posterior μ</span><span class="v good">78</span>
+            <span class="k">prior σ</span><span class="v">14.2</span>
+            <span class="k">posterior σ</span><span class="v">8.1</span>
+            <span class="k">anchor p25</span><span class="v">71</span>
+            <span class="k">anchor p75</span><span class="v">86</span>
+            <span class="k">shrink factor</span><span class="v">0.8</span>
+            <span class="k">clip applied</span><span class="v">no (within p25-p75)</span>
+          </div>
+          <div class="panel-cap" style="margin-top:14px">
+            The corrected score lands inside the anchor inter-quartile range. Variance
+            <i>halves</i> as the posterior is shrunk toward calibrated precedents.
+            <span class="chip ok">Δ within ±2.0 cap</span>
+            <span class="chip ok">KL(post‖prior) = 0.31</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── STEP 5 ─ Constellation ── -->
+    <section class="panel">
+      <div class="panel-head">
+        <div><span class="label">Step 5 / 5</span><span class="title">3D constellation &mdash; PCA-2 projection with density contours</span></div>
+        <div class="right">503 anchors · 12 selected · 1 submission</div>
+      </div>
+      <div class="panel-body">
+        <div>
+        <svg viewBox="0 0 540 290" width="100%" font-family="ui-monospace, monospace" font-size="10">
+          <rect x="40" y="14" width="490" height="260" fill="oklch(99% 0.003 260)" stroke="oklch(88% 0.01 260)"/>
+          <!-- density contour ellipses (winner cluster, HM cluster, non-winner blob) -->
+          <g fill="none" stroke="oklch(56% 0.14 250)" stroke-width="1.2">
+            <ellipse cx="380" cy="80"  rx="80" ry="46" opacity=".7"/>
+            <ellipse cx="380" cy="80"  rx="56" ry="32" opacity=".85"/>
+            <ellipse cx="380" cy="80"  rx="32" ry="20"/>
+          </g>
+          <text x="380" y="40" text-anchor="middle" fill="oklch(56% 0.14 250)" font-weight="600">winner basin</text>
+          <g fill="none" stroke="oklch(72% 0.14 75)" stroke-width="1.2">
+            <ellipse cx="240" cy="160" rx="110" ry="64" opacity=".55"/>
+            <ellipse cx="240" cy="160" rx="76" ry="44"  opacity=".7"/>
+            <ellipse cx="240" cy="160" rx="42" ry="26"/>
+          </g>
+          <text x="240" y="240" text-anchor="middle" fill="oklch(60% 0.14 75)" font-weight="600">HM basin</text>
+          <g fill="none" stroke="oklch(58% 0.015 260)" stroke-width="1" opacity=".7">
+            <ellipse cx="140" cy="220" rx="80" ry="40"/>
+            <ellipse cx="140" cy="220" rx="50" ry="26"/>
+          </g>
+          <text x="80" y="266" fill="oklch(58% 0.015 260)">non-winner</text>
+
+          <!-- 491 background points (sparse scatter, faint) -->
+          <g fill="oklch(58% 0.015 260)" opacity=".4">
+            <circle cx="80"  cy="200" r="1.5"/><circle cx="100" cy="240" r="1.5"/>
+            <circle cx="120" cy="180" r="1.5"/><circle cx="150" cy="210" r="1.5"/>
+            <circle cx="160" cy="250" r="1.5"/><circle cx="180" cy="190" r="1.5"/>
+            <circle cx="200" cy="230" r="1.5"/><circle cx="220" cy="170" r="1.5"/>
+            <circle cx="220" cy="200" r="1.5"/><circle cx="240" cy="140" r="1.5"/>
+            <circle cx="260" cy="180" r="1.5"/><circle cx="270" cy="220" r="1.5"/>
+            <circle cx="280" cy="120" r="1.5"/><circle cx="290" cy="160" r="1.5"/>
+            <circle cx="300" cy="200" r="1.5"/><circle cx="310" cy="240" r="1.5"/>
+            <circle cx="320" cy="130" r="1.5"/><circle cx="340" cy="170" r="1.5"/>
+            <circle cx="360" cy="110" r="1.5"/><circle cx="380" cy="150" r="1.5"/>
+            <circle cx="400" cy="90"  r="1.5"/><circle cx="420" cy="130" r="1.5"/>
+            <circle cx="440" cy="60"  r="1.5"/><circle cx="460" cy="100" r="1.5"/>
+            <circle cx="490" cy="140" r="1.5"/><circle cx="80"  cy="170" r="1.5"/>
+            <circle cx="115" cy="250" r="1.5"/><circle cx="145" cy="170" r="1.5"/>
+            <circle cx="175" cy="220" r="1.5"/><circle cx="205" cy="160" r="1.5"/>
+            <circle cx="235" cy="200" r="1.5"/><circle cx="265" cy="130" r="1.5"/>
+            <circle cx="295" cy="180" r="1.5"/><circle cx="325" cy="220" r="1.5"/>
+            <circle cx="355" cy="130" r="1.5"/><circle cx="385" cy="170" r="1.5"/>
+            <circle cx="415" cy="110" r="1.5"/><circle cx="445" cy="150" r="1.5"/>
+            <circle cx="475" cy="80"  r="1.5"/><circle cx="500" cy="120" r="1.5"/>
+          </g>
+
+          <!-- 12 selected anchors (highlighted) -->
+          <g fill="oklch(52% 0.18 28)" stroke="oklch(100% 0 0)" stroke-width="1">
+            <circle cx="356" cy="78"  r="3.5"/><circle cx="392" cy="64"  r="3.5"/>
+            <circle cx="412" cy="92"  r="3.5"/><circle cx="376" cy="106" r="3.5"/>
+            <circle cx="346" cy="98"  r="3.5"/><circle cx="406" cy="78"  r="3.5"/>
+            <circle cx="384" cy="84"  r="3.5"/><circle cx="362" cy="118" r="3.5"/>
+            <circle cx="398" cy="116" r="3.5"/><circle cx="418" cy="68"  r="3.5"/>
+            <circle cx="344" cy="72"  r="3.5"/><circle cx="372" cy="62"  r="3.5"/>
+          </g>
+
+          <!-- submission point: prior (red, far away) and posterior (white, in winner basin) -->
+          <line x1="244" y1="180" x2="380" y2="84" stroke="oklch(52% 0.18 28)" stroke-width="1.5" stroke-dasharray="3 3"/>
+          <circle cx="244" cy="180" r="6" fill="oklch(58% 0.18 28 / .6)" stroke="oklch(58% 0.18 28)" stroke-width="2"/>
+          <text x="236" y="200" fill="oklch(58% 0.18 28)" font-weight="600">prior (62)</text>
+          <circle cx="380" cy="84" r="7" fill="oklch(100% 0 0)" stroke="oklch(52% 0.18 28)" stroke-width="3"/>
+          <text x="372" y="106" fill="oklch(52% 0.18 28)" font-weight="600">post (78) ✓</text>
+
+          <!-- axes labels -->
+          <text x="285" y="288" text-anchor="middle" fill="oklch(58% 0.015 260)">PC1 (42.1% var)</text>
+          <text x="20" y="144" transform="rotate(-90 20 144)" text-anchor="middle" fill="oklch(58% 0.015 260)">PC2 (18.7% var)</text>
+        </svg>
+        </div>
+        <div>
+          <div class="stats-grid">
+            <span class="k">total points</span><span class="v">503</span>
+            <span class="k">anchors (red)</span><span class="v">12</span>
+            <span class="k">PC1 var</span><span class="v">42.1%</span>
+            <span class="k">PC2 var</span><span class="v">18.7%</span>
+            <span class="k">cum var</span><span class="v">60.8%</span>
+            <span class="k">silhouette</span><span class="v">0.41</span>
+            <span class="k">prior basin</span><span class="v">HM</span>
+            <span class="k">post basin</span><span class="v good">winner</span>
+          </div>
+          <div class="panel-cap" style="margin-top:14px">
+            The submission relocates from the <span class="chip warn">HM basin</span> to the
+            <span class="chip ok">winner basin</span> after audit-loop correction.
+            Density contours show the empirical winner-cluster boundary (1σ, 2σ, 3σ from
+            anchor centroid).
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ─── RIGHT: trace table ─── -->
+  <aside class="col right">
+    <div class="trace-head">phoenix trace · 47 spans</div>
+    <table class="trace">
+      <tr><th>t</th><th>span</th><th>val</th></tr>
+      <tr><td>0.00</td><td>ingest.pdf</td><td class="num">8 ch</td></tr>
+      <tr><td>0.12</td><td>ingest.repo</td><td class="num">142 f</td></tr>
+      <tr><td>0.45</td><td>embed.dense</td><td class="num">768d</td></tr>
+      <tr><td>0.62</td><td>embed.sparse</td><td class="num">bm25</td></tr>
+      <tr><td>1.20</td><td>qdrant.hybrid</td><td class="num">503</td></tr>
+      <tr><td>1.81</td><td>rrf.fuse k=60</td><td class="num">12</td></tr>
+      <tr><td>2.05</td><td>panel.white</td><td class="num">72</td></tr>
+      <tr><td>2.18</td><td>panel.red</td><td class="num">78</td></tr>
+      <tr><td>2.31</td><td>panel.yellow</td><td class="num">85</td></tr>
+      <tr><td>2.42</td><td>panel.black</td><td class="num">38</td></tr>
+      <tr><td>2.55</td><td>panel.green</td><td class="num">76</td></tr>
+      <tr><td>4.20</td><td>panel.blue.synth</td><td class="num">62</td></tr>
+      <tr class="added"><td>6.10</td><td>phoenix.online_eval</td><td class="num">0.79</td></tr>
+      <tr class="added"><td>6.32</td><td>phoenix.custom_eval</td><td class="num">0.72</td></tr>
+      <tr class="added"><td>6.55</td><td>black.counter_claim</td><td class="num">0.61</td></tr>
+      <tr class="added"><td>7.10</td><td>ensemble.auc</td><td class="num">0.84</td></tr>
+      <tr class="added"><td>7.22</td><td>bias.flag</td><td class="num">A3</td></tr>
+      <tr class="changed"><td>8.04</td><td>mcp.get_experiment</td><td class="num">μΔ=−0.8</td></tr>
+      <tr class="changed"><td>8.31</td><td>mcp.get_spans</td><td class="num">94 ref</td></tr>
+      <tr class="changed"><td>8.58</td><td>mcp.get_examples</td><td class="num">12</td></tr>
+      <tr class="changed"><td>8.81</td><td>qdrant.recommend</td><td class="num">3 neg</td></tr>
+      <tr class="changed"><td>9.20</td><td>calibrate.clip</td><td class="num">78</td></tr>
+      <tr><td>11.04</td><td>render.constellation</td><td class="num">503pt</td></tr>
+      <tr><td>11.42</td><td>report.sign</td><td class="num">sha…b209</td></tr>
+    </table>
+
+    <div class="meta" style="margin-top:16px">
+      <div><b>final score</b> <span style="color:var(--good); font-weight:700">78 / 100</span></div>
+      <div><b>P(winner)</b> 0.68 [0.59, 0.76]</div>
+      <div><b>Δ from raw</b> +16 (cap −2..+2 → ×8)</div>
+      <div><b>evidence refs</b> 94 (all cited)</div>
+      <div><b>audit triggered</b> <span class="chip warn">recency-bias</span></div>
+      <div style="margin-top:10px"><b>repro</b> <code>scripts/repro/run.py --sub=418 --seed=42</code></div>
+    </div>
+  </aside>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>GLASSHAT // The Auditor — Game Launcher</title>
+<style>
+/* ============================================================
+ * GLASSHAT — GAME LAUNCHER (P23 The Game Designer)
+ * Steam/Inscryption launcher aesthetic. Game HUD. Achievements.
+ * OKLCH color space. System fonts only. No external assets.
+ * ============================================================ */
+:root{
+  --bg-0: oklch(8% 0.02 260);
+  --bg-1: oklch(12% 0.03 260);
+  --bg-2: oklch(16% 0.04 260);
+  --bg-3: oklch(22% 0.05 260);
+  --ink: oklch(98% 0 0);
+  --ink-2: oklch(78% 0.02 260);
+  --ink-3: oklch(55% 0.02 260);
+
+  --accent: oklch(82% 0.18 195);          /* cyan HUD */
+  --accent-2: oklch(85% 0.20 90);         /* xp gold */
+  --accent-3: oklch(72% 0.22 30);         /* danger red */
+  --accent-4: oklch(78% 0.20 145);        /* success green */
+  --accent-5: oklch(76% 0.20 320);        /* magenta */
+
+  --hat-white: oklch(96% 0 0);
+  --hat-red: oklch(72% 0.20 25);
+  --hat-yellow: oklch(85% 0.15 95);
+  --hat-black: oklch(35% 0 0);
+  --hat-green: oklch(76% 0.18 150);
+  --hat-blue: oklch(72% 0.20 245);
+
+  --ease-spring: cubic-bezier(0.34,1.56,0.64,1);
+  --ease-out: cubic-bezier(0.22,1,0.36,1);
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:var(--bg-0);color:var(--ink);font-family:var(--sans);overflow-x:hidden;min-height:100vh}
+body{
+  background:
+    radial-gradient(ellipse 70% 50% at 20% 0%, oklch(20% 0.10 245 / .35), transparent 60%),
+    radial-gradient(ellipse 60% 50% at 90% 100%, oklch(20% 0.10 320 / .25), transparent 60%),
+    var(--bg-0);
+}
+
+/* ============== HUD frame ============== */
+.hud{
+  position:fixed;inset:0;pointer-events:none;z-index:50;
+}
+.hud-corner{position:absolute;width:36px;height:36px;border:2px solid var(--accent);opacity:.6}
+.hud-corner.tl{top:12px;left:12px;border-right:none;border-bottom:none}
+.hud-corner.tr{top:12px;right:12px;border-left:none;border-bottom:none}
+.hud-corner.bl{bottom:12px;left:12px;border-right:none;border-top:none}
+.hud-corner.br{bottom:12px;right:12px;border-left:none;border-top:none}
+
+.hud-top{
+  position:fixed;top:0;left:0;right:0;height:56px;z-index:40;
+  background:linear-gradient(180deg, oklch(10% 0.03 260 / .95), oklch(10% 0.03 260 / .6));
+  border-bottom:1px solid oklch(50% 0.10 245 / .25);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;backdrop-filter:blur(8px);
+}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-weight:700;letter-spacing:.18em;font-size:13px}
+.brand-mark{
+  width:22px;height:22px;border:2px solid var(--accent);border-radius:4px;
+  display:grid;place-items:center;font-size:11px;color:var(--accent);
+  box-shadow:0 0 14px oklch(82% 0.18 195 / .5);
+}
+.hud-stats{display:flex;gap:18px;font-family:var(--mono);font-size:11px;color:var(--ink-2)}
+.stat{display:flex;align-items:center;gap:6px}
+.stat-dot{width:6px;height:6px;border-radius:50%;background:var(--accent-4);box-shadow:0 0 8px var(--accent-4)}
+.sound-toggle{
+  background:none;border:1px solid var(--accent);color:var(--accent);
+  font-family:var(--mono);font-size:10px;padding:5px 10px;border-radius:4px;cursor:pointer;
+  letter-spacing:.1em;pointer-events:auto;
+}
+.sound-toggle.on{background:var(--accent);color:var(--bg-0)}
+
+/* ============== Layout ============== */
+main{padding:88px 28px 60px;max-width:1400px;margin:0 auto}
+
+/* HERO */
+.hero{
+  display:grid;grid-template-columns:1.4fr 1fr;gap:32px;align-items:stretch;
+  min-height:520px;
+}
+.hero-panel{
+  position:relative;
+  background:
+    linear-gradient(135deg, oklch(15% 0.04 245 / .9), oklch(10% 0.03 260 / .9)),
+    repeating-linear-gradient(45deg, transparent 0 14px, oklch(95% 0 0 / .02) 14px 15px);
+  border:1px solid oklch(50% 0.10 245 / .3);
+  border-radius:8px;padding:32px;overflow:hidden;
+}
+.hero-panel::before{
+  content:"";position:absolute;inset:0;
+  background:
+    radial-gradient(circle at 70% 30%, oklch(82% 0.18 195 / .25), transparent 55%),
+    radial-gradient(circle at 20% 80%, oklch(76% 0.20 320 / .18), transparent 55%);
+  pointer-events:none;
+}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--accent);
+  padding:6px 12px;border:1px solid var(--accent);border-radius:99px;
+  background:oklch(82% 0.18 195 / .08);margin-bottom:20px;position:relative;
+}
+.eyebrow::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 1.4s infinite}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+
+.title{
+  font-size:clamp(34px, 5vw, 58px);font-weight:800;line-height:1.02;
+  letter-spacing:-.02em;margin-bottom:14px;position:relative;
+}
+.title .accent{color:var(--accent);text-shadow:0 0 24px oklch(82% 0.18 195 / .6)}
+.tagline{color:var(--ink-2);font-size:16px;line-height:1.5;max-width:520px;margin-bottom:28px;position:relative}
+.tagline em{color:var(--accent-2);font-style:normal;font-weight:600}
+
+.cta-row{display:flex;gap:12px;flex-wrap:wrap;position:relative;z-index:2}
+.btn{
+  position:relative;font-family:var(--mono);font-weight:700;font-size:12px;
+  letter-spacing:.15em;padding:14px 22px;border-radius:4px;cursor:pointer;
+  border:none;transition:transform .15s var(--ease-spring), box-shadow .2s;
+  text-transform:uppercase;
+}
+.btn-primary{
+  background:linear-gradient(135deg, var(--accent), oklch(72% 0.18 215));
+  color:var(--bg-0);box-shadow:0 0 24px oklch(82% 0.18 195 / .5), 0 4px 14px oklch(0% 0 0 / .5);
+}
+.btn-primary:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 0 36px oklch(82% 0.18 195 / .7), 0 8px 24px oklch(0% 0 0 / .6)}
+.btn-secondary{
+  background:transparent;color:var(--ink);border:1px solid oklch(60% 0.10 245 / .5);
+}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent)}
+.btn-key{
+  font-family:var(--mono);font-size:9px;padding:2px 5px;border:1px solid currentColor;
+  border-radius:3px;margin-left:8px;opacity:.7;
+}
+
+/* Scenario carousel inside hero side */
+.hero-side{
+  background:linear-gradient(180deg, oklch(14% 0.03 260 / .9), oklch(10% 0.02 260 / .95));
+  border:1px solid oklch(50% 0.10 245 / .3);border-radius:8px;padding:24px;
+  display:flex;flex-direction:column;position:relative;overflow:hidden;
+}
+.scenario-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.scenario-head h3{font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--accent-2)}
+.scenario-pager{display:flex;gap:4px}
+.scenario-pip{width:18px;height:3px;background:oklch(50% 0.02 260);border-radius:99px;transition:background .3s}
+.scenario-pip.active{background:var(--accent-2);box-shadow:0 0 8px var(--accent-2)}
+
+.scenario-card{flex:1;display:flex;flex-direction:column;gap:10px;animation:fadein .5s var(--ease-out)}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.scenario-tag{font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.15em}
+.scenario-name{font-size:22px;font-weight:700;line-height:1.1}
+.scenario-bar{display:flex;align-items:center;gap:10px;margin-top:6px}
+.scenario-bar-label{font-family:var(--mono);font-size:10px;color:var(--ink-3);width:60px}
+.scenario-bar-track{flex:1;height:10px;background:oklch(20% 0.02 260);border-radius:99px;overflow:hidden;position:relative}
+.scenario-bar-fill{height:100%;border-radius:99px;transition:width .8s var(--ease-out)}
+.scenario-bar-val{font-family:var(--mono);font-size:11px;font-weight:700;width:48px;text-align:right}
+.scenario-delta{
+  display:inline-flex;align-items:center;gap:6px;margin-top:10px;
+  padding:8px 12px;background:oklch(20% 0.05 30 / .35);border:1px solid var(--accent-3);
+  border-radius:6px;font-family:var(--mono);font-size:11px;color:var(--accent-3);
+}
+.scenario-narration{
+  margin-top:auto;padding-top:16px;border-top:1px dashed oklch(40% 0.04 260 / .5);
+  font-size:13px;line-height:1.5;color:var(--ink-2);
+}
+.scenario-narration b{color:var(--accent-2)}
+
+/* ============== ACHIEVEMENT GRID ============== */
+.section-head{
+  display:flex;align-items:end;justify-content:space-between;margin:64px 0 20px;
+}
+.section-title{font-size:24px;font-weight:800;letter-spacing:-.01em}
+.section-title small{font-family:var(--mono);color:var(--accent);font-size:11px;letter-spacing:.2em;display:block;margin-bottom:4px;font-weight:600}
+.section-meta{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.1em}
+
+.ach-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.ach{
+  position:relative;padding:18px;border-radius:8px;
+  background:linear-gradient(180deg, oklch(16% 0.03 260 / .85), oklch(12% 0.02 260 / .9));
+  border:1px solid oklch(40% 0.05 260 / .4);
+  transition:transform .2s var(--ease-spring), border-color .2s, box-shadow .3s;
+  cursor:pointer;overflow:hidden;
+}
+.ach:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:0 8px 20px oklch(0% 0 0 / .5), 0 0 24px oklch(82% 0.18 195 / .25)}
+.ach[data-rarity="legendary"]{border-color:oklch(50% 0.08 90 / .5)}
+.ach[data-rarity="legendary"]:hover{border-color:var(--accent-2);box-shadow:0 8px 20px oklch(0% 0 0 / .5), 0 0 32px oklch(85% 0.20 90 / .35)}
+.ach[data-rarity="epic"]{border-color:oklch(50% 0.10 320 / .5)}
+.ach[data-rarity="epic"]:hover{border-color:var(--accent-5)}
+
+.ach-icon{
+  width:44px;height:44px;border-radius:6px;display:grid;place-items:center;margin-bottom:12px;
+  background:oklch(20% 0.04 260);border:1px solid oklch(50% 0.10 245 / .3);
+}
+.ach-name{font-weight:700;font-size:14px;margin-bottom:4px;line-height:1.2}
+.ach-desc{font-size:12px;color:var(--ink-2);line-height:1.4;margin-bottom:10px}
+.ach-rarity{
+  display:inline-block;font-family:var(--mono);font-size:9px;letter-spacing:.2em;
+  padding:3px 7px;border-radius:3px;
+}
+.ach-rarity.common{background:oklch(25% 0.02 260);color:var(--ink-2)}
+.ach-rarity.rare{background:oklch(30% 0.10 245);color:var(--accent)}
+.ach-rarity.epic{background:oklch(30% 0.12 320);color:var(--accent-5)}
+.ach-rarity.legendary{background:oklch(35% 0.12 90);color:var(--accent-2)}
+.ach-xp{position:absolute;top:14px;right:14px;font-family:var(--mono);font-size:10px;color:var(--accent-2);font-weight:700}
+
+/* ============== PARTY ROW (six hats) ============== */
+.party{
+  margin-top:48px;padding:24px;border-radius:8px;
+  background:linear-gradient(180deg, oklch(14% 0.03 260 / .9), oklch(10% 0.02 260 / .95));
+  border:1px solid oklch(40% 0.05 260 / .4);
+}
+.party-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:14px}
+.hat{
+  position:relative;padding:14px 12px;border-radius:6px;
+  background:oklch(18% 0.02 260);border:1px solid oklch(40% 0.05 260 / .4);
+  text-align:center;transition:transform .2s var(--ease-spring);cursor:pointer;
+}
+.hat:hover{transform:translateY(-3px)}
+.hat-avatar{
+  width:42px;height:42px;border-radius:50%;margin:0 auto 10px;
+  display:grid;place-items:center;font-weight:800;font-size:13px;
+  border:2px solid currentColor;
+}
+.hat-avatar.white{color:var(--hat-white);background:oklch(96% 0 0 / .1)}
+.hat-avatar.red{color:var(--hat-red);background:oklch(72% 0.20 25 / .15)}
+.hat-avatar.yellow{color:var(--hat-yellow);background:oklch(85% 0.15 95 / .15)}
+.hat-avatar.black{color:oklch(75% 0 0);background:oklch(20% 0 0 / .5);border-color:oklch(45% 0 0)}
+.hat-avatar.green{color:var(--hat-green);background:oklch(76% 0.18 150 / .15)}
+.hat-avatar.blue{color:var(--hat-blue);background:oklch(72% 0.20 245 / .15)}
+.hat-name{font-size:11px;font-weight:700;letter-spacing:.05em}
+.hat-class{font-family:var(--mono);font-size:9px;color:var(--ink-3);margin-top:2px;letter-spacing:.1em}
+.hat-hp{margin-top:8px;height:4px;background:oklch(20% 0.02 260);border-radius:99px;overflow:hidden}
+.hat-hp-fill{height:100%;background:var(--accent-4);width:100%}
+
+/* ============== FOOTER QUEST ============== */
+.quest-strip{
+  margin-top:36px;padding:16px 22px;border-radius:8px;
+  background:linear-gradient(90deg, oklch(20% 0.08 90 / .25), oklch(15% 0.03 260 / .5));
+  border:1px solid oklch(50% 0.10 90 / .4);
+  display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+}
+.quest-icon{width:32px;height:32px;border-radius:6px;background:var(--accent-2);color:var(--bg-0);display:grid;place-items:center;font-weight:800}
+.quest-label{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--accent-2)}
+.quest-title{font-weight:700;font-size:15px;margin-top:2px}
+.quest-text{flex:1;min-width:220px;color:var(--ink-2);font-size:13px;line-height:1.4}
+.quest-progress{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:11px;color:var(--ink-2)}
+.quest-bar{width:140px;height:6px;background:oklch(20% 0.02 260);border-radius:99px;overflow:hidden}
+.quest-bar-fill{height:100%;background:linear-gradient(90deg, var(--accent-2), var(--accent-4));width:62%}
+
+/* ============== Toast / Achievement popup ============== */
+.toast-stack{position:fixed;top:80px;right:24px;z-index:60;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+.toast{
+  min-width:300px;max-width:360px;
+  background:linear-gradient(135deg, oklch(18% 0.05 260 / .98), oklch(14% 0.04 260 / .98));
+  border:1px solid var(--accent-2);border-radius:8px;padding:14px 16px;
+  box-shadow:0 12px 32px oklch(0% 0 0 / .6), 0 0 28px oklch(85% 0.20 90 / .3);
+  display:flex;gap:12px;align-items:flex-start;
+  animation:toastIn .5s var(--ease-spring), toastOut .4s var(--ease-out) 4.6s forwards;
+}
+@keyframes toastIn{from{transform:translateX(120%) scale(.9);opacity:0}to{transform:none;opacity:1}}
+@keyframes toastOut{to{transform:translateX(120%) scale(.95);opacity:0}}
+.toast-icon{
+  width:34px;height:34px;border-radius:6px;flex-shrink:0;display:grid;place-items:center;
+  background:var(--accent-2);color:var(--bg-0);font-weight:800;
+}
+.toast-meta{font-family:var(--mono);font-size:9px;letter-spacing:.2em;color:var(--accent-2);margin-bottom:2px}
+.toast-name{font-weight:700;font-size:13px;margin-bottom:2px}
+.toast-desc{font-size:11px;color:var(--ink-2);line-height:1.3}
+
+/* ============== Intro overlay (Begin Audit interactive) ============== */
+.intro-overlay{
+  position:fixed;inset:0;z-index:200;
+  background:radial-gradient(ellipse at center, oklch(15% 0.06 260 / .98), oklch(5% 0.02 260 / .99));
+  display:none;flex-direction:column;align-items:center;justify-content:center;gap:24px;
+  animation:fadein .5s var(--ease-out);
+}
+.intro-overlay.active{display:flex}
+.intro-stage{
+  width:min(640px, 90vw);min-height:240px;
+  position:relative;display:flex;flex-direction:column;align-items:center;gap:18px;
+  padding:30px;
+}
+.intro-step{
+  font-family:var(--mono);font-size:11px;letter-spacing:.25em;color:var(--accent);
+  display:flex;align-items:center;gap:10px;
+}
+.intro-step::before{content:"";width:24px;height:1px;background:var(--accent)}
+.intro-step::after{content:"";width:24px;height:1px;background:var(--accent)}
+.intro-headline{font-size:28px;font-weight:800;text-align:center;line-height:1.2;max-width:520px}
+.intro-canvas{
+  width:480px;max-width:90%;height:120px;border:1px solid oklch(50% 0.10 245 / .4);border-radius:8px;
+  background:oklch(10% 0.02 260 / .5);position:relative;overflow:hidden;
+}
+.intro-progress{
+  height:100%;width:0%;
+  background:linear-gradient(90deg, var(--accent), var(--accent-2));
+  box-shadow:0 0 24px var(--accent);
+  transition:width 2.4s var(--ease-out);
+}
+.intro-progress.run{width:100%}
+.intro-progress::after{
+  content:"";position:absolute;inset:0;
+  background:repeating-linear-gradient(45deg, transparent 0 8px, oklch(0% 0 0 / .15) 8px 16px);
+}
+.intro-status{font-family:var(--mono);font-size:11px;color:var(--ink-2);letter-spacing:.1em}
+.intro-skip{
+  position:absolute;top:24px;right:24px;background:none;border:1px solid var(--ink-3);
+  color:var(--ink-2);font-family:var(--mono);font-size:10px;padding:6px 12px;border-radius:4px;
+  cursor:pointer;letter-spacing:.15em;
+}
+
+/* ============== Responsive ============== */
+@media (max-width:900px){
+  .hero{grid-template-columns:1fr}
+  .ach-grid{grid-template-columns:repeat(2,1fr)}
+  .party-grid{grid-template-columns:repeat(3,1fr)}
+}
+@media (max-width:600px){
+  main{padding:80px 16px 40px}
+  .ach-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- HUD frame -->
+<div class="hud">
+  <span class="hud-corner tl"></span>
+  <span class="hud-corner tr"></span>
+  <span class="hud-corner bl"></span>
+  <span class="hud-corner br"></span>
+</div>
+
+<header class="hud-top">
+  <div class="brand">
+    <span class="brand-mark">▣</span>
+    <span>GLASSHAT // THE AUDITOR</span>
+  </div>
+  <div class="hud-stats">
+    <div class="stat"><span class="stat-dot"></span>ONLINE</div>
+    <div class="stat">PILOT: <b style="color:var(--ink)">YOU</b></div>
+    <div class="stat">SEED: 503-CORPUS</div>
+    <button class="sound-toggle" id="sndBtn" onclick="toggleSound()">SFX · OFF</button>
+  </div>
+</header>
+
+<!-- Achievement toast stack -->
+<div class="toast-stack" id="toastStack"></div>
+
+<main>
+
+  <!-- HERO -->
+  <section class="hero">
+
+    <div class="hero-panel">
+      <span class="eyebrow">CHAPTER 01 · AUDIT-THE-AUDITOR</span>
+      <h1 class="title">
+        Don't just judge.<br/>
+        <span class="accent">Audit the judge.</span>
+      </h1>
+      <p class="tagline">
+        Six hats. One auditor. <em>503 past submissions</em> as the boss-level
+        ground truth. Your weapon: a vector space that catches over-confidence
+        before the score ships.
+      </p>
+      <div class="cta-row">
+        <button class="btn btn-primary" onclick="beginAudit()">▶ BEGIN AUDIT<span class="btn-key">SPACE</span></button>
+        <button class="btn btn-secondary" onclick="cycleScenario()">⟳ REPLAY · NEW RUBRIC<span class="btn-key">R</span></button>
+        <button class="btn btn-secondary" onclick="popAch('explorer')">⌖ MAP<span class="btn-key">M</span></button>
+      </div>
+    </div>
+
+    <aside class="hero-side">
+      <div class="scenario-head">
+        <h3>⌬ TODAY'S MATCH</h3>
+        <div class="scenario-pager">
+          <span class="scenario-pip active" id="pip0"></span>
+          <span class="scenario-pip" id="pip1"></span>
+          <span class="scenario-pip" id="pip2"></span>
+        </div>
+      </div>
+      <div class="scenario-card" id="scenarioCard">
+        <span class="scenario-tag" id="sTag">SUBMISSION · QDRANT VSD RUBRIC</span>
+        <div class="scenario-name" id="sName">VectorBard — pitch + repo</div>
+
+        <div class="scenario-bar">
+          <span class="scenario-bar-label">PRE</span>
+          <div class="scenario-bar-track"><div class="scenario-bar-fill" id="sBarPre" style="background:var(--accent-3);width:90%"></div></div>
+          <span class="scenario-bar-val" id="sValPre">9.0</span>
+        </div>
+        <div class="scenario-bar">
+          <span class="scenario-bar-label">POST</span>
+          <div class="scenario-bar-track"><div class="scenario-bar-fill" id="sBarPost" style="background:var(--accent-4);width:76%"></div></div>
+          <span class="scenario-bar-val" id="sValPost">7.6</span>
+        </div>
+
+        <div class="scenario-delta" id="sDelta">⚠ −1.4 · Yellow A1 over-confident · evidence_depth 0.31</div>
+
+        <div class="scenario-narration" id="sNarr">
+          <b>BOSS LINE:</b> "37 of 503 past submissions matched this profile.
+          <b>Winners: 0.</b>" The auditor pulled the score toward the
+          non-winner cluster.
+        </div>
+      </div>
+    </aside>
+  </section>
+
+  <!-- ACHIEVEMENTS -->
+  <section>
+    <div class="section-head">
+      <div class="section-title">
+        <small>⌘ FEATURE TREE</small>
+        Achievements unlock as the panel runs
+      </div>
+      <div class="section-meta">04 / 08 UNLOCKED</div>
+    </div>
+
+    <div class="ach-grid">
+
+      <article class="ach" data-rarity="legendary" onclick="popAch('triple')">
+        <span class="ach-xp">+250 XP</span>
+        <div class="ach-icon" style="color:var(--accent-2)">◈</div>
+        <div class="ach-name">Triple-Redundant Detect</div>
+        <div class="ach-desc">Online Eval + Custom Eval + Black-hat counter — three independent flags converge.</div>
+        <span class="ach-rarity legendary">LEGENDARY</span>
+      </article>
+
+      <article class="ach" data-rarity="epic" onclick="popAch('recommend')">
+        <span class="ach-xp">+180 XP</span>
+        <div class="ach-icon" style="color:var(--accent-5)">⌬</div>
+        <div class="ach-name">Recommend API Combo</div>
+        <div class="ach-desc">positive=anchors, negative=anti-patterns, strategy=average_vector. Damage multiplied.</div>
+        <span class="ach-rarity epic">EPIC</span>
+      </article>
+
+      <article class="ach" data-rarity="epic" onclick="popAch('dualrubric')">
+        <span class="ach-xp">+200 XP</span>
+        <div class="ach-icon" style="color:var(--accent-5)">⌗</div>
+        <div class="ach-name">Dual-Rubric Variance</div>
+        <div class="ach-desc">Same submission, two rubrics, two correct scores. Fairness is rubric-relative.</div>
+        <span class="ach-rarity epic">EPIC</span>
+      </article>
+
+      <article class="ach" data-rarity="legendary" onclick="popAch('correct')">
+        <span class="ach-xp">+300 XP</span>
+        <div class="ach-icon" style="color:var(--accent-2)">✦</div>
+        <div class="ach-name">Score Self-Corrects</div>
+        <div class="ach-desc">Yellow A1: 9.0 → 7.6 mid-run. Boss defeated. The 3D constellation reshapes.</div>
+        <span class="ach-rarity legendary">LEGENDARY</span>
+      </article>
+
+      <article class="ach" data-rarity="rare" onclick="popAch('topk')">
+        <span class="ach-xp">+120 XP</span>
+        <div class="ach-icon" style="color:var(--accent)">▤</div>
+        <div class="ach-name">Top-K Hit Rate Proof</div>
+        <div class="ach-desc">On 503 Gemini-3 corpus, ground-truth verification badge ships with the score.</div>
+        <span class="ach-rarity rare">RARE</span>
+      </article>
+
+      <article class="ach" data-rarity="rare" onclick="popAch('phoenix')">
+        <span class="ach-xp">+140 XP</span>
+        <div class="ach-icon" style="color:var(--accent)">⌑</div>
+        <div class="ach-name">Phoenix MCP Consult</div>
+        <div class="ach-desc">4 parallel calls in &lt;800ms. Drift stats, proof chain, anchors, anti-patterns.</div>
+        <span class="ach-rarity rare">RARE</span>
+      </article>
+
+      <article class="ach" data-rarity="common" onclick="popAch('receipts')">
+        <span class="ach-xp">+80 XP</span>
+        <div class="ach-icon" style="color:var(--ink-2)">▥</div>
+        <div class="ach-name">Score Receipts</div>
+        <div class="ach-desc">Every sub-score = deck quote + file:line + 2 anchor projects. Shareable proof.</div>
+        <span class="ach-rarity common">COMMON</span>
+      </article>
+
+      <article class="ach" data-rarity="common" onclick="popAch('humangate')">
+        <span class="ach-xp">+60 XP</span>
+        <div class="ach-icon" style="color:var(--ink-2)">◐</div>
+        <div class="ach-name">Human Override Gate</div>
+        <div class="ach-desc">You stay in control. Override writes a Phoenix annotation that re-calibrates next run.</div>
+        <span class="ach-rarity common">COMMON</span>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- PARTY MEMBERS -->
+  <section class="party">
+    <div class="section-head" style="margin:0">
+      <div class="section-title">
+        <small>⚑ YOUR PARTY · SIX HATS</small>
+        Pick your formation
+      </div>
+      <div class="section-meta">PHOENIX = META-JUDGE</div>
+    </div>
+    <div class="party-grid">
+      <div class="hat" onclick="popAch('white')">
+        <div class="hat-avatar white">W</div>
+        <div class="hat-name">WHITE</div>
+        <div class="hat-class">FACTS · SCOUT</div>
+        <div class="hat-hp"><div class="hat-hp-fill"></div></div>
+      </div>
+      <div class="hat" onclick="popAch('red')">
+        <div class="hat-avatar red">R</div>
+        <div class="hat-name">RED</div>
+        <div class="hat-class">INTUITION · ROGUE</div>
+        <div class="hat-hp"><div class="hat-hp-fill" style="width:88%"></div></div>
+      </div>
+      <div class="hat" onclick="popAch('yellow')">
+        <div class="hat-avatar yellow">Y</div>
+        <div class="hat-name">YELLOW</div>
+        <div class="hat-class">VALUE · BARD</div>
+        <div class="hat-hp"><div class="hat-hp-fill" style="width:62%;background:var(--accent-3)"></div></div>
+      </div>
+      <div class="hat" onclick="popAch('black')">
+        <div class="hat-avatar black">B</div>
+        <div class="hat-name">BLACK</div>
+        <div class="hat-class">RISK · WARRIOR</div>
+        <div class="hat-hp"><div class="hat-hp-fill"></div></div>
+      </div>
+      <div class="hat" onclick="popAch('green')">
+        <div class="hat-avatar green">G</div>
+        <div class="hat-name">GREEN</div>
+        <div class="hat-class">CREATIVE · MAGE</div>
+        <div class="hat-hp"><div class="hat-hp-fill" style="width:92%"></div></div>
+      </div>
+      <div class="hat" onclick="popAch('blue')">
+        <div class="hat-avatar blue">⌬</div>
+        <div class="hat-name">BLUE</div>
+        <div class="hat-class">SYNTH · PLANNER</div>
+        <div class="hat-hp"><div class="hat-hp-fill"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DAILY QUEST -->
+  <section class="quest-strip">
+    <div class="quest-icon">!</div>
+    <div>
+      <div class="quest-label">DAILY QUEST</div>
+      <div class="quest-title">Catch one over-confident Hat before it ships</div>
+    </div>
+    <div class="quest-text">
+      Reward: a signed audit trail + a Phoenix annotation. Streak bonus for 3 corrections in a single run.
+    </div>
+    <div class="quest-progress">
+      <span>62%</span>
+      <div class="quest-bar"><div class="quest-bar-fill"></div></div>
+      <span>S-rank</span>
+    </div>
+  </section>
+
+</main>
+
+<!-- BEGIN AUDIT intro overlay -->
+<div class="intro-overlay" id="intro">
+  <button class="intro-skip" onclick="closeIntro()">SKIP · ESC</button>
+  <div class="intro-stage">
+    <span class="intro-step">PHASE 01 · CALIBRATION</span>
+    <div class="intro-headline" id="introHead">Loading 503-project anchor constellation…</div>
+    <div class="intro-canvas"><div class="intro-progress" id="introBar"></div></div>
+    <div class="intro-status" id="introStatus">⟳ qdrant://past_evals · hybrid dense+sparse · RRF</div>
+    <button class="btn btn-primary" id="introCta" style="margin-top:14px;display:none" onclick="goDemo()">▶ ENTER MATCH</button>
+  </div>
+</div>
+
+<script>
+// ===================== state =====================
+let soundOn = false;
+let scenarioIdx = 0;
+
+const scenarios = [
+  {
+    tag:"SUBMISSION · QDRANT VSD RUBRIC",
+    name:"VectorBard — pitch + repo",
+    pre:9.0, post:7.6,
+    delta:"⚠ −1.4 · Yellow A1 over-confident · evidence_depth 0.31",
+    narr:'<b>BOSS LINE:</b> "37 of 503 past submissions matched this profile. <b>Winners: 0.</b>" The auditor pulled the score toward the non-winner cluster.'
+  },
+  {
+    tag:"SUBMISSION · RAPID AGENT RUBRIC",
+    name:"AgentForge — Tech 40 / Inn 30 / Imp 20 / Pres 10",
+    pre:7.3, post:7.9,
+    delta:"✦ +0.6 · Black hat under-scored · Phoenix mid-iter recall",
+    narr:'<b>BOSS LINE:</b> Phoenix MCP returned "Black under-confident on Tech tie-break by 0.8 over 14 past runs." Score animated up. <b>Participant accepted.</b>'
+  },
+  {
+    tag:"DUAL-RUBRIC REVEAL",
+    name:"Same submission · two rubrics",
+    pre:87, post:73,
+    delta:"⚡ Variance = 14 points · NOT bias · rubric-relative",
+    narr:'<b>BOSS LINE:</b> "Same engine. Different rubric. <b>Different (correct) score.</b>" Fairness is not absolute — it is rubric-relative.'
+  }
+];
+
+// ===================== sound =====================
+let audioCtx = null;
+function getCtx(){
+  if(!audioCtx){
+    try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
+  }
+  return audioCtx;
+}
+function blip(freq, dur, type){
+  if(!soundOn) return;
+  const ctx = getCtx(); if(!ctx) return;
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = type||"square"; o.frequency.value = freq;
+  g.gain.setValueAtTime(0.001, ctx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+  o.connect(g).connect(ctx.destination);
+  o.start(); o.stop(ctx.currentTime + dur);
+}
+function toggleSound(){
+  soundOn = !soundOn;
+  const btn = document.getElementById('sndBtn');
+  btn.textContent = 'SFX · ' + (soundOn?'ON':'OFF');
+  btn.classList.toggle('on', soundOn);
+  if(soundOn){ blip(660,0.08); setTimeout(()=>blip(880,0.10),80); }
+}
+
+// ===================== scenario carousel =====================
+function renderScenario(){
+  const s = scenarios[scenarioIdx];
+  document.getElementById('sTag').textContent = s.tag;
+  document.getElementById('sName').textContent = s.name;
+  document.getElementById('sValPre').textContent = s.pre;
+  document.getElementById('sValPost').textContent = s.post;
+  // normalize widths
+  const max = Math.max(s.pre, s.post, 10);
+  document.getElementById('sBarPre').style.width = ((s.pre/max)*100)+"%";
+  document.getElementById('sBarPost').style.width = ((s.post/max)*100)+"%";
+  document.getElementById('sDelta').textContent = s.delta;
+  document.getElementById('sNarr').innerHTML = s.narr;
+  // pips
+  [0,1,2].forEach(i=>{
+    document.getElementById('pip'+i).classList.toggle('active', i===scenarioIdx);
+  });
+  // re-animate card
+  const card = document.getElementById('scenarioCard');
+  card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
+}
+function cycleScenario(){
+  scenarioIdx = (scenarioIdx+1) % scenarios.length;
+  renderScenario();
+  blip(520,0.05); setTimeout(()=>blip(720,0.07),60);
+}
+setInterval(()=>{ scenarioIdx = (scenarioIdx+1) % scenarios.length; renderScenario(); }, 7000);
+
+// ===================== achievement toasts =====================
+const ACH = {
+  triple:{name:"Triple-Redundant Detect", desc:"3 detection paths converged", icon:"◈"},
+  recommend:{name:"Recommend API Combo", desc:"positive/negative anchors fused", icon:"⌬"},
+  dualrubric:{name:"Dual-Rubric Variance", desc:"Variance ≠ bias. Proven.", icon:"⌗"},
+  correct:{name:"Score Self-Corrects", desc:"Boss defeated. Yellow A1 calibrated.", icon:"✦"},
+  topk:{name:"Top-K Hit Rate Proof", desc:"Ground-truth verified on 503-corpus", icon:"▤"},
+  phoenix:{name:"Phoenix MCP Consult", desc:"4 parallel calls · <800ms", icon:"⌑"},
+  receipts:{name:"Score Receipts", desc:"Every score has a receipt", icon:"▥"},
+  humangate:{name:"Human Override", desc:"Annotation written. You stay in control.", icon:"◐"},
+  white:{name:"Recruited · WHITE", desc:"+Vertex Grounding tool", icon:"W"},
+  red:{name:"Recruited · RED", desc:"+Intuition multiplier", icon:"R"},
+  yellow:{name:"Recruited · YELLOW", desc:"⚠ over-confidence risk", icon:"Y"},
+  black:{name:"Recruited · BLACK", desc:"+must-cite-precedent plugin", icon:"B"},
+  green:{name:"Recruited · GREEN", desc:"+lateral move", icon:"G"},
+  blue:{name:"Recruited · BLUE", desc:"+planning · synthesis", icon:"⌬"},
+  explorer:{name:"Map Unlocked", desc:"3D constellation now navigable", icon:"⌖"}
+};
+function popAch(key){
+  const a = ACH[key]; if(!a) return;
+  const stack = document.getElementById('toastStack');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = `
+    <div class="toast-icon">${a.icon}</div>
+    <div>
+      <div class="toast-meta">ACHIEVEMENT UNLOCKED</div>
+      <div class="toast-name">${a.name}</div>
+      <div class="toast-desc">${a.desc}</div>
+    </div>`;
+  stack.appendChild(t);
+  blip(880,0.08,"triangle"); setTimeout(()=>blip(1180,0.10,"triangle"),80);
+  setTimeout(()=>t.remove(), 5200);
+}
+
+// ===================== intro =====================
+function beginAudit(){
+  document.getElementById('intro').classList.add('active');
+  document.getElementById('introBar').classList.remove('run');
+  document.getElementById('introCta').style.display = 'none';
+  document.getElementById('introStatus').textContent = '⟳ qdrant://past_evals · hybrid dense+sparse · RRF';
+  document.getElementById('introHead').textContent = 'Loading 503-project anchor constellation…';
+  blip(440,0.10); setTimeout(()=>blip(660,0.12),100);
+  setTimeout(()=>{ document.getElementById('introBar').classList.add('run'); }, 80);
+  setTimeout(()=>{ document.getElementById('introStatus').textContent = '✓ rubric_weights vector ready · 4 presets loaded'; }, 1100);
+  setTimeout(()=>{
+    document.getElementById('introHead').textContent = 'Ready. The auditor will catch the auditor.';
+    document.getElementById('introStatus').textContent = '✓ phoenix MCP handshake · ✓ qdrant hybrid online';
+    document.getElementById('introCta').style.display = 'inline-block';
+    popAch('triple');
+    blip(880,0.10,"triangle"); setTimeout(()=>blip(1320,0.14,"triangle"),120);
+  }, 2500);
+}
+function closeIntro(){ document.getElementById('intro').classList.remove('active'); }
+function goDemo(){ window.location.href = './demo.html'; }
+
+// ===================== shortcuts =====================
+document.addEventListener('keydown', (e)=>{
+  if(e.code === 'Space'){ e.preventDefault(); beginAudit(); }
+  if(e.key === 'r' || e.key === 'R'){ cycleScenario(); }
+  if(e.key === 'm' || e.key === 'M'){ popAch('explorer'); }
+  if(e.key === 'Escape'){ closeIntro(); }
+});
+
+// ===================== init =====================
+renderScenario();
+setTimeout(()=>popAch('phoenix'), 1200);
+setTimeout(()=>popAch('topk'), 2600);
+</script>
+</body>
+</html>
