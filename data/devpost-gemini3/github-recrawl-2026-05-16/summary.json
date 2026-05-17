@@ -1,0 +1,11 @@
+{
+  "updated_at": "2026-05-16T18:53:21Z",
+  "state": "finished",
+  "total_projects": 4493,
+  "checked": 4493,
+  "remaining": 0,
+  "projects_with_github_live": 2380,
+  "unique_repos_live": 2505,
+  "errors": 3,
+  "waf_events": 0
+}

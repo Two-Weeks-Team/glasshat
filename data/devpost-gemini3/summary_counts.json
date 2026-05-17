@@ -1,0 +1,185 @@
+{
+  "total_submissions": 4493,
+  "total_projects": 4493,
+  "winners": 13,
+  "projects_with_any_github_url": 2406,
+  "projects_with_github_repo_id": 2384,
+  "unique_github_repo_ids": 2509,
+  "total_github_urls": 7939,
+  "unique_github_urls": 2682,
+  "top_repos": [
+    [
+      "user-attachments/assets",
+      7
+    ],
+    [
+      "25f3001314-dev/vyapar_new",
+      2
+    ],
+    [
+      "BegAi-dev/AI-Cyber-Guardian",
+      2
+    ],
+    [
+      "mussaratjamshaid-hub/Hackathon-project",
+      2
+    ],
+    [
+      "raunitgrey7/FarmIQ",
+      2
+    ],
+    [
+      "Vector897/Globot",
+      1
+    ],
+    [
+      "iamdanishm/aegis",
+      1
+    ],
+    [
+      "ZentraHost/netra_project",
+      1
+    ],
+    [
+      "aadhi97x/proofy-extension",
+      1
+    ],
+    [
+      "jiviteshreddy44-netizen/proofyyy",
+      1
+    ],
+    [
+      "aadhi97x/proofy-app2",
+      1
+    ],
+    [
+      "Pranav301102/Gemini-hack",
+      1
+    ],
+    [
+      "Paulhb7/orphafold",
+      1
+    ],
+    [
+      "OrbitalAssets/OrbitalAssets",
+      1
+    ],
+    [
+      "alissatroiano/Legacy-Modernizer-2.0",
+      1
+    ],
+    [
+      "mayurpawar/agentguard-monorepo",
+      1
+    ],
+    [
+      "abbasmir12/procsee",
+      1
+    ],
+    [
+      "suryaremanan/BatteryForgeAI",
+      1
+    ],
+    [
+      "BostonListener/GeminiGeoFlow",
+      1
+    ],
+    [
+      "allwin23/Vault",
+      1
+    ]
+  ],
+  "top_domains": [
+    [
+      "devpost.team",
+      17972
+    ],
+    [
+      "d112y698adiu2z.cloudfront.net",
+      15707
+    ],
+    [
+      "github.com",
+      7933
+    ],
+    [
+      "devpost.com",
+      4505
+    ],
+    [
+      "discord.com",
+      4341
+    ],
+    [
+      "youtube.com",
+      4204
+    ],
+    [
+      "ai.studio",
+      1120
+    ],
+    [
+      "aistudio.google.com",
+      345
+    ],
+    [
+      "youtu.be",
+      232
+    ],
+    [
+      "drive.google.com",
+      112
+    ],
+    [
+      "huggingface.co",
+      64
+    ],
+    [
+      "testflight.apple.com",
+      54
+    ],
+    [
+      "play.google.com",
+      52
+    ],
+    [
+      "docs.google.com",
+      37
+    ],
+    [
+      "vimeo.com",
+      31
+    ],
+    [
+      "apps.apple.com",
+      30
+    ],
+    [
+      "localhost:8000",
+      26
+    ],
+    [
+      "localhost:3000",
+      24
+    ],
+    [
+      "x.com",
+      24
+    ],
+    [
+      "ihavenoidea.com",
+      24
+    ]
+  ],
+  "crawl": {
+    "started_at": "2026-05-15T09:25:28Z",
+    "finished_at": "2026-05-15T11:41:01Z",
+    "target_count": 100000,
+    "stop_at": 0,
+    "stop_goal_effective": 100000,
+    "pages_crawled": 188,
+    "submission_count": 4493,
+    "project_detail_count": 4493,
+    "winner_count_in_collected_gallery": 13
+  }
+}

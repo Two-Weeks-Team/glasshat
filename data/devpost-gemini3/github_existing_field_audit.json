@@ -1,0 +1,36 @@
+{
+  "direct_projects": 2380,
+  "robust_projects": 2383,
+  "direct_unique_repos": 2505,
+  "robust_unique_repos": 2508,
+  "projects_with_extra_candidates": 3,
+  "missing_samples": [
+    {
+      "title": "Foru AI: Skin & Health Agent",
+      "url": "https://devpost.com/software/foru-ai-skin-health-agent",
+      "direct": [],
+      "extra_candidates": [
+        "PeixunWu/foryou"
+      ],
+      "github_repos": []
+    },
+    {
+      "title": "goStuddy",
+      "url": "https://devpost.com/software/gostuddy",
+      "direct": [],
+      "extra_candidates": [
+        "abdushakurob/getstuddy"
+      ],
+      "github_repos": []
+    },
+    {
+      "title": "Slipstream Control Plane",
+      "url": "https://devpost.com/software/slipstream-control-plane",
+      "direct": [],
+      "extra_candidates": [
+        "anthony-maio/slipcore"
+      ],
+      "github_repos": []
+    }
+  ]
+}
