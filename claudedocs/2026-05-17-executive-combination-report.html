@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#0d1320" />
+<title>Glasshat — Executive Combination Report (2026-05-17)</title>
+<meta name="description" content="5-person executive panel verdict on the 9-advocate gallery combination. Chair·JTBD·Visual·FE·Red. Final 9-surface combination matrix + 4-conflict resolution + build order." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700;800&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+<style>
+:root {
+  --bg-base:        oklch(13% 0.018 250);
+  --bg-elevated:    oklch(17% 0.020 250);
+  --bg-elevated-hi: oklch(20% 0.024 250);
+  --bg-glass-hi:    oklch(95% 0 0 / 0.06);
+  --border-subtle:  oklch(95% 0 0 / 0.10);
+  --border-strong:  oklch(95% 0 0 / 0.22);
+  --text-primary:   oklch(98% 0 0);
+  --text-secondary: oklch(78% 0 0);
+  --text-muted:     oklch(62% 0 0);
+  --primary:        oklch(75% 0.16 215);
+  --primary-soft:   oklch(75% 0.16 215 / 0.16);
+  --accent:         oklch(78% 0.20 350);
+  --accent-soft:    oklch(78% 0.20 350 / 0.20);
+  --gold:           oklch(82% 0.16 88);
+  --success:        oklch(78% 0.18 150);
+  --warning:        oklch(82% 0.18 80);
+  --danger:         oklch(70% 0.22 28);
+  --radius-md: 12px; --radius-lg: 16px; --radius-xl: 20px; --radius-pill: 999px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 100%; scroll-behavior: smooth; }
+body {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: 'Inter', 'Noto Sans KR', system-ui, sans-serif;
+  font-size: 15.5px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  background-image:
+    radial-gradient(circle at 18% 8%, oklch(75% 0.16 215 / 0.08), transparent 50%),
+    radial-gradient(circle at 84% 86%, oklch(78% 0.20 350 / 0.07), transparent 50%);
+  background-attachment: fixed;
+}
+body { display: flex; min-height: 100vh; }
+.toc {
+  position: sticky;
+  top: 0;
+  width: 260px;
+  height: 100vh;
+  overflow-y: auto;
+  background: var(--bg-elevated);
+  border-right: 1px solid var(--border-subtle);
+  padding: 24px 18px;
+  flex-shrink: 0;
+}
+.toc-title { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 14px; font-family: 'JetBrains Mono', monospace; }
+.toc-list { list-style: none; }
+.toc-list li { margin: 2px 0; }
+.toc-list a { display: block; padding: 7px 10px; color: var(--text-secondary); text-decoration: none; font-size: 13px; border-radius: 6px; transition: all .15s ease; border-left: 2px solid transparent; }
+.toc-list a:hover { background: var(--bg-glass-hi); color: var(--text-primary); }
+.toc-list a.active { background: var(--primary-soft); border-left-color: var(--primary); color: var(--primary); font-weight: 600; }
+.toc-brand { font-family: 'Space Grotesk', sans-serif; font-weight: 800; font-size: 16px; margin-bottom: 24px; display: flex; align-items: center; gap: 8px; }
+.toc-brand .mark { width: 24px; height: 24px; border-radius: 6px; background: linear-gradient(135deg, var(--primary), var(--accent)); display: grid; place-items: center; color: var(--bg-base); font-weight: 800; font-size: 13px; }
+main { flex: 1; max-width: 1080px; margin: 0 auto; padding: 48px 56px 96px; min-width: 0; }
+.report-header { padding-bottom: 32px; border-bottom: 1px solid var(--border-subtle); margin-bottom: 48px; }
+.eyebrow { display: inline-block; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); background: var(--accent-soft); padding: 4px 12px; border-radius: var(--radius-pill); margin-bottom: 18px; border: 1px solid oklch(78% 0.20 350 / 0.30); }
+h1 { font-family: 'Space Grotesk', sans-serif; font-weight: 800; font-size: clamp(34px, 4vw, 52px); letter-spacing: -0.03em; line-height: 1.05; margin-bottom: 14px; background: linear-gradient(135deg, var(--text-primary) 30%, var(--primary) 65%, var(--accent)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.subtitle { color: var(--text-secondary); font-size: 17px; max-width: 720px; line-height: 1.5; }
+.report-meta { margin-top: 18px; display: flex; gap: 8px; flex-wrap: wrap; }
+.badge { font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 5px 11px; border-radius: var(--radius-pill); background: var(--bg-glass-hi); border: 1px solid var(--border-subtle); color: var(--text-secondary); }
+.badge.gold { background: oklch(82% 0.16 88 / 0.16); color: var(--gold); border-color: var(--gold); }
+.badge.success { background: oklch(78% 0.18 150 / 0.16); color: var(--success); border-color: var(--success); }
+section { margin-bottom: 64px; }
+section h2 { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 26px; letter-spacing: -0.01em; margin-bottom: 8px; display: flex; align-items: baseline; gap: 12px; }
+section h2 .num { font-family: 'JetBrains Mono', monospace; color: var(--primary); font-size: 15px; font-weight: 600; }
+section .sec-lead { color: var(--text-secondary); font-size: 15px; max-width: 720px; margin-bottom: 24px; }
+h3 { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 18px; margin: 32px 0 12px; letter-spacing: -0.01em; }
+p { margin-bottom: 14px; color: var(--text-secondary); }
+strong { color: var(--text-primary); font-weight: 700; }
+code { font-family: 'JetBrains Mono', monospace; font-size: 13px; background: var(--bg-glass-hi); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border-subtle); color: var(--text-primary); }
+a { color: var(--primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* TL;DR */
+.tldr { background: linear-gradient(135deg, var(--primary-soft), oklch(78% 0.20 350 / 0.10)); border: 1px solid var(--border-strong); border-radius: var(--radius-xl); padding: 28px; margin-bottom: 32px; }
+.tldr .title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 14px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--gold); margin-bottom: 14px; }
+.tldr .punch { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 24px; letter-spacing: -0.01em; line-height: 1.35; color: var(--text-primary); margin-bottom: 14px; }
+.tldr .body { color: var(--text-secondary); font-size: 15px; line-height: 1.65; }
+
+/* Metric grid */
+.metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin: 18px 0 32px; }
+.metric { background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 16px; }
+.metric .label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; margin-bottom: 6px; }
+.metric .value { font-family: 'Space Grotesk', sans-serif; font-weight: 800; font-size: 28px; letter-spacing: -0.02em; line-height: 1; color: var(--text-primary); }
+.metric .value.accent { color: var(--primary); }
+.metric .value.gold { color: var(--gold); }
+.metric .value.warning { color: var(--warning); }
+.metric .value.danger { color: var(--danger); }
+.metric .sub { font-size: 11px; color: var(--text-muted); margin-top: 6px; font-family: 'JetBrains Mono', monospace; }
+
+/* Panel cards (5 panelists) */
+.panel-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.panel-card { background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 18px; }
+.panel-card .role { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+.panel-card .who { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted); margin-bottom: 12px; }
+.panel-card .verdict { padding: 6px 10px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 600; display: inline-block; margin-bottom: 12px; font-family: 'JetBrains Mono', monospace; }
+.panel-card .verdict.agree { background: oklch(78% 0.18 150 / 0.16); color: var(--success); border: 1px solid var(--success); }
+.panel-card .verdict.partial { background: oklch(82% 0.18 80 / 0.16); color: var(--warning); border: 1px solid var(--warning); }
+.panel-card .verdict.shippable { background: var(--primary-soft); color: var(--primary); border: 1px solid var(--primary); }
+.panel-card .verdict.hostile { background: oklch(70% 0.22 28 / 0.16); color: var(--danger); border: 1px solid var(--danger); }
+.panel-card .quote { font-family: 'Space Grotesk', sans-serif; font-style: italic; font-size: 14px; line-height: 1.5; color: var(--text-primary); margin-bottom: 12px; padding-left: 12px; border-left: 3px solid var(--primary); }
+.panel-card ul { list-style: none; font-size: 13px; color: var(--text-secondary); }
+.panel-card ul li { padding: 3px 0; padding-left: 14px; position: relative; }
+.panel-card ul li::before { content: '·'; position: absolute; left: 0; color: var(--primary); font-weight: 700; }
+
+/* Combo matrix */
+.combo-table { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); overflow: hidden; margin: 16px 0 24px; }
+.combo-table th, .combo-table td { padding: 12px 16px; text-align: left; font-size: 13px; border-bottom: 1px solid var(--border-subtle); }
+.combo-table th { background: var(--bg-elevated-hi); font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+.combo-table tr:last-child td { border-bottom: none; }
+.combo-table tbody tr:hover { background: var(--bg-glass-hi); }
+.combo-table .owner-tag { font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 12px; padding: 2px 8px; border-radius: 4px; display: inline-block; }
+.combo-table .owner-tag.p23 { background: oklch(82% 0.16 88 / 0.18); color: var(--gold); }
+.combo-table .owner-tag.p05 { background: oklch(78% 0.20 350 / 0.18); color: var(--accent); }
+.combo-table .owner-tag.p25 { background: oklch(75% 0.16 215 / 0.18); color: var(--primary); }
+.combo-table .owner-tag.p13 { background: oklch(78% 0.18 150 / 0.18); color: var(--success); }
+.combo-table .owner-tag.p17 { background: oklch(75% 0.16 290 / 0.18); color: oklch(78% 0.16 290); }
+.combo-table .owner-tag.p18 { background: oklch(82% 0.18 50 / 0.18); color: oklch(82% 0.18 50); }
+.combo-table .owner-tag.p11 { background: oklch(70% 0 0 / 0.18); color: var(--text-secondary); }
+.combo-table .owner-tag.p07 { background: oklch(70% 0.18 200 / 0.18); color: oklch(78% 0.18 200); }
+.combo-table .owner-tag.p01 { background: oklch(82% 0.10 60 / 0.18); color: oklch(82% 0.10 60); }
+
+/* Conflict resolution */
+.conflict-list { display: flex; flex-direction: column; gap: 16px; }
+.conflict-card { background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 18px; border-left: 4px solid var(--warning); }
+.conflict-card .head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; flex-wrap: wrap; gap: 8px; }
+.conflict-card .title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 16px; }
+.conflict-card .severity { font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 2px 8px; border-radius: 4px; background: oklch(82% 0.18 80 / 0.18); color: var(--warning); border: 1px solid var(--warning); text-transform: uppercase; letter-spacing: 0.05em; }
+.conflict-card .severity.high { background: oklch(70% 0.22 28 / 0.18); color: var(--danger); border-color: var(--danger); }
+.conflict-card .from { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; }
+.conflict-card .resolution { padding: 10px 14px; background: oklch(78% 0.18 150 / 0.10); border-left: 3px solid var(--success); border-radius: 6px; font-size: 13px; color: var(--text-primary); margin-top: 8px; }
+.conflict-card .resolution strong { color: var(--success); }
+
+/* Build order */
+.build-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin: 16px 0; }
+.build-col { background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 16px; }
+.build-col .week-head { font-family: 'JetBrains Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--primary); margin-bottom: 4px; font-weight: 600; }
+.build-col .week-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 14px; margin-bottom: 12px; }
+.build-col ul { list-style: none; font-size: 13px; }
+.build-col li { padding: 6px 0; padding-left: 18px; position: relative; color: var(--text-secondary); border-bottom: 1px dashed oklch(95% 0 0 / 0.06); }
+.build-col li:last-child { border-bottom: none; }
+.build-col li::before { content: '▸'; position: absolute; left: 0; color: var(--primary); font-size: 10px; top: 8px; }
+
+/* Risk cards */
+.risk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+.risk-card { background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 16px; border-left: 4px solid var(--danger); }
+.risk-card .head { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 14px; margin-bottom: 8px; color: var(--danger); }
+.risk-card .body { font-size: 13px; color: var(--text-secondary); margin-bottom: 10px; }
+.risk-card .mitigation { background: oklch(78% 0.18 150 / 0.10); padding: 8px 12px; border-radius: 6px; font-size: 12px; color: var(--text-primary); border-left: 2px solid var(--success); }
+.risk-card .mitigation strong { color: var(--success); font-family: 'JetBrains Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* Decision box */
+.decision-box { background: linear-gradient(135deg, var(--primary-soft), oklch(82% 0.16 88 / 0.12)); border: 1px solid var(--border-strong); border-radius: var(--radius-xl); padding: 28px; margin: 24px 0; }
+.decision-box .label { font-family: 'JetBrains Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--gold); margin-bottom: 10px; }
+.decision-box .text { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 18px; line-height: 1.5; color: var(--text-primary); }
+.decision-box .sub { color: var(--text-secondary); font-size: 14px; margin-top: 10px; }
+
+/* Quote callout */
+.quote-callout { background: var(--bg-elevated-hi); border-left: 4px solid var(--accent); padding: 18px 22px; border-radius: 0 var(--radius-md) var(--radius-md) 0; margin: 18px 0; font-family: 'Space Grotesk', sans-serif; font-style: italic; font-size: 17px; line-height: 1.5; color: var(--text-primary); }
+.quote-callout .attrib { display: block; margin-top: 10px; font-family: 'JetBrains Mono', monospace; font-style: normal; font-size: 12px; color: var(--text-muted); }
+
+/* Score gauge */
+.gauge { display: inline-block; padding: 16px 24px; background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); }
+.gauge .num { font-family: 'Space Grotesk', sans-serif; font-weight: 800; font-size: 36px; line-height: 1; }
+.gauge .num.danger { color: var(--danger); }
+.gauge .num.warning { color: var(--warning); }
+.gauge .num.success { color: var(--success); }
+.gauge .lbl { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-top: 4px; }
+
+footer { padding-top: 32px; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 12px; font-family: 'JetBrains Mono', monospace; }
+
+@media (max-width: 980px) {
+  .toc { display: none; }
+  main { padding: 32px 24px 64px; }
+  .build-grid { grid-template-columns: 1fr; }
+  .risk-grid { grid-template-columns: 1fr; }
+  h1 { font-size: 32px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+</style>
+</head>
+<body>
+
+<aside class="toc">
+  <div class="toc-brand"><div class="mark">G</div>glasshat</div>
+  <div class="toc-title">Executive Report</div>
+  <ul class="toc-list">
+    <li><a href="#tldr">TL;DR · 2분 결정</a></li>
+    <li><a href="#context">1. 컨텍스트</a></li>
+    <li><a href="#panel">2. 5인 패널 견해</a></li>
+    <li><a href="#combo">3. 9-Surface 조합 매트릭스</a></li>
+    <li><a href="#borrow">4. 6 마이크로 차용</a></li>
+    <li><a href="#conflict">5. 갈등 해소 (5건)</a></li>
+    <li><a href="#red">6. Red의 38점 답변</a></li>
+    <li><a href="#build">7. 빌드 순서 (50h)</a></li>
+    <li><a href="#risk">8. 핵심 리스크 2건</a></li>
+    <li><a href="#decision">9. 경영진 결정 요청</a></li>
+    <li><a href="#next">10. 다음 단계</a></li>
+  </ul>
+</aside>
+
+<main>
+
+<header class="report-header">
+  <span class="eyebrow">Executive Combination Report · 2026-05-17 KST</span>
+  <h1>P23 엔진, P05 섀시, P25 텔레메트리.<br/>9개 advocate를 한 제품으로.</h1>
+  <p class="subtitle">5인 경영진 패널(Chair · JTBD · Visual · FE · Red)이 사용자의 P23-main / P05-landing / P07-mobile-ref 기준을 검토하고, 나머지 6개 advocate에서 무엇을 차용할지, 어떻게 조합할지, 무엇을 거부할지 합의한 결과. 빌드 시작 직전 마지막 결정 문서.</p>
+  <div class="report-meta">
+    <span class="badge">v1.0 · 2026-05-17 KST</span>
+    <span class="badge gold">Path B chosen</span>
+    <span class="badge success">5/5 panel verdict 도착</span>
+    <span class="badge">9-surface matrix locked</span>
+    <span class="badge">build cost ~50h</span>
+  </div>
+</header>
+
+<!-- ====================== TL;DR ====================== -->
+<section id="tldr">
+<h2><span class="num">§0</span>TL;DR · 2분에 결정 가능</h2>
+<div class="tldr">
+  <div class="title">★ Chair Verdict</div>
+  <div class="punch">"P23 engine, P05 chassis, P25 telemetry, P13 receipts, P11/P17 compliance floor, P18 voice, P01 micro-gesture, P07 mobile mirror."</div>
+  <div class="body">사용자의 베이스라인(P23 main / P05 landing) 확인. 나머지 6개 advocate는 각자의 1가지 마이크로 패턴만 차용. <strong>1건 chair veto</strong>: P23의 "CRITICAL HIT!" 풀스크린 스플래시는 데모 내부에서만 허용, 랜딩에서는 제거.</div>
+</div>
+
+<div class="metric-grid">
+  <div class="metric"><div class="label">패널 합의</div><div class="value success">4/5</div><div class="sub">Chair · JTBD · Visual · FE · Red(반대)</div></div>
+  <div class="metric"><div class="label">FE 빌드 비용</div><div class="value">50h</div><div class="sub">6 마이그레이션 합계</div></div>
+  <div class="metric"><div class="label">Red 점수</div><div class="value danger">38</div><div class="sub">/100 brutal</div></div>
+  <div class="metric"><div class="label">예상 Phase 1.mode-UI</div><div class="value accent">10-12d</div><div class="sub">병렬 시 ~10d</div></div>
+  <div class="metric"><div class="label">Success metric</div><div class="value gold">80%</div><div class="sub">9.0→7.6 + dual-rubric 회상 n=20</div></div>
+</div>
+
+<div class="quote-callout">
+  "당신은 가장 시끄러운 mockup을 main으로, 가장 예쁜 것을 landing으로 골랐다. 심사위원이 Twitter가 아니라 agent engineer라는 점을 잊었다."
+  <span class="attrib">— Red · Devil's Advocate (점수 38/100)</span>
+</div>
+
+<p>본 보고서는 Red의 비판을 정면으로 응대한다. <strong>해법</strong>: P25 Phoenix-replica trace panel을 <em>데모 우측 영구 노출</em>로 격상 + P13 reliability diagram을 landing 본문 필수 + S/A/B/C grade는 demo 내부에서만(landing/score 평면 제거) + P17 evidence-export chip 1개 단발 차용. Red의 P25-main counter-combo는 거부하되 그 핵심 메시지(agent-tech tie-break 신뢰성)는 흡수한다.</p>
+</section>
+
+<!-- ====================== CONTEXT ====================== -->
+<section id="context">
+<h2><span class="num">§1</span>컨텍스트 — 왜 이 보고서인가</h2>
+<p class="sec-lead">사용자는 9-advocate gallery (Path B)를 검토한 뒤 다음 4가지를 명시했다:</p>
+<ol style="padding-left: 20px; color: var(--text-secondary);">
+  <li style="margin-bottom: 6px;"><strong>P23 (Game Designer)</strong> = main framework</li>
+  <li style="margin-bottom: 6px;"><strong>P05 (Design-Forward)</strong> = landing (P23 landing은 game launcher 같음)</li>
+  <li style="margin-bottom: 6px;"><strong>P07 (Mobile-First)</strong> = reference only</li>
+  <li style="margin-bottom: 6px;">다른 6개도 같은 기준으로 평가 → 경영진 패널 호출</li>
+</ol>
+<p>5인 패널(Chair · JTBD · Visual · FE · Red)이 9개 <code>_proposal.md</code>를 다읽고 각자의 lens로 verdict를 냈다. 이 보고서는 5인 결과를 단일 결정 문서로 통합한다.</p>
+</section>
+
+<!-- ====================== PANEL ====================== -->
+<section id="panel">
+<h2><span class="num">§2</span>5인 패널 견해</h2>
+<p class="sec-lead">각 패널이 자기 lens로 baseline을 검토하고 verdict + 핵심 통찰 + 차용 권고를 제출. 4명 동의/부분동의, 1명(Red)이 hostile.</p>
+
+<div class="panel-grid">
+  <article class="panel-card">
+    <div class="role">Chair</div>
+    <div class="who">Chief Product Officer (Series A startup)</div>
+    <span class="verdict agree">CONFIRM baseline</span>
+    <div class="quote">"P23 carries the only screen-recordable, dinner-table-retellable artifact. P05 prevents the 'game launcher' read."</div>
+    <ul>
+      <li>9-surface matrix lock</li>
+      <li>6 micro-borrow 정의</li>
+      <li>Success: 80% 회상 (n=20 dry-run)</li>
+      <li>Veto: P23 "CRITICAL HIT" landing splash</li>
+    </ul>
+  </article>
+
+  <article class="panel-card">
+    <div class="role">JTBD Strategist</div>
+    <div class="who">Christensen Jobs-To-Be-Done</div>
+    <span class="verdict partial">PARTIAL agree</span>
+    <div class="quote">"P23 main + P05 landing은 P25 trace view와 P13 CI metrics가 'game = unserious' 리스크를 중화할 때만 성립한다."</div>
+    <ul>
+      <li>Job별 best: Qdrant→P11 · Rapid→P25 · Devpost→P23 · Enterprise→P17</li>
+      <li>Must migrate: P25 trace 3-pane · P13 KPI 95% CI · P17 evidence-export chip</li>
+      <li>Misfit: P23 S/A/B/C grade · P18 Pixar avatars · P07 mobile-primacy</li>
+    </ul>
+  </article>
+
+  <article class="panel-card">
+    <div class="role">Visual Director</div>
+    <div class="who">ex-Linear · ex-Vercel · ex-Resend</div>
+    <span class="verdict partial">NEEDS-BRIDGE</span>
+    <div class="quote">"Serif cinema와 RPG HUD는 공존할 수 있다 — 단 typographic contract와 2-tier motion rule을 seam에서 엄격히 강제할 때만."</div>
+    <ul>
+      <li>3-voice type: serif-italic(narrative) / mono(HUD) / sans(body)</li>
+      <li>2-tier motion: 1100ms cinema / 220ms game-feel</li>
+      <li>Survive: P13 chart · P25 trace · P18 Phoenix-eye</li>
+      <li>Break: P01 cream · P17 enterprise chrome · P11 docs sidebar</li>
+    </ul>
+  </article>
+
+  <article class="panel-card">
+    <div class="role">FE Architect</div>
+    <div class="who">ex-Vercel · ex-Cloudflare</div>
+    <span class="verdict shippable">SHIPPABLE</span>
+    <div class="quote">"하나의 Next.js 16 앱에서 출시 가능. P07은 reference가 아니라 real mobile route로 띄워야 한다 — 다른 advocate에 없는 layout이다."</div>
+    <ul>
+      <li>Stack: Next.js 16 + Motion One + R3F+drei + Zustand</li>
+      <li>Theme-per-route-segment로 token 충돌 해소</li>
+      <li>6 migrations cost: 50h</li>
+      <li>W1: shell + P23 demo + P05 hero</li>
+      <li>W2: P25 panel + P13 chart + P07 mobile</li>
+    </ul>
+  </article>
+
+  <article class="panel-card">
+    <div class="role">Red · Devil's Advocate</div>
+    <div class="who">적대적 비판</div>
+    <span class="verdict hostile">38 / 100</span>
+    <div class="quote">"심사위원이 Twitter가 아니라 agent engineer라는 점을 잊었다. RPG framing은 calibration thesis를 trivialize한다."</div>
+    <ul>
+      <li>P23 5축 sink reason 명시</li>
+      <li>P05+P23 tonal whiplash 경고</li>
+      <li>Underrated: <strong>P25</strong> — 3 judge tribe 동시 만족</li>
+      <li>Counter-combo: P25-main + P13 landing + P17 footer (rejected)</li>
+    </ul>
+  </article>
+</div>
+</section>
+
+<!-- ====================== COMBO MATRIX ====================== -->
+<section id="combo">
+<h2><span class="num">§3</span>9-Surface 조합 매트릭스 (locked)</h2>
+<p class="sec-lead">제품의 9개 surface 각각에 advocate를 1명씩 할당. Chair 결정 + 4명 패널 input + Red 반론 흡수.</p>
+
+<table class="combo-table">
+  <thead>
+    <tr>
+      <th>Surface</th>
+      <th>Owner</th>
+      <th>What goes here</th>
+      <th>Why this owner</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Landing · Hero</strong></td>
+      <td><span class="owner-tag p05">P05</span></td>
+      <td>Editorial italic serif "audits the judge." + live R3F 503-anchor constellation + mix-blend custom cursor</td>
+      <td>5초 첫인상에 SaaS-grade credibility를 즉시 확립. Game launcher 인상 차단</td>
+    </tr>
+    <tr>
+      <td><strong>Landing · Proof block</strong></td>
+      <td><span class="owner-tag p13">P13</span></td>
+      <td>Reliability diagram (vanilla vs Glasshat ECE) + 95% bootstrap CI + KPI strip (ECE −38.4% · Spearman +0.29 · bias-flip −14.7pp · P@10 +0.40)</td>
+      <td>"38% calibration reduction" claim에 정량 anchor 제공. Red의 38점 핵심 비판(증거 부재) 해소</td>
+    </tr>
+    <tr>
+      <td><strong>Landing · Act II cinematic</strong></td>
+      <td><span class="owner-tag p18">P18</span></td>
+      <td>6-scene scroll-driven 짧은 cinematic (Phoenix-as-eye + Yellow 캐릭터를 실루엣으로 추상화, full Pixar avatar 사용 안 함)</td>
+      <td>Doumont-quiet 종결 + 감정 곡선. JTBD warning(P18 avatar misfit)을 silhouette-only로 조정</td>
+    </tr>
+    <tr>
+      <td><strong>Landing · Compliance strip</strong></td>
+      <td><span class="owner-tag p17">P17</span></td>
+      <td>4-badge strip만 (SOC2 in progress · EU AI Act Art.12 · NIST RMF · ISO 42001) + evidence-export chip (.zip download)</td>
+      <td>Enterprise framing을 strip 단위로 제한. Visual director의 "enterprise chrome 차단" 경고와 양립</td>
+    </tr>
+    <tr>
+      <td><strong>Demo · Main framework</strong></td>
+      <td><span class="owner-tag p23">P23</span></td>
+      <td>Game canvas HUD + 6 hats as party cards + combo counter + 5-phase auto-play</td>
+      <td>유일한 dinner-table-retellable + screen-recordable artifact</td>
+    </tr>
+    <tr>
+      <td><strong>Demo · Climax (score correction)</strong></td>
+      <td><span class="owner-tag p23">P23</span> + <span class="owner-tag p01">P01</span></td>
+      <td>P23의 critical-hit 비주얼 (단, 풀스크린 스플래시 제거 — Chair veto) + P01의 strike-through 9.0 → 7̶.̶6̶ micro-gesture</td>
+      <td>Chair veto 적용. 게임 비주얼 유지하되 trivializing 요소(스플래시) 제거</td>
+    </tr>
+    <tr>
+      <td><strong>Demo · Trace right rail</strong></td>
+      <td><span class="owner-tag p25">P25</span></td>
+      <td>Phoenix-replica span tree (47 spans) + waterfall gantt + OpenInference attribute inspector — <strong>always visible</strong> (toggle 아님)</td>
+      <td>Rapid Agent Tech tie-break #1. Red의 "agent engineer가 심사" 비판 직접 응대. JTBD: rapid_agent_judge_job 충족</td>
+    </tr>
+    <tr>
+      <td><strong>Mobile route</strong></td>
+      <td><span class="owner-tag p07">P07</span></td>
+      <td>실제 <code>/m</code> route — 375px primary + 7-scene snap-scroll + bottom-sheet CTA</td>
+      <td>FE Architect 권고: reference 아닌 real route. JTBD 경고(Qdrant judge는 desktop)는 default 라우팅에서 desktop 우선으로 회피</td>
+    </tr>
+    <tr>
+      <td><strong><code>/trust</code> route (별도)</strong></td>
+      <td><span class="owner-tag p11">P11</span></td>
+      <td>Stage-1 dual-table (Qdrant + Rapid Agent) + file:line evidence + 라이선스 badge</td>
+      <td>Visual collision 회피 위해 별도 route + 별도 theme. Submission day에 심사관이 한 페이지에서 모든 체크리스트 확인</td>
+    </tr>
+    <tr>
+      <td><strong><code>/audit-report</code> route (별도)</strong></td>
+      <td><span class="owner-tag p01">P01</span></td>
+      <td>Typewritten forensic dossier — <code>[data-theme="contrarian"]</code>로 격리 (cream paper + Courier)</td>
+      <td>Easter egg-grade 차별화. Main UX와 격리 (Visual director의 "P01 cream breaks system" 회피)</td>
+    </tr>
+  </tbody>
+</table>
+</section>
+
+<!-- ====================== BORROW ====================== -->
+<section id="borrow">
+<h2><span class="num">§4</span>6개 advocate에서 1개씩 마이크로 차용</h2>
+<p class="sec-lead">각 비-main advocate에서 ONE specific element만 차용. 더 가져오면 token collision. Chair·JTBD·FE 합의.</p>
+
+<table class="combo-table">
+  <thead>
+    <tr><th>From</th><th>차용 요소</th><th>적용 위치</th><th>구현 비용</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><span class="owner-tag p01">P01</span></td><td>Live strike-through correction <code>9.0 → 7̶.̶6̶</code> micro-gesture</td><td>Demo HUD + trace panel</td><td>6h · CSS only</td></tr>
+    <tr><td><span class="owner-tag p11">P11</span></td><td>Stage-1 dual compliance table with file:line anchors</td><td><code>/trust</code> route</td><td>5h · shadcn Table + MDX</td></tr>
+    <tr><td><span class="owner-tag p13">P13</span></td><td>Reliability diagram + 95% bootstrap CI as hero chart</td><td>Landing body proof block</td><td>8h · visx or Observable Plot</td></tr>
+    <tr><td><span class="owner-tag p17">P17</span></td><td>Signed evidence-bundle export chip (.zip download)</td><td>Demo score footer + landing strip</td><td>10h · shadcn DataTable + zod</td></tr>
+    <tr><td><span class="owner-tag p18">P18</span></td><td>6-scene scroll cinematic + Phoenix-as-eye motif</td><td>Landing Act II (hero ↔ proof 사이)</td><td>9h · Motion One scroll + inline SVG</td></tr>
+    <tr><td><span class="owner-tag p25">P25</span></td><td>Phoenix-replica span tree + waterfall + attribute inspector</td><td>Demo right rail (always visible)</td><td>12h · react-arborist + custom waterfall</td></tr>
+  </tbody>
+</table>
+<p style="margin-top: 12px;"><strong>Total migration cost: 50h.</strong> P23 demo 본체와 P05 landing 본체는 이미 gallery에 존재 (재사용).</p>
+</section>
+
+<!-- ====================== CONFLICT ====================== -->
+<section id="conflict">
+<h2><span class="num">§5</span>패널 갈등 해소 (5건)</h2>
+<p class="sec-lead">5명 의견이 모두 일치하지 않았다. 5가지 핵심 갈등 + 각각의 해소.</p>
+
+<div class="conflict-list">
+  <article class="conflict-card">
+    <div class="head">
+      <div class="title">갈등 1 · P23 게임 frame이 audit 신뢰성을 trivialize?</div>
+      <span class="severity high">P0</span>
+    </div>
+    <div class="from"><strong>Red</strong>: "boss-fight metaphor trivializes the calibration thesis." (점수 38)<br/><strong>JTBD</strong>: "P25 trace + P13 KPI가 game=unserious 리스크를 중화할 때만 성립." <strong>Chair</strong>: "P23은 dinner-table-retellable 유일 자산."</div>
+    <div class="resolution"><strong>해소 →</strong> P25 trace right rail을 <em>always visible</em>로 격상 (toggle 아님) + P13 reliability chart를 landing 필수 + P23 S/A/B/C grade는 demo 내부에서만 (score screen 제거) + P23 "CRITICAL HIT" 풀스크린 스플래시 제거 (Chair veto). Red의 핵심 비판 직접 응대.</div>
+  </article>
+
+  <article class="conflict-card">
+    <div class="head">
+      <div class="title">갈등 2 · P05 cinema + P23 RPG = tonal whiplash?</div>
+      <span class="severity high">P0</span>
+    </div>
+    <div class="from"><strong>Visual</strong>: "Serif italic 156px + mono-uppercase 58px가 싸운다. needs-bridge." <strong>Red</strong>: "심사관이 cinema 후 turn-based JRPG로 다시 던져진다."</div>
+    <div class="resolution"><strong>해소 →</strong> Visual Director의 <strong>typographic contract</strong> 채택: serif-italic = narrative moments only, mono = HUD/telemetry only, sans = body. + <strong>2-tier motion rule</strong>: cinema 1100ms / game-feel 220ms 절대 mix 금지. + P23의 magenta-320 hue 제거 (Steam launcher tell). + 8px base grid + radius 14-22px 통일.</div>
+  </article>
+
+  <article class="conflict-card">
+    <div class="head">
+      <div class="title">갈등 3 · Chair는 6 borrow / Visual은 P11·P17·P01 "would break"</div>
+      <span class="severity">P1</span>
+    </div>
+    <div class="from"><strong>Chair</strong>: P01/P11/P13/P17/P18/P25 모두 차용. <strong>Visual</strong>: P01 cream + P17 enterprise + P11 docs sidebar는 시스템 파괴.</div>
+    <div class="resolution"><strong>해소 →</strong> FE Architect의 <strong>theme-per-route-segment</strong> 채택: 메인 라우트는 P05+P23 통합 theme, <code>/trust</code>는 P11 theme, <code>/audit-report</code>는 P01 theme로 격리. 색상 토큰만 swap, spacing+typography scale은 공유. P17은 4-badge strip + 1 chip만 (full chrome 차단).</div>
+  </article>
+
+  <article class="conflict-card">
+    <div class="head">
+      <div class="title">갈등 4 · P07은 reference인가 real route인가?</div>
+      <span class="severity">P1</span>
+    </div>
+    <div class="from"><strong>사용자 baseline</strong>: P07 reference only. <strong>FE</strong>: real mobile route로 ship. <strong>JTBD</strong>: "Qdrant judge는 desktop, mobile-primacy는 misfit."</div>
+    <div class="resolution"><strong>해소 →</strong> Real <code>/m</code> route + default 라우팅은 desktop. UA sniff로 모바일 사용자만 <code>/m</code>으로 redirect (judge는 영향 없음). FE의 mobile snap-scroll layout이 다른 advocate에 없는 유일 자산임을 인정.</div>
+  </article>
+
+  <article class="conflict-card">
+    <div class="head">
+      <div class="title">갈등 5 · Red의 P25-main counter-combo를 어떻게 응대?</div>
+      <span class="severity">P0</span>
+    </div>
+    <div class="from"><strong>Red</strong>: "P25-main + P13 landing + P17 footer가 3 judge tribe 동시 만족. 게임 frame은 viral하지만 audit를 trivialize."</div>
+    <div class="resolution"><strong>해소 →</strong> Counter-combo는 거부하되 핵심 메시지(agent-tech 신뢰성) 100% 흡수. P25 trace를 demo right rail에 always-visible로 격상. P13 reliability를 landing 필수. → P23 main의 viral 자산을 유지하면서 Red의 agent-tech tie-break 요구 충족. <strong>두 axis 모두 가짐.</strong></div>
+  </article>
+</div>
+</section>
+
+<!-- ====================== RED RESPONSE ====================== -->
+<section id="red">
+<h2><span class="num">§6</span>Red의 38점에 정면 응대</h2>
+<p class="sec-lead">Red는 baseline을 brutal 38/100으로 채점했다. 5가지 sink reason 각각에 응대.</p>
+
+<table class="combo-table">
+  <thead>
+    <tr><th>Red의 sink axis</th><th>Red의 비판</th><th>응대</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Qdrant Originality</td>
+      <td>"Constellation은 recycled metaphor"</td>
+      <td>P13 reliability diagram + 95% CI를 landing 필수. Qdrant Recommendation API의 positive/negative 쿼리를 trace right rail에서 explicit code로 노출 (P25). "qdrant.recommend(strategy=\"average_vector\")" 그대로 표시.</td>
+    </tr>
+    <tr>
+      <td>Qdrant UX</td>
+      <td>"503 stars는 read-only spectacle"</td>
+      <td>3D constellation에 hover tooltip + click-to-inspect 활성화 (FE 권고). 사용자가 직접 anchor를 클릭해 다른 winner를 조회 가능. P25 trace pane에서도 동일.</td>
+    </tr>
+    <tr>
+      <td>Rapid Agent Tech tie-break</td>
+      <td>"RPG HUD가 agent orchestration 가림"</td>
+      <td>P25 Phoenix-replica trace tree (47-span)를 demo right rail에 always-visible. ADK topology(GlasshatRoot → ParallelAgent[6] → LoopAgent(max_iter=2) → MCPToolset)를 SVG live animation으로 노출. Red가 underrated 지적한 P25를 가장 큰 비중으로 통합.</td>
+    </tr>
+    <tr>
+      <td>Rapid Agent Impact</td>
+      <td>"Boss-fight metaphor가 calibration thesis trivialize"</td>
+      <td>P13의 calibration delta 정량 데이터를 landing proof block에 lead로 배치. P17의 SOC2/EU AI Act/NIST/ISO 4-badge strip + evidence-export chip로 enterprise governance 의도 명시. 게임 자산은 demo 내부로만 격리.</td>
+    </tr>
+    <tr>
+      <td>Devpost first-5s</td>
+      <td>"5-phase 자동재생이 phase 2까지 viewer 집중 요구"</td>
+      <td>Landing hero(P05)가 첫 5초 담당 (RPG HUD 노출 안 함). 데모 진입은 사용자 명시 클릭으로만. Hero의 R3F constellation + serif italic이 5초 dwell 보장. P18 cinematic이 hero ↔ proof 사이 스크롤로 자연 transition.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="quote-callout">
+  Red 점수 38 → 응대 후 추정 65. (당신은 viral도 가지고 agent-tech 신뢰도 가진다.)
+  <span class="attrib">— 응대 종료</span>
+</div>
+</section>
+
+<!-- ====================== BUILD ====================== -->
+<section id="build">
+<h2><span class="num">§7</span>빌드 순서 (FE Architect plan)</h2>
+<p class="sec-lead">Next.js 16 App Router + Motion One + R3F+drei + Zustand. Theme-per-route-segment로 토큰 충돌 해소.</p>
+
+<div class="build-grid">
+  <div class="build-col">
+    <div class="week-head">Week 1 · Must</div>
+    <div class="week-title">기반 + 양대 자산</div>
+    <ul>
+      <li>Next.js 16 shell + <code>tokens.css</code></li>
+      <li>Shared lib: Hat&lt;Color&gt;, ScoreBar/Strike, MCPCallChip, AnchorList, KPIStrip</li>
+      <li><strong>P23 game-canvas</strong> <code>/demo</code> route + party HUD + critical-hit(splash 제외) + score-screen</li>
+      <li><strong>P05 landing hero</strong> + R3F constellation (instanced, 503 anchors) + climax serif reveal</li>
+    </ul>
+  </div>
+  <div class="build-col">
+    <div class="week-head">Week 2 · Should</div>
+    <div class="week-title">신뢰성 + 모바일</div>
+    <ul>
+      <li><strong>P25 Phoenix trace panel</strong> demo right rail (same run data as P23 timeline)</li>
+      <li><strong>P13 reliability diagram</strong> + KPI strip on landing proof block</li>
+      <li><strong>P07 mobile route</strong> <code>/m</code> — 7-scene snap-scroll 변형</li>
+      <li>UA-based default routing</li>
+    </ul>
+  </div>
+  <div class="build-col">
+    <div class="week-head">Later · Could</div>
+    <div class="week-title">격리 라우트</div>
+    <ul>
+      <li><strong>P17</strong> evidence-export chip + 4-badge strip</li>
+      <li><strong>P11</strong> <code>/trust</code> Stage-1 dual-table</li>
+      <li><strong>P18</strong> 6-scene Act II cinematic on landing</li>
+      <li><strong>P01</strong> <code>/audit-report</code> dossier (격리 theme)</li>
+    </ul>
+  </div>
+</div>
+
+<p style="margin-top: 18px;">합계 ~50h migration + P23/P05 본체 재사용 → <strong>Phase 1.mode-UI 예상 10-12일</strong> (Phase 1 D backend + 1.5 RubricSynthesizer + 1.B Qdrant와 병렬 가능).</p>
+</section>
+
+<!-- ====================== RISK ====================== -->
+<section id="risk">
+<h2><span class="num">§8</span>핵심 리스크 2건 + 완화</h2>
+<p class="sec-lead">FE Architect가 명시한 ship-blocking 리스크 2건.</p>
+
+<div class="risk-grid">
+  <article class="risk-card">
+    <div class="head">⚠ R1 · 메인 스레드 프레임 경쟁</div>
+    <div class="body">R3F 503-anchor constellation + P23 game canvas HUD + Motion One scroll 안무가 동시에 메인 스레드 점유 → 중급 노트북에서 climax 시 jank</div>
+    <div class="mitigation"><strong>Mitigation →</strong> OffscreenCanvas worker로 anchor 위치 계산 offload + <code>prefers-reduced-motion</code> gate + P18 cinematic은 pre-baked CSS keyframes(JS 없음) + DPR &lt;1.5 기기는 <code>?view=2d</code> P11 fallback 자동 적용</div>
+  </article>
+
+  <article class="risk-card">
+    <div class="head">⚠ R2 · 스타일 토큰 충돌</div>
+    <div class="body">P01 typewriter cream + P05 OKLCH dark glass + P17 enterprise neutral이 하나의 <code>tokens.css</code>에서 공존 불가 → 한 미학이 어색해짐</div>
+    <div class="mitigation"><strong>Mitigation →</strong> <code>[data-theme]</code> per <code>layout.tsx</code> route segment: landing=<code>design-forward</code>, <code>/audit-report</code>=<code>contrarian</code>, <code>/trust</code>=<code>enterprise</code>. Spacing + typography scale은 공유, 색상 토큰만 swap</div>
+  </article>
+</div>
+</section>
+
+<!-- ====================== DECISION ====================== -->
+<section id="decision">
+<h2><span class="num">§9</span>경영진 결정 요청</h2>
+<p class="sec-lead">아래 4가지를 경영진이 lock하면 Phase 1.mode-UI 시작.</p>
+
+<div class="decision-box">
+  <div class="label">DECISION #1 · Combination Matrix</div>
+  <div class="text">§3의 9-Surface 매트릭스를 그대로 lock?</div>
+  <div class="sub">또는 1-2개 surface 변경 요청 (예: <code>/trust</code> 없애고 P11 차용 자체 제거)</div>
+</div>
+
+<div class="decision-box">
+  <div class="label">DECISION #2 · Chair Veto</div>
+  <div class="text">P23 "CRITICAL HIT" 풀스크린 스플래시 = 데모 내부에서만 (landing/score 제거) 확정?</div>
+  <div class="sub">또는 score screen에서는 유지 (game-feel 강화 vs B2B 신뢰 trade-off)</div>
+</div>
+
+<div class="decision-box">
+  <div class="label">DECISION #3 · P07 격상</div>
+  <div class="text">P07을 reference에서 <strong>real <code>/m</code> route</strong>로 격상 (FE 권고)? </div>
+  <div class="sub">또는 사용자 baseline 유지 (reference only)</div>
+</div>
+
+<div class="decision-box">
+  <div class="label">DECISION #4 · Success Metric</div>
+  <div class="text">Chair-lock metric: "Stage 1 judges 80%가 demo 후 9.0→7.6 + dual-rubric 회상 (n=20)"</div>
+  <div class="sub">또는 다른 metric (예: top-13 hit rate ≥ 9/13 · landing dwell ≥ 45s · GitHub star ≥ 200)</div>
+</div>
+</section>
+
+<!-- ====================== NEXT ====================== -->
+<section id="next">
+<h2><span class="num">§10</span>다음 단계 (lock 후)</h2>
+<ol style="padding-left: 24px; color: var(--text-secondary); line-height: 1.8;">
+  <li>경영진 4 decisions lock → 메모리 <code>glasshat-chosen-combo</code> 저장</li>
+  <li><code>feat/chosen-combo-mode-ui</code> branch 생성</li>
+  <li>FE Architect plan대로 W1 작업 시작 (shell + P23 demo + P05 hero)</li>
+  <li>병렬 backend: Phase 1 D (LLM adapter) + 1.5 (RubricSynthesizer) + 1.B (Qdrant)</li>
+  <li>~5/27 (D-5) dry-run 20 judges → success metric 측정 → recall ≥80% 미달 시 즉시 P0 fix sprint</li>
+  <li>5/31 Qdrant 제출 마감 / 6/11 Rapid Agent 마감</li>
+</ol>
+</section>
+
+<footer>
+glasshat · executive combination report v1.0 · 2026-05-17 KST · 5-panel verdict · 9-surface matrix · 50h FE migration · 10-12d Phase 1.mode-UI<br/>
+source: <a href="https://github.com/Two-Weeks-Team/glasshat/tree/main/mockups/gallery">github.com/Two-Weeks-Team/glasshat/mockups/gallery</a> · live: <a href="https://two-weeks-team.github.io/glasshat/gallery/">gallery</a>
+</footer>
+
+</main>
+
+<script>
+// TOC active section
+(function() {
+  const links = document.querySelectorAll('.toc-list a');
+  const sections = [...links].map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const onScroll = () => {
+    let active = sections[0];
+    for (const s of sections) {
+      const r = s.getBoundingClientRect();
+      if (r.top < 200) active = s;
+    }
+    links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + active.id));
+  };
+  window.addEventListener('scroll', onScroll, {passive: true});
+  onScroll();
+})();
+</script>
+</body>
+</html>
