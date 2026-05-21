@@ -40,3 +40,10 @@ def test_validate_custom_yaml_roundtrip() -> None:
 def test_validate_custom_yaml_rejects_garbage() -> None:
     with pytest.raises(RubricValidationError):
         validate_custom_yaml({"not": "a rubric"})
+
+
+def test_low_confidence_warning(make_rubric: MakeRubric) -> None:
+    r = make_rubric()
+    r.confidence = 0.3
+    warns = validate_rubric(r, source_text=None)
+    assert any(w.code == "low_confidence" for w in warns)

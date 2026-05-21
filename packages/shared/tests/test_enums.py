@@ -27,7 +27,8 @@ def test_run_mode() -> None:
 
 
 def test_str_enum_is_str() -> None:
-    assert Hat.BLUE == "blue"
+    assert isinstance(Hat.BLUE, str)
+    assert Hat.BLUE.value == "blue"
 
 
 def test_error_hierarchy() -> None:

@@ -1,5 +1,8 @@
 import json
+from pathlib import Path
 
+import glasshat.rubric.schema as schema_mod
+import pytest
 from glasshat.rubric.schema import SCHEMA_PATH, schema_matches_disk, synthesized_schema
 
 
@@ -16,3 +19,10 @@ def test_disk_schema_exists_and_matches_model() -> None:
         "synthesized.schema.json is stale — run scripts/gen_rubric_schema.py and commit"
     )
     assert schema_matches_disk()
+
+
+def test_schema_matches_disk_false_when_missing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(schema_mod, "SCHEMA_PATH", tmp_path / "absent.json")
+    assert schema_mod.schema_matches_disk() is False

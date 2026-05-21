@@ -64,9 +64,7 @@ def make_rubric() -> MakeRubric:
         ]
         return SynthesizedRubric(
             source=RubricSource(type=SourceKind.PRESET, identifier="test"),
-            scoring_rule=ScoringRule(
-                aggregation=Aggregation(aggregation), final_scale="0-100"
-            ),
+            scoring_rule=ScoringRule(aggregation=Aggregation(aggregation), final_scale="0-100"),
             criteria=crits,
         )
 
