@@ -56,3 +56,32 @@ PYTHONPATH=packages/shared/src:packages/rubric/src:agents/src:services/ingest/sr
 uv run python scripts/real_e2e.py
 ```
 (requires the optional SDKs: `uv pip install google-genai google-adk arize-phoenix arize-phoenix-otel openinference-instrumentation-google-adk openinference-instrumentation-google-genai mcp`)
+
+---
+
+## Item 5 — live Cloud Run deployment (2026-05-21)
+
+Deployed via `infra/deploy.sh --confirm` (Cloud Build → Artifact Registry → Cloud Run), hard-scoped to `panelyst-hackathon` / `us-central1` / min-instances=0:
+
+- API: `https://glasshat-api-o366v7tl2q-uc.a.run.app`
+- Web: `https://glasshat-web-o366v7tl2q-uc.a.run.app`
+
+Verified:
+```
+GET  /health           -> {"status":"ok"}
+POST /api/evaluate     -> final_score 52.07, 4 audit self-corrections (3.19 -> 2.39, ...)
+GET  /  /judge  /participate  -> 200, 200, 200
+```
+Demo image uses `mock`/`memory` backends (the runtime image excludes the optional Vertex/Phoenix SDKs) — reliable + free per-request; the real-Vertex chain is proven by `scripts/real_e2e.py` above.
+
+## Item 6 — 3D self-correction (driven by real pipeline output)
+
+`/participate` → "Run sample evaluation" streams the pipeline over SSE and reshapes the
+react-three-fiber constellation from the resulting `RunRecord`. Screenshot:
+`claudedocs/assets/glasshat-3d-self-correction.png` — Final 51.3, all four axes flagged
+`self-corrected`, four constellation nodes projected from the corrected (score, weight, evidence).
+
+Operational note: locally, when `arize-phoenix` is installed but no collector is running, the
+`PhoenixTracer` (SimpleSpanProcessor) blocks on synchronous OTLP export retries — set
+`OTEL_SDK_DISABLED=true` for a credential-free local demo, or point `PHOENIX_COLLECTOR_ENDPOINT`
+at a running Phoenix. The deployed image is unaffected (phoenix not installed → NoOp tracer).

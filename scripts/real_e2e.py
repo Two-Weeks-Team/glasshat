@@ -47,14 +47,6 @@ class LiveTracer:
 
 async def main() -> None:
     import phoenix as px
-    from google.adk.agents import LlmAgent
-    from google.adk.runners import InMemoryRunner
-    from google.adk.tools.mcp_tool import MCPToolset, StdioConnectionParams
-    from google.genai import types
-    from mcp import StdioServerParameters
-    from openinference.instrumentation.google_adk import GoogleADKInstrumentor
-    from phoenix.otel import register
-
     from glasshat.agents.audit import ConsultResult, TableConsultant
     from glasshat.agents.types import EvaluationInput
     from glasshat.pipeline.engine import Deps, run_evaluation
@@ -64,6 +56,13 @@ async def main() -> None:
     from glasshat.shared.enums import Hat, RunMode
     from glasshat.shared.llm import VertexLlmClient
     from glasshat.shared.retrieval import HybridIndex
+    from google.adk.agents import LlmAgent
+    from google.adk.runners import InMemoryRunner
+    from google.adk.tools.mcp_tool import MCPToolset, StdioConnectionParams
+    from google.genai import types
+    from mcp import StdioServerParameters
+    from openinference.instrumentation.google_adk import GoogleADKInstrumentor
+    from phoenix.otel import register
 
     print("[1] Launching local self-hosted Phoenix (in-process)...")
     sess = px.launch_app()
@@ -101,7 +100,9 @@ async def main() -> None:
     async for ev in runner.run_async(
         user_id="e2e",
         session_id=session.id,
-        new_message=types.Content(role="user", parts=[types.Part(text="List the Phoenix projects.")]),
+        new_message=types.Content(
+            role="user", parts=[types.Part(text="List the Phoenix projects.")]
+        ),
     ):
         if ev.content and ev.content.parts:
             for p in ev.content.parts:
@@ -143,7 +144,10 @@ async def main() -> None:
         print(f"  {s.criterion_id}: {s.score}{'  [self-corrected]' if s.audit else ''}")
     print("audit self-corrections:")
     for c in record.audit_corrections:
-        print(f"  {c.hat} {c.criterion_id}: {c.original} -> {c.corrected}  (mean_delta={c.mean_delta})")
+        print(
+            f"  {c.hat} {c.criterion_id}: {c.original} -> {c.corrected} "
+            f"(mean_delta={c.mean_delta})"
+        )
     stages = [e.stage.value for e in events]
     print(f"SSE stages ({len(stages)}): {stages}")
 
