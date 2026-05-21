@@ -1,0 +1,77 @@
+# Gemini 3 Hackathon (Dec 2025 - Feb 2026, concluded) — its own published rubric.
+# Used as the calibration corpus rubric (data/devpost-gemini3). Different weights
+# than rapid-agent on purpose: this drives the dual-rubric variance demonstration.
+preset_id: gemini3
+verified_at: 2026-05-14
+source_url: https://gemini3.devpost.com/rules
+source_excerpt: |
+  Technical Implementation (40%), Innovation (30%), Impact (20%),
+  Presentation (10%).
+synthesized:
+  schema_version: "1.0"
+  source:
+    type: preset
+    identifier: gemini3
+  scoring_rule:
+    aggregation: weighted_sum
+    final_scale: "0-100"
+  criteria:
+    - id: tech-implementation
+      label: "Technical Implementation"
+      weight: 0.40
+      scale: 5
+      bmad_mapping: [B1, B2, C1, C2, C3]
+      descriptor_levels:
+        1: "Basic wrapper, no novel engineering"
+        2: "Working integration, some custom logic"
+        3: "Non-trivial engineering, edge cases handled"
+        4: "Complex architecture, custom protocols"
+        5: "Publication-worthy depth"
+      evidence_required: true
+      source_clause: "Criterion 1, weight 40%"
+      source_excerpt: "Technical Implementation"
+    - id: innovation
+      label: "Innovation"
+      weight: 0.30
+      scale: 5
+      bmad_mapping: [A1, A3]
+      descriptor_levels:
+        1: "Recognizable pattern"
+        2: "Familiar with one twist"
+        3: "Non-obvious approach"
+        4: "Rarely-seen pattern"
+        5: "Defines a new pattern"
+      evidence_required: true
+      source_clause: "Criterion 2, weight 30%"
+      source_excerpt: "Innovation"
+    - id: impact
+      label: "Impact"
+      weight: 0.20
+      scale: 5
+      bmad_mapping: [A4, A2]
+      descriptor_levels:
+        1: "Unclear who benefits"
+        2: "Small group benefit"
+        3: "Clear defined-audience benefit"
+        4: "Broad market impact"
+        5: "Category-defining impact"
+      evidence_required: true
+      source_clause: "Criterion 3, weight 20%"
+      source_excerpt: "Impact"
+    - id: presentation
+      label: "Presentation"
+      weight: 0.10
+      scale: 5
+      bmad_mapping: [D1, D2, D3, D4]
+      descriptor_levels:
+        1: "Hard to follow"
+        2: "Rough but understandable"
+        3: "Clear and well-paced"
+        4: "Polished and compelling"
+        5: "Outstanding storytelling"
+      evidence_required: true
+      source_clause: "Criterion 4, weight 10%"
+      source_excerpt: "Presentation"
+  tie_breakers:
+    - { order: 1, criterion_id: tech-implementation }
+  confidence: 1.0

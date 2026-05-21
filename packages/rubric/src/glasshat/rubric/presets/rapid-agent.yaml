@@ -1,0 +1,96 @@
+# Rapid Agent / Arize track — OFFICIAL rubric.
+# LOCKED 2026-05-21: official rule is 4 criteria x EQUAL 25%, tie-break by listed
+# order (Technological Implementation -> Design -> Potential Impact -> Quality of
+# the Idea). The "Tech 40 / Inn 30 / Imp 20 / Pres 10" interpretation is WRONG and
+# is corrected here. Source: claudedocs/2026-05-21-session-handoff.md §2-1.
+preset_id: rapid-agent
+verified_at: 2026-05-21
+source_url: https://rapid-agent.devpost.com/rules
+source_excerpt: |
+  Judging criteria, weighted equally (25% each): Technological Implementation;
+  Design; Potential Impact; Quality of the Idea. Ties are broken in that listed
+  order, then by judge vote.
+synthesized:
+  schema_version: "1.0"
+  source:
+    type: preset
+    identifier: rapid-agent
+  scoring_rule:
+    aggregation: weighted_sum
+    final_scale: "0-100"
+  criteria:
+    - id: tech-implementation
+      label: "Technological Implementation"
+      weight: 0.25
+      scale: 5
+      bmad_mapping: [B1, B2, C1, C2, C3, C4]
+      descriptor_levels:
+        1: "Surface — basic wrapper, no novel engineering"
+        2: "Functional — working integration, some custom logic"
+        3: "Solid — non-trivial engineering, edge cases handled"
+        4: "Impressive — complex architecture, custom protocols"
+        5: "Exceptional — publication-worthy depth"
+      evidence_required: true
+      source_clause: "Judging criterion 1 of 4, weight 25%, tie-break first"
+      source_excerpt: "Technological Implementation"
+    - id: design
+      label: "Design"
+      weight: 0.25
+      scale: 5
+      bmad_mapping: [D1, D3, A2]
+      descriptor_levels:
+        1: "Confusing first run, no feedback"
+        2: "Works with friction, sparse polish"
+        3: "Smooth happy path, helpful errors"
+        4: "Thoughtful pacing, demo-able in 60s"
+        5: "Memorable, dinner-table-retellable UX"
+      evidence_required: true
+      source_clause: "Judging criterion 2 of 4, weight 25%, tie-break second"
+      source_excerpt: "Design"
+    - id: potential-impact
+      label: "Potential Impact"
+      weight: 0.25
+      scale: 5
+      bmad_mapping: [A4, A1]
+      descriptor_levels:
+        1: "Niche, unclear who benefits"
+        2: "Plausible benefit for a small group"
+        3: "Clear benefit for a defined audience"
+        4: "Broad impact across a real market"
+        5: "Category-defining, large addressable impact"
+      evidence_required: true
+      source_clause: "Judging criterion 3 of 4, weight 25%, tie-break third"
+      source_excerpt: "Potential Impact"
+    - id: quality-of-idea
+      label: "Quality of the Idea"
+      weight: 0.25
+      scale: 5
+      bmad_mapping: [A1, A3]
+      descriptor_levels:
+        1: "Recognizable wrapper pattern"
+        2: "Familiar pattern with one twist"
+        3: "Non-obvious, well-motivated concept"
+        4: "Pattern not seen in prior winners"
+        5: "Defines a genuinely new pattern"
+      evidence_required: true
+      source_clause: "Judging criterion 4 of 4, weight 25%, tie-break fourth"
+      source_excerpt: "Quality of the Idea"
+  tie_breakers:
+    - { order: 1, criterion_id: tech-implementation }
+    - { order: 2, criterion_id: design }
+    - { order: 3, criterion_id: potential-impact }
+    - { order: 4, criterion_id: quality-of-idea }
+  threshold_gates:
+    - id: phoenix-mcp-runtime
+      condition: "Must call the Phoenix MCP server at runtime (Arize Stage-1)"
+      check: automated
+    - id: gemini-google-stack
+      condition: "Uses Gemini + Google Cloud Agent Builder + a partner MCP server"
+      check: manual
+    - id: public-oss-repo
+      condition: "Public repository with an OSI-approved license"
+      check: manual
+    - id: demo-video
+      condition: "<=3 minute demo video on YouTube/Vimeo (English or EN subtitles)"
+      check: manual
+  confidence: 1.0

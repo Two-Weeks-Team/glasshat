@@ -1,0 +1,64 @@
+# Qdrant VSD 2026 — 3 axes, equal weight, simple average.
+# Retained as a preset for the dual-rubric variance FEATURE (not a pursued track).
+preset_id: qdrant
+verified_at: 2026-05-14
+source_url: https://try.qdrant.tech/hackathon-vsd
+source_excerpt: |
+  Functionality, Originality, User Experience. Submissions that are only
+  chatbots are not allowed.
+synthesized:
+  schema_version: "1.0"
+  source:
+    type: preset
+    identifier: qdrant
+  scoring_rule:
+    aggregation: simple_average
+    final_scale: "0-100"
+  criteria:
+    - id: functionality
+      label: "Functionality"
+      weight: 0.333
+      scale: 5
+      bmad_mapping: [C1, C2, C3, C4, C5, B3, B4]
+      descriptor_levels:
+        1: "Pipeline doesn't run end-to-end"
+        2: "Runs but breaks on edge cases"
+        3: "Solid end-to-end on golden path"
+        4: "Handles edge cases + retries gracefully"
+        5: "Production-grade observability + recovery"
+      evidence_required: true
+      source_clause: "Judging criterion 1 of 3"
+      source_excerpt: "Functionality"
+    - id: originality
+      label: "Originality"
+      weight: 0.333
+      scale: 5
+      bmad_mapping: [A1, A3, B1]
+      descriptor_levels:
+        1: "Recognizable wrapper pattern"
+        2: "Familiar pattern with one twist"
+        3: "Non-obvious approach"
+        4: "Pattern not seen in 2025 winners"
+        5: "Defines a new pattern"
+      evidence_required: true
+      source_clause: "Judging criterion 2 of 3"
+      source_excerpt: "Originality"
+    - id: user-experience
+      label: "User Experience"
+      weight: 0.333
+      scale: 5
+      bmad_mapping: [D1, D2, D3, D4, A2]
+      descriptor_levels:
+        1: "Confusing first run, no feedback"
+        2: "Works with friction, sparse docs"
+        3: "Smooth happy path, helpful errors"
+        4: "Thoughtful pacing, demo-able in 60s"
+        5: "Memorable beat, dinner-table-retellable"
+      evidence_required: true
+      source_clause: "Judging criterion 3 of 3"
+      source_excerpt: "User Experience"
+  threshold_gates:
+    - id: non-chatbot
+      condition: "Submission must not be a chatbot (no chat-only UX)"
+      check: manual
+  confidence: 1.0
