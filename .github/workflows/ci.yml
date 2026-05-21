@@ -31,10 +31,10 @@ jobs:
         run: uv run ruff check .
 
       - name: Ruff format check
-        run: uv run ruff format --check packages
+        run: uv run ruff format --check .
 
       - name: Mypy (strict)
-        run: uv run mypy packages
+        run: uv run mypy packages agents services
 
       - name: Pytest + coverage gate (>=90%)
         run: uv run pytest --cov=glasshat --cov-report=term-missing --cov-fail-under=90
