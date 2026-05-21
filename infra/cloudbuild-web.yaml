@@ -1,0 +1,8 @@
+# Build the Glasshat web image (context apps/web) using infra/Dockerfile.web.
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: ["build", "-f", "infra/Dockerfile.web", "-t", "${_IMAGE}", "apps/web"]
+images:
+  - "${_IMAGE}"
+options:
+  logging: CLOUD_LOGGING_ONLY

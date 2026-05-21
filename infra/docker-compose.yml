@@ -1,0 +1,30 @@
+# Local full-stack bring-up. Host ports avoid 8080 (production) deliberately.
+#   docker compose -f infra/docker-compose.yml up --build
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.api
+    ports:
+      - "8088:8080" # host 8088 -> container 8080 (NEVER bind host 8080: that is production)
+    environment:
+      LLM_BACKEND: mock
+      MONITOR_BACKEND: phoenix-local
+      DOCSTORE_BACKEND: memory
+      BLOB_BACKEND: local-fs
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8080/health').status==200 else 1)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: ../apps/web
+      dockerfile: ../../infra/Dockerfile.web
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_BASE: "http://localhost:8088"
+    depends_on:
+      - api
