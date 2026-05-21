@@ -65,11 +65,10 @@ mypy_path = "packages/shared/src:packages/rubric/src"
 [[tool.mypy.overrides]]
 module = [
     "rank_bm25.*",
-    "google.genai.*",
-    "google.adk.*",
+    "google",
+    "google.*",
     "phoenix.*",
     "openinference.*",
-    "google.cloud.*",
     "opentelemetry.*",
 ]
 ignore_missing_imports = true
