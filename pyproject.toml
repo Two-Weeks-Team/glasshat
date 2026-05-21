@@ -95,5 +95,7 @@ module = [
     "phoenix.*",
     "openinference.*",
     "opentelemetry.*",
+    "mcp",
+    "mcp.*",
 ]
 ignore_missing_imports = true
