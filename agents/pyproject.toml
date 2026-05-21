@@ -8,6 +8,7 @@ dependencies = [
     "glasshat-rubric",
     "pydantic>=2.7",
     "PyYAML>=6",
+    "httpx>=0.27",
 ]
 
 [build-system]
