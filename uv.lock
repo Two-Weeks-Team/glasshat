@@ -16,6 +16,7 @@ resolution-markers = [
 members = [
     "glasshat",
     "glasshat-agents",
+    "glasshat-api",
     "glasshat-code-grader",
     "glasshat-ingest",
     "glasshat-pipeline",
@@ -884,6 +885,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "glasshat-agents" },
+    { name = "glasshat-api" },
     { name = "glasshat-code-grader" },
     { name = "glasshat-ingest" },
     { name = "glasshat-pipeline" },
@@ -903,6 +905,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "glasshat-agents", editable = "agents" },
+    { name = "glasshat-api", editable = "apps/api" },
     { name = "glasshat-code-grader", editable = "services/code-grader" },
     { name = "glasshat-ingest", editable = "services/ingest" },
     { name = "glasshat-pipeline", editable = "services/pipeline-orchestrator" },
@@ -938,6 +941,23 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.27" },
     { name = "pydantic", specifier = ">=2.7" },
     { name = "pyyaml", specifier = ">=6" },
+]
+
+[[package]]
+name = "glasshat-api"
+version = "0.1.0"
+source = { editable = "apps/api" }
+dependencies = [
+    { name = "fastapi" },
+    { name = "glasshat-pipeline" },
+    { name = "uvicorn" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastapi", specifier = ">=0.115" },
+    { name = "glasshat-pipeline", editable = "services/pipeline-orchestrator" },
+    { name = "uvicorn", specifier = ">=0.30" },
 ]
 
 [[package]]

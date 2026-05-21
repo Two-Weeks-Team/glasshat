@@ -10,13 +10,14 @@ dependencies = [
     "glasshat-ingest",
     "glasshat-code-grader",
     "glasshat-pipeline",
+    "glasshat-api",
 ]
 
 [tool.uv]
 package = false
 
 [tool.uv.workspace]
-members = ["packages/*", "services/*", "agents"]
+members = ["packages/*", "services/*", "agents", "apps/api"]
 
 [tool.uv.sources]
 glasshat-shared = { workspace = true }
@@ -25,6 +26,7 @@ glasshat-agents = { workspace = true }
 glasshat-ingest = { workspace = true }
 glasshat-code-grader = { workspace = true }
 glasshat-pipeline = { workspace = true }
+glasshat-api = { workspace = true }
 
 [dependency-groups]
 dev = [
@@ -47,6 +49,7 @@ testpaths = [
     "services/ingest/tests",
     "services/code-grader/tests",
     "services/pipeline-orchestrator/tests",
+    "apps/api/tests",
 ]
 # uv-managed CPython 3.12.13 does not process editable `.pth` files via `site`,
 # so src layouts are put on the path explicitly (standard pytest pattern).
@@ -59,6 +62,7 @@ pythonpath = [
     "services/ingest/src",
     "services/code-grader/src",
     "services/pipeline-orchestrator/src",
+    "apps/api/src",
 ]
 
 [tool.coverage.run]
@@ -85,7 +89,7 @@ explicit_package_bases = true
 # Strict typing on source; test files are linted by ruff. Excluding tests avoids
 # duplicate-basename module clashes across the many per-package tests/ dirs.
 exclude = '(^|/)tests/'
-mypy_path = "packages/shared/src:packages/rubric/src:agents/src:services/ingest/src:services/code-grader/src:services/pipeline-orchestrator/src"
+mypy_path = "packages/shared/src:packages/rubric/src:agents/src:services/ingest/src:services/code-grader/src:services/pipeline-orchestrator/src:apps/api/src"
 
 [[tool.mypy.overrides]]
 module = [
