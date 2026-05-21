@@ -16,7 +16,8 @@ import yaml
 from glasshat.rubric.canonical import compute_schema_hash, compute_weights_vector
 from glasshat.rubric.models import SynthesizedRubric
 
-PRESETS_DIR = Path(__file__).parent / "presets"
+# Data dir is "preset_files" (NOT "presets") to avoid clashing with this module's name.
+PRESETS_DIR = Path(__file__).parent / "preset_files"
 
 
 def list_presets() -> list[str]:
