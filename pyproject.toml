@@ -28,7 +28,10 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-addopts = "-q"
+addopts = "-q -m 'not integration'"
+markers = [
+    "integration: requires live external credentials (Vertex/Phoenix/Firestore/GCS); deselected by default",
+]
 testpaths = ["packages/shared/tests", "packages/rubric/tests"]
 # uv-managed CPython 3.12.13 does not process editable `.pth` files via `site`,
 # so src layouts are put on the path explicitly (standard pytest pattern).
@@ -58,3 +61,14 @@ strict = true
 namespace_packages = true
 explicit_package_bases = true
 mypy_path = "packages/shared/src:packages/rubric/src"
+
+[[tool.mypy.overrides]]
+module = [
+    "rank_bm25.*",
+    "google",
+    "google.*",
+    "phoenix.*",
+    "openinference.*",
+    "opentelemetry.*",
+]
+ignore_missing_imports = true
