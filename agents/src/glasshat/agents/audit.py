@@ -79,9 +79,9 @@ def apply_correction(
         mean_delta=consult.mean_delta,
         n=consult.n,
         reason=(
-            f"{assessment.hat.value} over/under-confident on '{assessment.criterion_id}' "
-            f"(evidence={bucket_of(assessment.evidence_depth)}, mean_delta={consult.mean_delta:+.2f}, "
-            f"n={consult.n})"
+            f"{assessment.hat.value} over/under-confident on "
+            f"'{assessment.criterion_id}' (evidence={bucket_of(assessment.evidence_depth)}, "
+            f"mean_delta={consult.mean_delta:+.2f}, n={consult.n})"
         ),
     )
 
