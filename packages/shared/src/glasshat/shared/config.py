@@ -69,9 +69,12 @@ class Settings(BaseSettings):
     phoenix_collector_endpoint: str = ""
     phoenix_project_name: str = "glasshat"
 
-    # --- Local backend paths ---
+    # --- DocStore / BlobStore targets ---
     docstore_sqlite_path: str = "./var/glasshat.db"
+    firestore_project_id: str = ""
     blob_local_dir: str = "./var/uploads"
+    gcs_uploads_bucket: str = ""
+    gcs_reports_bucket: str = ""
 
     # --- Misc ---
     github_token: str = ""
