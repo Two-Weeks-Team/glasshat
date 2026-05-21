@@ -12,6 +12,7 @@ import asyncio
 from typing import Any
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from glasshat.agents.blue_planner import plan
 from glasshat.agents.rubric_synthesizer import synthesize
@@ -32,6 +33,12 @@ class OverrideRequest(BaseModel):
 def create_app(deps: Deps | None = None) -> FastAPI:
     """Build the FastAPI app. Pass ``deps`` (e.g. mock) in tests; defaults otherwise."""
     app = FastAPI(title="Glasshat API", version="0.1.0")
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
     app.state.deps = deps or default_deps()
 
     def _deps() -> Deps:

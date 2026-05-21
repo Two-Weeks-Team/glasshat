@@ -24,3 +24,7 @@ coverage.xml
 .ruff_cache/
 *.egg-info/
 uv.lock.bak
+
+# Browser/e2e transient artifacts
+.playwright-mcp/
+/glasshat-3d-self-correction.png

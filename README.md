@@ -4,7 +4,11 @@
 
 Glasshat ingests a pitch deck + a GitHub repo + **the evaluator's official rules**, synthesizes a per-evaluation rubric that mirrors those rules, runs a six-perspective AI panel that grounds every sub-score in retrieved evidence, and then — live, on screen — **catches its own over-confidence and self-corrects the score**, with the 3D evaluation graph reshaping as it happens. It is an *artifact-ingesting evaluation pipeline + a transparent fairness monitor*, **not a chatbot**.
 
-**Track**: Google Cloud Rapid Agent Hackathon — **Arize track**. Built on **Gemini 3 (Vertex AI) + Google ADK** with **Arize Phoenix** observability and the **Phoenix MCP server** consulted at runtime for the self-improvement loop.
+**Track**: Google Cloud Rapid Agent Hackathon — **Arize track**. Built on **Gemini (Vertex AI) + Google ADK** with **Arize Phoenix** observability and the **Phoenix MCP server** consulted at runtime for the self-improvement loop.
+
+**Live deployment** (Cloud Run, `panelyst-hackathon`, us-central1, min-instances=0):
+- Web: **https://glasshat-web-o366v7tl2q-uc.a.run.app** (`/judge` · `/participate`)
+- API: **https://glasshat-api-o366v7tl2q-uc.a.run.app** (`/health` · `/api/evaluate`)
 
 **Two viewports, one engine**: `/judge` (batch rank + lock official scores) and `/participate` (single submission + iterate on the weakest axis). Closing line: *"Same engine. Different viewer. Different fairness."*
 
@@ -83,7 +87,14 @@ The deploy script ignores your active gcloud project and always targets `panelys
 
 ## Status
 
-Engine, API, and web are built and CI-green on the mock stack (SDD + TDD; per-phase PRs). Live Vertex/Phoenix e2e and the Cloud Run deployment require credentials + billing on the target project. See `docs/superpowers/plans/` for the build plans.
+Engine, API, and web are built and **CI-green** (SDD + TDD; one PR per phase — see merged PRs #7–#13). Verified:
+
+- **Mock stack** (no credentials): full `run_evaluation` end-to-end, self-correct, SSE, 150+ tests, Docker images build in CI.
+- **Real e2e** (`scripts/real_e2e.py`): real Vertex Gemini + Vertex embeddings + in-code hybrid retrieval + self-hosted Phoenix (80 spans) + real Phoenix MCP (stdio, 27 tools, `list-projects` call via a Google ADK agent) → RubricSynthesizer→6-hat→audit **self-correct** → final 54.04. Evidence: `claudedocs/2026-05-21-real-e2e-evidence.md`.
+- **Live Cloud Run**: both viewports return HTTP 200; `/api/evaluate` returns a self-corrected `RunRecord`.
+- **3D self-correction**: `/participate` runs the pipeline and reshapes the constellation from real output — `claudedocs/assets/glasshat-3d-self-correction.png`.
+
+See `docs/superpowers/plans/` for the per-phase build plans.
 
 ## License
 

@@ -43,9 +43,13 @@ gcloud builds submit --project="$PROJECT" \
   --config=infra/cloudbuild-web.yaml --substitutions=_IMAGE="$WEB_IMAGE" .
 
 echo "==> Deploying API to Cloud Run (min-instances=0)..."
+# Demo backends (mock/memory) — the runtime image (uv sync --no-dev) does not include the
+# optional vertex/phoenix SDKs. The real Vertex+Phoenix+MCP chain is proven by
+# scripts/real_e2e.py. To deploy with LLM_BACKEND=vertex, rebuild the image with the
+# `vertex`/`phoenix` extras and set GLASSHAT_GEMINI_* + GOOGLE_GENAI_USE_VERTEXAI=true.
 gcloud run deploy glasshat-api --project="$PROJECT" --region="$REGION" \
   --image="$API_IMAGE" --min-instances=0 --allow-unauthenticated \
-  --set-env-vars="LLM_BACKEND=vertex,MONITOR_BACKEND=phoenix-cloud,DOCSTORE_BACKEND=firestore,GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_GENAI_USE_VERTEXAI=true"
+  --set-env-vars="LLM_BACKEND=mock,MONITOR_BACKEND=phoenix-local,DOCSTORE_BACKEND=memory,GOOGLE_CLOUD_PROJECT=${PROJECT}"
 
 API_URL=$(gcloud run services describe glasshat-api \
   --project="$PROJECT" --region="$REGION" --format="value(status.url)")
