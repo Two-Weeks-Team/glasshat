@@ -6,17 +6,25 @@ requires-python = ">=3.12"
 dependencies = [
     "glasshat-shared",
     "glasshat-rubric",
+    "glasshat-agents",
+    "glasshat-ingest",
+    "glasshat-code-grader",
+    "glasshat-pipeline",
 ]
 
 [tool.uv]
 package = false
 
 [tool.uv.workspace]
-members = ["packages/*"]
+members = ["packages/*", "services/*", "agents"]
 
 [tool.uv.sources]
 glasshat-shared = { workspace = true }
 glasshat-rubric = { workspace = true }
+glasshat-agents = { workspace = true }
+glasshat-ingest = { workspace = true }
+glasshat-code-grader = { workspace = true }
+glasshat-pipeline = { workspace = true }
 
 [dependency-groups]
 dev = [
@@ -28,16 +36,30 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-addopts = "-q -m 'not integration'"
+addopts = "-q -m 'not integration' --import-mode=importlib"
 markers = [
     "integration: requires live external credentials (Vertex/Phoenix/Firestore/GCS); deselected by default",
 ]
-testpaths = ["packages/shared/tests", "packages/rubric/tests"]
+testpaths = [
+    "packages/shared/tests",
+    "packages/rubric/tests",
+    "agents/tests",
+    "services/ingest/tests",
+    "services/code-grader/tests",
+    "services/pipeline-orchestrator/tests",
+]
 # uv-managed CPython 3.12.13 does not process editable `.pth` files via `site`,
 # so src layouts are put on the path explicitly (standard pytest pattern).
 # Deployment is unaffected: Docker installs built wheels (namespace packages
 # land in site-packages directly).
-pythonpath = ["packages/shared/src", "packages/rubric/src"]
+pythonpath = [
+    "packages/shared/src",
+    "packages/rubric/src",
+    "agents/src",
+    "services/ingest/src",
+    "services/code-grader/src",
+    "services/pipeline-orchestrator/src",
+]
 
 [tool.coverage.run]
 source = ["glasshat"]
@@ -60,7 +82,10 @@ python_version = "3.12"
 strict = true
 namespace_packages = true
 explicit_package_bases = true
-mypy_path = "packages/shared/src:packages/rubric/src"
+# Strict typing on source; test files are linted by ruff. Excluding tests avoids
+# duplicate-basename module clashes across the many per-package tests/ dirs.
+exclude = '(^|/)tests/'
+mypy_path = "packages/shared/src:packages/rubric/src:agents/src:services/ingest/src:services/code-grader/src:services/pipeline-orchestrator/src"
 
 [[tool.mypy.overrides]]
 module = [

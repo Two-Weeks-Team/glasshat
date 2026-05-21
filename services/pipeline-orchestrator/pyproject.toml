@@ -1,0 +1,26 @@
+[project]
+name = "glasshat-pipeline"
+version = "0.1.0"
+description = "Glasshat pipeline orchestrator: wires the engine end-to-end (ADK runtime adapter)"
+requires-python = ">=3.12"
+dependencies = [
+    "glasshat-shared",
+    "glasshat-rubric",
+    "glasshat-agents",
+    "glasshat-ingest",
+    "glasshat-code-grader",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/glasshat"]
+
+[tool.uv.sources]
+glasshat-shared = { workspace = true }
+glasshat-rubric = { workspace = true }
+glasshat-agents = { workspace = true }
+glasshat-ingest = { workspace = true }
+glasshat-code-grader = { workspace = true }
