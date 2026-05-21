@@ -145,8 +145,7 @@ async def main() -> None:
     print("audit self-corrections:")
     for c in record.audit_corrections:
         print(
-            f"  {c.hat} {c.criterion_id}: {c.original} -> {c.corrected} "
-            f"(mean_delta={c.mean_delta})"
+            f"  {c.hat} {c.criterion_id}: {c.original} -> {c.corrected} (mean_delta={c.mean_delta})"
         )
     stages = [e.stage.value for e in events]
     print(f"SSE stages ({len(stages)}): {stages}")
