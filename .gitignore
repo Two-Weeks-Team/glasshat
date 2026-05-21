@@ -14,3 +14,13 @@ __pycache__/
 .DS_Store
 .terraform/
 *.tfstate*
+
+# Python / uv / tooling
+var/
+.coverage
+coverage.xml
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+uv.lock.bak

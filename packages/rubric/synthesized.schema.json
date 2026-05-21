@@ -1,0 +1,264 @@
+{
+  "$defs": {
+    "Aggregation": {
+      "description": "How per-criterion scores combine into a final score.",
+      "enum": [
+        "weighted_sum",
+        "simple_average",
+        "tie_break_ordered"
+      ],
+      "title": "Aggregation",
+      "type": "string"
+    },
+    "Criterion": {
+      "description": "One scored axis of a rubric, mapped onto BMAD primitives.",
+      "properties": {
+        "bmad_mapping": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Bmad Mapping",
+          "type": "array"
+        },
+        "descriptor_levels": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Descriptor Levels",
+          "type": "object"
+        },
+        "evidence_required": {
+          "default": true,
+          "title": "Evidence Required",
+          "type": "boolean"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "scale": {
+          "minimum": 2,
+          "title": "Scale",
+          "type": "integer"
+        },
+        "source_clause": {
+          "default": "",
+          "title": "Source Clause",
+          "type": "string"
+        },
+        "source_excerpt": {
+          "default": "",
+          "title": "Source Excerpt",
+          "type": "string"
+        },
+        "weight": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Weight"
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "scale",
+        "bmad_mapping",
+        "descriptor_levels"
+      ],
+      "title": "Criterion",
+      "type": "object"
+    },
+    "RubricSource": {
+      "description": "Provenance of the synthesized rubric.",
+      "properties": {
+        "fetched_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fetched At"
+        },
+        "identifier": {
+          "title": "Identifier",
+          "type": "string"
+        },
+        "source_text_excerpt": {
+          "default": "",
+          "title": "Source Text Excerpt",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/$defs/SourceKind"
+        }
+      },
+      "required": [
+        "type",
+        "identifier"
+      ],
+      "title": "RubricSource",
+      "type": "object"
+    },
+    "ScoringRule": {
+      "description": "How per-criterion scores aggregate, and the display scale.",
+      "properties": {
+        "aggregation": {
+          "$ref": "#/$defs/Aggregation"
+        },
+        "final_scale": {
+          "default": "0-100",
+          "title": "Final Scale",
+          "type": "string"
+        }
+      },
+      "required": [
+        "aggregation"
+      ],
+      "title": "ScoringRule",
+      "type": "object"
+    },
+    "SourceKind": {
+      "description": "Where a synthesized rubric was derived from.",
+      "enum": [
+        "preset",
+        "url",
+        "pdf",
+        "custom"
+      ],
+      "title": "SourceKind",
+      "type": "string"
+    },
+    "ThresholdGate": {
+      "description": "A pass/fail rule separate from scoring (e.g. 'must have public repo').",
+      "properties": {
+        "check": {
+          "default": "manual",
+          "title": "Check",
+          "type": "string"
+        },
+        "condition": {
+          "title": "Condition",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "condition"
+      ],
+      "title": "ThresholdGate",
+      "type": "object"
+    },
+    "TieBreaker": {
+      "description": "One step in the ordered tie-break chain (lower ``order`` breaks first).",
+      "properties": {
+        "criterion_id": {
+          "title": "Criterion Id",
+          "type": "string"
+        },
+        "order": {
+          "minimum": 1,
+          "title": "Order",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "order",
+        "criterion_id"
+      ],
+      "title": "TieBreaker",
+      "type": "object"
+    }
+  },
+  "description": "A per-evaluation rubric whose axes mirror the source-of-truth rules.",
+  "properties": {
+    "confidence": {
+      "default": 1.0,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Confidence",
+      "type": "number"
+    },
+    "criteria": {
+      "items": {
+        "$ref": "#/$defs/Criterion"
+      },
+      "minItems": 1,
+      "title": "Criteria",
+      "type": "array"
+    },
+    "rubric_id": {
+      "title": "Rubric Id",
+      "type": "string"
+    },
+    "rubric_schema_hash": {
+      "default": "",
+      "title": "Rubric Schema Hash",
+      "type": "string"
+    },
+    "schema_version": {
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "scoring_rule": {
+      "$ref": "#/$defs/ScoringRule"
+    },
+    "source": {
+      "$ref": "#/$defs/RubricSource"
+    },
+    "threshold_gates": {
+      "items": {
+        "$ref": "#/$defs/ThresholdGate"
+      },
+      "title": "Threshold Gates",
+      "type": "array"
+    },
+    "tie_breakers": {
+      "items": {
+        "$ref": "#/$defs/TieBreaker"
+      },
+      "title": "Tie Breakers",
+      "type": "array"
+    },
+    "warnings": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Warnings",
+      "type": "array"
+    },
+    "weights_vector": {
+      "items": {
+        "type": "number"
+      },
+      "title": "Weights Vector",
+      "type": "array"
+    }
+  },
+  "required": [
+    "source",
+    "scoring_rule",
+    "criteria"
+  ],
+  "title": "SynthesizedRubric",
+  "type": "object"
+}

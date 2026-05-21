@@ -1,0 +1,60 @@
+[project]
+name = "glasshat"
+version = "0.1.0"
+description = "Glasshat — Arize-track rubric-aware evaluation engine (workspace root)"
+requires-python = ">=3.12"
+dependencies = [
+    "glasshat-shared",
+    "glasshat-rubric",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["packages/*"]
+
+[tool.uv.sources]
+glasshat-shared = { workspace = true }
+glasshat-rubric = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "pytest-cov>=5",
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "types-PyYAML",
+]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["packages/shared/tests", "packages/rubric/tests"]
+# uv-managed CPython 3.12.13 does not process editable `.pth` files via `site`,
+# so src layouts are put on the path explicitly (standard pytest pattern).
+# Deployment is unaffected: Docker installs built wheels (namespace packages
+# land in site-packages directly).
+pythonpath = ["packages/shared/src", "packages/rubric/src"]
+
+[tool.coverage.run]
+source = ["glasshat"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+# Lint only first-party code; spikes/mockups/data are validated reference artifacts.
+extend-exclude = ["spikes", "mockups", "data", "claudedocs", "docs", "var"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+namespace_packages = true
+explicit_package_bases = true
+mypy_path = "packages/shared/src:packages/rubric/src"

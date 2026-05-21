@@ -1,0 +1,85 @@
+"""Runtime configuration via environment variables.
+
+Every external system sits behind a backend selector so the implementation is a
+config flip, not a rewrite (see ``docs/architecture.md`` §5). Defaults are the
+zero-dependency ``mock``/``memory``/``local-fs`` backends so tests and CI run
+with no external calls or credentials.
+"""
+
+from __future__ import annotations
+
+from functools import lru_cache
+from typing import Literal
+
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+LlmBackend = Literal["vertex", "mock"]
+MonitorBackend = Literal["phoenix-local", "phoenix-cloud"]
+DocStoreBackend = Literal["memory", "sqlite", "firestore"]
+BlobBackend = Literal["local-fs", "gcs"]
+AgentRuntime = Literal["adk-local", "adk-cloud-run"]
+
+
+class Settings(BaseSettings):
+    """Process configuration loaded from environment (and ``.env`` if present)."""
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
+        populate_by_name=True,
+    )
+
+    # --- GCP identity ---
+    google_cloud_project: str = ""
+    google_cloud_region: str = "us-central1"
+    google_genai_use_vertexai: bool = True
+
+    # --- Gemini model tiers (GLASSHAT_-prefixed in .env) ---
+    gemini_pro: str = Field(
+        default="gemini-3.1-pro-preview", validation_alias="GLASSHAT_GEMINI_PRO"
+    )
+    gemini_pro_location: str = Field(
+        default="global", validation_alias="GLASSHAT_GEMINI_PRO_LOCATION"
+    )
+    gemini_flash: str = Field(
+        default="gemini-3-flash-preview", validation_alias="GLASSHAT_GEMINI_FLASH"
+    )
+    gemini_flash_location: str = Field(
+        default="global", validation_alias="GLASSHAT_GEMINI_FLASH_LOCATION"
+    )
+    gemini_flash_lite: str = Field(
+        default="gemini-3.1-flash-lite", validation_alias="GLASSHAT_GEMINI_FLASH_LITE"
+    )
+    gemini_flash_lite_location: str = Field(
+        default="global", validation_alias="GLASSHAT_GEMINI_FLASH_LITE_LOCATION"
+    )
+
+    # --- Backend selectors (config flip) ---
+    llm_backend: LlmBackend = "mock"
+    monitor_backend: MonitorBackend = "phoenix-local"
+    docstore_backend: DocStoreBackend = "memory"
+    blob_backend: BlobBackend = "local-fs"
+    agent_runtime: AgentRuntime = "adk-local"
+
+    # --- Phoenix / Arize ---
+    phoenix_api_key: str = ""
+    phoenix_collector_endpoint: str = ""
+    phoenix_project_name: str = "glasshat"
+
+    # --- Local backend paths ---
+    docstore_sqlite_path: str = "./var/glasshat.db"
+    blob_local_dir: str = "./var/uploads"
+
+    # --- Misc ---
+    github_token: str = ""
+    port: int = 8080
+    next_public_default_locale: str = "en"
+
+
+@lru_cache(maxsize=1)
+def get_settings() -> Settings:
+    """Return the process-wide cached :class:`Settings` instance."""
+    return Settings()

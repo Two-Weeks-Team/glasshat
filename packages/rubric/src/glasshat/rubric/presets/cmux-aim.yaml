@@ -1,0 +1,83 @@
+# CMUX x AIM Hackathon (Seoul, 2026-04) — Track 1: 5 criteria @ 1-5, simple average.
+# Per-criterion weights are null (equal-weight simple average per portal).
+preset_id: cmux-aim
+verified_at: 2026-05-14
+source_url: https://cmux-aim-hack.example/rules
+source_excerpt: |
+  Track 1 is scored on five criteria, each 1-5, averaged: Problem Fit,
+  Technical Execution, Innovation, Completeness, Presentation.
+synthesized:
+  schema_version: "1.0"
+  source:
+    type: preset
+    identifier: cmux-aim
+  scoring_rule:
+    aggregation: simple_average
+    final_scale: "1-5"
+  criteria:
+    - id: problem-fit
+      label: "Problem Fit"
+      scale: 5
+      bmad_mapping: [A1, A2]
+      descriptor_levels:
+        1: "No clear problem"
+        2: "Vague problem"
+        3: "Clear problem, plausible fit"
+        4: "Sharp problem, strong fit"
+        5: "Compelling, validated problem"
+      evidence_required: true
+      source_clause: "Track 1 criterion 1 of 5"
+      source_excerpt: "Problem Fit"
+    - id: technical-execution
+      label: "Technical Execution"
+      scale: 5
+      bmad_mapping: [B2, C1, C2]
+      descriptor_levels:
+        1: "Barely functional"
+        2: "Runs with issues"
+        3: "Solid execution"
+        4: "Strong, robust execution"
+        5: "Exceptional execution"
+      evidence_required: true
+      source_clause: "Track 1 criterion 2 of 5"
+      source_excerpt: "Technical Execution"
+    - id: innovation
+      label: "Innovation"
+      scale: 5
+      bmad_mapping: [A3]
+      descriptor_levels:
+        1: "Derivative"
+        2: "Minor novelty"
+        3: "Notable novelty"
+        4: "Strong novelty"
+        5: "Breakthrough"
+      evidence_required: true
+      source_clause: "Track 1 criterion 3 of 5"
+      source_excerpt: "Innovation"
+    - id: completeness
+      label: "Completeness"
+      scale: 5
+      bmad_mapping: [C1, C5]
+      descriptor_levels:
+        1: "Fragmentary"
+        2: "Partial"
+        3: "Mostly complete"
+        4: "Complete"
+        5: "Complete + polished"
+      evidence_required: true
+      source_clause: "Track 1 criterion 4 of 5"
+      source_excerpt: "Completeness"
+    - id: presentation
+      label: "Presentation"
+      scale: 5
+      bmad_mapping: [D1, D2, D3]
+      descriptor_levels:
+        1: "Hard to follow"
+        2: "Rough"
+        3: "Clear"
+        4: "Polished"
+        5: "Outstanding"
+      evidence_required: true
+      source_clause: "Track 1 criterion 5 of 5"
+      source_excerpt: "Presentation"
+  confidence: 1.0
