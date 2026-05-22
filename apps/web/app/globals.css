@@ -136,6 +136,32 @@ a {
   animation: pulse-ring 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+/* Score-bar fill eases to its value (incl. the self-correction pull-back) instead of snapping. */
+.score-fill {
+  transition: width 0.8s var(--ease-out-expo);
+}
+
+/* Skeleton shimmer for loading states. */
+@keyframes shimmer {
+  0% {
+    background-position: -150% 0;
+  }
+  100% {
+    background-position: 150% 0;
+  }
+}
+.skeleton {
+  background: linear-gradient(
+    100deg,
+    var(--color-surface-2) 30%,
+    color-mix(in oklch, var(--color-accent) 14%, var(--color-surface-2)) 50%,
+    var(--color-surface-2) 70%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+  border-radius: 0.5rem;
+}
+
 /* Hero motif: a criterion node over-shoots (amber) then self-corrects (accent), looping. */
 @keyframes heroDrop {
   0%,
@@ -186,6 +212,12 @@ a {
     transform: none;
   }
   .animate-pulse-ring {
+    animation: none;
+  }
+  .score-fill {
+    transition: none;
+  }
+  .skeleton {
     animation: none;
   }
   /* Freeze the hero node in its calibrated (corrected) state. */

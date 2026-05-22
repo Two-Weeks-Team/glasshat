@@ -37,8 +37,8 @@ const SAMPLE_DECK =
   "We built Glasshat, a rubric-aware evaluation engine. It ingests a pitch deck, a " +
   "GitHub repo, and the official judging rules, synthesizes a per-evaluation rubric, runs a " +
   "six-perspective panel that grounds every sub-score in retrieved evidence, then audits and " +
-  "self-corrects its own over-confident scores against past evaluations. Built on Gemini + " +
-  "Google ADK with Arize Phoenix observability. Includes a full test suite and a live demo.";
+  "self-corrects its own over-confident scores against past evaluations. Built on Gemini 3.1 + " +
+  "Google ADK with Arize AX observability. Includes a full test suite and a live demo.";
 
 type Phase = "form" | "planning" | "plan" | "running" | "done" | "error";
 
