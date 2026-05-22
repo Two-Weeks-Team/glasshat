@@ -45,6 +45,19 @@ def test_health(client: TestClient) -> None:
     assert client.get("/health").json() == {"status": "ok"}
 
 
+def test_presets_lists_all(client: TestClient) -> None:
+    r = client.get("/api/presets")
+    assert r.status_code == 200
+    body = r.json()
+    ids = {p["id"] for p in body}
+    assert {"rapid-agent", "qdrant", "cmux-aim", "gemini3"} <= ids
+    ra = next(p for p in body if p["id"] == "rapid-agent")
+    assert ra["criteria_count"] == 4
+    assert ra["final_scale"] == "0-100"
+    assert ra["label"] == "Rapid Agent"
+    assert ra["source_type"] == "preset"
+
+
 def test_plan_preview(client: TestClient) -> None:
     r = client.post(
         "/api/plan", json={"rubric_source": {"preset_id": "rapid-agent"}, "deck_text": "x"}
