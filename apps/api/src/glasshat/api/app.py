@@ -19,6 +19,7 @@ from glasshat.agents.rubric_synthesizer import synthesize
 from glasshat.agents.types import EvaluationInput, PlanObject, RunRecord
 from glasshat.pipeline.engine import Deps, default_deps, run_evaluation
 from glasshat.pipeline.events import PipelineEvent, sse_line
+from glasshat.rubric.presets import list_presets, load_preset
 from pydantic import BaseModel
 
 
@@ -28,6 +29,21 @@ class OverrideRequest(BaseModel):
     criterion_id: str
     score: float
     reason: str = ""
+
+
+class PresetInfo(BaseModel):
+    """A rubric preset summary for the picker (gate-0 rubric selection)."""
+
+    id: str
+    label: str
+    criteria_count: int
+    final_scale: str
+    source_type: str
+
+
+def _preset_label(preset_id: str) -> str:
+    """Human display label, e.g. ``"rapid-agent"`` -> ``"Rapid Agent"``."""
+    return " ".join(part.capitalize() for part in preset_id.replace("_", "-").split("-"))
 
 
 def create_app(deps: Deps | None = None) -> FastAPI:
@@ -48,6 +64,22 @@ def create_app(deps: Deps | None = None) -> FastAPI:
     @app.get("/health")
     def health() -> dict[str, str]:
         return {"status": "ok"}
+
+    @app.get("/api/presets")
+    def presets() -> list[PresetInfo]:
+        out: list[PresetInfo] = []
+        for preset_id in list_presets():
+            rubric = load_preset(preset_id)
+            out.append(
+                PresetInfo(
+                    id=preset_id,
+                    label=_preset_label(preset_id),
+                    criteria_count=len(rubric.criteria),
+                    final_scale=rubric.scoring_rule.final_scale,
+                    source_type=str(rubric.source.type.value),
+                )
+            )
+        return out
 
     @app.post("/api/plan")
     async def plan_preview(inp: EvaluationInput) -> PlanObject:
