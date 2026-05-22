@@ -115,21 +115,61 @@ a {
   box-shadow: 0 18px 44px -22px oklch(0.72 0.17 290 / 0.55);
 }
 
-.reveal {
-  opacity: 0;
-  transform: translateY(16px);
-  transition:
-    opacity 0.6s var(--ease-out-expo),
-    transform 0.6s var(--ease-out-expo);
-  will-change: opacity, transform;
+@keyframes revealIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
-.reveal.is-visible {
-  opacity: 1;
-  transform: none;
+/* `both` fill-mode ends in the visible state, so content is never stuck hidden
+   (works without JS); the optional stagger comes from an inline animation-delay. */
+.reveal {
+  animation: revealIn 0.6s var(--ease-out-expo) both;
+  will-change: opacity, transform;
 }
 
 .animate-pulse-ring {
   animation: pulse-ring 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Hero motif: a criterion node over-shoots (amber) then self-corrects (accent), looping. */
+@keyframes heroDrop {
+  0%,
+  12% {
+    transform: translateY(0);
+  }
+  42%,
+  62% {
+    transform: translateY(58px);
+  }
+  92%,
+  100% {
+    transform: translateY(0);
+  }
+}
+@keyframes heroFill {
+  0%,
+  12% {
+    fill: var(--color-warn);
+  }
+  42%,
+  62% {
+    fill: var(--color-accent);
+  }
+  92%,
+  100% {
+    fill: var(--color-warn);
+  }
+}
+.hero-node-correct {
+  animation: heroDrop 5s var(--ease-out-expo) infinite;
+}
+.hero-node-dot {
+  animation: heroFill 5s var(--ease-out-expo) infinite;
 }
 
 /* Respect users who prefer less motion. */
@@ -138,9 +178,7 @@ a {
     animation: none;
   }
   .reveal {
-    opacity: 1;
-    transform: none;
-    transition: none;
+    animation: none;
   }
   .hover-lift,
   .hover-lift:hover {
@@ -149,5 +187,14 @@ a {
   }
   .animate-pulse-ring {
     animation: none;
+  }
+  /* Freeze the hero node in its calibrated (corrected) state. */
+  .hero-node-correct {
+    animation: none;
+    transform: translateY(58px);
+  }
+  .hero-node-dot {
+    animation: none;
+    fill: var(--color-accent);
   }
 }
