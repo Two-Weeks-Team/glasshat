@@ -39,11 +39,19 @@ class MockLlmClient:
 
 
 class VertexLlmClient:
-    """Real Vertex Gemini client (generation + embeddings). Lazy-imports google.genai."""
+    """Real Vertex Gemini client (generation + embeddings). Lazy-imports google.genai.
+
+    Location-aware: Gemini 3.x models are served on the Vertex **global** endpoint
+    (a regional endpoint returns 404), while the embedding model
+    ``text-embedding-005`` is regional. Each tier carries its own location
+    (``Settings.gemini_*_location``, default ``global``); a ``google.genai.Client``
+    is built and cached **per location** so generation hits ``global`` and
+    embeddings stay on ``google_cloud_region``.
+    """
 
     def __init__(self, settings: Settings | None = None) -> None:
         self._settings = settings or get_settings()
-        self._client: Any = None
+        self._clients: dict[str, Any] = {}
 
     def _models(self) -> dict[str, str]:
         return {
@@ -52,28 +60,38 @@ class VertexLlmClient:
             "flash_lite": self._settings.gemini_flash_lite,
         }
 
-    def _get_client(self) -> Any:  # pragma: no cover - requires GCP credentials
-        if self._client is None:
+    def _locations(self) -> dict[str, str]:
+        return {
+            "pro": self._settings.gemini_pro_location,
+            "flash": self._settings.gemini_flash_location,
+            "flash_lite": self._settings.gemini_flash_lite_location,
+        }
+
+    def _client_for(self, location: str) -> Any:
+        client = self._clients.get(location)
+        if client is None:  # pragma: no cover - requires google-genai + GCP credentials
             from google import genai
 
-            self._client = genai.Client(
+            client = genai.Client(
                 vertexai=True,
                 project=self._settings.google_cloud_project,
-                location=self._settings.google_cloud_region,
+                location=location,
             )
-        return self._client
+            self._clients[location] = client
+        return client
 
-    async def generate(  # pragma: no cover - requires GCP credentials
-        self, prompt: str, *, tier: str = _TIER_DEFAULT, **kwargs: Any
-    ) -> str:
+    async def generate(self, prompt: str, *, tier: str = _TIER_DEFAULT, **kwargs: Any) -> str:
         model = self._models().get(tier, self._settings.gemini_flash)
-        resp = await self._get_client().aio.models.generate_content(model=model, contents=prompt)
+        location = self._locations().get(tier, self._settings.gemini_flash_location)
+        resp = await self._client_for(location).aio.models.generate_content(
+            model=model, contents=prompt
+        )
         return str(resp.text or "")
 
-    async def embed(  # pragma: no cover - requires GCP credentials
-        self, texts: Sequence[str]
-    ) -> list[list[float]]:
-        resp = await self._get_client().aio.models.embed_content(
+    async def embed(self, texts: Sequence[str]) -> list[list[float]]:
+        # text-embedding-005 is a regional model → use the configured region, not global.
+        client = self._client_for(self._settings.google_cloud_region)
+        resp = await client.aio.models.embed_content(
             model="text-embedding-005", contents=list(texts)
         )
         return [list(e.values) for e in resp.embeddings]
