@@ -30,8 +30,13 @@ import {
   weakestAxis,
   type RunState,
 } from "@/lib/participate-state";
+import { SAMPLE_COHORT } from "@/lib/sample-cohort";
 
 const ConstellationGraph = dynamic(() => import("@/components/ConstellationGraph"), { ssr: false });
+
+// Real cached RunRecord (gemini-3.1-flash-lite) used for the first-paint sample
+// preview so the score bars, audit callout, and 3D graph are visible before any run.
+const SAMPLE_RESULT = SAMPLE_COHORT[0].record;
 
 const SAMPLE_DECK =
   "We built Glasshat, a rubric-aware evaluation engine. It ingests a pitch deck, a " +
@@ -100,8 +105,6 @@ export function ParticipateClient() {
   }
 
   const busy = phase === "planning" || phase === "running";
-  const rows = record ? scoreRows(record) : [];
-  const weakest = weakestAxis(rows);
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-10">
@@ -227,77 +230,103 @@ export function ParticipateClient() {
         </section>
       )}
 
-      {/* ── Results ── */}
+      {/* ── Results (live) ── */}
       {phase === "done" && record && (
-        <section className="mt-6 flex flex-col gap-6">
-          <Reveal className="grid gap-3 sm:grid-cols-3">
-            <StatCard
-              label="Final score"
-              value={<CountUp value={record.final_score} />}
-              sub={`out of ${scaleMax(record.rubric.scoring_rule.final_scale)}`}
-            />
-            <StatCard
-              label="Self-corrections"
-              value={record.audit_corrections.length}
-              sub="over-confident axes pulled back"
-            />
-            <StatCard
-              label="Rubric"
-              value={record.rubric.source.identifier}
-              sub={`${record.rubric.criteria.length} criteria · ${record.rubric.scoring_rule.aggregation}`}
-            />
-          </Reveal>
-
-          <Reveal>
-            <h2 className="mb-3 text-lg font-medium">Per-criterion scores</h2>
-            <div className="flex flex-col gap-5">
-              {rows.map((r) => (
-                <div key={r.id} className="flex flex-col gap-2">
-                  <ScoreBar
-                    label={r.label}
-                    score={r.score}
-                    max={r.scale}
-                    weightPct={r.weightPct}
-                    corrected={r.audit != null}
-                  />
-                  <EvidenceList refs={r.evidenceRefs} />
-                  {r.audit && <AuditCallout correction={r.audit} />}
-                </div>
-              ))}
-            </div>
-          </Reveal>
-
-          <Reveal>
-            <h2 className="mb-3 text-lg font-medium">Self-correction graph</h2>
-            <ConstellationGraph nodes={constellationNodes(record)} />
-            <p className="mt-2 text-xs text-[var(--color-muted)]">
-              Axes: score · weight · evidence depth. <span className="text-[#f0b429]">Amber</span>{" "}
-              nodes were self-corrected and reshape from their over-confident origin.
-            </p>
-          </Reveal>
-
-          {weakest && (
-            <div className="rounded-2xl border border-[var(--color-accent)]/40 bg-[color-mix(in_oklch,var(--color-accent)_8%,transparent)] p-4">
-              <div className="text-sm font-medium">Weakest axis: {weakest.label}</div>
-              <p className="mt-1 text-sm text-[var(--color-muted)]">
-                Scored {weakest.score.toFixed(1)}/{weakest.scale}. Strengthen the evidence for this
-                criterion and re-run to see the score move.
-              </p>
-              <button
-                onClick={() => setPhase("form")}
-                className="mt-3 rounded-lg border border-[var(--color-border)] px-4 py-1.5 text-sm font-medium transition hover:bg-[var(--color-surface-2)]"
-              >
-                ← Iterate on my submission
-              </button>
-            </div>
-          )}
-
-          <Reveal>
-            <h2 className="mb-3 text-lg font-medium">Synthesized rubric</h2>
-            <RubricTable rubric={record.rubric} />
-          </Reveal>
-        </section>
+        <ResultsView record={record} onIterate={() => setPhase("form")} />
       )}
+
+      {/* ── Sample result preview on first paint (before any run) ── */}
+      {phase === "form" && !record && <ResultsView record={SAMPLE_RESULT} sample />}
     </main>
+  );
+}
+
+function ResultsView({
+  record,
+  sample = false,
+  onIterate,
+}: {
+  record: RunRecord;
+  sample?: boolean;
+  onIterate?: () => void;
+}) {
+  const rows = scoreRows(record);
+  const weakest = weakestAxis(rows);
+  return (
+    <section className="mt-6 flex flex-col gap-6">
+      {sample && (
+        <p className="rounded-xl border border-[var(--color-accent)]/35 bg-[color-mix(in_oklch,var(--color-accent)_8%,transparent)] px-4 py-2.5 text-sm text-[var(--color-muted)]">
+          <span className="font-medium text-[var(--color-ink)]">Sample result</span> — a cached{" "}
+          <span className="font-mono">gemini-3.1-flash-lite</span> evaluation so you can see the
+          output shape. Submit your own above to run it live.
+        </p>
+      )}
+      <Reveal className="grid gap-3 sm:grid-cols-3">
+        <StatCard
+          label="Final score"
+          value={<CountUp value={record.final_score} />}
+          sub={`out of ${scaleMax(record.rubric.scoring_rule.final_scale)}`}
+        />
+        <StatCard
+          label="Self-corrections"
+          value={record.audit_corrections.length}
+          sub="over-confident axes pulled back"
+        />
+        <StatCard
+          label="Rubric"
+          value={record.rubric.source.identifier}
+          sub={`${record.rubric.criteria.length} criteria · ${record.rubric.scoring_rule.aggregation}`}
+        />
+      </Reveal>
+
+      <Reveal>
+        <h2 className="mb-3 text-lg font-medium">Per-criterion scores</h2>
+        <div className="flex flex-col gap-5">
+          {rows.map((r) => (
+            <div key={r.id} className="flex flex-col gap-2">
+              <ScoreBar
+                label={r.label}
+                score={r.score}
+                max={r.scale}
+                weightPct={r.weightPct}
+                corrected={r.audit != null}
+              />
+              <EvidenceList refs={r.evidenceRefs} />
+              {r.audit && <AuditCallout correction={r.audit} />}
+            </div>
+          ))}
+        </div>
+      </Reveal>
+
+      <Reveal>
+        <h2 className="mb-3 text-lg font-medium">Self-correction graph</h2>
+        <ConstellationGraph nodes={constellationNodes(record)} />
+        <p className="mt-2 text-xs text-[var(--color-muted)]">
+          Axes: score · weight · evidence depth. <span className="text-[#f0b429]">Amber</span>{" "}
+          nodes were self-corrected and reshape from their over-confident origin.
+        </p>
+      </Reveal>
+
+      {weakest && !sample && (
+        <div className="rounded-2xl border border-[var(--color-accent)]/40 bg-[color-mix(in_oklch,var(--color-accent)_8%,transparent)] p-4">
+          <div className="text-sm font-medium">Weakest axis: {weakest.label}</div>
+          <p className="mt-1 text-sm text-[var(--color-muted)]">
+            Scored {weakest.score.toFixed(1)}/{weakest.scale}. Strengthen the evidence for this
+            criterion and re-run to see the score move.
+          </p>
+          <button
+            onClick={onIterate}
+            className="mt-3 rounded-lg border border-[var(--color-border)] px-4 py-1.5 text-sm font-medium transition hover:bg-[var(--color-surface-2)]"
+          >
+            ← Iterate on my submission
+          </button>
+        </div>
+      )}
+
+      <Reveal>
+        <h2 className="mb-3 text-lg font-medium">Synthesized rubric</h2>
+        <RubricTable rubric={record.rubric} />
+      </Reveal>
+    </section>
   );
 }
