@@ -1,11 +1,33 @@
 import asyncio
 import os
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
 from glasshat.shared.config import Settings
 from glasshat.shared.llm import MockLlmClient, VertexLlmClient, get_llm_client
 from glasshat.shared.protocols import LlmClient
+
+
+class _FakeAioModels:
+    """Records calls so tests can assert model + endpoint routing."""
+
+    def __init__(self) -> None:
+        self.generate_calls: list[tuple[str, str]] = []
+        self.embed_calls: list[tuple[str, list[str]]] = []
+
+    async def generate_content(self, *, model: str, contents: str) -> SimpleNamespace:
+        self.generate_calls.append((model, contents))
+        return SimpleNamespace(text=f"out:{model}")
+
+    async def embed_content(self, *, model: str, contents: list[str]) -> SimpleNamespace:
+        self.embed_calls.append((model, list(contents)))
+        return SimpleNamespace(embeddings=[SimpleNamespace(values=[0.1, 0.2]) for _ in contents])
+
+
+class _FakeClient:
+    def __init__(self) -> None:
+        self.aio = SimpleNamespace(models=_FakeAioModels())
 
 
 def test_mock_is_llmclient() -> None:
@@ -51,6 +73,73 @@ def test_get_llm_client_returns_mock_by_default(monkeypatch: pytest.MonkeyPatch)
 def test_get_llm_client_returns_vertex_when_configured() -> None:
     s = Settings(_env_file=None, llm_backend="vertex")  # type: ignore[call-arg]
     assert isinstance(get_llm_client(s), VertexLlmClient)  # lazy: no creds needed to construct
+
+
+def test_vertex_locations_map_tiers_to_config() -> None:
+    s = Settings(  # type: ignore[call-arg]
+        _env_file=None,
+        gemini_pro_location="global",
+        gemini_flash_location="global",
+        gemini_flash_lite_location="us-central1",
+    )
+    assert VertexLlmClient(s)._locations() == {
+        "pro": "global",
+        "flash": "global",
+        "flash_lite": "us-central1",
+    }
+
+
+def test_vertex_generate_routes_to_tier_model_and_location() -> None:
+    """3.x flash models must hit the GLOBAL endpoint (regional → 404)."""
+    s = Settings(  # type: ignore[call-arg]
+        _env_file=None,
+        llm_backend="vertex",
+        gemini_flash="gemini-3.1-flash-lite",
+        gemini_flash_location="global",
+    )
+    c = VertexLlmClient(s)
+    fake = _FakeClient()
+    c._clients["global"] = fake  # pre-seed → no google-genai import needed
+    out = asyncio.run(c.generate("hi", tier="flash"))
+    assert fake.aio.models.generate_calls == [("gemini-3.1-flash-lite", "hi")]
+    assert out == "out:gemini-3.1-flash-lite"
+
+
+def test_vertex_generate_pro_and_flash_lite_use_distinct_endpoints() -> None:
+    s = Settings(  # type: ignore[call-arg]
+        _env_file=None,
+        llm_backend="vertex",
+        gemini_pro="gemini-3.1-pro-preview",
+        gemini_pro_location="global",
+        gemini_flash_lite="gemini-3.1-flash-lite",
+        gemini_flash_lite_location="us-east5",
+    )
+    c = VertexLlmClient(s)
+    global_client, regional_client = _FakeClient(), _FakeClient()
+    c._clients["global"] = global_client
+    c._clients["us-east5"] = regional_client
+    asyncio.run(c.generate("p", tier="pro"))
+    asyncio.run(c.generate("f", tier="flash_lite"))
+    assert global_client.aio.models.generate_calls == [("gemini-3.1-pro-preview", "p")]
+    assert regional_client.aio.models.generate_calls == [("gemini-3.1-flash-lite", "f")]
+
+
+def test_vertex_embed_uses_regional_client_not_global() -> None:
+    """text-embedding-005 is a regional model — embeddings must stay regional."""
+    s = Settings(_env_file=None, llm_backend="vertex", google_cloud_region="us-central1")  # type: ignore[call-arg]
+    c = VertexLlmClient(s)
+    fake = _FakeClient()
+    c._clients["us-central1"] = fake
+    out = asyncio.run(c.embed(["a", "b"]))
+    assert fake.aio.models.embed_calls == [("text-embedding-005", ["a", "b"])]
+    assert len(out) == 2 and out[0] == [0.1, 0.2]
+
+
+def test_vertex_client_is_cached_per_location() -> None:
+    c = VertexLlmClient(Settings(_env_file=None))  # type: ignore[call-arg]
+    fake = _FakeClient()
+    c._clients["global"] = fake
+    assert c._client_for("global") is fake  # cache hit → no reconstruction/import
 
 
 @pytest.mark.integration
