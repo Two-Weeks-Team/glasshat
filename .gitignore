@@ -28,3 +28,6 @@ uv.lock.bak
 # Browser/e2e transient artifacts
 .playwright-mcp/
 /glasshat-3d-self-correction.png
+
+# macOS file-sync duplicate artifacts (e.g. "name 2.md", "file 3.py")
+*\ [0-9].*
