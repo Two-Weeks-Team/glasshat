@@ -1,8 +1,19 @@
 # Build the Glasshat web image (context apps/web) using infra/Dockerfile.web.
+# _API_BASE bakes the API URL into the client bundle (NEXT_PUBLIC_* is build-time).
 steps:
   - name: gcr.io/cloud-builders/docker
-    args: ["build", "-f", "infra/Dockerfile.web", "-t", "${_IMAGE}", "apps/web"]
+    args:
+      - build
+      - -f
+      - infra/Dockerfile.web
+      - --build-arg
+      - NEXT_PUBLIC_API_BASE=${_API_BASE}
+      - -t
+      - ${_IMAGE}
+      - apps/web
 images:
   - "${_IMAGE}"
+substitutions:
+  _API_BASE: ""
 options:
   logging: CLOUD_LOGGING_ONLY

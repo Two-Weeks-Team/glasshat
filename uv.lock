@@ -893,6 +893,20 @@ dependencies = [
     { name = "glasshat-shared" },
 ]
 
+[package.optional-dependencies]
+firestore = [
+    { name = "glasshat-shared", extra = ["firestore"] },
+]
+gcs = [
+    { name = "glasshat-shared", extra = ["gcs"] },
+]
+phoenix = [
+    { name = "glasshat-shared", extra = ["phoenix"] },
+]
+vertex = [
+    { name = "glasshat-shared", extra = ["vertex"] },
+]
+
 [package.dev-dependencies]
 dev = [
     { name = "mypy" },
@@ -911,7 +925,12 @@ requires-dist = [
     { name = "glasshat-pipeline", editable = "services/pipeline-orchestrator" },
     { name = "glasshat-rubric", editable = "packages/rubric" },
     { name = "glasshat-shared", editable = "packages/shared" },
+    { name = "glasshat-shared", extras = ["firestore"], marker = "extra == 'firestore'", editable = "packages/shared" },
+    { name = "glasshat-shared", extras = ["gcs"], marker = "extra == 'gcs'", editable = "packages/shared" },
+    { name = "glasshat-shared", extras = ["phoenix"], marker = "extra == 'phoenix'", editable = "packages/shared" },
+    { name = "glasshat-shared", extras = ["vertex"], marker = "extra == 'vertex'", editable = "packages/shared" },
 ]
+provides-extras = ["vertex", "phoenix", "firestore", "gcs"]
 
 [package.metadata.requires-dev]
 dev = [

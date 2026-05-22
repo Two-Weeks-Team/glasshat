@@ -5,18 +5,39 @@
 # This script ALWAYS passes --project=panelyst-hackathon explicitly and never
 # reads or changes the active config. Run from the repo root.
 #
-#   bash infra/deploy.sh --confirm
+#   bash infra/deploy.sh --confirm            # real Vertex Gemini + Phoenix Cloud
+#   bash infra/deploy.sh --confirm --mock     # deterministic mock/memory demo (no creds)
+#
+# Real mode prerequisites (one-time, you run these):
+#   1. Phoenix Cloud API key in Secret Manager:
+#        printf '%s' "<PHOENIX_API_KEY>" | gcloud secrets create phoenix-api-key \
+#          --data-file=- --project=panelyst-hackathon
+#   2. The Cloud Run runtime service account needs:
+#        roles/aiplatform.user           (call Vertex Gemini)
+#        roles/secretmanager.secretAccessor on phoenix-api-key
+#   3. Optional override: export PHOENIX_COLLECTOR_ENDPOINT=... (default below).
 set -euo pipefail
 
 PROJECT="panelyst-hackathon"
 REGION="us-central1"
 REPO="glasshat"
+PHOENIX_COLLECTOR_ENDPOINT="${PHOENIX_COLLECTOR_ENDPOINT:-https://app.phoenix.arize.com}"
 
-if [[ "${1:-}" != "--confirm" ]]; then
+MODE="real"
+CONFIRMED=""
+for arg in "$@"; do
+  case "$arg" in
+    --confirm) CONFIRMED="yes" ;;
+    --mock) MODE="mock" ;;
+  esac
+done
+
+if [[ "$CONFIRMED" != "yes" ]]; then
   echo "Refusing to deploy without --confirm."
   echo "  Target project : $PROJECT (Cloud Run, BILLABLE)"
   echo "  Active project : $(gcloud config get-value project 2>/dev/null || echo unknown) (IGNORED by this script)"
-  echo "  Re-run: bash infra/deploy.sh --confirm"
+  echo "  Mode           : real (Vertex+Phoenix) unless --mock is passed"
+  echo "  Re-run: bash infra/deploy.sh --confirm [--mock]"
   exit 1
 fi
 
@@ -34,27 +55,45 @@ gcloud artifacts repositories describe "$REPO" \
   gcloud artifacts repositories create "$REPO" \
     --project="$PROJECT" --location="$REGION" --repository-format=docker
 
-echo "==> Building API image via Cloud Build..."
-gcloud builds submit --project="$PROJECT" \
-  --config=infra/cloudbuild-api.yaml --substitutions=_IMAGE="$API_IMAGE" .
+# --- Per-mode build args + runtime env ---
+if [[ "$MODE" == "real" ]]; then
+  echo "==> Mode: REAL (Vertex Gemini + Phoenix Cloud)"
+  if ! gcloud secrets describe phoenix-api-key --project="$PROJECT" >/dev/null 2>&1; then
+    echo "Missing secret 'phoenix-api-key'. Create it first:" >&2
+    echo "  printf '%s' \"<PHOENIX_API_KEY>\" | gcloud secrets create phoenix-api-key --data-file=- --project=$PROJECT" >&2
+    exit 3
+  fi
+  UV_EXTRAS="--extra vertex --extra phoenix"
+  API_ENV="LLM_BACKEND=vertex,MONITOR_BACKEND=phoenix-cloud,DOCSTORE_BACKEND=memory,GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_REGION=${REGION},GOOGLE_GENAI_USE_VERTEXAI=true,PHOENIX_COLLECTOR_ENDPOINT=${PHOENIX_COLLECTOR_ENDPOINT},PHOENIX_PROJECT_NAME=glasshat"
+  API_SECRETS=(--set-secrets "PHOENIX_API_KEY=phoenix-api-key:latest")
+else
+  echo "==> Mode: MOCK (deterministic, no credentials)"
+  UV_EXTRAS=""
+  API_ENV="LLM_BACKEND=mock,MONITOR_BACKEND=phoenix-local,DOCSTORE_BACKEND=memory,GOOGLE_CLOUD_PROJECT=${PROJECT}"
+  API_SECRETS=()
+fi
 
-echo "==> Building web image via Cloud Build..."
+echo "==> Building API image via Cloud Build (UV_EXTRAS='${UV_EXTRAS}')..."
 gcloud builds submit --project="$PROJECT" \
-  --config=infra/cloudbuild-web.yaml --substitutions=_IMAGE="$WEB_IMAGE" .
+  --config=infra/cloudbuild-api.yaml \
+  --substitutions=_IMAGE="$API_IMAGE",_UV_EXTRAS="$UV_EXTRAS" .
 
 echo "==> Deploying API to Cloud Run (min-instances=0)..."
-# Demo backends (mock/memory) — the runtime image (uv sync --no-dev) does not include the
-# optional vertex/phoenix SDKs. The real Vertex+Phoenix+MCP chain is proven by
-# scripts/real_e2e.py. To deploy with LLM_BACKEND=vertex, rebuild the image with the
-# `vertex`/`phoenix` extras and set GLASSHAT_GEMINI_* + GOOGLE_GENAI_USE_VERTEXAI=true.
 gcloud run deploy glasshat-api --project="$PROJECT" --region="$REGION" \
   --image="$API_IMAGE" --min-instances=0 --allow-unauthenticated \
-  --set-env-vars="LLM_BACKEND=mock,MONITOR_BACKEND=phoenix-local,DOCSTORE_BACKEND=memory,GOOGLE_CLOUD_PROJECT=${PROJECT}"
+  --set-env-vars="$API_ENV" "${API_SECRETS[@]}"
 
 API_URL=$(gcloud run services describe glasshat-api \
   --project="$PROJECT" --region="$REGION" --format="value(status.url)")
 
-echo "==> Deploying web to Cloud Run (NEXT_PUBLIC_API_BASE=${API_URL})..."
+# The API URL must be baked into the web client bundle at BUILD time, so build
+# the web image only after the API is up and its URL is known.
+echo "==> Building web image via Cloud Build (NEXT_PUBLIC_API_BASE=${API_URL})..."
+gcloud builds submit --project="$PROJECT" \
+  --config=infra/cloudbuild-web.yaml \
+  --substitutions=_IMAGE="$WEB_IMAGE",_API_BASE="$API_URL" .
+
+echo "==> Deploying web to Cloud Run..."
 gcloud run deploy glasshat-web --project="$PROJECT" --region="$REGION" \
   --image="$WEB_IMAGE" --min-instances=0 --allow-unauthenticated \
   --set-env-vars="NEXT_PUBLIC_API_BASE=${API_URL}"
@@ -63,7 +102,7 @@ WEB_URL=$(gcloud run services describe glasshat-web \
   --project="$PROJECT" --region="$REGION" --format="value(status.url)")
 
 echo ""
-echo "Deployed:"
+echo "Deployed (mode=${MODE}):"
 echo "  API: ${API_URL}"
 echo "  Web: ${WEB_URL}"
 echo "Verify: curl -fsS ${API_URL}/health"
