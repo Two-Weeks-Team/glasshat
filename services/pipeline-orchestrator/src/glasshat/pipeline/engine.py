@@ -97,16 +97,23 @@ async def run_evaluation(
             for c in chunks
         )
 
-    rubric = await synthesize(inp, deps.llm)
+    with deps.tracer.span("agent_synthesize", **{"glasshat.agent": "RubricSynthesizer"}):
+        rubric = await synthesize(inp, deps.llm)
     emit(Stage.PLANNING, rubric_id=rubric.rubric_id)
-    pln = plan(rubric, inp)
+    with deps.tracer.span("agent_plan", **{"glasshat.agent": "BluePlanner"}):
+        pln = plan(rubric, inp)
 
     emit(Stage.HATS_RUNNING, hats=[h.value for h in pln.hats_enabled])
-    assessments = await run_panel(pln, rubric, inp, deps.llm, deps.retrieval, deps.tracer)
+    with deps.tracer.span(
+        "agent_hats",
+        **{"glasshat.agent": "SixHatPanel", "glasshat.hats": len(pln.hats_enabled)},
+    ):
+        assessments = await run_panel(pln, rubric, inp, deps.llm, deps.retrieval, deps.tracer)
 
     emit(Stage.AUDITING)
     emit(Stage.AUDIT_STARTED)
-    corrections = await run_audit(assessments, deps.consultant)
+    with deps.tracer.span("agent_audit", **{"glasshat.agent": "Audit"}):
+        corrections = await run_audit(assessments, deps.consultant)
     for c in corrections:
         emit(Stage.INCONSISTENCY_FLAGGED, hat=c.hat.value, criterion=c.criterion_id)
         emit(Stage.PHOENIX_CONSULTATION, mean_delta=c.mean_delta, n=c.n)
@@ -122,8 +129,10 @@ async def run_evaluation(
         )
 
     emit(Stage.SCORING)
-    scores = score(rubric, assessments, corrections)
-    record = assemble(run_id, rubric, scores, corrections, mode=inp.mode, created_at=_now())
+    with deps.tracer.span("agent_score", **{"glasshat.agent": "BMADScorer"}):
+        scores = score(rubric, assessments, corrections)
+    with deps.tracer.span("agent_report", **{"glasshat.agent": "ReportAssembler"}):
+        record = assemble(run_id, rubric, scores, corrections, mode=inp.mode, created_at=_now())
 
     deps.docstore.put("runs", run_id, record.model_dump(mode="json"))
     emit(Stage.GRAPH_RESHAPE, criteria=len(scores))
