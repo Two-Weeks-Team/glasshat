@@ -81,23 +81,28 @@ docker compose -f infra/docker-compose.yml up --build   # web :3000, api :8088
 
 **Live (Cloud Run, project=`panelyst-hackathon`, us-central1, min-instances=0):**
 ```bash
-# Real Vertex Gemini + Phoenix Cloud (default). One-time: put the Phoenix key in Secret Manager
-#   printf '%s' "<PHOENIX_API_KEY>" | gcloud secrets create phoenix-api-key --data-file=- --project=panelyst-hackathon
-# and grant the Cloud Run SA roles/aiplatform.user + roles/secretmanager.secretAccessor.
-bash infra/deploy.sh --confirm
+# Real Vertex Gemini + Arize AX tracing (default). One-time: put the Arize AX API key
+# (the `ak-…` key) in Secret Manager, and grant the Cloud Run SA aiplatform.user + secretAccessor:
+#   printf '%s' "<ARIZE_API_KEY>" | gcloud secrets create phoenix-api-key --data-file=- --project=panelyst-hackathon
+ARIZE_SPACE_ID=<your-AX-space-id> bash infra/deploy.sh --confirm
 
-# Deterministic mock/memory demo — no credentials, no secret needed:
+# Real Vertex Gemini, tracing off (no observability creds needed):
+bash infra/deploy.sh --confirm --no-phoenix
+
+# Deterministic mock/memory demo — no credentials at all:
 bash infra/deploy.sh --confirm --mock
 ```
 The script ignores your active gcloud project and always targets `panelyst-hackathon` explicitly.
 It deploys the API first, then bakes the live API URL into the web client bundle at build time
-(`NEXT_PUBLIC_API_BASE` is build-time, not runtime).
+(`NEXT_PUBLIC_API_BASE` is build-time, not runtime). Observability backends: `arize` (Arize AX,
+`otlp.arize.com`), `phoenix-cloud`/`phoenix-local` (Arize Phoenix), or NoOp.
 
 ## Status
 
-Engine, API, and web are built and **CI-green** (SDD + TDD; one PR per phase — see merged PRs #7–#22). The web was rebuilt from a thin shell into two fully functional viewports (PRs #15–#18), then elevated visually (PRs #20–#22: mesh-gradient design system, animated hero motif, bento grid, count-up, scroll reveals). A build-time fix ensures the deployed client actually reaches the API (`NEXT_PUBLIC_API_BASE` is baked at web build, not set at runtime). See `claudedocs/2026-05-22-web-rebuild-verification.md` and `claudedocs/2026-05-22-design-elevation-verification.md`. Verified:
+Engine, API, and web are built and **CI-green** (SDD + TDD; one PR per phase — see merged PRs #7–#25). The web was rebuilt from a thin shell into two fully functional viewports (PRs #15–#18), then elevated visually (PRs #20–#23: mesh-gradient design system, animated hero motif, bento grid, count-up, scroll reveals). A build-time fix ensures the deployed client actually reaches the API (`NEXT_PUBLIC_API_BASE` is baked at web build, not set at runtime). Observability is wired to **Arize AX** (PR #24) and deps are at latest majors (PR #25). See `claudedocs/2026-05-22-web-rebuild-verification.md` and `claudedocs/2026-05-22-design-elevation-verification.md`. Verified:
 
 - **Lighthouse ≥ 90** on all pages: landing 90/95/96 (desktop), 95/95/96 (mobile); `/judge` & `/participate` 100/96/96 (desktop) — Performance / Accessibility / Best-Practices. Motion respects `prefers-reduced-motion`.
+- **Live Arize AX observability**: the deployed service registers to `otlp.arize.com` (project `glasshat`) and exports a span per pipeline stage on every evaluation — verified via the live registration logs (no export errors) and a live real-Gemini eval (run `58f6892c`, final 64.6). e2e: `scripts/real_arize_ax_e2e.py`.
 
 - **Mock stack** (no credentials): full `run_evaluation` end-to-end, self-correct, SSE, 150+ tests, Docker images build in CI.
 - **Real e2e** (`scripts/real_e2e.py`): real Vertex Gemini + Vertex embeddings + in-code hybrid retrieval + self-hosted Phoenix (80 spans) + real Phoenix MCP (stdio, 27 tools, `list-projects` call via a Google ADK agent) → RubricSynthesizer→6-hat→audit **self-correct** → final 54.04. Evidence: `claudedocs/2026-05-21-real-e2e-evidence.md`.
