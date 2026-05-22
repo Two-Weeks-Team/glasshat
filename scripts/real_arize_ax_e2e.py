@@ -10,9 +10,9 @@ score -> report) with every stage as a span exported to the AX project.
 Run (creds from env, never hard-coded):
   ARIZE_SPACE_ID=... ARIZE_API_KEY=... ARIZE_PROJECT_NAME=glasshat \
   GOOGLE_CLOUD_PROJECT=panelyst-hackathon GOOGLE_GENAI_USE_VERTEXAI=true \
-  GOOGLE_CLOUD_REGION=us-central1 \
-  GLASSHAT_GEMINI_PRO=gemini-2.5-pro GLASSHAT_GEMINI_FLASH=gemini-2.5-flash \
-  GLASSHAT_GEMINI_FLASH_LITE=gemini-2.5-flash \
+  GOOGLE_CLOUD_REGION=us-central1 GOOGLE_CLOUD_LOCATION=global \
+  GLASSHAT_GEMINI_PRO=gemini-3.1-pro-preview GLASSHAT_GEMINI_FLASH=gemini-3.1-flash-lite \
+  GLASSHAT_GEMINI_FLASH_LITE=gemini-3.1-flash-lite \
   uv run --with arize-otel --extra vertex python scripts/real_arize_ax_e2e.py
 """
 

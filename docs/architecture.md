@@ -1,8 +1,23 @@
 # Glasshat — Architecture
 
-> Authoritative design document. Code references this; if the two diverge, this is the source of truth and the code is the bug.
+> ⚠️ **SUPERSEDED — historical design document (2026-05-13/15). For the shipped
+> system, `README.md` is authoritative.** This file captures the *original* pre-build
+> design and intentionally diverged from it during implementation. Where this doc and
+> the code disagree, **the code (and README) win**. Key deltas vs. what actually shipped:
 >
-> **2026-05-15 update**: Architecture extended for [[glasshat-rubric-and-mode]] (RubricSynthesizer agent + Hybrid mode viewports + past_evals weight payload). See §10 (additions) for the diff against the 2026-05-13 baseline.
+> | This doc says | Shipped reality |
+> |---|---|
+> | Qdrant (vector DB) | **No Qdrant** — in-code hybrid retrieval (Vertex embeddings + cosine + `rank-bm25` + RRF) |
+> | LangGraph / Google Agent Builder | **Google ADK** (`adk-local` / `adk-cloud-run`) |
+> | Firebase Authentication | **No auth** (open demo endpoints) |
+> | "17 BMAD items" | Per-rubric criteria; the Rapid Agent preset is **4 criteria × 25%** |
+> | Vertex Grounding / Google Search hat | Not wired; hats ground on the in-code retrieval index |
+> | "Phoenix span" / Arize-hosted | **Arize AX** (`otlp.arize.com`); Phoenix self-host/cloud retained as fallback backends |
+> | Model unspecified | **`gemini-3.1-flash-lite`** (Vertex, `global` endpoint) |
+>
+> The §1–§10 below are preserved as the design-of-record for provenance; read them as
+> "what we planned," not "what runs." The retrieval/orchestration/observability shape is
+> faithful; the named technologies are not.
 
 ## 1. Topology (textual diagram)
 
