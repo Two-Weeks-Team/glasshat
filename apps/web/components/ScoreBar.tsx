@@ -20,7 +20,7 @@ export function ScoreBar({ label, score, max, weightPct, corrected }: ScoreBarPr
       </div>
       <div className="h-2 w-full rounded-full bg-[var(--color-muted)]/15">
         <div
-          className="h-2 rounded-full bg-[var(--color-accent)]"
+          className="score-fill h-2 rounded-full bg-[var(--color-accent)]"
           style={{ width: `${pct}%` }}
           data-testid="score-bar-fill"
         />

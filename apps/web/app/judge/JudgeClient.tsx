@@ -13,6 +13,7 @@ import {
   type RunRecord,
 } from "@/lib/api";
 import { rankSubmissions, topKHitRate, type EvalItem } from "@/lib/ranking";
+import { SAMPLE_COHORT } from "@/lib/sample-cohort";
 
 type RowStatus = "idle" | "running" | "done" | "error";
 
@@ -23,6 +24,7 @@ interface Row {
   record?: RunRecord;
   error?: string;
   overrides: Record<string, number>;
+  sample?: boolean;
 }
 
 const SEED: { label: string; deck: string }[] = [
@@ -32,7 +34,7 @@ const SEED: { label: string; deck: string }[] = [
       "Glasshat is a rubric-aware evaluation engine that ingests the official judging rules, " +
       "synthesizes a per-evaluation rubric, runs a six-hat panel grounded in retrieved evidence, " +
       "and audits and self-corrects its own over-confident scores against past evaluations. " +
-      "Built on Gemini + Google ADK with Arize Phoenix observability and the Phoenix MCP server. " +
+      "Built on Gemini 3.1 + Google ADK with Arize AX observability and the Phoenix MCP server. " +
       "Full test suite, CI, and a live Cloud Run deployment.",
   },
   {
@@ -63,10 +65,22 @@ const newRow = (s: { label: string; deck: string }): Row => ({
   overrides: {},
 });
 
+// First paint shows a real (cached) sample cohort so the ranked table, score
+// bars, and self-correction badges are visible immediately; "Run cohort"
+// re-evaluates live. The records in SAMPLE_COHORT are genuine API output.
+const sampleByLabel = new Map(SAMPLE_COHORT.map((s) => [s.label, s.record]));
+const initialRows = (): Row[] =>
+  SEED.map((s) => {
+    const record = sampleByLabel.get(s.label);
+    return record
+      ? { ...s, status: "done" as RowStatus, record, overrides: {}, sample: true }
+      : newRow(s);
+  });
+
 export function JudgeClient() {
   const [presets, setPresets] = useState<PresetInfo[]>([]);
   const [presetId, setPresetId] = useState("rapid-agent");
-  const [rows, setRows] = useState<Row[]>(SEED.map(newRow));
+  const [rows, setRows] = useState<Row[]>(initialRows);
   const [winners, setWinners] = useState<Set<string>>(new Set());
   const [locked, setLocked] = useState<Set<string>>(new Set());
   const [running, setRunning] = useState(false);
@@ -87,7 +101,15 @@ export function JudgeClient() {
   async function runCohort() {
     setRunning(true);
     setExpanded(null);
-    setRows((rs) => rs.map((r) => ({ ...r, status: "running", record: undefined, error: undefined })));
+    setRows((rs) =>
+      rs.map((r) => ({
+        ...r,
+        status: "running",
+        record: undefined,
+        error: undefined,
+        sample: false,
+      })),
+    );
     await Promise.all(
       rows.map(async (r) => {
         try {
@@ -115,6 +137,7 @@ export function JudgeClient() {
   const ranked = useMemo(() => rankSubmissions(items), [items]);
   const hitRate = topKHitRate(ranked, winners, k);
   const allDone = rows.length > 0 && rows.every((r) => r.status === "done");
+  const isSample = rows.some((r) => r.sample);
 
   const toggle = (set: Set<string>, label: string): Set<string> => {
     const next = new Set(set);
@@ -165,7 +188,11 @@ export function JudgeClient() {
             disabled={running || rows.length === 0}
             className="rounded-xl bg-[var(--color-accent)] px-5 py-2 font-medium text-white transition disabled:opacity-40"
           >
-            {running ? `Evaluating ${rows.length}…` : `Run cohort (${rows.length})`}
+            {running
+              ? `Evaluating ${rows.length}…`
+              : isSample
+                ? `Run cohort live (${rows.length})`
+                : `Run cohort (${rows.length})`}
           </button>
           <label className="flex items-center gap-2 text-sm text-[var(--color-muted)]">
             Top-K
@@ -228,6 +255,15 @@ export function JudgeClient() {
             sub="official results frozen"
           />
         </div>
+      )}
+
+      {isSample && (
+        <p className="mt-6 rounded-xl border border-[var(--color-accent)]/35 bg-[color-mix(in_oklch,var(--color-accent)_8%,transparent)] px-4 py-2.5 text-sm text-[var(--color-muted)]">
+          <span className="font-medium text-[var(--color-ink)]">Sample cohort</span> — real
+          RunRecords cached from a live <span className="font-mono">gemini-3.1-flash-lite</span> run.
+          Press <span className="font-medium text-[var(--color-ink)]">Run cohort live</span> to
+          re-evaluate against the API now.
+        </p>
       )}
 
       {/* Ranking / cohort table */}
@@ -338,8 +374,8 @@ function RankedRow(props: RankedRowProps) {
 
   return (
     <>
-      <tr className="border-t border-[var(--color-border)]/40 align-top">
-        <td className="px-4 py-3 font-mono text-lg tabular-nums">{rank}</td>
+      <tr className="border-t border-[var(--color-border)]/40 align-top transition-colors hover:bg-[var(--color-surface-2)]/40">
+        <td className="px-4 py-3 font-mono text-2xl tabular-nums text-[var(--color-muted)]">{rank}</td>
         <td className="px-4 py-3">
           <div className="font-medium">{label}</div>
           <div className="mt-1 flex flex-wrap gap-1">
@@ -352,7 +388,9 @@ function RankedRow(props: RankedRowProps) {
           </div>
         </td>
         <td className="px-4 py-3">
-          <div className="font-mono text-xl tabular-nums">{effectiveFinal.toFixed(1)}</div>
+          <div className="font-mono text-3xl font-semibold tabular-nums text-gradient">
+            {effectiveFinal.toFixed(1)}
+          </div>
         </td>
         <td className="px-4 py-3" style={{ minWidth: "14rem" }}>
           <div className="flex flex-col gap-1.5">
