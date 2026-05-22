@@ -95,7 +95,9 @@ It deploys the API first, then bakes the live API URL into the web client bundle
 
 ## Status
 
-Engine, API, and web are built and **CI-green** (SDD + TDD; one PR per phase — see merged PRs #7–#18). The web was rebuilt from a thin shell into two fully functional viewports (PRs #15–#18); a build-time fix ensures the deployed client actually reaches the API (`NEXT_PUBLIC_API_BASE` is baked at web build, not set at runtime). See `claudedocs/2026-05-22-web-rebuild-verification.md`. Verified:
+Engine, API, and web are built and **CI-green** (SDD + TDD; one PR per phase — see merged PRs #7–#22). The web was rebuilt from a thin shell into two fully functional viewports (PRs #15–#18), then elevated visually (PRs #20–#22: mesh-gradient design system, animated hero motif, bento grid, count-up, scroll reveals). A build-time fix ensures the deployed client actually reaches the API (`NEXT_PUBLIC_API_BASE` is baked at web build, not set at runtime). See `claudedocs/2026-05-22-web-rebuild-verification.md` and `claudedocs/2026-05-22-design-elevation-verification.md`. Verified:
+
+- **Lighthouse ≥ 90** on all pages: landing 90/95/96 (desktop), 95/95/96 (mobile); `/judge` & `/participate` 100/96/96 (desktop) — Performance / Accessibility / Best-Practices. Motion respects `prefers-reduced-motion`.
 
 - **Mock stack** (no credentials): full `run_evaluation` end-to-end, self-correct, SSE, 150+ tests, Docker images build in CI.
 - **Real e2e** (`scripts/real_e2e.py`): real Vertex Gemini + Vertex embeddings + in-code hybrid retrieval + self-hosted Phoenix (80 spans) + real Phoenix MCP (stdio, 27 tools, `list-projects` call via a Google ADK agent) → RubricSynthesizer→6-hat→audit **self-correct** → final 54.04. Evidence: `claudedocs/2026-05-21-real-e2e-evidence.md`.
