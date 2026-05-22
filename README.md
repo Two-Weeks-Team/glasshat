@@ -4,11 +4,27 @@
 
 Glasshat ingests a pitch deck + a GitHub repo + **the evaluator's official rules**, synthesizes a per-evaluation rubric that mirrors those rules, runs a six-perspective AI panel that grounds every sub-score in retrieved evidence, and then — live, on screen — **catches its own over-confidence and self-corrects the score**, with the 3D evaluation graph reshaping as it happens. It is an *artifact-ingesting evaluation pipeline + a transparent fairness monitor*, **not a chatbot**.
 
-**Track**: Google Cloud Rapid Agent Hackathon — **Arize track**. Built on **Gemini (Vertex AI) + Google ADK** with **Arize Phoenix** observability and the **Phoenix MCP server** consulted at runtime for the self-improvement loop.
+**Track**: Google Cloud Rapid Agent Hackathon — **Arize track**. Built on **Gemini (Vertex AI) + Google ADK** with **Arize AX** observability (OpenInference/OTLP → `otlp.arize.com`), and the **Phoenix MCP server** available for the live-trace-driven calibration consultant. **Live model: `gemini-3.1-flash-lite`** (Vertex, served on the `global` endpoint).
 
 **Live deployment** (Cloud Run, `panelyst-hackathon`, us-central1, min-instances=0):
 - Web: **https://glasshat-web-o366v7tl2q-uc.a.run.app** (`/judge` · `/participate`)
 - API: **https://glasshat-api-o366v7tl2q-uc.a.run.app** (`/health` · `/api/evaluate`)
+
+### Try the live demo (≈60 seconds, no install)
+
+1. Open **https://glasshat-web-o366v7tl2q-uc.a.run.app/participate**.
+2. Pick the **Rapid Agent** rubric preset, paste any pitch text, submit.
+3. **Approve the plan** at gate 1 (the inspectable plan card: 6 hats, criteria, weights).
+4. Watch the **live SSE monitor** stream the pipeline (`ingesting → planning → hats_running → auditing`), then the **audit self-correct** beat: an over-confident hat (e.g. YELLOW `9.0 → 8.2`) is pulled back and the **3D constellation reshapes** to the calibrated position.
+5. `/judge` shows the batch view: rank by rubric, ordered tie-break, gate-2 override, lock.
+
+Or hit the API directly (real Gemini 3.1 RunRecord):
+```bash
+curl -s -X POST https://glasshat-api-o366v7tl2q-uc.a.run.app/api/evaluate \
+  -H 'content-type: application/json' \
+  -d '{"rubric_source":{"preset_id":"rapid-agent"},"deck_text":"we built ...","mode":"judge"}'
+# → RunRecord: per-criterion scores + audit_corrections (the live self-correction)
+```
 
 **Two viewports, one engine**: `/judge` (batch rank + lock official scores) and `/participate` (single submission + iterate on the weakest axis). Closing line: *"Same engine. Different viewer. Different fairness."*
 
@@ -25,10 +41,12 @@ deck.pdf + repo URL + rubric source
         │
    BluePlanner → 6-hat panel (White/Red/Yellow/Black/Green/Blue)   ── glasshat.agents.hats
         │     each hat retrieves evidence via in-code hybrid search
-        │     (dense cosine + BM25 + RRF), every step a Phoenix span
+        │     (dense cosine + BM25 + RRF); every agent + hat is its own Arize AX span
         │
    AuditLoop  (calibration self-correct: clip(score − 0.8·mean_delta, p25, p75))  ── glasshat.agents.audit
-        │     consults Phoenix over MCP (stdio) for per-cell drift stats
+        │     Consultant protocol: deployed path = calibrated prior from spike-D
+        │     held-out anchors (TableConsultant); live-trace variant = PhoenixMcpConsultant
+        │     (queries per-cell drift over Phoenix MCP/stdio — exercised by scripts/real_*_e2e.py)
         │
    BMADScorer → ReportAssembler  (final score in the rubric's native scale)
         │
@@ -58,7 +76,7 @@ deck.pdf + repo URL + rubric source
 
 ## Reproduce
 
-**Python engine + API (no credentials):**
+**Python engine + API (no credentials — `mock`/`memory` backends, deterministic):**
 ```bash
 uv sync
 uv run pytest                       # full suite, mock/memory backends
@@ -67,6 +85,8 @@ curl -s localhost:8088/health
 curl -s -X POST localhost:8088/api/evaluate \
   -H 'content-type: application/json' \
   -d '{"rubric_source":{"preset_id":"rapid-agent"},"deck_text":"we built ...","mode":"participant"}'
+# Scores here are deterministic (mock LLM). For real Gemini, set LLM_BACKEND=vertex
+# + the GLASSHAT_GEMINI_* / GOOGLE_CLOUD_* env (see .env.example), or use the live demo above.
 ```
 
 **Web (no credentials):**
@@ -99,14 +119,14 @@ It deploys the API first, then bakes the live API URL into the web client bundle
 
 ## Status
 
-Engine, API, and web are built and **CI-green** (SDD + TDD; one PR per phase — see merged PRs #7–#25). The web was rebuilt from a thin shell into two fully functional viewports (PRs #15–#18), then elevated visually (PRs #20–#23: mesh-gradient design system, animated hero motif, bento grid, count-up, scroll reveals). A build-time fix ensures the deployed client actually reaches the API (`NEXT_PUBLIC_API_BASE` is baked at web build, not set at runtime). Observability is wired to **Arize AX** (PR #24) and deps are at latest majors (PR #25). See `claudedocs/2026-05-22-web-rebuild-verification.md` and `claudedocs/2026-05-22-design-elevation-verification.md`. Verified:
+Engine, API, and web are built and **CI-green** (SDD + TDD; one PR per phase — merged PRs **#7–#30**). The web was rebuilt from a thin shell into two fully functional viewports (PRs #15–#18), then elevated visually (PRs #20–#23: mesh-gradient design system, animated hero motif, bento grid, count-up, scroll reveals). A build-time fix ensures the deployed client actually reaches the API (`NEXT_PUBLIC_API_BASE` is baked at web build, not runtime). Observability is wired to **Arize AX** (PR #24); the live model was migrated to **`gemini-3.1-flash-lite`** with a location-aware Vertex client that routes Gemini 3.x to the `global` endpoint (PR #27), and every orchestration agent now emits its own `glasshat.agent` AX span (PR #28). See `claudedocs/2026-05-22-production-self-assessment.md`. Verified:
 
-- **Lighthouse ≥ 90** on all pages: landing 90/95/96 (desktop), 95/95/96 (mobile); `/judge` & `/participate` 100/96/96 (desktop) — Performance / Accessibility / Best-Practices. Motion respects `prefers-reduced-motion`.
-- **Live Arize AX observability**: the deployed service registers to `otlp.arize.com` (project `glasshat`) and exports a span per pipeline stage on every evaluation — verified via the live registration logs (no export errors) and a live real-Gemini eval (run `58f6892c`, final 64.6). e2e: `scripts/real_arize_ax_e2e.py`.
+- **Lighthouse ≥ 90** on all pages — fresh live (post-deploy): landing **92/95/96**, `/judge` **93/96/96**, `/participate` **95/96/96** (Performance / Accessibility / Best-Practices). Motion respects `prefers-reduced-motion`.
+- **Live Arize AX observability**: the deployed service registers to `otlp.arize.com` (project `glasshat`) and emits a span **per agent** (`RubricSynthesizer · BluePlanner · SixHatPanel · Audit · BMADScorer · ReportAssembler`) plus per-hat `hat_assess` spans on every evaluation — verified via live registration logs (no export errors) and a live real-Gemini eval on `gemini-3.1-flash-lite` (e.g. run `2b2e29c2`, final 56.93, 4 audit self-corrections). e2e: `scripts/real_arize_ax_e2e.py`.
 
-- **Mock stack** (no credentials): full `run_evaluation` end-to-end, self-correct, SSE, 150+ tests, Docker images build in CI.
-- **Real e2e** (`scripts/real_e2e.py`): real Vertex Gemini + Vertex embeddings + in-code hybrid retrieval + self-hosted Phoenix (80 spans) + real Phoenix MCP (stdio, 27 tools, `list-projects` call via a Google ADK agent) → RubricSynthesizer→6-hat→audit **self-correct** → final 54.04. Evidence: `claudedocs/2026-05-21-real-e2e-evidence.md`.
-- **Live Cloud Run**: both viewports return HTTP 200; `/api/evaluate` returns a self-corrected `RunRecord`.
+- **Mock stack** (no credentials): full `run_evaluation` end-to-end, self-correct, SSE, 197 tests (157 py + 40 web), Docker images build in CI.
+- **Real e2e** (`scripts/real_e2e.py`): real Vertex Gemini + Vertex embeddings + in-code hybrid retrieval + self-hosted Phoenix + real Phoenix MCP (stdio, `list-projects` via a Google ADK agent) → RubricSynthesizer→6-hat→audit **self-correct** → report. Evidence: `claudedocs/2026-05-21-real-e2e-evidence.md` _(headline numbers there were captured pre-#27 on gemini-2.5; the live path is now gemini-3.1-flash-lite)_.
+- **Live Cloud Run**: both viewports return HTTP 200; `/api/evaluate` returns a self-corrected `RunRecord` on real `gemini-3.1-flash-lite`.
 - **3D self-correction**: `/participate` runs the pipeline and reshapes the constellation from real output — `claudedocs/assets/glasshat-3d-self-correction.png`.
 
 See `docs/superpowers/plans/` for the per-phase build plans.

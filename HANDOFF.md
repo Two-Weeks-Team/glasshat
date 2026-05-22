@@ -1,8 +1,13 @@
 # Glasshat — Session Handoff
 
-> New session: `cd ~/Documents/GitHub/glasshat` then `/handon` (this file is at repo root). For Claude's persistent memory of this project see `/Users/kimsejun/.claude/projects/-Users-kimsejun-Documents-GitHub-hackathon-submissions/memory/` (start at `MEMORY.md`).
+> ⚠️ **SUPERSEDED (2026-05-14). Do not treat as current.** This describes the old
+> dual-track plan (Qdrant "Think Outside the Bot" + Rapid Agent). **Qdrant was cut**;
+> the project is now a **single-track Arize submission, no vector DB**. For current
+> state read **`README.md`** and the latest **`claudedocs/2026-05-22-session-handoff-v3.md`**.
 
-Last updated: 2026-05-14 KST.
+> New session: `cd ~/Documents/GitHub/glasshat` then `/handon` (this file is at repo root). For Claude's persistent memory of this project see the project memory dir (start at `MEMORY.md`).
+
+Last updated: 2026-05-14 KST (superseded — see v3 handoff).
 
 ---
 

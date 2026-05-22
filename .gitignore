@@ -29,5 +29,6 @@ uv.lock.bak
 .playwright-mcp/
 /glasshat-3d-self-correction.png
 
-# macOS file-sync duplicate artifacts (e.g. "name 2.md", "file 3.py")
+# macOS file-sync duplicate artifacts (e.g. "name 2.md", "file 3.py", ".coverage 2")
 *\ [0-9].*
+*\ [0-9]

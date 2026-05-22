@@ -1,5 +1,10 @@
 # Real-input e2e evidence (goal item 4) — 2026-05-21
 
+> **Note (added 2026-05-22):** this run was captured on **gemini-2.5-flash**, before the
+> PR #27 migration. The live path is now **gemini-3.1-flash-lite** (Vertex `global`
+> endpoint). Treat the model name + score below as a historical 2.5-era snapshot; the
+> pipeline shape (RubricSynthesizer→6-hat→audit self-correct→report) is unchanged.
+
 Run: `scripts/real_e2e.py` against **real Vertex Gemini** (ADC, project `panelyst-hackathon`,
 `us-central1`) + **locally self-hosted Phoenix** (in-process; Docker daemon was down, so the
 `arize-phoenix` server was used — functionally identical to the Phoenix Docker container) +

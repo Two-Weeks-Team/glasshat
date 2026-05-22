@@ -1,3 +1,9 @@
+> ⚠️ **SUPERSEDED — historical planning inventory.** This plan still treats **Qdrant
+> VSD as the primary submission target**; that track was **dropped**. The shipped product
+> is a **single-track Arize submission with no vector database** (in-code hybrid retrieval),
+> on **Google ADK** and **`gemini-3.1-flash-lite`**. For current state read **`README.md`**
+> and **`claudedocs/2026-05-22-session-handoff-v3.md`**. Kept for provenance only.
+
 <!-- Mirrored from Two-Weeks-Team/hackathon-submissions:projects/rapid-agent-hackathon/planning/whyc-fairthon-port-plan.md . The umbrella copy is the source of truth for planning; this is the in-repo copy. Repo name is 'panelyst' (the prior 'WhyC' name belonged to the now-archived 'While YC hires' project). -->
 
 <!-- 🔴 ADDENDUM 2026-05-14: This file is engineering inventory. The authoritative dual-submission winning thesis + decision log is `docs/max-wins-plan.md` (locked 2026-05-14, **upgraded 2026-05-15 with §13-§17 rubric+mode thesis**). The product was renamed **Panelyst → Glasshat** (user-approved, panel-recommended). Korean i18n cut from v1. 3D graph reclassified stretch → MUST-BUILD. Qdrant VSD is primary submission target; Rapid Agent / Arize track is 7-day repackaging of the same engine. PLAN.md §8 open items are CLOSED in max-wins-plan.md §8. Read max-wins-plan.md FIRST. -->

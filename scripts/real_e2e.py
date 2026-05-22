@@ -10,7 +10,8 @@ Phoenix span count.
 
 Run:
   GOOGLE_CLOUD_PROJECT=panelyst-hackathon GOOGLE_GENAI_USE_VERTEXAI=true \
-  GOOGLE_CLOUD_REGION=us-central1 GLASSHAT_GEMINI_FLASH=gemini-2.5-flash \
+  GOOGLE_CLOUD_REGION=us-central1 GOOGLE_CLOUD_LOCATION=global \
+  GLASSHAT_GEMINI_FLASH=gemini-3.1-flash-lite GLASSHAT_GEMINI_FLASH_LOCATION=global \
   uv run python scripts/real_e2e.py
 """
 
@@ -90,7 +91,7 @@ async def main() -> None:
     print(f"    MCP tools discovered: {len(tools)}")
     agent = LlmAgent(
         name="PhoenixConsultant",
-        model="gemini-2.5-flash",
+        model="gemini-3.1-flash-lite",
         instruction="Call the list-projects tool and report the project names.",
         tools=[toolset],
     )

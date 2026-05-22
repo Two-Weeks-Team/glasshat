@@ -2,7 +2,12 @@
 
 > **For**: a developer just added to the project. **Goal**: from zero context to first commit in ≤2 hours.
 >
-> **Last verified**: 2026-05-15. Update when the project structure or deploy story changes materially.
+> ⚠️ **Partially stale (written 2026-05-15, pre-build).** Ignore the **Qdrant** setup
+> (`GLASSHAT_QDRANT_URL`, §2.4) and the spike-as-gate steps — **Qdrant was cut** (retrieval
+> is in-code) and the spikes are historical. Correct package path is
+> `services/pipeline-orchestrator/` (package `glasshat.pipeline`). Authoritative current
+> state: **`README.md`** + **`claudedocs/2026-05-22-session-handoff-v3.md`**. The uv/Python
+> setup below is still valid.
 
 ---
 
