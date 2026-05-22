@@ -388,7 +388,12 @@ function RankedRow(props: RankedRowProps) {
           </div>
         </td>
         <td className="px-4 py-3">
-          <div className="font-mono text-3xl font-semibold tabular-nums text-gradient">
+          <div
+            className={
+              "font-mono font-semibold tabular-nums text-gradient " +
+              (rank === 1 ? "text-4xl" : rank === 2 ? "text-3xl" : "text-2xl opacity-80")
+            }
+          >
             {effectiveFinal.toFixed(1)}
           </div>
         </td>
