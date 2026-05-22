@@ -50,13 +50,28 @@ class Deps:
     consultant: Consultant
 
 
+# YELLOW (optimism) over-confidence prior, grounded in spike-D held-out anchors
+# (docs/spike-results.md §4: recovered mean_delta 1.453 @ low-evidence, 0.306 @
+# high-evidence). The bias is strongest when evidence is thin, so the prior is
+# evidence-bucket-varied rather than a flat constant — the audit pulls YELLOW back
+# hardest exactly where it has the least to stand on. The correction formula itself
+# is bidirectional (a negative mean_delta raises an under-confident score — see
+# test_audit.test_apply_correction_is_bidirectional); the deployed prior encodes the
+# over-confidence bias that spike-D actually measured.
+_YELLOW_DELTA_BY_BUCKET: dict[str, tuple[float, int]] = {
+    "low": (1.45, 7),
+    "mid": (0.80, 10),
+    "high": (0.31, 16),
+}
+
+
 def default_calibration_table() -> dict[tuple[Hat, str, str], ConsultResult]:
-    """Seed YELLOW (optimism-bias) calibration for every preset criterion + bucket."""
+    """Seed the spike-D YELLOW optimism-bias prior for every preset criterion + bucket."""
     table: dict[tuple[Hat, str, str], ConsultResult] = {}
     for preset_id in list_presets():
         for criterion in load_preset(preset_id).criteria:
-            for bucket in ("low", "mid", "high"):
-                table[(Hat.YELLOW, criterion.id, bucket)] = ConsultResult(1.0, 14, 0.0, 10.0)
+            for bucket, (mean_delta, n) in _YELLOW_DELTA_BY_BUCKET.items():
+                table[(Hat.YELLOW, criterion.id, bucket)] = ConsultResult(mean_delta, n, 0.0, 10.0)
     return table
 
 

@@ -66,13 +66,17 @@ async def run_hat(
         with tracer.span(
             "hat_assess",
             **{"glasshat.hat": hat.value, "glasshat.criterion": criterion.id},
-        ):
+        ) as span:
             query_vector = (await llm.embed([criterion.label]))[0]
             hits = retrieval.search(criterion.label, top_k=top_k, query_vector=query_vector)
             evidence_refs = [hit.doc.id for hit in hits]
             response = await llm.generate(
                 _hat_prompt(hat, criterion, inp, evidence_refs), tier="flash"
             )
+            # Observable in Arize AX: a real-LLM response that doesn't emit a
+            # parseable `SCORE:` falls back to a deterministic hash — flag it so a
+            # malformed model output never silently masquerades as a real score.
+            span.set_attr("glasshat.score_parse_failed", _SCORE_RE.search(response) is None)
             depth = min(1.0, len(hits) / top_k) if top_k else 0.0
             out.append(
                 HatAssessment(

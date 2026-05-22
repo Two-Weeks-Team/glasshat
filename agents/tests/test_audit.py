@@ -31,6 +31,17 @@ def test_apply_correction_yellow_low_evidence_to_about_7_6() -> None:
     assert 7.5 <= corr.corrected <= 7.7  # 9.0 - 0.8*1.74 = 7.61
 
 
+def test_apply_correction_is_bidirectional() -> None:
+    """A negative mean_delta (an under-confident axis) is corrected *upward*."""
+    under = HatAssessment(
+        hat=Hat.GREEN, criterion_id="quality-of-idea", score=4.0, evidence_depth=0.8
+    )
+    corr = apply_correction(under, ConsultResult(mean_delta=-1.0, n=12, p25=0.0, p75=10.0))
+    assert corr is not None
+    assert corr.corrected == 4.8  # 4.0 - 0.8*(-1.0) = 4.8, raised, not lowered
+    assert corr.corrected > corr.original
+
+
 def test_no_correction_when_calibrated() -> None:
     assert apply_correction(_yellow_low(), ConsultResult(0.1, 20, 5.0, 9.0)) is None
 
