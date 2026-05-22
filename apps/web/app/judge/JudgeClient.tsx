@@ -142,7 +142,7 @@ export function JudgeClient() {
       </header>
 
       {/* Controls */}
-      <section className="rounded-2xl border border-[var(--color-border)]/60 bg-[var(--color-surface)] p-5">
+      <section className="elevate rounded-2xl p-5">
         <div className="flex flex-wrap items-end gap-4">
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-[var(--color-muted)]">Rubric</span>
@@ -231,7 +231,7 @@ export function JudgeClient() {
       )}
 
       {/* Ranking / cohort table */}
-      <section className="mt-6 overflow-hidden rounded-2xl border border-[var(--color-border)]/60 bg-[var(--color-surface)]">
+      <section className="elevate mt-6 overflow-hidden rounded-2xl">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-xs uppercase tracking-wide text-[var(--color-muted)]">

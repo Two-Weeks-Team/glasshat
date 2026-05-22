@@ -5,7 +5,9 @@ import { useEffect, useState } from "react";
 
 import { AuditCallout } from "@/components/AuditCallout";
 import { Badge } from "@/components/Badge";
+import { CountUp } from "@/components/CountUp";
 import { EvidenceList } from "@/components/EvidenceList";
+import { Reveal } from "@/components/Reveal";
 import { RubricTable } from "@/components/RubricTable";
 import { ScoreBar } from "@/components/ScoreBar";
 import { StageTimeline } from "@/components/StageTimeline";
@@ -112,7 +114,7 @@ export function ParticipateClient() {
       </header>
 
       {/* ── Input form ── */}
-      <section className="rounded-2xl border border-[var(--color-border)]/60 bg-[var(--color-surface)] p-5">
+      <section className="elevate rounded-2xl p-5">
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-[var(--color-muted)]">Rubric</span>
@@ -177,7 +179,7 @@ export function ParticipateClient() {
 
       {/* ── Gate 1: plan preview ── */}
       {plan && (phase === "plan" || phase === "running" || phase === "done") && (
-        <section className="mt-6 rounded-2xl border border-[var(--color-border)]/60 bg-[var(--color-surface)] p-5">
+        <section className="elevate mt-6 rounded-2xl p-5">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-lg font-medium">Plan (human gate 1)</h2>
             {phase === "plan" && (
@@ -219,7 +221,7 @@ export function ParticipateClient() {
 
       {/* ── Live monitor ── */}
       {(phase === "running" || phase === "done") && (
-        <section className="mt-6 rounded-2xl border border-[var(--color-border)]/60 bg-[var(--color-surface)] p-5">
+        <section className="elevate mt-6 rounded-2xl p-5">
           <h2 className="mb-4 text-lg font-medium">Live pipeline</h2>
           <StageTimeline current={run.current} beats={run.beats} done={run.done} />
         </section>
@@ -228,10 +230,10 @@ export function ParticipateClient() {
       {/* ── Results ── */}
       {phase === "done" && record && (
         <section className="mt-6 flex flex-col gap-6">
-          <div className="grid gap-3 sm:grid-cols-3">
+          <Reveal className="grid gap-3 sm:grid-cols-3">
             <StatCard
               label="Final score"
-              value={record.final_score.toFixed(1)}
+              value={<CountUp value={record.final_score} />}
               sub={`out of ${scaleMax(record.rubric.scoring_rule.final_scale)}`}
             />
             <StatCard
@@ -244,9 +246,9 @@ export function ParticipateClient() {
               value={record.rubric.source.identifier}
               sub={`${record.rubric.criteria.length} criteria · ${record.rubric.scoring_rule.aggregation}`}
             />
-          </div>
+          </Reveal>
 
-          <div>
+          <Reveal>
             <h2 className="mb-3 text-lg font-medium">Per-criterion scores</h2>
             <div className="flex flex-col gap-5">
               {rows.map((r) => (
@@ -263,16 +265,16 @@ export function ParticipateClient() {
                 </div>
               ))}
             </div>
-          </div>
+          </Reveal>
 
-          <div>
+          <Reveal>
             <h2 className="mb-3 text-lg font-medium">Self-correction graph</h2>
             <ConstellationGraph nodes={constellationNodes(record)} />
             <p className="mt-2 text-xs text-[var(--color-muted)]">
               Axes: score · weight · evidence depth. <span className="text-[#f0b429]">Amber</span>{" "}
               nodes were self-corrected and reshape from their over-confident origin.
             </p>
-          </div>
+          </Reveal>
 
           {weakest && (
             <div className="rounded-2xl border border-[var(--color-accent)]/40 bg-[color-mix(in_oklch,var(--color-accent)_8%,transparent)] p-4">
@@ -290,10 +292,10 @@ export function ParticipateClient() {
             </div>
           )}
 
-          <div>
+          <Reveal>
             <h2 className="mb-3 text-lg font-medium">Synthesized rubric</h2>
             <RubricTable rubric={record.rubric} />
-          </div>
+          </Reveal>
         </section>
       )}
     </main>
