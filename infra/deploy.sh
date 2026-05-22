@@ -5,23 +5,22 @@
 # This script ALWAYS passes --project=panelyst-hackathon explicitly and never
 # reads or changes the active config. Run from the repo root.
 #
-#   bash infra/deploy.sh --confirm            # real Vertex Gemini + Phoenix Cloud
-#   bash infra/deploy.sh --confirm --mock     # deterministic mock/memory demo (no creds)
+#   ARIZE_SPACE_ID=<id> bash infra/deploy.sh --confirm   # real Vertex + Arize AX tracing
+#   bash infra/deploy.sh --confirm --no-phoenix          # real Vertex, tracing off
+#   bash infra/deploy.sh --confirm --mock                # deterministic mock demo (no creds)
 #
-# Real mode prerequisites (one-time, you run these):
-#   1. Phoenix Cloud API key in Secret Manager:
-#        printf '%s' "<PHOENIX_API_KEY>" | gcloud secrets create phoenix-api-key \
+# Real (Arize AX) prerequisites (one-time, you run these):
+#   1. Arize AX API key (the `ak-…` key) in Secret Manager as `phoenix-api-key`:
+#        printf '%s' "<ARIZE_API_KEY>" | gcloud secrets create phoenix-api-key \
 #          --data-file=- --project=panelyst-hackathon
-#   2. The Cloud Run runtime service account needs:
-#        roles/aiplatform.user           (call Vertex Gemini)
-#        roles/secretmanager.secretAccessor on phoenix-api-key
-#   3. Optional override: export PHOENIX_COLLECTOR_ENDPOINT=... (default below).
+#   2. export ARIZE_SPACE_ID=<your AX space id>   (from app.arize.com → Space → API Keys)
+#   3. Cloud Run runtime SA needs roles/aiplatform.user + roles/secretmanager.secretAccessor.
 set -euo pipefail
 
 PROJECT="panelyst-hackathon"
 REGION="us-central1"
 REPO="glasshat"
-PHOENIX_COLLECTOR_ENDPOINT="${PHOENIX_COLLECTOR_ENDPOINT:-https://app.phoenix.arize.com}"
+ARIZE_SPACE_ID="${ARIZE_SPACE_ID:-}"
 
 MODE="real"
 CONFIRMED=""
@@ -68,14 +67,18 @@ if [[ "$MODE" == "real" && "$NO_PHOENIX" == "yes" ]]; then
   API_ENV="LLM_BACKEND=vertex,MONITOR_BACKEND=phoenix-cloud,DOCSTORE_BACKEND=memory,GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_REGION=${REGION},GOOGLE_GENAI_USE_VERTEXAI=true,${GEMINI_ENV}"
   API_SECRETS=()
 elif [[ "$MODE" == "real" ]]; then
-  echo "==> Mode: REAL (Vertex Gemini + Phoenix Cloud)"
+  echo "==> Mode: REAL (Vertex Gemini + Arize AX tracing)"
+  if [[ -z "$ARIZE_SPACE_ID" ]]; then
+    echo "Set ARIZE_SPACE_ID=<your AX space id> for real Arize tracing, or use --no-phoenix." >&2
+    exit 4
+  fi
   if ! gcloud secrets describe phoenix-api-key --project="$PROJECT" >/dev/null 2>&1; then
-    echo "Missing secret 'phoenix-api-key'. Create it first:" >&2
-    echo "  printf '%s' \"<PHOENIX_API_KEY>\" | gcloud secrets create phoenix-api-key --data-file=- --project=$PROJECT" >&2
+    echo "Missing secret 'phoenix-api-key' (your Arize AX API key). Create it first:" >&2
+    echo "  printf '%s' \"<ARIZE_API_KEY>\" | gcloud secrets create phoenix-api-key --data-file=- --project=$PROJECT" >&2
     exit 3
   fi
-  UV_EXTRAS="--extra vertex --extra phoenix"
-  API_ENV="LLM_BACKEND=vertex,MONITOR_BACKEND=phoenix-cloud,DOCSTORE_BACKEND=memory,GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_REGION=${REGION},GOOGLE_GENAI_USE_VERTEXAI=true,${GEMINI_ENV},PHOENIX_COLLECTOR_ENDPOINT=${PHOENIX_COLLECTOR_ENDPOINT},PHOENIX_PROJECT_NAME=glasshat"
+  UV_EXTRAS="--extra vertex --extra arize"
+  API_ENV="LLM_BACKEND=vertex,MONITOR_BACKEND=arize,DOCSTORE_BACKEND=memory,GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_REGION=${REGION},GOOGLE_GENAI_USE_VERTEXAI=true,${GEMINI_ENV},ARIZE_SPACE_ID=${ARIZE_SPACE_ID},PHOENIX_PROJECT_NAME=glasshat"
   API_SECRETS=(--set-secrets "PHOENIX_API_KEY=phoenix-api-key:latest")
 else
   echo "==> Mode: MOCK (deterministic, no credentials)"

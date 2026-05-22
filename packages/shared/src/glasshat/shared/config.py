@@ -15,7 +15,7 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 LlmBackend = Literal["vertex", "mock"]
-MonitorBackend = Literal["phoenix-local", "phoenix-cloud"]
+MonitorBackend = Literal["phoenix-local", "phoenix-cloud", "arize"]
 DocStoreBackend = Literal["memory", "sqlite", "firestore"]
 BlobBackend = Literal["local-fs", "gcs"]
 AgentRuntime = Literal["adk-local", "adk-cloud-run"]
@@ -68,6 +68,9 @@ class Settings(BaseSettings):
     phoenix_api_key: str = ""
     phoenix_collector_endpoint: str = ""
     phoenix_project_name: str = "glasshat"
+    # Arize AX (monitor_backend="arize"): traces go to otlp.arize.com using
+    # phoenix_api_key as the AX API key + this space id (both required by AX).
+    arize_space_id: str = ""
 
     # --- DocStore / BlobStore targets ---
     docstore_sqlite_path: str = "./var/glasshat.db"
