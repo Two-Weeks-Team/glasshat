@@ -21,6 +21,12 @@ def test_get_tracer_falls_back_to_noop_without_phoenix() -> None:
     assert isinstance(t, NoOpTracer)
 
 
+def test_get_tracer_arize_falls_back_to_noop_without_arize_otel() -> None:
+    # CI does not install the arize extra, so monitor_backend=arize -> NoOp
+    t = get_tracer(Settings(_env_file=None, monitor_backend="arize"))  # type: ignore[call-arg]
+    assert isinstance(t, NoOpTracer)
+
+
 @pytest.mark.integration
 def test_phoenix_tracer_span_emits() -> None:
     pytest.importorskip("phoenix")

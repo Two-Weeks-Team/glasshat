@@ -65,9 +65,45 @@ class PhoenixTracer:  # pragma: no cover - requires the phoenix extra + collecto
         trace.get_current_span().set_attribute(key, value)
 
 
-def get_tracer(settings: Settings | None = None) -> NoOpTracer | PhoenixTracer:
-    """Return the configured tracer; NoOp when Phoenix is unavailable."""
+class ArizeTracer:  # pragma: no cover - requires the arize-otel extra + creds
+    """OpenInference -> Arize AX tracer (otlp.arize.com, api_key + space_id)."""
+
+    def __init__(self, settings: Settings | None = None) -> None:
+        settings = settings or get_settings()
+        from arize.otel import register
+
+        register(
+            space_id=settings.arize_space_id,
+            api_key=settings.phoenix_api_key,
+            project_name=settings.phoenix_project_name,
+            set_global_tracer_provider=True,
+        )
+        from opentelemetry import trace
+
+        self._tracer = trace.get_tracer("glasshat")
+
+    @contextmanager
+    def span(self, name: str, **attrs: Any) -> Iterator[_OtelSpan]:
+        with self._tracer.start_as_current_span(name) as sp:
+            for key, value in attrs.items():
+                sp.set_attribute(key, value)
+            yield _OtelSpan(sp)
+
+    def set_attr(self, key: str, value: Any) -> None:
+        from opentelemetry import trace
+
+        trace.get_current_span().set_attribute(key, value)
+
+
+def get_tracer(settings: Settings | None = None) -> NoOpTracer | PhoenixTracer | ArizeTracer:
+    """Return the configured tracer; NoOp when the backend's SDK is unavailable."""
     settings = settings or get_settings()
+    if settings.monitor_backend == "arize":
+        try:
+            import arize.otel  # noqa: F401
+        except ImportError:
+            return NoOpTracer()
+        return ArizeTracer(settings)  # pragma: no cover - arize extra installed
     if settings.monitor_backend.startswith("phoenix"):
         try:
             import phoenix.otel  # noqa: F401

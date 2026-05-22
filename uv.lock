@@ -174,6 +174,25 @@ wheels = [
 ]
 
 [[package]]
+name = "arize-otel"
+version = "0.12.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "openinference-instrumentation" },
+    { name = "openinference-semantic-conventions" },
+    { name = "opentelemetry-exporter-otlp", version = "1.41.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.15' or sys_platform != 'win32'" },
+    { name = "opentelemetry-exporter-otlp", version = "1.42.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.15' and sys_platform == 'win32'" },
+    { name = "opentelemetry-proto", version = "1.41.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.15' or sys_platform != 'win32'" },
+    { name = "opentelemetry-proto", version = "1.42.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.15' and sys_platform == 'win32'" },
+    { name = "opentelemetry-sdk", version = "1.41.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.15' or sys_platform != 'win32'" },
+    { name = "opentelemetry-sdk", version = "1.42.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.15' and sys_platform == 'win32'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/06/b0/c216d72ef4325f2a2a053f7627628e35229f41ae95abd6d9901f6342ac07/arize_otel-0.12.0.tar.gz", hash = "sha256:c35ce05901d3e95fd889f467535ec4993887eea7ea82f25d60596682c53fca89", size = 15805, upload-time = "2026-03-30T21:10:08.044Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2e/4d/e956199649231bf04ac3e97167d4bddd59b14be84ca6bedb6ef91f6774fc/arize_otel-0.12.0-py3-none-any.whl", hash = "sha256:a00eb772f1ae47452594e1d58012d1d1a41009eae43a80fa6fd793117d4c08b7", size = 16841, upload-time = "2026-03-30T21:10:06.895Z" },
+]
+
+[[package]]
 name = "arize-phoenix"
 version = "15.11.1"
 source = { registry = "https://pypi.org/simple" }
@@ -894,6 +913,9 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+arize = [
+    { name = "glasshat-shared", extra = ["arize"] },
+]
 firestore = [
     { name = "glasshat-shared", extra = ["firestore"] },
 ]
@@ -925,12 +947,13 @@ requires-dist = [
     { name = "glasshat-pipeline", editable = "services/pipeline-orchestrator" },
     { name = "glasshat-rubric", editable = "packages/rubric" },
     { name = "glasshat-shared", editable = "packages/shared" },
+    { name = "glasshat-shared", extras = ["arize"], marker = "extra == 'arize'", editable = "packages/shared" },
     { name = "glasshat-shared", extras = ["firestore"], marker = "extra == 'firestore'", editable = "packages/shared" },
     { name = "glasshat-shared", extras = ["gcs"], marker = "extra == 'gcs'", editable = "packages/shared" },
     { name = "glasshat-shared", extras = ["phoenix"], marker = "extra == 'phoenix'", editable = "packages/shared" },
     { name = "glasshat-shared", extras = ["vertex"], marker = "extra == 'vertex'", editable = "packages/shared" },
 ]
-provides-extras = ["vertex", "phoenix", "firestore", "gcs"]
+provides-extras = ["vertex", "phoenix", "arize", "firestore", "gcs"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -1059,6 +1082,10 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+arize = [
+    { name = "arize-otel" },
+    { name = "openinference-instrumentation-google-adk" },
+]
 firestore = [
     { name = "google-cloud-firestore" },
 ]
@@ -1079,6 +1106,7 @@ vertex = [
 
 [package.metadata]
 requires-dist = [
+    { name = "arize-otel", marker = "extra == 'arize'", specifier = ">=0.12" },
     { name = "arize-phoenix", marker = "extra == 'phoenix'", specifier = ">=11" },
     { name = "arize-phoenix-otel", marker = "extra == 'phoenix'", specifier = ">=0.6" },
     { name = "google-adk", marker = "extra == 'vertex'", specifier = ">=1.0" },
@@ -1086,12 +1114,13 @@ requires-dist = [
     { name = "google-cloud-storage", marker = "extra == 'gcs'", specifier = ">=2.16" },
     { name = "google-genai", marker = "extra == 'vertex'", specifier = ">=0.3" },
     { name = "numpy", specifier = ">=2.0" },
+    { name = "openinference-instrumentation-google-adk", marker = "extra == 'arize'", specifier = ">=0.1" },
     { name = "openinference-instrumentation-google-adk", marker = "extra == 'phoenix'", specifier = ">=0.1" },
     { name = "pydantic", specifier = ">=2.7" },
     { name = "pydantic-settings", specifier = ">=2.3" },
     { name = "rank-bm25", specifier = ">=0.2" },
 ]
-provides-extras = ["vertex", "phoenix", "firestore", "gcs"]
+provides-extras = ["vertex", "phoenix", "arize", "firestore", "gcs"]
 
 [[package]]
 name = "google-adk"

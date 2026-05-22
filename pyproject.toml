@@ -19,6 +19,7 @@ dependencies = [
 # and the mock demo build need none of these.
 vertex = ["glasshat-shared[vertex]"]
 phoenix = ["glasshat-shared[phoenix]"]
+arize = ["glasshat-shared[arize]"]
 firestore = ["glasshat-shared[firestore]"]
 gcs = ["glasshat-shared[gcs]"]
 
@@ -106,6 +107,8 @@ module = [
     "google",
     "google.*",
     "phoenix.*",
+    "arize",
+    "arize.*",
     "openinference.*",
     "opentelemetry.*",
     "mcp",

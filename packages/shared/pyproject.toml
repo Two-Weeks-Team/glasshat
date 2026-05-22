@@ -18,6 +18,11 @@ phoenix = [
     "arize-phoenix-otel>=0.6",
     "openinference-instrumentation-google-adk>=0.1",
 ]
+# Arize AX (commercial, app.arize.com) tracing via OTLP to otlp.arize.com.
+arize = [
+    "arize-otel>=0.12",
+    "openinference-instrumentation-google-adk>=0.1",
+]
 firestore = ["google-cloud-firestore>=2.16"]
 gcs = ["google-cloud-storage>=2.16"]
 
