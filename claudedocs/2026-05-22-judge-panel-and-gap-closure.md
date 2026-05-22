@@ -39,9 +39,35 @@ Closes the credibility landmines all four judges flagged:
   parseable `SCORE:` (currently falls back to a hash silently).
 - README already reframed so the deployed self-correction is not overstated as live-trace-driven.
 
+## Re-judge (after PRs #31–#37) — both axes materially up
+
+Two independent re-reviews on the updated live site + docs:
+
+| Judge | Before → After | Verdict |
+|---|---|---|
+| Adversarial skeptic (credibility) | **72 → 88** | All four prior landmines confirmed FIXED; calibration claim now live-verifiable to the decimal (`9.0 − 0.8×1.45 = 7.84`); sample cohort honestly labelled (not theatre). |
+| Design / UX (visual wow) | **74 → 86** | Both prior HIGH gaps FIXED — /judge "visual cliff" closed (ranked sample on first paint), ScoreBar eases. |
+
+Skeptic re-judge surfaced (and we then closed) three follow-ups:
+- README PR-range `#7–#30` had re-gone-stale (`#31–#34` existed) → changed to **`#7 onward`** (PR #35).
+- **Seven** scaffold-era stub READMEs still described the abandoned Qdrant/LangGraph/Firebase/17-item design as "Not yet implemented" → rewritten to shipped reality (PR #35).
+- README demo example `9.0 → 8.2` → live `9.0 → 7.84` (PR #35).
+
+Design re-judge surfaced (and we then closed):
+- `/participate` was the lone empty-form holdout → first-paint **sample result** via shared `ResultsView` (PR #36).
+- Flat score visuals → ScoreBar **colour ramp** + /judge **rank-encoded numerals** (PR #36).
+- Regression caught in verification: the sample's three.js 3D graph dropped `/participate` Lighthouse perf to **56** → deferred behind a click for the sample, perf restored to **92 live** (PR #37).
+
+## Final state (verified live, 2026-05-23)
+
+- Routes: `/health` + `/`, `/judge`, `/participate` → **200**.
+- Live RunRecord on `gemini-3.1-flash-lite` with spike-D calibration (`mean_delta 1.45`).
+- Lighthouse (live, all ≥90): landing **91/95/96**, /judge **93/96/96**, /participate **92/96/96**.
+- Gates: ruff/format/mypy/pytest (**161**, 97.87 % cov) + eslint/tsc/vitest (**40**)/build green; Actions green on PRs #31–#37 (all merged, merge commits, no squash).
+
 ## Deferred to handoff next-step (bigger lifts, not blockers)
 - Wire `repo_url` → `code-grader` → retrieval into the default pipeline (README implies repo
   evidence flows into scoring; today only `deck_text` is indexed).
 - Wire `PhoenixMcpConsultant` into the live API path (vs. exercised only by e2e scripts).
 - Wire `weight_aware_anchor` (cross-rubric anchor retrieval) into the audit step.
-- Display-font + larger typographic moment on the app screens (design "bigger lift").
+- Display-font + larger landing-hero moment (design "bigger lift", LOW).
