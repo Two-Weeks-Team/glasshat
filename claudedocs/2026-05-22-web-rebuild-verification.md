@@ -70,3 +70,32 @@ in production).
 
 A `--mock` redeploy needs none of the above and already serves the full rebuilt UI (with the
 build-time API-base fix), so the live site stops being "empty" immediately.
+
+## Real verification + live real-Vertex deploy (2026-05-22, follow-up)
+
+### G1 — Real Arize Phoenix e2e (self-hosted)
+`scripts/real_phoenix_cloud_e2e.py` targets Phoenix **Cloud**; `scripts/real_e2e.py` targets a
+self-hosted Phoenix. Ran the latter against real Vertex on `panelyst-hackathon`:
+- Self-hosted Arize Phoenix (OSS) up, project `glasshat-e2e`.
+- Real ADK → Phoenix **MCP** (stdio): 27 tools, `list-projects` tool called.
+- Real **Vertex Gemini** (`gemini-2.5-flash`): RunRecord `f9ab2489`, final **54.39**, all 4 criteria
+  self-corrected (yellow hat, mean_delta 1.2); 25 SSE stages incl. the full self-correction beats.
+- **29 Phoenix spans captured.**
+
+**Key-type finding:** the provided `ak-…` key is an **Arize AX** key (authenticates at
+`otlp.arize.com`, 400-not-401), **not** a Phoenix-Cloud key, so it cannot push to
+`app.phoenix.arize.com` (401). To stream traces to the user's hosted account we need either a
+Phoenix-Cloud key (from `app.phoenix.arize.com/settings/api-keys`, no `ak-` prefix) or the Arize AX
+**Space ID** (for the `otlp.arize.com` endpoint). Secret `phoenix-api-key` is created in Secret
+Manager and the Cloud Run SA has `secretmanager.secretAccessor` + `aiplatform.user`.
+
+### G2 — Live real-Vertex deploy
+`bash infra/deploy.sh --confirm --no-phoenix` (real Vertex Gemini; tracing NoOp pending the correct
+Phoenix credential) → deployed to `panelyst-hackathon`/us-central1, min-instances=0.
+- API revision `glasshat-api-00002-cbv`; `GET /health` → `{"status":"ok"}`.
+- Live `POST /api/evaluate` (**real Gemini**): `run_id 38de48ed`, final **58.27**, all 4 criteria
+  self-corrected, 4 audit corrections (~77s cold: cold start + 6 sequential real hat calls).
+- `/`, `/judge`, `/participate` → HTTP **200**; live landing screenshot `assets/live-landing.png`
+  shows the full rebuilt UI in production.
+
+Live URLs: Web https://glasshat-web-o366v7tl2q-uc.a.run.app · API https://glasshat-api-o366v7tl2q-uc.a.run.app

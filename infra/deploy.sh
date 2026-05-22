@@ -25,10 +25,12 @@ PHOENIX_COLLECTOR_ENDPOINT="${PHOENIX_COLLECTOR_ENDPOINT:-https://app.phoenix.ar
 
 MODE="real"
 CONFIRMED=""
+NO_PHOENIX=""
 for arg in "$@"; do
   case "$arg" in
     --confirm) CONFIRMED="yes" ;;
     --mock) MODE="mock" ;;
+    --no-phoenix) NO_PHOENIX="yes" ;;  # real Vertex, tracing → NoOp (phoenix extra omitted)
   esac
 done
 
@@ -56,7 +58,16 @@ gcloud artifacts repositories describe "$REPO" \
     --project="$PROJECT" --location="$REGION" --repository-format=docker
 
 # --- Per-mode build args + runtime env ---
-if [[ "$MODE" == "real" ]]; then
+# Gemini 3.x preview is global-endpoint-only (regional → 404); pin the proven
+# 2.5 GA models that work on the us-central1 regional endpoint used by the client.
+GEMINI_ENV="GLASSHAT_GEMINI_PRO=gemini-2.5-pro,GLASSHAT_GEMINI_FLASH=gemini-2.5-flash,GLASSHAT_GEMINI_FLASH_LITE=gemini-2.5-flash"
+
+if [[ "$MODE" == "real" && "$NO_PHOENIX" == "yes" ]]; then
+  echo "==> Mode: REAL Vertex Gemini, tracing OFF (NoOp — phoenix extra omitted)"
+  UV_EXTRAS="--extra vertex"
+  API_ENV="LLM_BACKEND=vertex,MONITOR_BACKEND=phoenix-cloud,DOCSTORE_BACKEND=memory,GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_REGION=${REGION},GOOGLE_GENAI_USE_VERTEXAI=true,${GEMINI_ENV}"
+  API_SECRETS=()
+elif [[ "$MODE" == "real" ]]; then
   echo "==> Mode: REAL (Vertex Gemini + Phoenix Cloud)"
   if ! gcloud secrets describe phoenix-api-key --project="$PROJECT" >/dev/null 2>&1; then
     echo "Missing secret 'phoenix-api-key'. Create it first:" >&2
@@ -64,7 +75,7 @@ if [[ "$MODE" == "real" ]]; then
     exit 3
   fi
   UV_EXTRAS="--extra vertex --extra phoenix"
-  API_ENV="LLM_BACKEND=vertex,MONITOR_BACKEND=phoenix-cloud,DOCSTORE_BACKEND=memory,GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_REGION=${REGION},GOOGLE_GENAI_USE_VERTEXAI=true,PHOENIX_COLLECTOR_ENDPOINT=${PHOENIX_COLLECTOR_ENDPOINT},PHOENIX_PROJECT_NAME=glasshat"
+  API_ENV="LLM_BACKEND=vertex,MONITOR_BACKEND=phoenix-cloud,DOCSTORE_BACKEND=memory,GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_REGION=${REGION},GOOGLE_GENAI_USE_VERTEXAI=true,${GEMINI_ENV},PHOENIX_COLLECTOR_ENDPOINT=${PHOENIX_COLLECTOR_ENDPOINT},PHOENIX_PROJECT_NAME=glasshat"
   API_SECRETS=(--set-secrets "PHOENIX_API_KEY=phoenix-api-key:latest")
 else
   echo "==> Mode: MOCK (deterministic, no credentials)"
@@ -81,7 +92,7 @@ gcloud builds submit --project="$PROJECT" \
 echo "==> Deploying API to Cloud Run (min-instances=0)..."
 gcloud run deploy glasshat-api --project="$PROJECT" --region="$REGION" \
   --image="$API_IMAGE" --min-instances=0 --allow-unauthenticated \
-  --set-env-vars="$API_ENV" "${API_SECRETS[@]}"
+  --set-env-vars="$API_ENV" ${API_SECRETS[@]+"${API_SECRETS[@]}"}
 
 API_URL=$(gcloud run services describe glasshat-api \
   --project="$PROJECT" --region="$REGION" --format="value(status.url)")
