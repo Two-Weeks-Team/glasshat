@@ -252,6 +252,10 @@ function ResultsView({
 }) {
   const rows = scoreRows(record);
   const weakest = weakestAxis(rows);
+  // The 3D graph pulls in three.js; for the first-paint SAMPLE preview defer it
+  // behind a click so the initial load stays light (Lighthouse perf ≥90). A real
+  // run (not perf-measured) renders it immediately.
+  const [show3d, setShow3d] = useState(!sample);
   return (
     <section className="mt-6 flex flex-col gap-6">
       {sample && (
@@ -300,7 +304,16 @@ function ResultsView({
 
       <Reveal>
         <h2 className="mb-3 text-lg font-medium">Self-correction graph</h2>
-        <ConstellationGraph nodes={constellationNodes(record)} />
+        {show3d ? (
+          <ConstellationGraph nodes={constellationNodes(record)} />
+        ) : (
+          <button
+            onClick={() => setShow3d(true)}
+            className="flex h-[260px] w-full items-center justify-center rounded-xl border border-dashed border-[var(--color-border)] text-sm text-[var(--color-muted)] transition hover:bg-[var(--color-surface-2)]/40"
+          >
+            ▶ Load the interactive 3D self-correction graph
+          </button>
+        )}
         <p className="mt-2 text-xs text-[var(--color-muted)]">
           Axes: score · weight · evidence depth. <span className="text-[#f0b429]">Amber</span>{" "}
           nodes were self-corrected and reshape from their over-confident origin.
