@@ -13,6 +13,15 @@ dependencies = [
     "glasshat-api",
 ]
 
+[project.optional-dependencies]
+# Real backends, surfaced from glasshat-shared so the API image can opt in at
+# build time (`uv sync --extra vertex --extra phoenix`). Omitted by default — CI
+# and the mock demo build need none of these.
+vertex = ["glasshat-shared[vertex]"]
+phoenix = ["glasshat-shared[phoenix]"]
+firestore = ["glasshat-shared[firestore]"]
+gcs = ["glasshat-shared[gcs]"]
+
 [tool.uv]
 package = false
 

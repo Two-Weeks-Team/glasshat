@@ -4,7 +4,11 @@ FROM python:3.12-slim AS builder
 COPY --from=ghcr.io/astral-sh/uv:0.11 /uv /uvx /bin/
 WORKDIR /app
 COPY . .
-RUN uv sync --frozen --no-dev
+# UV_EXTRAS is empty by default (mock/memory build — fast, no credentials, used by
+# CI). The real deploy passes "--extra vertex --extra phoenix" to bake in the
+# Vertex Gemini + Arize Phoenix SDKs (see infra/deploy.sh).
+ARG UV_EXTRAS=""
+RUN uv sync --frozen --no-dev ${UV_EXTRAS}
 
 FROM python:3.12-slim AS runtime
 WORKDIR /app

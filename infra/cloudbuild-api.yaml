@@ -1,8 +1,19 @@
 # Build the Glasshat API image from the repo root using infra/Dockerfile.api.
+# _UV_EXTRAS is empty by default (mock build); deploy.sh passes the real extras.
 steps:
   - name: gcr.io/cloud-builders/docker
-    args: ["build", "-f", "infra/Dockerfile.api", "-t", "${_IMAGE}", "."]
+    args:
+      - build
+      - -f
+      - infra/Dockerfile.api
+      - --build-arg
+      - UV_EXTRAS=${_UV_EXTRAS}
+      - -t
+      - ${_IMAGE}
+      - .
 images:
   - "${_IMAGE}"
+substitutions:
+  _UV_EXTRAS: ""
 options:
   logging: CLOUD_LOGGING_ONLY

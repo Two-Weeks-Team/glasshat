@@ -51,7 +51,7 @@ deck.pdf + repo URL + rubric source
 | `services/code-grader` | `glasshat.code_grader` | static repo heuristics |
 | `services/pipeline-orchestrator` | `glasshat.pipeline` | `run_evaluation` end-to-end + SSE + ADK/Phoenix-MCP runtime |
 | `apps/api` | `glasshat.api` | FastAPI: evaluate / plan gate / SSE stream / runs / override gate |
-| `apps/web` | `glasshat-web` | Next.js 16: landing + `/judge` + `/participate` + 3D self-correction |
+| `apps/web` | `glasshat-web` | Next.js 16: landing + `/judge` (batch rank · tie-break · gate-2 override · lock) + `/participate` (plan gate · live SSE monitor · evidence · audit callouts · 3D self-correction) |
 | `infra/` | — | Dockerfiles, compose, Cloud Run deploy |
 
 **Config-flip backends** (env): `LLM_BACKEND` (`mock`\|`vertex`), `MONITOR_BACKEND` (`phoenix-local`\|`phoenix-cloud`), `DOCSTORE_BACKEND` (`memory`\|`sqlite`\|`firestore`), `BLOB_BACKEND` (`local-fs`\|`gcs`), `AGENT_RUNTIME` (`adk-local`\|`adk-cloud-run`). The `mock`/`memory`/`local-fs`/`noop` backends are complete, deterministic implementations — the whole engine runs and is tested with **zero credentials**.
@@ -79,15 +79,23 @@ cd apps/web && pnpm install && pnpm dev   # http://localhost:3000
 docker compose -f infra/docker-compose.yml up --build   # web :3000, api :8088
 ```
 
-**Live (Vertex Gemini + Phoenix Cloud + Cloud Run):** set `.env` from `.env.example` (Vertex via ADC, `PHOENIX_API_KEY`), then:
+**Live (Cloud Run, project=`panelyst-hackathon`, us-central1, min-instances=0):**
 ```bash
-bash infra/deploy.sh --confirm     # deploys to project=panelyst-hackathon, us-central1, min-instances=0
+# Real Vertex Gemini + Phoenix Cloud (default). One-time: put the Phoenix key in Secret Manager
+#   printf '%s' "<PHOENIX_API_KEY>" | gcloud secrets create phoenix-api-key --data-file=- --project=panelyst-hackathon
+# and grant the Cloud Run SA roles/aiplatform.user + roles/secretmanager.secretAccessor.
+bash infra/deploy.sh --confirm
+
+# Deterministic mock/memory demo — no credentials, no secret needed:
+bash infra/deploy.sh --confirm --mock
 ```
-The deploy script ignores your active gcloud project and always targets `panelyst-hackathon` explicitly.
+The script ignores your active gcloud project and always targets `panelyst-hackathon` explicitly.
+It deploys the API first, then bakes the live API URL into the web client bundle at build time
+(`NEXT_PUBLIC_API_BASE` is build-time, not runtime).
 
 ## Status
 
-Engine, API, and web are built and **CI-green** (SDD + TDD; one PR per phase — see merged PRs #7–#13). Verified:
+Engine, API, and web are built and **CI-green** (SDD + TDD; one PR per phase — see merged PRs #7–#18). The web was rebuilt from a thin shell into two fully functional viewports (PRs #15–#18); a build-time fix ensures the deployed client actually reaches the API (`NEXT_PUBLIC_API_BASE` is baked at web build, not set at runtime). See `claudedocs/2026-05-22-web-rebuild-verification.md`. Verified:
 
 - **Mock stack** (no credentials): full `run_evaluation` end-to-end, self-correct, SSE, 150+ tests, Docker images build in CI.
 - **Real e2e** (`scripts/real_e2e.py`): real Vertex Gemini + Vertex embeddings + in-code hybrid retrieval + self-hosted Phoenix (80 spans) + real Phoenix MCP (stdio, 27 tools, `list-projects` call via a Google ADK agent) → RubricSynthesizer→6-hat→audit **self-correct** → final 54.04. Evidence: `claudedocs/2026-05-21-real-e2e-evidence.md`.
