@@ -99,3 +99,20 @@ Phoenix credential) → deployed to `panelyst-hackathon`/us-central1, min-instan
   shows the full rebuilt UI in production.
 
 Live URLs: Web https://glasshat-web-o366v7tl2q-uc.a.run.app · API https://glasshat-api-o366v7tl2q-uc.a.run.app
+
+## Resolution — Arize AX observability is live (PR #24, redeploy)
+
+The `ak-…` key was confirmed to be an **Arize AX** key (`app.arize.com`); the user provided the
+Space ID (`U3BhY2U6NDUxMzY6V012Yg==`, "app.2weeks Space"). Added a first-class `arize` monitor
+backend (`ArizeTracer` → `arize.otel.register` → `otlp.arize.com`), wired `deploy.sh` real mode to
+it, and **redeployed**:
+
+- `scripts/real_arize_ax_e2e.py` (local): probe span flushed with **zero export errors**, real Vertex
+  pipeline `run 42951b51` final 59.04 (4 self-corrections), all spans flushed to AX project `glasshat`.
+- **Live service**: registers to `otlp.arize.com` (project `glasshat`, all auth headers set, no export
+  errors in Cloud Run logs); live real-Gemini eval `run 58f6892c` final 64.6. Every pipeline stage is
+  now a span in the AX space.
+
+Deps were also upgraded to latest majors (PR #25): web eslint 10 / TS 6 / vitest 4 / jsdom 29 /
+three 0.184; Python `uv lock --upgrade`. Held (upstream caps): `@vitejs/plugin-react`@5 (6 needs
+vite 8; vitest 4 ships vite 7) and `starlette`@0.52 (FastAPI caps `<1.0`).
