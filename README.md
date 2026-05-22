@@ -15,7 +15,7 @@ Glasshat ingests a pitch deck + a GitHub repo + **the evaluator's official rules
 1. Open **https://glasshat-web-o366v7tl2q-uc.a.run.app/participate**.
 2. Pick the **Rapid Agent** rubric preset, paste any pitch text, submit.
 3. **Approve the plan** at gate 1 (the inspectable plan card: 6 hats, criteria, weights).
-4. Watch the **live SSE monitor** stream the pipeline (`ingesting → planning → hats_running → auditing`), then the **audit self-correct** beat: an over-confident hat (e.g. YELLOW `9.0 → 8.2`) is pulled back and the **3D constellation reshapes** to the calibrated position.
+4. Watch the **live SSE monitor** stream the pipeline (`ingesting → planning → hats_running → auditing`), then the **audit self-correct** beat: an over-confident hat (e.g. YELLOW pulled back ≈`0.8 × mean_delta` at low evidence — `9.0 → 7.84`) is corrected and the **3D constellation reshapes** to the calibrated position.
 5. `/judge` shows the batch view: rank by rubric, ordered tie-break, gate-2 override, lock.
 
 Or hit the API directly (real Gemini 3.1 RunRecord):
@@ -119,7 +119,7 @@ It deploys the API first, then bakes the live API URL into the web client bundle
 
 ## Status
 
-Engine, API, and web are built and **CI-green** (SDD + TDD; one PR per phase — merged PRs **#7–#30**). The web was rebuilt from a thin shell into two fully functional viewports (PRs #15–#18), then elevated visually (PRs #20–#23: mesh-gradient design system, animated hero motif, bento grid, count-up, scroll reveals). A build-time fix ensures the deployed client actually reaches the API (`NEXT_PUBLIC_API_BASE` is baked at web build, not runtime). Observability is wired to **Arize AX** (PR #24); the live model was migrated to **`gemini-3.1-flash-lite`** with a location-aware Vertex client that routes Gemini 3.x to the `global` endpoint (PR #27), and every orchestration agent now emits its own `glasshat.agent` AX span (PR #28). See `claudedocs/2026-05-22-production-self-assessment.md`. Verified:
+Engine, API, and web are built and **CI-green** (SDD + TDD; one PR per phase — merged PRs **#7 onward**, see the repo PR list). The web was rebuilt from a thin shell into two fully functional viewports (PRs #15–#18), then elevated visually (PRs #20–#23: mesh-gradient design system, animated hero motif, bento grid, count-up, scroll reveals). A build-time fix ensures the deployed client actually reaches the API (`NEXT_PUBLIC_API_BASE` is baked at web build, not runtime). Observability is wired to **Arize AX** (PR #24); the live model was migrated to **`gemini-3.1-flash-lite`** with a location-aware Vertex client that routes Gemini 3.x to the `global` endpoint (PR #27), and every orchestration agent now emits its own `glasshat.agent` AX span (PR #28). See `claudedocs/2026-05-22-production-self-assessment.md`. Verified:
 
 - **Lighthouse ≥ 90** on all pages — fresh live (post-deploy): landing **92/95/96**, `/judge` **93/96/96**, `/participate` **95/96/96** (Performance / Accessibility / Best-Practices). Motion respects `prefers-reduced-motion`.
 - **Live Arize AX observability**: the deployed service registers to `otlp.arize.com` (project `glasshat`) and emits a span **per agent** (`RubricSynthesizer · BluePlanner · SixHatPanel · Audit · BMADScorer · ReportAssembler`) plus per-hat `hat_assess` spans on every evaluation — verified via live registration logs (no export errors) and a live real-Gemini eval on `gemini-3.1-flash-lite` (e.g. run `2b2e29c2`, final 56.93, 4 audit self-corrections). e2e: `scripts/real_arize_ax_e2e.py`.
