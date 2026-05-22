@@ -49,45 +49,4 @@ judge **demo-seed** label. **Zero unfinished-code markers.** ✅
 3. **Redeploy + re-verify** (a) Lighthouse on live, (c) `/health`+3 routes 200,
    live RunRecord model = `gemini-3.1-flash-lite`.
 
-## Round 2 — final verdicts (after gap closure + redeploy on gemini-3.1-flash-lite)
-
-Two PRs closed the two FAILs; live redeployed on `main` (real Vertex
-`gemini-3.1-flash-lite` + Arize AX). All verdicts now **PASS**.
-
-| # | Axis | Verdict | Live evidence |
-|---|------|---------|---------------|
-| a | Visual wow (Lighthouse ≥90 all pages) | **PASS** | Fresh live Lighthouse (post-redeploy, isolated Chrome): `/` **92/95/96**, `/judge` **93/96/96**, `/participate` **95/96/96** (Performance / Accessibility / Best-Practices). Web bundle unchanged this session (PRs were backend-only). |
-| b1 | Orchestration role effectiveness | **PASS** | 6 real implementations (table above); live eval exercised the full chain. |
-| b2 | AX span separation per agent | **PASS** (was FAIL) | **PR #28**: `agent_synthesize/plan/hats/audit/score/report` each open a `glasshat.agent` span (`SixHatPanel` parents the per-hat `hat_assess`). Live AX register clean — `otlp.arize.com`, project `glasshat`, space-id header present, **zero export errors / tracebacks**. |
-| c1 | I→O flow — code path | **PASS** | Unchanged; all endpoints real. |
-| c2 | Live real-Gemini RunRecord on 3.1 | **PASS** (was FAIL) | **PR #27**: live API env `LLM_BACKEND=vertex`, `GLASSHAT_GEMINI_FLASH=gemini-3.1-flash-lite`, `*_LOCATION=global`. Live `POST /api/evaluate` → **200**, RunRecord `2b2e29c2-4205-4ba8-80eb-fedea0d76126`, final **56.93**, **4 self-correction** audit corrections (YELLOW 9.0→8.2, 8.0→7.2, 9.0→8.2, …). A regional 404 would have 500'd — 3.1-flash-lite is served on the global endpoint. **No `gemini-2.5` references remain** (grep clean). |
-
-### Gates & verification (all surfaced in the session transcript)
-
-- **Python**: `ruff` ✅ · `ruff format` ✅ · `mypy` ✅ (34 files) · `pytest` **157 passed, 97.85 % cov** (≥90).
-- **Web**: `eslint` ✅ · `tsc` ✅ · `vitest` **40 passed** · `next build` ✅ (4 routes).
-- **GitHub Actions**: PR #27 (docker/lint-type-test/web) + PR #28 (+ CodeRabbit) all pass → both **merged** via merge commit (no squash).
-- **Shipped grep** `mock|stub|placeholder|todo|fixme` (excl. tests) → 23 matches, all legitimate (named `mock`/`memory` docstrings, HTML `placeholder` attrs, `TodoZap` demo seed). **Zero unfinished-code markers.**
-- **Live**: `/health` → 200 `{"status":"ok"}`; `/`, `/judge`, `/participate` → 200.
-- **Model**: live env + a successful real eval prove `gemini-3.1-flash-lite`; **2.5 fully removed**.
-
-### Root cause closed (model migration)
-
-`VertexLlmClient` built a single `genai.Client` on `google_cloud_region`
-(us-central1) for every call and ignored the per-tier `*_location` config (which
-already defaulted to `global`). Gemini 3.x is served only on the Vertex **global**
-endpoint, so a regional call 404'd — the documented reason `deploy.sh` had pinned
-2.5. PR #27 makes the client location-aware (one cached client per location;
-generation → `global`, embeddings `text-embedding-005` → regional) and points
-`deploy.sh` at `gemini-3.1-flash-lite`. Verified against official Vertex docs.
-
-### Residual / not in scope this session
-
-- **AX UI visual confirmation**: code-side export verified (register OK, 0 errors);
-  eyeballing traces in app.arize.com needs the user's login — out of scope.
-- **Submission assets** (demo video / Devpost text): explicitly deferred per this
-  session's decision.
-- **`gemini-3.1-pro-preview` (pro tier)**: only fires on the URL rubric-synthesis
-  path (not the preset demo path), so it was not exercised by the live eval. The
-  preset/custom-YAML paths are deterministic and need no LLM.
-
+_Round 2 (final verdicts after gap closure) is appended at the bottom of this file._
