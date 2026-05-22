@@ -11,7 +11,7 @@ export function StatCard({ label, value, sub }: StatCardProps) {
   return (
     <div
       data-testid="stat-card"
-      className="rounded-2xl border border-[var(--color-border)]/60 bg-[var(--color-surface)] p-4"
+      className="hover-lift rounded-2xl border border-[var(--color-border)]/60 bg-[var(--color-surface)] p-4"
     >
       <div className="text-xs uppercase tracking-wide text-[var(--color-muted)]">{label}</div>
       <div className="mt-1 text-2xl font-semibold tabular-nums">{value}</div>
