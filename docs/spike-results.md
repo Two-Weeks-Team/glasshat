@@ -1,3 +1,13 @@
+> ⚠️ **HISTORICAL / PLANNING DOCUMENT — not the shipped state.** This file belongs to
+> the pre-build planning set, which explored an earlier **dual-submission** strategy
+> (a Qdrant "Think Outside the Bot" entry alongside the Rapid Agent / Arize entry) and
+> assumed Qdrant / LangGraph / visual Agent Builder / Firebase. **None of that shipped.**
+> For the authoritative shipped system see **[`README.md`](../README.md)** and
+> **[`docs/rapid-agent-compliance.md`](./rapid-agent-compliance.md)**: single Arize-track
+> submission · **no Qdrant** (in-code hybrid retrieval) · **Google ADK on Cloud Run**
+> (no LangGraph, no visual Agent Builder) · **no Firebase** · live model
+> **`gemini-3.1-flash-lite`**. Read the body below as "what we planned," not "what runs."
+
 # Spike Test Results — Glasshat Technical Validation
 
 > **Status**: All 7 spikes PASSED on 2026-05-14/15 KST. The audit-the-auditor wow moment is technically validated end-to-end. Phase 1 build can proceed without architectural risk.

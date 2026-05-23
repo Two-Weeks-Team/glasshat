@@ -1,3 +1,13 @@
+> ⚠️ **HISTORICAL / PLANNING DOCUMENT — not the shipped state.** This file belongs to
+> the pre-build planning set, which explored an earlier **dual-submission** strategy
+> (a Qdrant "Think Outside the Bot" entry alongside the Rapid Agent / Arize entry) and
+> assumed Qdrant / LangGraph / visual Agent Builder / Firebase. **None of that shipped.**
+> For the authoritative shipped system see **[`README.md`](../README.md)** and
+> **[`docs/rapid-agent-compliance.md`](./rapid-agent-compliance.md)**: single Arize-track
+> submission · **no Qdrant** (in-code hybrid retrieval) · **Google ADK on Cloud Run**
+> (no LangGraph, no visual Agent Builder) · **no Firebase** · live model
+> **`gemini-3.1-flash-lite`**. Read the body below as "what we planned," not "what runs."
+
 # Technical Apex Features — Decision Matrix
 
 > **Status**: Locked 2026-05-14. Extended 2026-05-15 (+5 features for rubric+mode lock — §10). Maps every advanced capability from Qdrant / Phoenix-Arize / Gemini 3 / Google ADK to an APPLY / CUT / STRETCH decision for Glasshat. Each row records the judging-axis payoff and implementation complexity, so the build sequence is deterministic. Companion files: `docs/max-wins-plan.md` (strategy + scripts), `docs/wow-moment-design.md` (audit-the-auditor design), `docs/rubric-synthesis-spec.md` + `docs/hybrid-mode-spec.md` (rubric+mode upgrade).
