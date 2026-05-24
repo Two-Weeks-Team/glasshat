@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>glasshat · Evaluation Report — Provenance &amp; Citations</title>
+<style>
+  /* ============ OKLCH palette — paper / ink / accent ============ */
+  :root{
+    --paper:        oklch(98.5% 0.006 95);
+    --paper-2:      oklch(96.2% 0.010 95);
+    --rule:         oklch(86% 0.012 95);
+    --rule-strong:  oklch(74% 0.016 95);
+    --ink:          oklch(24% 0.018 75);
+    --ink-soft:     oklch(42% 0.016 75);
+    --ink-faint:    oklch(58% 0.014 75);
+    --accent:       oklch(46% 0.13 24);   /* citation / link — deep crimson */
+    --accent-soft:  oklch(94% 0.04 24);
+    --good:         oklch(52% 0.12 150);
+    --warn:         oklch(58% 0.14 70);
+    --calib:        oklch(50% 0.13 285);  /* calibration / self-correction */
+    --calib-soft:   oklch(95% 0.03 285);
+    --white-hat:    oklch(62% 0.005 0);
+    --red-hat:      oklch(57% 0.18 25);
+    --yellow-hat:   oklch(72% 0.14 85);
+    --black-hat:    oklch(34% 0.01 0);
+    --green-hat:    oklch(56% 0.13 150);
+    --blue-hat:     oklch(54% 0.13 250);
+    --serif: "Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+    --sans: system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --mono: ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:var(--paper-2);color:var(--ink);
+    font-family:var(--serif);line-height:1.62;
+    -webkit-font-smoothing:antialiased;
+    padding:32px 16px 96px;
+  }
+  /* paper sheet */
+  .sheet{
+    max-width:880px;margin:0 auto;background:var(--paper);
+    border:1px solid var(--rule);
+    box-shadow:0 1px 2px oklch(20% 0.02 75 / .06),0 12px 40px oklch(20% 0.02 75 / .08);
+    padding:56px 64px 64px;position:relative;
+  }
+  @media (max-width:640px){ .sheet{padding:36px 24px 48px} body{padding:14px 8px 60px} }
+
+  /* ============ masthead ============ */
+  .venue{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--ink-faint);border-bottom:1px solid var(--rule);padding-bottom:8px;
+    display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}
+  .doi{color:var(--accent)}
+  h1.title{font-size:30px;line-height:1.18;margin:22px 0 6px;font-weight:600;letter-spacing:-.01em}
+  .subtitle{font-size:16px;color:var(--ink-soft);font-style:italic;margin:0 0 18px}
+  .byline{font-size:13px;color:var(--ink-soft);font-family:var(--sans)}
+  .byline sup{color:var(--accent)}
+  .affil{font-size:11.5px;color:var(--ink-faint);font-family:var(--sans);margin-top:4px}
+
+  /* ============ abstract ============ */
+  .abstract{margin:26px 0;padding:18px 22px;background:var(--paper-2);
+    border-left:3px solid var(--ink-soft);font-size:14px;line-height:1.6}
+  .abstract h2{font-family:var(--sans);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    margin:0 0 8px;color:var(--ink-faint)}
+  .kw{font-family:var(--sans);font-size:12px;color:var(--ink-soft);margin-top:10px}
+  .kw b{color:var(--ink)}
+
+  h2.sec{font-size:13px;font-family:var(--sans);letter-spacing:.1em;text-transform:uppercase;
+    color:var(--ink-soft);border-bottom:1px solid var(--rule);padding-bottom:6px;
+    margin:40px 0 18px;display:flex;align-items:baseline;gap:10px}
+  h2.sec .n{color:var(--accent);font-family:var(--mono);font-size:12px}
+
+  /* ============ input / methods ============ */
+  .methods{font-size:14px}
+  textarea#pitch{width:100%;min-height:118px;resize:vertical;font-family:var(--mono);
+    font-size:12.5px;line-height:1.55;color:var(--ink);background:var(--paper-2);
+    border:1px solid var(--rule-strong);padding:14px 16px;border-radius:2px}
+  textarea#pitch:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
+  .run-row{display:flex;align-items:center;gap:14px;margin-top:14px;flex-wrap:wrap}
+  button.run{font-family:var(--sans);font-size:13px;font-weight:600;letter-spacing:.02em;
+    background:var(--ink);color:var(--paper);border:none;padding:11px 22px;border-radius:2px;
+    cursor:pointer;transition:background .15s}
+  button.run:hover{background:var(--accent)}
+  button.run:disabled{background:var(--ink-faint);cursor:not-allowed}
+  .model-tag{font-family:var(--mono);font-size:11px;color:var(--ink-faint)}
+  .model-tag b{color:var(--ink-soft)}
+
+  /* ============ live pipeline ============ */
+  .pipeline{display:flex;align-items:stretch;gap:0;margin:6px 0 2px;flex-wrap:wrap;
+    counter-reset:stage}
+  .stage{flex:1 1 0;min-width:120px;position:relative;padding:12px 10px 12px 14px;
+    border:1px solid var(--rule);border-right:none;background:var(--paper-2);
+    font-family:var(--sans);transition:background .3s,border-color .3s}
+  .stage:last-child{border-right:1px solid var(--rule)}
+  .stage::before{counter-increment:stage;content:"S" counter(stage);
+    font-family:var(--mono);font-size:9.5px;color:var(--ink-faint);letter-spacing:.1em}
+  .stage .nm{font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-top:3px;line-height:1.25}
+  .stage .st{font-family:var(--mono);font-size:10px;margin-top:6px;color:var(--ink-faint);
+    display:flex;align-items:center;gap:5px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--rule-strong);flex:none}
+  .stage[data-state="active"]{background:oklch(96% 0.03 24);border-color:var(--accent)}
+  .stage[data-state="active"] .nm{color:var(--ink)}
+  .stage[data-state="active"] .dot{background:var(--accent);animation:pulse 1s infinite}
+  .stage[data-state="active"] .st{color:var(--accent)}
+  .stage[data-state="done"]{background:oklch(96% 0.03 150)}
+  .stage[data-state="done"] .dot{background:var(--good)}
+  .stage[data-state="done"] .st{color:var(--good)}
+  .stage[data-state="audit"]{background:var(--calib-soft);border-color:var(--calib)}
+  .stage[data-state="audit"] .dot{background:var(--calib);animation:pulse 1s infinite}
+  .stage[data-state="audit"] .st{color:var(--calib)}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.82)}}
+  .progress-line{height:2px;background:var(--rule);margin:2px 0 0;overflow:hidden}
+  .progress-line i{display:block;height:100%;width:0;background:var(--accent);transition:width .4s ease}
+
+  /* ============ results table ============ */
+  .results{font-size:14px}
+  table.scores{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:4px}
+  table.scores th{font-family:var(--sans);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--ink-faint);text-align:left;padding:8px 10px;border-bottom:1.5px solid var(--rule-strong)}
+  table.scores th.num,table.scores td.num{text-align:right;font-variant-numeric:tabular-nums}
+  table.scores td{padding:11px 10px;border-bottom:1px solid var(--rule);vertical-align:top}
+  table.scores tr.crit{opacity:0;transform:translateY(6px);transition:opacity .5s,transform .5s}
+  table.scores tr.crit.in{opacity:1;transform:none}
+  .hat-chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--sans);font-size:12px}
+  .hat-chip i{width:10px;height:10px;border-radius:2px;flex:none}
+  .crit-name{font-weight:600}
+  .crit-desc{font-size:11.5px;color:var(--ink-faint);font-family:var(--sans);margin-top:2px}
+  .ci{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);white-space:nowrap}
+  .score-val{font-family:var(--mono);font-weight:600;font-size:14px}
+  /* inline citation superscripts */
+  sup.cite{font-family:var(--sans);font-size:9.5px;color:var(--accent);cursor:pointer;
+    padding:0 1px;font-weight:600;border-radius:2px;transition:background .15s}
+  sup.cite:hover,sup.cite:focus{background:var(--accent-soft);outline:none}
+  sup.cite[aria-expanded="true"]{background:var(--accent);color:var(--paper)}
+
+  /* corrected score animation */
+  .corrected{display:inline-flex;align-items:baseline;gap:6px}
+  .corrected .old{color:var(--ink-faint);text-decoration:line-through;font-size:12px;
+    transition:opacity .6s}
+  .corrected .arrow{color:var(--calib);font-family:var(--mono);font-size:11px}
+  .corrected .new{color:var(--calib);font-weight:700}
+  .flash-calib{animation:flashCalib 1.2s ease}
+  @keyframes flashCalib{0%{background:transparent}25%{background:var(--calib-soft)}100%{background:transparent}}
+
+  /* ============ calibration note (self-audit) ============ */
+  .calib-note{margin:26px 0;border:1px solid var(--calib);border-left:4px solid var(--calib);
+    background:var(--calib-soft);padding:16px 20px;font-size:13px;border-radius:2px;
+    opacity:0;max-height:0;overflow:hidden;transition:opacity .6s,max-height .6s,padding .6s}
+  .calib-note.show{opacity:1;max-height:420px;padding:16px 20px}
+  .calib-note h3{font-family:var(--sans);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--calib);margin:0 0 8px;display:flex;align-items:center;gap:8px}
+  .calib-note .delta{font-family:var(--mono);font-size:12px}
+  .calib-note .delta b{color:var(--calib)}
+  .calib-note p{margin:8px 0 0;line-height:1.55}
+  .calib-meta{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);margin-top:10px;
+    padding-top:10px;border-top:1px dashed var(--rule-strong)}
+
+  /* ============ final score ============ */
+  .final{margin:30px 0;padding:24px 26px;border:1.5px solid var(--ink);background:var(--paper-2);
+    display:flex;align-items:center;gap:28px;flex-wrap:wrap;border-radius:2px;
+    opacity:0;transition:opacity .8s}
+  .final.show{opacity:1}
+  .final .big{font-family:var(--mono);font-weight:700;font-size:46px;line-height:1;color:var(--ink)}
+  .final .big small{font-size:20px;color:var(--ink-faint)}
+  .final .scale{font-family:var(--sans);font-size:11px;color:var(--ink-faint);text-transform:uppercase;
+    letter-spacing:.08em;margin-top:4px}
+  .final .bd{flex:1 1 240px;font-size:12px;font-family:var(--sans)}
+  .final .bd-row{display:flex;justify-content:space-between;gap:12px;padding:3px 0;
+    border-bottom:1px dotted var(--rule)}
+  .final .bd-row span:last-child{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .ci-final{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:6px}
+
+  /* ============ references ============ */
+  .refs{font-size:12.5px}
+  ol.reflist{list-style:none;counter-reset:ref;padding:0;margin:6px 0 0}
+  ol.reflist li{counter-increment:ref;position:relative;padding:11px 14px 11px 40px;
+    border-bottom:1px solid var(--rule);scroll-margin-top:20px;transition:background .4s}
+  ol.reflist li::before{content:"[" counter(ref) "]";position:absolute;left:8px;top:11px;
+    font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:600}
+  ol.reflist li.hl{background:var(--accent-soft)}
+  .ref-quote{font-style:italic;color:var(--ink)}
+  .ref-src{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);margin-top:5px;
+    display:flex;gap:8px;flex-wrap:wrap}
+  .ref-src b{color:var(--ink-soft);font-weight:600}
+  .conf-bar{display:inline-block;width:54px;height:5px;background:var(--rule);border-radius:3px;
+    overflow:hidden;vertical-align:middle;margin-left:2px}
+  .conf-bar i{display:block;height:100%;background:var(--good)}
+
+  /* footnotes */
+  .footnotes{margin-top:34px;padding-top:14px;border-top:1px solid var(--rule);
+    font-size:11px;color:var(--ink-faint);line-height:1.5;font-family:var(--sans)}
+  .footnotes p{margin:4px 0}
+  .footnotes sup{color:var(--accent)}
+
+  /* prefers-reduced-motion */
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+    .stage[data-state="active"] .dot,.stage[data-state="audit"] .dot{animation:none}
+  }
+
+  /* skip / hidden helper */
+  .results-wrap,.refs-wrap{opacity:.4;pointer-events:none;transition:opacity .5s}
+  .results-wrap.live,.refs-wrap.live{opacity:1;pointer-events:auto}
+  .hint{font-family:var(--sans);font-size:12px;color:var(--ink-faint);font-style:italic;margin:8px 0 0}
+</style>
+</head>
+<body>
+<main class="sheet" aria-label="Evaluation report">
+
+  <!-- masthead -->
+  <div class="venue">
+    <span>glasshat · Six-Hat Evaluation Report</span>
+    <span class="doi">doi:glasshat/eval-2026-0523-A14</span>
+  </div>
+
+  <h1 class="title">A Transparent, Evidence-Grounded Assessment of a Hackathon Submission</h1>
+  <p class="subtitle">Provenance-first scoring with explicit calibration and self-audit</p>
+  <p class="byline">
+    glasshat Evaluation Panel<sup>1</sup> &nbsp;·&nbsp;
+    RubricSynthesizer, BluePlanner, SixHatPanel, Auditor<sup>2</sup>
+  </p>
+  <p class="affil">Inference: gemini-3.1-flash-lite (Vertex AI) · Observability: Arize AX · Calibration: Phoenix MCP</p>
+
+  <!-- abstract -->
+  <section class="abstract">
+    <h2>Abstract</h2>
+    Each criterion below is scored by a dedicated reasoning perspective (the Six Thinking Hats) and
+    <b>grounded in passages retrieved from your own submission</b>. Every sub-score carries inline
+    citations [n] resolving to the exact quoted evidence in §5&nbsp;References. The panel
+    <b>audits its own confidence</b>: where a hat is over-certain relative to the cited support, the
+    Auditor issues a calibration note (§4) and the score is corrected <i>before</i> the final figure
+    is reported on the rubric's native scale.
+    <div class="kw"><b>Keywords:</b> retrieval-grounded scoring · confidence calibration · self-audit · rubric provenance</div>
+  </section>
+
+  <!-- 1. methods / input -->
+  <h2 class="sec"><span class="n">1.</span> Methods — Submission Under Review</h2>
+  <div class="methods">
+    <p style="margin:0 0 10px;font-size:13px;color:var(--ink-soft)">
+      Paste your pitch / deck text. The panel evaluates it verbatim — citations point to
+      <i>your own lines</i>, never to external sources.</p>
+    <textarea id="pitch" spellcheck="false">FlowState — an AI scheduling copilot for solo founders.
+Problem: founders lose ~11 hrs/week to context-switching across calendar, inbox, and tasks.
+Solution: FlowState ingests your calendar + inbox and auto-drafts a focus-blocked day, re-planning live as meetings shift.
+Traction: 240 beta users, 38% week-4 retention, $4.1k MRR after 6 weeks, zero paid acquisition.
+Tech: on-device intent model + server re-planner; we built a live re-scheduling engine that resolves conflicts in <200ms.
+Ask: $250k pre-seed to reach 2,000 paying users and ship the team edition.</textarea>
+    <div class="run-row">
+      <button class="run" id="runBtn">▶ Run evaluation</button>
+      <span class="model-tag">model <b>gemini-3.1-flash-lite</b> · temp 0.2 · retrieval k=4</span>
+    </div>
+    <p class="hint" id="hint">The pipeline runs live below. When scores appear, click any citation [n] to open its grounding evidence.</p>
+  </div>
+
+  <!-- 2. pipeline -->
+  <h2 class="sec"><span class="n">2.</span> Procedure — Live Evaluation Pipeline</h2>
+  <div class="pipeline" id="pipeline" aria-live="polite">
+    <div class="stage" data-stage="0"><span class="nm">Input ingest</span><span class="st"><span class="dot"></span><span class="lbl">queued</span></span></div>
+    <div class="stage" data-stage="1"><span class="nm">RubricSynthesizer</span><span class="st"><span class="dot"></span><span class="lbl">queued</span></span></div>
+    <div class="stage" data-stage="2"><span class="nm">BluePlanner</span><span class="st"><span class="dot"></span><span class="lbl">queued</span></span></div>
+    <div class="stage" data-stage="3"><span class="nm">SixHatPanel</span><span class="st"><span class="dot"></span><span class="lbl">queued</span></span></div>
+    <div class="stage" data-stage="4"><span class="nm">Auditor (calibration)</span><span class="st"><span class="dot"></span><span class="lbl">queued</span></span></div>
+    <div class="stage" data-stage="5"><span class="nm">Final score</span><span class="st"><span class="dot"></span><span class="lbl">queued</span></span></div>
+  </div>
+  <div class="progress-line"><i id="prog"></i></div>
+
+  <!-- 3. results table -->
+  <h2 class="sec"><span class="n">3.</span> Results — Per-Criterion Scores &amp; Provenance</h2>
+  <div class="results-wrap" id="resultsWrap">
+  <div class="results">
+    <table class="scores" aria-label="Per-criterion scores">
+      <thead>
+        <tr>
+          <th>Criterion (rubric) &amp; perspective</th>
+          <th class="num">Score</th>
+          <th class="num">95% CI</th>
+        </tr>
+      </thead>
+      <tbody id="scoreBody"></tbody>
+    </table>
+  </div>
+  </div>
+
+  <!-- 4. calibration note -->
+  <h2 class="sec"><span class="n">4.</span> Calibration Note — Auditor Self-Correction</h2>
+  <div class="calib-note" id="calibNote" role="note">
+    <h3>⚖ Confidence over-estimation detected · Yellow Hat</h3>
+    <div class="delta">YELLOW (Benefits / Feasibility): <b>9.0 → 7.8</b> &nbsp;(Δ = −1.2)</div>
+    <p>The Yellow Hat assigned <b>9.0</b> on traction, citing strong early metrics<sup class="cite" data-ref="3" tabindex="0">[3]</sup>.
+    The Auditor cross-checked the claim against retrieved support and found the optimism
+    <i>insufficiently grounded</i>: the cited evidence reports a 6-week window and 38% week-4 retention<sup class="cite" data-ref="4" tabindex="0">[4]</sup>,
+    which supports promise but not a top-decile score. Confidence was over-weighted relative to
+    evidence density (1 corroborating passage; CI width 1.8). The score is calibrated down to
+    <b>7.8</b> with a widened interval before finalization.</p>
+    <div class="calib-meta">audit method: evidence-density vs. asserted-confidence check · logged to Arize AX trace 0x8e1c · calibrated via Phoenix MCP · applied pre-final</div>
+  </div>
+
+  <!-- final score -->
+  <div class="final" id="final" aria-live="polite">
+    <div>
+      <div class="big" id="finalNum">—<small>/50</small></div>
+      <div class="scale">Rubric native scale · 5 criteria × 10</div>
+    </div>
+    <div class="bd" id="finalBd"></div>
+  </div>
+  <div class="ci-final" id="ciFinal"></div>
+
+  <!-- 5. references -->
+  <h2 class="sec"><span class="n">5.</span> References — Retrieved Evidence (grounding)</h2>
+  <div class="refs-wrap" id="refsWrap">
+  <div class="refs">
+    <ol class="reflist" id="refList"></ol>
+  </div>
+  </div>
+
+  <!-- footnotes -->
+  <div class="footnotes">
+    <p><sup>1</sup> Six Thinking Hats panel: White (facts), Red (intuition/risk-feel), Yellow (benefits), Black (caution), Green (creativity), Blue (process). Each hat scores independently, then is reconciled by the Auditor.</p>
+    <p><sup>2</sup> Pipeline: Input → RubricSynthesizer → BluePlanner → SixHatPanel → Auditor → Final. No score is reported until the Auditor's calibration pass completes.</p>
+    <p>All citations resolve to passages in §5, extracted from the submission text in §1. No external corpus is consulted. CI = bootstrapped 95% interval over the panel's per-hat estimates.</p>
+  </div>
+
+</main>
+
+<script>
+(function(){
+  "use strict";
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // ---- evidence references (resolve to user's own pitch lines) ----
+  var REFS = [
+    { quote:"founders lose ~11 hrs/week to context-switching across calendar, inbox, and tasks.",
+      src:"§1 line 2 (Problem)", conf:0.86 },
+    { quote:"ingests your calendar + inbox and auto-drafts a focus-blocked day, re-planning live as meetings shift.",
+      src:"§1 line 3 (Solution)", conf:0.91 },
+    { quote:"240 beta users, 38% week-4 retention, $4.1k MRR after 6 weeks, zero paid acquisition.",
+      src:"§1 line 4 (Traction)", conf:0.74 },
+    { quote:"38% week-4 retention … after 6 weeks",
+      src:"§1 line 4 (Traction, window noted)", conf:0.69 },
+    { quote:"on-device intent model + server re-planner … resolves conflicts in <200ms.",
+      src:"§1 line 5 (Tech)", conf:0.83 },
+    { quote:"$250k pre-seed to reach 2,000 paying users and ship the team edition.",
+      src:"§1 line 6 (Ask)", conf:0.80 }
+  ];
+
+  // ---- criteria (rubric) × hat × evidence citations ----
+  // YELLOW row carries a self-correction 9.0 -> 7.8
+  var CRITERIA = [
+    { crit:"Problem clarity & significance", desc:"Is the problem real, sharp, and worth solving?",
+      hat:"White", color:"var(--white-hat)", score:8.6, ci:"±0.6", cites:[1] },
+    { crit:"Solution & innovation", desc:"Is the approach novel and technically credible?",
+      hat:"Green", color:"var(--green-hat)", score:8.2, ci:"±0.9", cites:[2,5] },
+    { crit:"Traction & feasibility", desc:"Does evidence support the benefits claimed?",
+      hat:"Yellow", color:"var(--yellow-hat)", score:7.8, oldScore:9.0, ci:"±1.8", cites:[3,4], corrected:true },
+    { crit:"Risks & defensibility", desc:"What weakens or threatens the case?",
+      hat:"Black", color:"var(--black-hat)", score:6.9, ci:"±1.1", cites:[3,6] },
+    { crit:"Clarity & ask", desc:"Process, narrative, and the funding ask.",
+      hat:"Blue", color:"var(--blue-hat)", score:8.1, ci:"±0.7", cites:[6] }
+  ];
+
+  // ===== render references =====
+  var refList = document.getElementById("refList");
+  REFS.forEach(function(r, i){
+    var li = document.createElement("li");
+    li.id = "ref-" + (i+1);
+    li.innerHTML =
+      '<span class="ref-quote">&ldquo;'+r.quote+'&rdquo;</span>' +
+      '<span class="ref-src"><b>source:</b> '+r.src+
+      ' <b>· retrieval confidence:</b> '+(r.conf*100|0)+'% '+
+      '<span class="conf-bar"><i style="width:'+(r.conf*100)+'%"></i></span></span>';
+    refList.appendChild(li);
+  });
+
+  // ===== pipeline control =====
+  var stages = Array.prototype.slice.call(document.querySelectorAll(".stage"));
+  var prog = document.getElementById("prog");
+  var runBtn = document.getElementById("runBtn");
+  var hint = document.getElementById("hint");
+  var scoreBody = document.getElementById("scoreBody");
+  var calibNote = document.getElementById("calibNote");
+  var resultsWrap = document.getElementById("resultsWrap");
+  var refsWrap = document.getElementById("refsWrap");
+  var finalEl = document.getElementById("final");
+  var finalNum = document.getElementById("finalNum");
+  var finalBd = document.getElementById("finalBd");
+  var ciFinal = document.getElementById("ciFinal");
+  var running = false;
+
+  function setStage(idx, state, label){
+    if(idx<0||idx>=stages.length) return;
+    stages[idx].setAttribute("data-state", state);
+    var lbl = stages[idx].querySelector(".lbl");
+    if(lbl && label) lbl.textContent = label;
+    prog.style.width = Math.round(((idx + (state==="done"?1:0.5)) / stages.length) * 100) + "%";
+  }
+  function wait(ms){ return new Promise(function(res){ setTimeout(res, reduce ? Math.min(ms,120) : ms); }); }
+
+  function resetUI(){
+    stages.forEach(function(s){ s.setAttribute("data-state",""); s.querySelector(".lbl").textContent="queued"; });
+    prog.style.width="0";
+    scoreBody.innerHTML="";
+    calibNote.classList.remove("show");
+    finalEl.classList.remove("show");
+    finalNum.innerHTML="—<small>/50</small>";
+    finalBd.innerHTML=""; ciFinal.textContent="";
+    resultsWrap.classList.remove("live"); refsWrap.classList.remove("live");
+  }
+
+  function citeHTML(refs){
+    return refs.map(function(n){
+      return '<sup class="cite" data-ref="'+n+'" tabindex="0" role="button" '+
+             'aria-label="open citation '+n+'" aria-expanded="false">['+n+']</sup>';
+    }).join("");
+  }
+
+  function addScoreRow(c, i){
+    var tr = document.createElement("tr");
+    tr.className = "crit";
+    var scoreCell;
+    if(c.corrected){
+      scoreCell =
+        '<span class="corrected" id="corr">' +
+          '<span class="old" id="oldScore">'+c.oldScore.toFixed(1)+'</span>' +
+          '<span class="arrow">→</span>' +
+          '<span class="new">'+c.score.toFixed(1)+'</span>' +
+        '</span>';
+    } else {
+      scoreCell = '<span class="score-val">'+c.score.toFixed(1)+'</span>';
+    }
+    tr.innerHTML =
+      '<td>' +
+        '<span class="hat-chip"><i style="background:'+c.color+'"></i>'+c.hat+' Hat</span>' +
+        '<div class="crit-name">'+c.crit+' '+citeHTML(c.cites)+'</div>' +
+        '<div class="crit-desc">'+c.desc+'</div>' +
+      '</td>' +
+      '<td class="num">'+scoreCell+'</td>' +
+      '<td class="num"><span class="ci">'+c.ci+'</span></td>';
+    scoreBody.appendChild(tr);
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ tr.classList.add("in"); }); });
+    return tr;
+  }
+
+  function bindCitations(){
+    Array.prototype.slice.call(document.querySelectorAll("sup.cite")).forEach(function(c){
+      function open(){
+        var n = c.getAttribute("data-ref");
+        var li = document.getElementById("ref-"+n);
+        // collapse others
+        Array.prototype.slice.call(document.querySelectorAll("sup.cite")).forEach(function(o){ o.setAttribute("aria-expanded","false"); });
+        Array.prototype.slice.call(document.querySelectorAll(".reflist li")).forEach(function(o){ o.classList.remove("hl"); });
+        c.setAttribute("aria-expanded","true");
+        if(li){ li.classList.add("hl"); li.scrollIntoView({block:"center"}); }
+      }
+      c.addEventListener("click", open);
+      c.addEventListener("keydown", function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); open(); } });
+    });
+  }
+
+  function renderFinal(){
+    // sum of the 5 corrected criterion scores on native /50 scale
+    var sum = CRITERIA.reduce(function(a,c){ return a + c.score; }, 0);
+    finalEl.classList.add("show");
+    finalBd.innerHTML = CRITERIA.map(function(c){
+      return '<div class="bd-row"><span>'+c.hat+' · '+c.crit+'</span><span>'+c.score.toFixed(1)+'</span></div>';
+    }).join("") + '<div class="bd-row" style="border:none;font-weight:700"><span>Total</span><span>'+sum.toFixed(1)+' / 50</span></div>';
+    // animate count-up
+    var target = sum, cur = 0, steps = reduce?1:28;
+    var iv = setInterval(function(){
+      cur += target/steps;
+      if(cur>=target){ cur=target; clearInterval(iv); }
+      finalNum.innerHTML = cur.toFixed(1) + '<small>/50</small>';
+    }, reduce?0:26);
+    ciFinal.textContent = "Reported 95% CI on total: ±2.4 (post-calibration). Yellow Hat's widened interval (±1.8) propagated to the aggregate.";
+  }
+
+  async function run(){
+    if(running) return; running = true;
+    runBtn.disabled = true; runBtn.textContent = "▶ Running…";
+    resetUI();
+    hint.textContent = "Evaluating… each stage reports as it completes.";
+
+    // S0 ingest
+    setStage(0,"active","reading"); await wait(700);
+    setStage(0,"done","ingested");
+
+    // S1 rubric
+    setStage(1,"active","parsing rubric"); await wait(750);
+    setStage(1,"done","5 criteria");
+
+    // S2 blue planner
+    setStage(2,"active","planning order"); await wait(700);
+    setStage(2,"done","plan ready");
+
+    // S3 six hat panel — emit rows progressively
+    setStage(3,"active","6 hats scoring");
+    resultsWrap.classList.add("live"); refsWrap.classList.add("live");
+    for(var i=0;i<CRITERIA.length;i++){
+      addScoreRow(CRITERIA[i], i);
+      await wait(reduce?80:520);
+    }
+    setStage(3,"done","scored");
+
+    // S4 auditor — self-correction moment
+    setStage(4,"audit","auditing confidence"); await wait(900);
+    // flash + reveal calibration, animate the YELLOW score 9.0 -> 7.8
+    var corr = document.getElementById("corr");
+    var oldS = document.getElementById("oldScore");
+    if(corr){ corr.classList.add("flash-calib"); }
+    calibNote.classList.add("show");
+    await wait(700);
+    if(oldS && !reduce){ oldS.style.opacity = "0.5"; }
+    setStage(4,"done","calibrated");
+    await wait(450);
+
+    // S5 final
+    setStage(5,"active","aggregating"); await wait(650);
+    renderFinal();
+    setStage(5,"done","reported");
+
+    bindCitations();
+    hint.innerHTML = "Done. Click any citation <b>[n]</b> in §3 to jump to its grounding evidence in §5 — and see §4 for the Auditor's self-correction.";
+    runBtn.disabled = false; runBtn.textContent = "↻ Re-run evaluation";
+    running = false;
+  }
+
+  runBtn.addEventListener("click", run);
+
+  // auto-run once on load so it feels alive
+  window.addEventListener("load", function(){ setTimeout(run, reduce?100:600); });
+})();
+</script>
+</body>
+</html>

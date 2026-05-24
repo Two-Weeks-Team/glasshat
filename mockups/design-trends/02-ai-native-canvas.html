@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>glasshat — Live Evaluation Canvas</title>
+<style>
+  /* ============ AI-NATIVE CANVAS · OKLCH palette ============ */
+  :root {
+    --bg:        oklch(18% 0.03 275);
+    --bg-2:      oklch(22% 0.04 278);
+    --panel:     oklch(25% 0.035 280 / 0.72);
+    --panel-2:   oklch(29% 0.04 282 / 0.6);
+    --stroke:    oklch(45% 0.05 285 / 0.4);
+    --ink:       oklch(95% 0.01 280);
+    --ink-soft:  oklch(78% 0.02 282);
+    --ink-dim:   oklch(62% 0.025 283);
+    --accent:    oklch(72% 0.17 295);
+    --accent-2:  oklch(80% 0.14 200);
+    --good:      oklch(78% 0.16 150);
+    --warn:      oklch(80% 0.16 85);
+    --bad:       oklch(68% 0.19 25);
+    /* Six Thinking Hats */
+    --h-white:   oklch(92% 0.01 280);
+    --h-red:     oklch(68% 0.19 22);
+    --h-yellow:  oklch(83% 0.16 95);
+    --h-black:   oklch(55% 0.03 280);
+    --h-green:   oklch(76% 0.17 150);
+    --h-blue:    oklch(70% 0.15 250);
+    --radius: 16px;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background:
+      radial-gradient(120% 80% at 12% -8%, oklch(30% 0.08 295 / 0.55), transparent 60%),
+      radial-gradient(100% 70% at 92% 0%, oklch(28% 0.07 205 / 0.4), transparent 55%),
+      var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 28px 24px 80px; }
+
+  /* ============ Header ============ */
+  header.top {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 22px;
+  }
+  .logo { display: flex; align-items: center; gap: 11px; }
+  .logo .mark { width: 34px; height: 34px; }
+  .logo b { font-size: 18px; letter-spacing: -0.01em; }
+  .logo .tag {
+    font-size: 11px; color: var(--ink-dim); border-left: 1px solid var(--stroke);
+    padding-left: 11px; margin-left: 4px;
+  }
+  .modelpill {
+    margin-left: auto; display: flex; align-items: center; gap: 8px;
+    font-family: var(--mono); font-size: 11.5px; color: var(--ink-soft);
+    background: var(--panel); border: 1px solid var(--stroke);
+    padding: 7px 12px; border-radius: 999px;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--good);
+    box-shadow: 0 0 0 0 oklch(78% 0.16 150 / 0.6); animation: pulse 2.4s infinite; }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 oklch(78% 0.16 150 / 0.55); }
+    70% { box-shadow: 0 0 0 7px oklch(78% 0.16 150 / 0); }
+    100% { box-shadow: 0 0 0 0 oklch(78% 0.16 150 / 0); }
+  }
+
+  /* ============ Composer (the conversational surface) ============ */
+  .composer {
+    background: var(--panel); border: 1px solid var(--stroke);
+    border-radius: var(--radius); padding: 16px 16px 14px;
+    backdrop-filter: blur(8px); margin-bottom: 18px;
+    box-shadow: 0 18px 50px -28px oklch(10% 0.05 280 / 0.9);
+  }
+  .composer .hint { font-size: 12.5px; color: var(--ink-dim); margin: 0 4px 9px; }
+  .composer .hint b { color: var(--accent-2); font-weight: 600; }
+  .field {
+    width: 100%; min-height: 92px; resize: vertical;
+    background: oklch(16% 0.025 278); color: var(--ink);
+    border: 1px solid var(--stroke); border-radius: 12px;
+    padding: 13px 14px; font-size: 14px; font-family: inherit; line-height: 1.55;
+  }
+  .field:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .composer-row { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+  .rubric-chip {
+    font-size: 12px; color: var(--ink-soft); display: flex; align-items: center; gap: 7px;
+    background: var(--panel-2); border: 1px solid var(--stroke);
+    padding: 7px 11px; border-radius: 9px;
+  }
+  .rubric-chip svg { width: 14px; height: 14px; }
+  .run-btn {
+    margin-left: auto; cursor: pointer; border: none; color: oklch(16% 0.02 280);
+    font-weight: 650; font-size: 14px; padding: 11px 20px; border-radius: 11px;
+    background: linear-gradient(120deg, var(--accent), var(--accent-2));
+    display: flex; align-items: center; gap: 9px; transition: transform .12s ease, filter .12s ease;
+  }
+  .run-btn:hover { filter: brightness(1.08); }
+  .run-btn:active { transform: translateY(1px); }
+  .run-btn:disabled { filter: saturate(.4) brightness(.8); cursor: progress; }
+  .run-btn svg { width: 16px; height: 16px; }
+
+  /* ============ Pipeline rail ============ */
+  .pipeline {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
+    margin: 0 0 18px; counter-reset: step;
+  }
+  .stage {
+    position: relative; background: var(--panel); border: 1px solid var(--stroke);
+    border-radius: 12px; padding: 12px 13px; transition: border-color .35s, background .35s;
+  }
+  .stage .lbl { font-size: 11px; color: var(--ink-dim); font-family: var(--mono); }
+  .stage .nm { font-size: 13px; font-weight: 600; margin-top: 3px; }
+  .stage .st { font-size: 10.5px; margin-top: 7px; color: var(--ink-dim);
+    display: flex; align-items: center; gap: 6px; min-height: 14px; }
+  .stage::after {
+    content: ""; position: absolute; right: -6px; top: 50%; width: 8px; height: 2px;
+    background: var(--stroke); transform: translateY(-50%); z-index: 1;
+  }
+  .stage:last-child::after { display: none; }
+  .stage[data-state="active"] {
+    border-color: var(--accent); background: oklch(28% 0.06 295 / 0.7);
+    box-shadow: 0 0 0 1px var(--accent), 0 0 28px -8px var(--accent);
+  }
+  .stage[data-state="done"] { border-color: oklch(60% 0.1 150 / 0.5); }
+  .stage[data-state="done"] .st { color: var(--good); }
+  .spin { width: 11px; height: 11px; border-radius: 50%;
+    border: 2px solid oklch(72% 0.17 295 / 0.3); border-top-color: var(--accent);
+    animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .check { width: 11px; height: 11px; color: var(--good); }
+
+  /* ============ Canvas grid ============ */
+  .canvas { display: grid; grid-template-columns: 1fr 340px; gap: 18px; align-items: start; }
+  @media (max-width: 900px) { .canvas { grid-template-columns: 1fr; } }
+
+  /* Stream log (left) */
+  .stream {
+    background: var(--panel); border: 1px solid var(--stroke); border-radius: var(--radius);
+    padding: 18px; min-height: 420px; backdrop-filter: blur(8px);
+  }
+  .stream h3 { margin: 0 0 4px; font-size: 13px; color: var(--ink-soft);
+    font-family: var(--mono); font-weight: 500; letter-spacing: .02em; }
+  .stream .sub { font-size: 11.5px; color: var(--ink-dim); margin-bottom: 16px; }
+
+  .agent-card {
+    border: 1px solid var(--stroke); border-radius: 13px; padding: 14px 15px;
+    margin-bottom: 12px; background: var(--panel-2);
+    opacity: 0; transform: translateY(8px) scale(.99);
+    animation: rise .45s ease forwards;
+  }
+  @keyframes rise { to { opacity: 1; transform: none; } }
+  .agent-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .hat {
+    width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center;
+    font-size: 13px; flex: 0 0 auto; border: 1px solid oklch(50% 0.04 280 / 0.5);
+  }
+  .agent-head .who { font-size: 13.5px; font-weight: 600; }
+  .agent-head .role { font-size: 11px; color: var(--ink-dim); }
+  .agent-head .score-tag {
+    margin-left: auto; font-family: var(--mono); font-size: 13px; font-weight: 700;
+    background: oklch(30% 0.04 282 / 0.7); border: 1px solid var(--stroke);
+    padding: 3px 9px; border-radius: 8px; transition: color .3s, background .3s;
+  }
+  .agent-body { font-size: 12.8px; color: var(--ink-soft); }
+  .stream-txt::after {
+    content: "▍"; color: var(--accent); animation: blink 1s steps(2) infinite;
+  }
+  .stream-txt.done::after { content: ""; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .evidence-btn {
+    margin-top: 9px; display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11.5px; color: var(--accent-2); cursor: pointer;
+    background: oklch(26% 0.05 205 / 0.4); border: 1px solid oklch(55% 0.08 205 / 0.4);
+    padding: 5px 10px; border-radius: 8px; transition: background .15s;
+  }
+  .evidence-btn:hover { background: oklch(30% 0.07 205 / 0.55); }
+  .evidence-btn svg { width: 12px; height: 12px; }
+  .evidence {
+    margin-top: 10px; border-left: 2px solid var(--accent-2);
+    padding: 9px 12px; background: oklch(20% 0.03 205 / 0.45);
+    border-radius: 0 9px 9px 0; font-size: 12px; color: var(--ink-soft);
+    display: none; animation: rise .3s ease;
+  }
+  .evidence.open { display: block; }
+  .evidence .src { font-family: var(--mono); font-size: 10.5px; color: var(--accent-2); }
+  .evidence q { color: var(--ink); font-style: italic; display: block; margin-top: 4px; }
+
+  /* Audit / self-correction card */
+  .audit-card { border-color: var(--warn); background: oklch(28% 0.07 85 / 0.16); }
+  .audit-card .agent-head .who { color: var(--warn); }
+  .correct-line { font-family: var(--mono); font-size: 12.5px; margin-top: 9px;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .was { text-decoration: line-through; color: var(--ink-dim); }
+  .arrow { color: var(--warn); }
+  .now { color: var(--warn); font-weight: 700; }
+  .flash { animation: flash .9s ease 1; }
+  @keyframes flash {
+    0% { background: oklch(80% 0.16 85 / 0); }
+    30% { background: oklch(80% 0.16 85 / 0.35); }
+    100% { background: oklch(80% 0.16 85 / 0); }
+  }
+
+  /* ============ Verdict (right) ============ */
+  .verdict {
+    position: sticky; top: 22px;
+    background: var(--panel); border: 1px solid var(--stroke); border-radius: var(--radius);
+    padding: 20px 18px; backdrop-filter: blur(8px);
+  }
+  .verdict h3 { margin: 0 0 2px; font-size: 13px; color: var(--ink-soft);
+    font-family: var(--mono); font-weight: 500; }
+  .verdict .scale { font-size: 11px; color: var(--ink-dim); margin-bottom: 16px; }
+  .gauge { position: relative; width: 168px; height: 168px; margin: 4px auto 10px; }
+  .gauge svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .gauge .ringbg { fill: none; stroke: oklch(30% 0.03 282 / 0.7); stroke-width: 12; }
+  .gauge .ringfg { fill: none; stroke: url(#g1); stroke-width: 12; stroke-linecap: round;
+    transition: stroke-dashoffset 1.1s cubic-bezier(.4,0,.1,1); }
+  .gauge .num { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+  .gauge .num b { font-size: 40px; font-family: var(--mono); letter-spacing: -0.02em; }
+  .gauge .num span { font-size: 12px; color: var(--ink-dim); }
+  .verdict .state { text-align: center; font-size: 12px; color: var(--ink-dim);
+    min-height: 16px; margin-bottom: 14px; }
+
+  .breakdown { display: flex; flex-direction: column; gap: 9px; }
+  .brk { font-size: 12px; }
+  .brk-top { display: flex; justify-content: space-between; margin-bottom: 4px; }
+  .brk-top .k { color: var(--ink-soft); }
+  .brk-top .v { font-family: var(--mono); color: var(--ink); }
+  .bar { height: 6px; border-radius: 4px; background: oklch(30% 0.03 282 / 0.7); overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; border-radius: 4px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    transition: width 1s cubic-bezier(.4,0,.1,1); }
+  .verdict .foot { margin-top: 16px; font-size: 10.5px; color: var(--ink-dim);
+    line-height: 1.5; border-top: 1px solid var(--stroke); padding-top: 12px; }
+  .verdict .foot b { color: var(--ink-soft); font-weight: 600; }
+
+  .idle-veil { text-align: center; color: var(--ink-dim); font-size: 12.5px; padding: 30px 8px; }
+  .idle-veil svg { width: 40px; height: 40px; opacity: .5; margin-bottom: 10px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::after, *::before { animation: none !important; transition: none !important; }
+    .stream-txt::after { content: ""; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="logo">
+      <svg class="mark" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <rect x="3" y="3" width="34" height="34" rx="10" fill="oklch(28% 0.07 295)" stroke="oklch(72% 0.17 295)" stroke-width="1.5"/>
+        <path d="M11 24c0-5 4-9 9-9s9 4 9 9" stroke="oklch(80% 0.14 200)" stroke-width="2.2" stroke-linecap="round"/>
+        <circle cx="20" cy="13" r="2.4" fill="oklch(83% 0.16 95)"/>
+        <line x1="13" y1="28" x2="27" y2="28" stroke="oklch(92% 0.01 280)" stroke-width="2.2" stroke-linecap="round"/>
+      </svg>
+      <b>glasshat</b>
+      <span class="tag">transparent pitch evaluation</span>
+    </div>
+    <div class="modelpill"><span class="dot"></span> gemini-3.1-flash-lite · Vertex AI · Arize AX tracing</div>
+  </header>
+
+  <!-- Conversational composer -->
+  <section class="composer">
+    <p class="hint">Paste your pitch or deck text. The panel scores it against the <b>official hackathon rubric</b> — live, with evidence you can open.</p>
+    <textarea class="field" id="pitch" spellcheck="false">Glasshat is a transparent AI evaluation layer for hackathons. Founders paste their pitch and watch a Six-Hat panel grade it live against the official rubric — every sub-score linked to the exact sentence it came from, and the panel audits itself before finalizing. We run on gemini-3.1-flash-lite with full Arize AX tracing. 40 pilot teams, 92% said the breakdown changed how they revised their deck.</textarea>
+    <div class="composer-row">
+      <div class="rubric-chip">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M3 2h10v12H3z" stroke="oklch(80% 0.14 200)" stroke-width="1.3"/><path d="M5.5 5.5h5M5.5 8h5M5.5 10.5h3" stroke="oklch(80% 0.14 200)" stroke-width="1.3" stroke-linecap="round"/></svg>
+        Rubric: Innovation · Feasibility · Impact · Clarity · 0–10 scale
+      </div>
+      <button class="run-btn" id="run">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M3 2.5v11l9-5.5z" fill="oklch(16% 0.02 280)"/></svg>
+        Evaluate live
+      </button>
+    </div>
+  </section>
+
+  <!-- Pipeline rail -->
+  <div class="pipeline" id="pipeline">
+    <div class="stage" data-stage="0"><div class="lbl">01</div><div class="nm">RubricSynthesizer</div><div class="st" data-st></div></div>
+    <div class="stage" data-stage="1"><div class="lbl">02</div><div class="nm">BluePlanner</div><div class="st" data-st></div></div>
+    <div class="stage" data-stage="2"><div class="lbl">03</div><div class="nm">SixHatPanel</div><div class="st" data-st></div></div>
+    <div class="stage" data-stage="3"><div class="lbl">04</div><div class="nm">Audit</div><div class="st" data-st></div></div>
+    <div class="stage" data-stage="4"><div class="lbl">05</div><div class="nm">Final score</div><div class="st" data-st></div></div>
+  </div>
+
+  <!-- Canvas -->
+  <div class="canvas">
+    <section class="stream" id="stream">
+      <h3>// live evaluation stream</h3>
+      <div class="sub">Agentic cards compose themselves as the panel reasons. Open any card's evidence to see the grounding.</div>
+      <div id="cards"></div>
+    </section>
+
+    <aside class="verdict">
+      <h3>// verdict</h3>
+      <div class="scale">Official rubric · 0–10 scale</div>
+      <div class="gauge">
+        <svg viewBox="0 0 120 120">
+          <defs>
+            <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="oklch(72% 0.17 295)"/>
+              <stop offset="1" stop-color="oklch(80% 0.14 200)"/>
+            </linearGradient>
+          </defs>
+          <circle class="ringbg" cx="60" cy="60" r="52"/>
+          <circle class="ringfg" id="ring" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="326.7"/>
+        </svg>
+        <div class="num"><b id="finalNum">—</b><span id="finalDen">/ 10</span></div>
+      </div>
+      <div class="state" id="vstate">awaiting input</div>
+
+      <div class="breakdown" id="breakdown">
+        <div class="idle-veil" id="veil">
+          <svg viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="16" stroke="oklch(62% 0.025 283)" stroke-width="1.5" stroke-dasharray="4 4"/><path d="M14 20l4 4 8-9" stroke="oklch(62% 0.025 283)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <div>Run an evaluation to see the transparent breakdown.</div>
+        </div>
+      </div>
+
+      <div class="foot" id="vfoot" style="display:none">
+        <b>Why you can trust this:</b> each sub-score is grounded in a retrieved span of your text. The Audit stage caught one over-confident hat and corrected it <b>before</b> finalizing. Full trace recorded in Arize AX · calibrated via Phoenix.
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  var runBtn   = document.getElementById("run");
+  var stages   = Array.prototype.slice.call(document.querySelectorAll(".stage"));
+  var cardsEl  = document.getElementById("cards");
+  var ring     = document.getElementById("ring");
+  var finalNum = document.getElementById("finalNum");
+  var vstate   = document.getElementById("vstate");
+  var breakdown= document.getElementById("breakdown");
+  var veil     = document.getElementById("veil");
+  var vfoot    = document.getElementById("vfoot");
+  var RING_LEN = 326.7;
+
+  // ---- panel data -------------------------------------------------
+  var hats = [
+    { key:"white", glyph:"⬜", color:"var(--h-white)", who:"White Hat", role:"Facts & data", score:8.1,
+      text:"The submission states 40 pilot teams and a 92% satisfaction figure. These are concrete, falsifiable claims that anchor the evaluation.",
+      ev:{ src:"pitch · sentence 4", q:"40 pilot teams, 92% said the breakdown changed how they revised their deck." } },
+    { key:"red", glyph:"🟥", color:"var(--h-red)", who:"Red Hat", role:"Intuition & emotion", score:7.4,
+      text:"There is a genuine emotional pull in “watch a panel grade it live.” Founders fear opaque judging; this speaks to that anxiety directly.",
+      ev:{ src:"pitch · sentence 2", q:"watch a Six-Hat panel grade it live against the official rubric." } },
+    { key:"yellow", glyph:"🟨", color:"var(--h-yellow)", who:"Yellow Hat", role:"Optimism & value", score:9.0,
+      text:"Self-auditing transparency is a category-defining benefit. If retrieval grounding holds up, this could become the default trust layer for every hackathon.",
+      ev:{ src:"pitch · sentence 3", q:"the panel audits itself before finalizing." }, optimistic:true },
+    { key:"black", glyph:"⬛", color:"var(--h-black)", who:"Black Hat", role:"Risk & caution", score:6.2,
+      text:"The 92% figure has no sample-size denominator beyond “40 teams,” and “changed how they revised” is self-reported. Defensibility of the moat is unaddressed.",
+      ev:{ src:"pitch · sentence 4", q:"92% said the breakdown changed how they revised their deck." } },
+    { key:"green", glyph:"🟩", color:"var(--h-green)", who:"Green Hat", role:"Creativity & growth", score:8.0,
+      text:"The grounding mechanism opens adjacent products: per-sentence revision coaching, longitudinal deck diffs, judge-calibration as a service.",
+      ev:{ src:"pitch · sentence 1", q:"every sub-score linked to the exact sentence it came from." } },
+    { key:"blue", glyph:"🟦", color:"var(--h-blue)", who:"Blue Hat", role:"Process & synthesis", score:7.6,
+      text:"Structure is sound: claim → evidence → audit. The pitch would land harder if Feasibility addressed gemini-3.1-flash-lite latency at panel scale.",
+      ev:{ src:"pitch · sentence 3", q:"We run on gemini-3.1-flash-lite with full Arize AX tracing." } }
+  ];
+
+  // rubric breakdown (0-10), computed-feel after audit
+  var rubric = [
+    { k:"Innovation",  v:8.4 },
+    { k:"Feasibility", v:7.1 },
+    { k:"Impact",      v:7.9 },
+    { k:"Clarity",     v:8.2 }
+  ];
+  var FINAL = 7.9; // after self-correction
+
+  // ---- helpers ----------------------------------------------------
+  function wait(ms){ return new Promise(function(r){ setTimeout(r, reduced ? Math.min(ms,120) : ms); }); }
+
+  function setStage(i, state, label) {
+    var s = stages[i];
+    s.setAttribute("data-state", state);
+    var st = s.querySelector("[data-st]");
+    if (state === "active") {
+      st.innerHTML = '<span class="spin"></span>' + (label || "working…");
+    } else if (state === "done") {
+      st.innerHTML = '<svg class="check" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5 6.5-7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' + (label || "done");
+    } else { st.textContent = label || ""; }
+  }
+
+  // stream text token-by-token into an element
+  function streamInto(el, text) {
+    return new Promise(function (resolve) {
+      el.classList.add("stream-txt");
+      if (reduced) { el.textContent = text; el.classList.add("done"); return resolve(); }
+      var words = text.split(" "), i = 0;
+      (function tick() {
+        if (i >= words.length) { el.classList.add("done"); return resolve(); }
+        el.textContent += (i ? " " : "") + words[i++];
+        el.parentElement.parentElement.scrollIntoView({ block:"nearest" });
+        setTimeout(tick, 16 + Math.random() * 26);
+      })();
+    });
+  }
+
+  function scoreColor(v){ return v >= 8 ? "var(--good)" : v >= 6.8 ? "var(--warn)" : "var(--bad)"; }
+
+  function addHatCard(h) {
+    var card = document.createElement("div");
+    card.className = "agent-card";
+    card.innerHTML =
+      '<div class="agent-head">' +
+        '<div class="hat" style="color:'+h.color+';background:oklch(28% 0.04 280 / .6)">'+h.glyph+'</div>' +
+        '<div><div class="who">'+h.who+'</div><div class="role">'+h.role+'</div></div>' +
+        '<div class="score-tag" data-score>· · ·</div>' +
+      '</div>' +
+      '<div class="agent-body"><span data-txt></span></div>';
+    cardsEl.appendChild(card);
+
+    var txt = card.querySelector("[data-txt]");
+    var tag = card.querySelector("[data-score]");
+    return streamInto(txt, h.text).then(function () {
+      tag.textContent = h.score.toFixed(1);
+      tag.style.color = scoreColor(h.score);
+      // evidence affordance
+      var btn = document.createElement("button");
+      btn.className = "evidence-btn";
+      btn.innerHTML = '<svg viewBox="0 0 12 12" fill="none"><path d="M2 6s1.6-3 4-3 4 3 4 3-1.6 3-4 3-4-3-4-3z" stroke="currentColor" stroke-width="1.1"/><circle cx="6" cy="6" r="1.3" fill="currentColor"/></svg> Open evidence';
+      var ev = document.createElement("div");
+      ev.className = "evidence";
+      ev.innerHTML = '<span class="src">retrieved · '+h.ev.src+'</span><q>'+h.ev.q+'</q>';
+      card.querySelector(".agent-body").appendChild(btn);
+      card.querySelector(".agent-body").appendChild(ev);
+      btn.addEventListener("click", function () {
+        var open = ev.classList.toggle("open");
+        btn.firstChild.nodeValue = "";
+        btn.innerHTML = (open ? '<svg viewBox="0 0 12 12" fill="none"><path d="M2 6h8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg> Hide evidence'
+                              : '<svg viewBox="0 0 12 12" fill="none"><path d="M2 6s1.6-3 4-3 4 3 4 3-1.6 3-4 3-4-3-4-3z" stroke="currentColor" stroke-width="1.1"/><circle cx="6" cy="6" r="1.3" fill="currentColor"/></svg> Open evidence');
+      });
+      return { card: card, tag: tag };
+    });
+  }
+
+  function addAuditCard() {
+    var card = document.createElement("div");
+    card.className = "agent-card audit-card";
+    card.innerHTML =
+      '<div class="agent-head">' +
+        '<div class="hat" style="color:var(--warn);background:oklch(28% 0.05 85 / .35)">⚖</div>' +
+        '<div><div class="who">Audit · self-correction</div><div class="role">calibration pass · Phoenix MCP</div></div>' +
+      '</div>' +
+      '<div class="agent-body"><span data-txt></span></div>';
+    cardsEl.appendChild(card);
+    var txt = card.querySelector("[data-txt]");
+    return streamInto(txt, "Cross-checking each hat against its retrieved evidence. Yellow Hat scored 9.0 on a benefit that is conditional on retrieval grounding holding up — not yet demonstrated at scale. Confidence exceeds evidence. Pulling it back.")
+      .then(function () {
+        var line = document.createElement("div");
+        line.className = "correct-line";
+        line.innerHTML = 'Yellow Hat &nbsp; <span class="was">9.0</span> <span class="arrow">→</span> <span class="now">7.8</span> &nbsp; recalibrated';
+        card.querySelector(".agent-body").appendChild(line);
+        return { card: card };
+      });
+  }
+
+  function renderBreakdown() {
+    veil.style.display = "none";
+    breakdown.innerHTML = "";
+    rubric.forEach(function (r) {
+      var row = document.createElement("div");
+      row.className = "brk";
+      row.innerHTML =
+        '<div class="brk-top"><span class="k">'+r.k+'</span><span class="v">'+r.v.toFixed(1)+' / 10</span></div>' +
+        '<div class="bar"><i></i></div>';
+      breakdown.appendChild(row);
+      requestAnimationFrame(function () {
+        row.querySelector("i").style.width = (r.v * 10) + "%";
+      });
+    });
+    vfoot.style.display = "block";
+  }
+
+  function animateGauge(target) {
+    ring.style.strokeDashoffset = RING_LEN - (RING_LEN * (target / 10));
+    if (reduced) { finalNum.textContent = target.toFixed(1); return; }
+    var t0 = null, dur = 1100;
+    function frame(ts) {
+      if (!t0) t0 = ts;
+      var p = Math.min((ts - t0) / dur, 1);
+      finalNum.textContent = (target * (1 - Math.pow(1 - p, 3))).toFixed(1);
+      if (p < 1) requestAnimationFrame(frame); else finalNum.textContent = target.toFixed(1);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  // ---- main run ---------------------------------------------------
+  var running = false;
+  async function run() {
+    if (running) return;
+    running = true;
+    runBtn.disabled = true;
+    runBtn.lastChild.nodeValue = " Evaluating…";
+    cardsEl.innerHTML = "";
+    breakdown.innerHTML = "";
+    breakdown.appendChild(veil); veil.style.display = "block";
+    vfoot.style.display = "none";
+    ring.style.strokeDashoffset = RING_LEN;
+    finalNum.textContent = "—";
+    stages.forEach(function (s, i) { setStage(i, "idle", i === 0 ? "" : "queued"); });
+
+    // 01 RubricSynthesizer
+    setStage(0, "active", "parsing rubric…");
+    vstate.textContent = "synthesizing rubric → 4 criteria, 0–10";
+    await wait(900);
+    setStage(0, "done", "4 criteria");
+
+    // 02 BluePlanner
+    setStage(1, "active", "planning panel…");
+    vstate.textContent = "Blue planner assigning six hats";
+    await wait(800);
+    setStage(1, "done", "6 hats");
+
+    // 03 SixHatPanel — stream each card
+    setStage(2, "active", "panel reasoning…");
+    vstate.textContent = "six hats reasoning over your text";
+    for (var i = 0; i < hats.length; i++) {
+      await addHatCard(hats[i]);
+      await wait(120);
+    }
+    setStage(2, "done", "6 scored");
+
+    // 04 Audit — self-correction
+    setStage(3, "active", "auditing scores…");
+    vstate.textContent = "auditing for over-confidence";
+    await wait(300);
+    var audit = await addAuditCard();
+    // visibly correct the Yellow hat's score tag in its own card
+    var yellowTag = cardsEl.querySelectorAll(".agent-card")[2].querySelector("[data-score]");
+    await wait(reduced ? 60 : 500);
+    if (!reduced) yellowTag.parentElement.parentElement.classList.add("flash");
+    yellowTag.textContent = "7.8";
+    yellowTag.style.color = scoreColor(7.8);
+    audit.card.querySelector(".correct-line") && (function(){})();
+    setStage(3, "done", "1 corrected");
+
+    // 05 Final
+    setStage(4, "active", "finalizing…");
+    vstate.textContent = "composing grounded verdict";
+    await wait(650);
+    setStage(4, "done", "final");
+    vstate.textContent = "evaluated · audited · grounded";
+    renderBreakdown();
+    animateGauge(FINAL);
+
+    runBtn.disabled = false;
+    runBtn.lastChild.nodeValue = " Re-evaluate";
+    running = false;
+  }
+
+  runBtn.addEventListener("click", run);
+})();
+</script>
+</body>
+</html>

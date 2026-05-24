@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>glasshat — Proof Receipt</title>
+<style>
+  :root {
+    /* Trust Ledger palette — high-contrast, accountable, paper-receipt */
+    --paper: oklch(98.5% 0.004 95);
+    --paper-edge: oklch(95% 0.006 95);
+    --ink: oklch(22% 0.02 260);
+    --ink-soft: oklch(46% 0.02 260);
+    --ink-faint: oklch(64% 0.015 260);
+    --rule: oklch(89% 0.008 260);
+    --rule-strong: oklch(80% 0.01 260);
+    --seal: oklch(52% 0.18 150);       /* verified green */
+    --seal-bg: oklch(95% 0.05 150);
+    --warn: oklch(62% 0.17 55);         /* amber correction */
+    --warn-bg: oklch(96% 0.06 75);
+    --flag: oklch(56% 0.20 25);         /* red flag */
+    --accent: oklch(50% 0.13 250);      /* ledger blue */
+    --accent-bg: oklch(96% 0.03 250);
+    --hash: oklch(54% 0.10 290);
+    --shadow: oklch(22% 0.02 260 / 0.10);
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background:
+      repeating-linear-gradient(0deg, transparent, transparent 31px, oklch(50% 0.13 250 / 0.04) 31px, oklch(50% 0.13 250 / 0.04) 32px),
+      oklch(94% 0.006 260);
+    color: var(--ink);
+    line-height: 1.5;
+    padding: 32px 16px 80px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .receipt {
+    max-width: 760px;
+    margin: 0 auto;
+    background: var(--paper);
+    border: 1px solid var(--rule-strong);
+    box-shadow: 0 1px 0 var(--paper-edge), 0 20px 50px -20px var(--shadow);
+    position: relative;
+  }
+  /* perforated top/bottom edge */
+  .receipt::before, .receipt::after {
+    content: "";
+    position: absolute; left: 0; right: 0; height: 10px;
+    background-image: radial-gradient(circle at 6px 5px, oklch(94% 0.006 260) 4px, transparent 4.5px);
+    background-size: 16px 10px;
+  }
+  .receipt::before { top: -10px; }
+  .receipt::after { bottom: -10px; transform: scaleY(-1); }
+
+  /* ---------- Header ---------- */
+  header.head {
+    padding: 26px 30px 22px;
+    border-bottom: 2px solid var(--ink);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .logo {
+    width: 38px; height: 38px; flex: none;
+    border: 2px solid var(--ink);
+    border-radius: 9px;
+    display: grid; place-items: center;
+  }
+  .logo svg { width: 22px; height: 22px; }
+  .brand h1 { font-size: 18px; letter-spacing: -0.02em; }
+  .brand .sub { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); letter-spacing: 0.04em; }
+  .doc-meta { text-align: right; font-family: var(--mono); font-size: 11px; color: var(--ink-soft); }
+  .doc-meta .docid { color: var(--ink); font-weight: 600; }
+  .verify-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    margin-top: 6px; padding: 3px 8px;
+    border: 1px solid var(--seal);
+    color: var(--seal); background: var(--seal-bg);
+    border-radius: 999px; font-size: 10px; font-weight: 700; letter-spacing: 0.05em;
+  }
+  .verify-pill .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--seal); }
+
+  /* ---------- Title strip ---------- */
+  .titlestrip {
+    padding: 16px 30px;
+    background: var(--accent-bg);
+    border-bottom: 1px dashed var(--rule-strong);
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
+  }
+  .titlestrip h2 { font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+  .titlestrip .model { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); }
+
+  /* ---------- Input panel ---------- */
+  .input-panel { padding: 22px 30px; border-bottom: 1px solid var(--rule); }
+  .label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; color: var(--ink-faint); text-transform: uppercase; margin-bottom: 8px; display: block; }
+  textarea {
+    width: 100%; min-height: 92px; resize: vertical;
+    font-family: var(--sans); font-size: 14px; line-height: 1.55; color: var(--ink);
+    padding: 12px 14px;
+    border: 1px solid var(--rule-strong); border-radius: 8px; background: oklch(99.5% 0.002 95);
+  }
+  textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+  .run-row { display: flex; align-items: center; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+  .run-btn {
+    font-family: var(--sans); font-weight: 700; font-size: 14px;
+    color: var(--paper); background: var(--ink);
+    border: none; border-radius: 8px; padding: 11px 20px; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 8px;
+    transition: transform .12s ease, opacity .2s ease;
+  }
+  .run-btn:hover { transform: translateY(-1px); }
+  .run-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+  .run-btn svg { width: 15px; height: 15px; }
+  .run-note { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); }
+
+  /* ---------- Pipeline ---------- */
+  .pipeline { padding: 22px 30px; border-bottom: 1px solid var(--rule); }
+  .pipeline-track { display: flex; align-items: stretch; gap: 0; flex-wrap: wrap; }
+  .stage {
+    flex: 1 1 0; min-width: 92px;
+    text-align: center; position: relative; padding: 0 4px;
+  }
+  .stage .node {
+    width: 34px; height: 34px; margin: 0 auto 7px;
+    border-radius: 50%; border: 2px solid var(--rule-strong);
+    background: var(--paper);
+    display: grid; place-items: center;
+    font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--ink-faint);
+    transition: all .35s ease;
+  }
+  .stage .nm { font-size: 11px; line-height: 1.25; color: var(--ink-soft); font-weight: 600; }
+  .stage .connector {
+    position: absolute; top: 17px; left: -50%; width: 100%; height: 2px;
+    background: var(--rule-strong); z-index: -1;
+  }
+  .stage:first-child .connector { display: none; }
+  .stage.active .node { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 0 4px var(--accent-bg); }
+  .stage.done .node { border-color: var(--seal); background: var(--seal); color: var(--paper); }
+  .stage.done .connector { background: var(--seal); }
+  .stage.active .nm { color: var(--accent); }
+
+  /* ---------- Hat scores ---------- */
+  .hats { padding: 14px 30px 4px; }
+  .hats-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+  .hats-head .label { margin: 0; }
+  .hats-head .scale { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); }
+  .hat-row {
+    display: grid; grid-template-columns: 22px 1fr 64px; align-items: center; gap: 12px;
+    padding: 9px 0; border-bottom: 1px dotted var(--rule);
+    opacity: 0; transform: translateX(-6px);
+    transition: opacity .4s ease, transform .4s ease;
+  }
+  .hat-row.in { opacity: 1; transform: none; }
+  .hat-chip { width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid oklch(70% 0.02 260 / 0.5); }
+  .hat-white  { background: oklch(99% 0 0); }
+  .hat-red    { background: oklch(60% 0.20 25); }
+  .hat-yellow { background: oklch(82% 0.15 95); }
+  .hat-black  { background: oklch(28% 0.01 260); }
+  .hat-green  { background: oklch(60% 0.16 150); }
+  .hat-blue   { background: oklch(55% 0.15 250); }
+  .hat-name { font-size: 13px; font-weight: 600; }
+  .hat-name .crit { display: block; font-size: 11px; font-weight: 400; color: var(--ink-faint); }
+  .hat-score-cell { text-align: right; font-family: var(--mono); }
+  .hat-bar { height: 5px; border-radius: 3px; background: var(--rule); overflow: hidden; margin-top: 4px; }
+  .hat-bar > i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 3px; transition: width .8s cubic-bezier(.2,.7,.2,1); }
+  .sc { font-size: 15px; font-weight: 700; }
+  .sc .max { color: var(--ink-faint); font-weight: 400; font-size: 12px; }
+  .ev-btn {
+    font-family: var(--mono); font-size: 10px; color: var(--accent);
+    background: none; border: none; cursor: pointer; text-decoration: underline; padding: 0; margin-top: 3px;
+  }
+  .ev-btn:hover { color: var(--ink); }
+
+  .corrected .sc { color: var(--warn); }
+  .corrected-flag {
+    display: inline-block; font-family: var(--mono); font-size: 9px; font-weight: 700;
+    color: var(--warn); background: var(--warn-bg); border: 1px solid var(--warn);
+    border-radius: 4px; padding: 1px 5px; margin-top: 3px; letter-spacing: 0.03em;
+    animation: pulseWarn 1.4s ease 2;
+  }
+  @keyframes pulseWarn { 0%,100% { box-shadow: 0 0 0 0 oklch(62% 0.17 55 / 0.4);} 50% { box-shadow: 0 0 0 5px oklch(62% 0.17 55 / 0);} }
+
+  /* evidence drawer */
+  .ev-drawer {
+    grid-column: 1 / -1;
+    max-height: 0; overflow: hidden;
+    transition: max-height .35s ease;
+  }
+  .ev-drawer.open { max-height: 240px; }
+  .ev-inner {
+    margin: 8px 0 4px; padding: 12px 14px;
+    background: var(--accent-bg); border-left: 3px solid var(--accent); border-radius: 0 6px 6px 0;
+    font-size: 12.5px; color: var(--ink-soft);
+  }
+  .ev-inner .quote { color: var(--ink); font-style: italic; border-left: 2px solid var(--rule-strong); padding-left: 10px; margin: 6px 0 8px; }
+  .ev-inner .meta { font-family: var(--mono); font-size: 10.5px; color: var(--hash); display: flex; flex-wrap: wrap; gap: 4px 14px; }
+  .ev-inner .meta b { color: var(--ink-soft); font-weight: 600; }
+
+  /* ---------- Ledger ---------- */
+  .ledger { padding: 20px 30px; border-top: 2px dashed var(--rule-strong); }
+  .ledger-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+  .ledger-head h3 { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink); }
+  .ledger-head .count { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); }
+  .ledger-list { list-style: none; margin-top: 10px; }
+  .lgr {
+    display: grid; grid-template-columns: 14px 1fr; gap: 12px;
+    padding: 9px 0; border-bottom: 1px solid var(--rule);
+    opacity: 0; transform: translateY(6px);
+    transition: opacity .35s ease, transform .35s ease;
+  }
+  .lgr.in { opacity: 1; transform: none; }
+  .lgr .rail { display: flex; flex-direction: column; align-items: center; }
+  .lgr .tick { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex: none; }
+  .lgr .line { width: 2px; flex: 1; background: var(--rule); margin-top: 3px; }
+  .lgr:last-child .line { display: none; }
+  .lgr.l-verify .tick { background: var(--seal); }
+  .lgr.l-correct .tick { background: var(--warn); }
+  .lgr.l-flag .tick { background: var(--flag); }
+  .lgr.l-final .tick { background: var(--ink); width: 11px; height: 11px; }
+  .lgr .body { min-width: 0; }
+  .lgr .ts { font-family: var(--mono); font-size: 10.5px; color: var(--ink-faint); }
+  .lgr .msg { font-size: 13px; margin: 1px 0 3px; }
+  .lgr .msg b { font-weight: 700; }
+  .lgr.l-correct .msg b { color: var(--warn); }
+  .lgr .hashline { font-family: var(--mono); font-size: 10.5px; color: var(--hash); word-break: break-all; }
+  .lgr .hashline .k { color: var(--ink-faint); }
+  .badge {
+    display: inline-block; font-family: var(--mono); font-size: 9px; font-weight: 700;
+    padding: 1px 6px; border-radius: 4px; letter-spacing: 0.04em; vertical-align: middle; margin-left: 6px;
+  }
+  .badge.b-verify { color: var(--seal); background: var(--seal-bg); border: 1px solid var(--seal); }
+  .badge.b-correct { color: var(--warn); background: var(--warn-bg); border: 1px solid var(--warn); }
+  .badge.b-flag { color: var(--flag); background: oklch(96% 0.04 25); border: 1px solid var(--flag); }
+
+  /* ---------- Final seal ---------- */
+  .final {
+    margin: 4px 30px 0; padding: 22px 24px;
+    border: 2px solid var(--ink); border-radius: 12px;
+    background: oklch(99.5% 0.002 95);
+    display: flex; align-items: center; gap: 22px; flex-wrap: wrap;
+    opacity: 0; transform: scale(.97);
+    transition: opacity .5s ease, transform .5s ease;
+  }
+  .final.in { opacity: 1; transform: none; }
+  .final .scorebox { text-align: center; flex: none; }
+  .final .scorebox .big { font-size: 46px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; font-family: var(--mono); }
+  .final .scorebox .of { font-size: 14px; color: var(--ink-faint); font-family: var(--mono); }
+  .final .scorebox .scl { font-size: 10px; color: var(--ink-faint); font-family: var(--mono); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 4px; }
+  .final .divider { width: 1px; align-self: stretch; background: var(--rule-strong); }
+  .final .detail { flex: 1 1 220px; }
+  .final .detail .ttl { font-size: 13px; font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+  .final .stamp {
+    width: 30px; height: 30px; border: 2px solid var(--seal); border-radius: 50%;
+    display: grid; place-items: center; color: var(--seal); flex: none;
+  }
+  .final .stamp svg { width: 16px; height: 16px; }
+  .final .detail p { font-size: 12.5px; color: var(--ink-soft); }
+  .final .detail .rootline { font-family: var(--mono); font-size: 10.5px; color: var(--hash); margin-top: 8px; word-break: break-all; }
+  .final .detail .rootline .k { color: var(--ink-faint); }
+
+  footer.foot {
+    padding: 18px 30px 24px; text-align: center;
+    font-family: var(--mono); font-size: 10.5px; color: var(--ink-faint); letter-spacing: 0.03em;
+  }
+  footer.foot .stack { color: var(--ink-soft); }
+
+  .hidden-until { visibility: hidden; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; animation: none !important; }
+  }
+  @media (max-width: 560px) {
+    .stage .nm { font-size: 10px; }
+    .final .divider { display: none; }
+    .doc-meta { text-align: left; }
+    header.head { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<main class="receipt" aria-label="Evaluation proof receipt">
+
+  <header class="head">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 12l9 4 9-4"/><path d="M3 17l9 4 9-4"/>
+        </svg>
+      </span>
+      <div>
+        <h1>glasshat</h1>
+        <div class="sub">PROOF RECEIPT · TRANSPARENT EVALUATION</div>
+      </div>
+    </div>
+    <div class="doc-meta">
+      <div>RECEIPT <span class="docid" id="docid">#GH-—</span></div>
+      <div id="issued">issued —</div>
+      <div class="verify-pill" id="verifyPill" style="opacity:.35"><span class="dot"></span><span id="verifyTxt">UNVERIFIED</span></div>
+    </div>
+  </header>
+
+  <div class="titlestrip">
+    <h2>Six-Hat Rubric Evaluation</h2>
+    <span class="model">model: gemini-3.1-flash-lite · Vertex AI · obs: Arize AX</span>
+  </div>
+
+  <section class="input-panel">
+    <label class="label" for="pitch">Your pitch / deck text</label>
+    <textarea id="pitch" spellcheck="false">Glasshat turns any hackathon rubric into a transparent 6-perspective AI panel. Founders paste their deck, and within seconds receive a grounded score on the official scale — every sub-score linked to the exact line that earned it, every calibration logged. We run on gemini-3.1-flash-lite with Arize AX observability and a Phoenix calibration loop. Traction: 240 submissions scored across 3 pilot hackathons, 92% organizer agreement with panel scores.</textarea>
+    <div class="run-row">
+      <button class="run-btn" id="runBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+        Run evaluation
+      </button>
+      <span class="run-note" id="runNote">Pipeline runs live · every decision is logged below</span>
+    </div>
+  </section>
+
+  <section class="pipeline" aria-label="Evaluation pipeline">
+    <div class="pipeline-track" id="track">
+      <div class="stage" data-s="0"><span class="connector"></span><div class="node">IN</div><div class="nm">Input</div></div>
+      <div class="stage" data-s="1"><span class="connector"></span><div class="node">RS</div><div class="nm">Rubric<br>Synth</div></div>
+      <div class="stage" data-s="2"><span class="connector"></span><div class="node">BP</div><div class="nm">Blue<br>Planner</div></div>
+      <div class="stage" data-s="3"><span class="connector"></span><div class="node">6H</div><div class="nm">Six-Hat<br>Panel</div></div>
+      <div class="stage" data-s="4"><span class="connector"></span><div class="node">AU</div><div class="nm">Audit</div></div>
+      <div class="stage" data-s="5"><span class="connector"></span><div class="node">FN</div><div class="nm">Final</div></div>
+    </div>
+  </section>
+
+  <section class="hats" aria-label="Per-hat sub-scores">
+    <div class="hats-head">
+      <span class="label">Per-hat sub-scores</span>
+      <span class="scale">scale 0–10 · open evidence ↓</span>
+    </div>
+    <div id="hatRows"></div>
+  </section>
+
+  <section class="ledger" aria-label="Audit ledger">
+    <div class="ledger-head">
+      <h3>Audit Ledger — immutable</h3>
+      <span class="count" id="ledgerCount">0 entries</span>
+    </div>
+    <ul class="ledger-list" id="ledgerList"></ul>
+  </section>
+
+  <section style="padding:6px 0 26px;">
+    <div class="final" id="final" aria-live="polite">
+      <div class="scorebox">
+        <div class="big" id="finalScore">—</div>
+        <div class="of">/ 50.0</div>
+        <div class="scl">rubric native scale</div>
+      </div>
+      <div class="divider" aria-hidden="true"></div>
+      <div class="detail">
+        <div class="ttl">
+          <span class="stamp" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+          Finalized &amp; sealed
+        </div>
+        <p id="finalNote">After 1 self-correction, the panel score is sealed against the ledger root hash.</p>
+        <div class="rootline"><span class="k">ledger_root:</span> <span id="rootHash">—</span></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <div class="stack">gemini-3.1-flash-lite · Vertex AI · Arize AX tracing · Phoenix MCP calibration</div>
+    <div>Every score above is reproducible from the logged evidence hashes. Nothing is hidden.</div>
+  </footer>
+
+</main>
+
+<script>
+(function () {
+  "use strict";
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // ---- Hat definitions (final, post-correction state) ----
+  var HATS = [
+    { key:"white",  name:"White", crit:"Facts & evidence",      cls:"hat-white",
+      score:8.2, ev:'"240 submissions scored across 3 pilot hackathons" — concrete, dated, verifiable metric.', src:"pitch ¶1, line 5", conf:0.91 },
+    { key:"red",    name:"Red",   crit:"Gut / emotional pull",  cls:"hat-red",
+      score:7.5, ev:'Opening promise of "transparent" evaluation lands emotionally; founders fear opaque judging.', src:"pitch ¶1, line 1", conf:0.84 },
+    { key:"yellow", name:"Yellow",crit:"Value & upside",        cls:"hat-yellow",
+      score:7.8, ev:'"92% organizer agreement" supports upside — but is single-source & not externally audited.', src:"pitch ¶1, line 6", conf:0.62,
+      corrected:true, from:9.0 },
+    { key:"black",  name:"Black", crit:"Risks & caution",       cls:"hat-black",
+      score:6.9, ev:'Calibration loop is named but not benchmarked against a held-out human panel.', src:"derived · no direct claim", conf:0.88 },
+    { key:"green",  name:"Green", crit:"Novelty & creativity",  cls:"hat-green",
+      score:8.0, ev:'Per-line grounding + logged calibration is a differentiated take vs. black-box scorers.', src:"pitch ¶1, line 2", conf:0.86 },
+  ];
+  // Final native-scale total intentionally aggregates the 5 visible hats + Blue meta-score.
+  var BLUE_META = 8.1; // Blue = synthesis/process integrity, shown only in ledger
+  var FINAL_TOTAL = (8.2 + 7.5 + 7.8 + 6.9 + 8.0) ; // = 38.4 across 5 hats; rubric native /50 incl. blue
+  var FINAL_NATIVE = (FINAL_TOTAL + BLUE_META).toFixed(1); // 46.5 / 50
+
+  var stages = Array.prototype.slice.call(document.querySelectorAll(".stage"));
+  var hatRowsEl = document.getElementById("hatRows");
+  var ledgerListEl = document.getElementById("ledgerList");
+  var ledgerCountEl = document.getElementById("ledgerCount");
+  var runBtn = document.getElementById("runBtn");
+  var runNote = document.getElementById("runNote");
+  var finalEl = document.getElementById("final");
+  var finalScoreEl = document.getElementById("finalScore");
+  var rootHashEl = document.getElementById("rootHash");
+  var verifyPill = document.getElementById("verifyPill");
+  var verifyTxt = document.getElementById("verifyTxt");
+
+  // deterministic pseudo-hash for display realism (no crypto needed, offline)
+  function hashOf(str) {
+    var h = 0x811c9dc5;
+    for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = (h * 0x01000193) >>> 0; }
+    var hex = (h >>> 0).toString(16);
+    while (hex.length < 8) hex = "0" + hex;
+    // expand to a 16-char ledger-style hash
+    var h2 = 0x12345678 ^ h;
+    for (var j = 0; j < str.length; j++) { h2 ^= (str.charCodeAt(j) << (j % 5)); h2 = (h2 * 16777619) >>> 0; }
+    var hex2 = (h2 >>> 0).toString(16); while (hex2.length < 8) hex2 = "0" + hex2;
+    return hex + hex2;
+  }
+
+  function nowStamp(offsetMs) {
+    var d = new Date(Date.now() + (offsetMs || 0));
+    function p(n){ return n < 10 ? "0"+n : ""+n; }
+    return p(d.getHours())+":"+p(d.getMinutes())+":"+p(d.getSeconds())+"."+String(d.getMilliseconds()).padStart(3,"0");
+  }
+
+  var ledgerN = 0;
+  var ledgerChain = "GENESIS";
+  function appendLedger(opts) {
+    ledgerN++;
+    var prev = ledgerChain;
+    var entryHash = hashOf(prev + "|" + opts.msg + "|" + ledgerN);
+    ledgerChain = entryHash;
+
+    var li = document.createElement("li");
+    li.className = "lgr " + (opts.cls || "");
+    var badge = opts.badge ? '<span class="badge '+opts.badgeCls+'">'+opts.badge+'</span>' : "";
+    li.innerHTML =
+      '<div class="rail"><span class="tick"></span><span class="line"></span></div>' +
+      '<div class="body">' +
+        '<div class="ts">' + nowStamp() + ' · entry ' + String(ledgerN).padStart(3,"0") + '</div>' +
+        '<div class="msg">' + opts.msg + badge + '</div>' +
+        '<div class="hashline"><span class="k">hash:</span> ' + entryHash +
+          (opts.evhash ? ' &nbsp;<span class="k">evidence:</span> ' + opts.evhash : '') +
+        '</div>' +
+      '</div>';
+    ledgerListEl.appendChild(li);
+    ledgerCountEl.textContent = ledgerN + (ledgerN === 1 ? " entry" : " entries");
+    // animate in
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ li.classList.add("in"); }); });
+    li.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "nearest" });
+    return entryHash;
+  }
+
+  function buildHatRow(h, idx) {
+    var wrap = document.createElement("div");
+    wrap.className = "hat-row" + (h.corrected ? " corrected" : "");
+    wrap.id = "hat-" + h.key;
+    var evhash = hashOf(h.ev + h.src);
+    var pct = Math.round((h.score / 10) * 100);
+    var correctedBits = h.corrected
+      ? '<span class="corrected-flag" id="cf-'+h.key+'" style="display:none">CORRECTED ' + h.from.toFixed(1) + ' → ' + h.score.toFixed(1) + '</span>'
+      : '';
+    wrap.innerHTML =
+      '<span class="hat-chip ' + h.cls + '" aria-hidden="true"></span>' +
+      '<div>' +
+        '<span class="hat-name">' + h.name + ' Hat<span class="crit">' + h.crit + '</span></span>' +
+        '<button class="ev-btn" data-hat="' + h.key + '">open evidence ↓</button>' +
+        correctedBits +
+      '</div>' +
+      '<div class="hat-score-cell">' +
+        '<span class="sc" id="sc-'+h.key+'">—<span class="max">/10</span></span>' +
+        '<div class="hat-bar"><i id="bar-'+h.key+'"></i></div>' +
+      '</div>' +
+      '<div class="ev-drawer" id="ev-'+h.key+'">' +
+        '<div class="ev-inner">' +
+          '<div>Grounded evidence retrieved by the panel:</div>' +
+          '<div class="quote">' + h.ev + '</div>' +
+          '<div class="meta">' +
+            '<span><b>source:</b> ' + h.src + '</span>' +
+            '<span><b>confidence:</b> ' + h.conf.toFixed(2) + '</span>' +
+            '<span><b>evidence_hash:</b> ' + evhash + '</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    hatRowsEl.appendChild(wrap);
+    return { el: wrap, evhash: evhash };
+  }
+
+  // build rows up front (hidden via .hat-row opacity)
+  var hatMeta = {};
+  HATS.forEach(function (h, i) { hatMeta[h.key] = buildHatRow(h, i); });
+
+  // evidence toggles (always available, even before run for already-revealed rows)
+  hatRowsEl.addEventListener("click", function (e) {
+    var btn = e.target.closest(".ev-btn");
+    if (!btn) return;
+    var k = btn.getAttribute("data-hat");
+    var drawer = document.getElementById("ev-" + k);
+    var open = drawer.classList.toggle("open");
+    btn.textContent = open ? "hide evidence ↑" : "open evidence ↓";
+    if (open) {
+      appendLedger({
+        cls: "l-verify", badge: "EVIDENCE OPENED", badgeCls: "b-verify",
+        msg: "User opened grounded evidence for <b>" + k.charAt(0).toUpperCase()+k.slice(1) + " Hat</b>",
+        evhash: hatMeta[k].evhash
+      });
+    }
+  });
+
+  function setStage(i, state) {
+    var s = stages[i];
+    if (!s) return;
+    s.classList.remove("active", "done");
+    if (state) s.classList.add(state);
+  }
+
+  function revealHat(h) {
+    var meta = hatMeta[h.key];
+    meta.el.classList.add("in");
+    // animate score count + bar
+    var scEl = document.getElementById("sc-" + h.key);
+    var barEl = document.getElementById("bar-" + h.key);
+    // for the corrected hat, first show the inflated value, then correct it during audit
+    var displayScore = h.corrected ? h.from : h.score;
+    animateScore(scEl, barEl, displayScore);
+    appendLedger({
+      msg: "<b>" + h.name + " Hat</b> scored <b>" + displayScore.toFixed(1) + "</b>/10 · " + h.crit.toLowerCase(),
+      evhash: meta.evhash
+    });
+  }
+
+  function animateScore(scEl, barEl, target) {
+    if (reduce) {
+      scEl.innerHTML = target.toFixed(1) + '<span class="max">/10</span>';
+      barEl.style.width = (target / 10 * 100) + "%";
+      return;
+    }
+    var start = performance.now(), dur = 600, from = 0;
+    function step(t) {
+      var p = Math.min(1, (t - start) / dur);
+      var v = from + (target - from) * (1 - Math.pow(1 - p, 3));
+      scEl.innerHTML = v.toFixed(1) + '<span class="max">/10</span>';
+      barEl.style.width = (v / 10 * 100) + "%";
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  function correctYellow() {
+    var h = HATS.filter(function (x) { return x.corrected; })[0];
+    if (!h) return;
+    var scEl = document.getElementById("sc-" + h.key);
+    var barEl = document.getElementById("bar-" + h.key);
+    var flag = document.getElementById("cf-" + h.key);
+    // log the flag first
+    appendLedger({
+      cls: "l-flag", badge: "OVER-CONFIDENT", badgeCls: "b-flag",
+      msg: "Audit flags <b>Yellow Hat</b>: claim is single-source &amp; un-audited → confidence 0.62 below threshold 0.75",
+      evhash: hatMeta[h.key].evhash
+    });
+    // animate the visible correction down
+    var startVal = h.from, target = h.score;
+    if (reduce) {
+      scEl.innerHTML = target.toFixed(1) + '<span class="max">/10</span>';
+      barEl.style.width = (target / 10 * 100) + "%";
+    } else {
+      var start = performance.now(), dur = 900;
+      (function tick(t) {
+        var p = Math.min(1, (t - start) / dur);
+        var v = startVal + (target - startVal) * (1 - Math.pow(1 - p, 3));
+        scEl.innerHTML = v.toFixed(1) + '<span class="max">/10</span>';
+        barEl.style.width = (v / 10 * 100) + "%";
+        if (p < 1) requestAnimationFrame(tick);
+      })(performance.now());
+    }
+    if (flag) flag.style.display = "inline-block";
+    // log the correction as an immutable ledger entry
+    setTimeout(function () {
+      appendLedger({
+        cls: "l-correct", badge: "SELF-CORRECTED", badgeCls: "b-correct",
+        msg: "Calibrator pulled <b>Yellow 9.0 → 7.8</b> via Phoenix MCP before finalize · diff logged",
+        evhash: hatMeta[h.key].evhash
+      });
+    }, reduce ? 0 : 950);
+  }
+
+  // ---- main sequence ----
+  var running = false;
+  function run() {
+    if (running) return;
+    running = true;
+    runBtn.disabled = true;
+    runNote.textContent = "Evaluating live… decisions appending to ledger";
+
+    // reset visuals
+    ledgerListEl.innerHTML = ""; ledgerN = 0; ledgerChain = "GENESIS";
+    ledgerCountEl.textContent = "0 entries";
+    finalEl.classList.remove("in");
+    finalScoreEl.textContent = "—";
+    HATS.forEach(function (h) {
+      hatMeta[h.key].el.classList.remove("in");
+      var sc = document.getElementById("sc-"+h.key); sc.innerHTML = '—<span class="max">/10</span>';
+      document.getElementById("bar-"+h.key).style.width = "0";
+      var d = document.getElementById("ev-"+h.key); d.classList.remove("open");
+      var cf = document.getElementById("cf-"+h.key); if (cf) cf.style.display = "none";
+    });
+    document.querySelectorAll(".ev-btn").forEach(function(b){ b.textContent = "open evidence ↓"; });
+    stages.forEach(function (_, i) { setStage(i, null); });
+    verifyPill.style.opacity = ".35"; verifyTxt.textContent = "EVALUATING"; verifyPill.style.color = "var(--ink-faint)"; verifyPill.style.borderColor = "var(--rule-strong)";
+
+    // doc id + issued
+    var id = "GH-" + (Math.floor(Math.random()*9000)+1000) + "-" + (Math.floor(Math.random()*900)+100);
+    document.getElementById("docid").textContent = "#" + id;
+    var d = new Date();
+    document.getElementById("issued").textContent = "issued " + d.toISOString().slice(0,19).replace("T"," ") + "Z";
+
+    var t = reduce ? 1 : 1; // base unit
+    var Q = []; // queue of [delayMs, fn]
+    function at(ms, fn) { Q.push([ms, fn]); }
+
+    var step = reduce ? 80 : 1;
+    var c = 0; // cumulative time
+
+    // Stage 0: input
+    c += 120*step; at(c, function () {
+      setStage(0, "active");
+      appendLedger({ msg: "Pitch ingested · " + document.getElementById("pitch").value.trim().length + " chars normalized", evhash: hashOf(document.getElementById("pitch").value).slice(0,16) });
+    });
+    c += 500*step; at(c, function () { setStage(0, "done"); setStage(1, "active");
+      appendLedger({ msg: "<b>RubricSynthesizer</b>: mapped official rubric → 6 hats on 0–10 native scale" }); });
+
+    // Stage 2 Blue planner
+    c += 700*step; at(c, function () { setStage(1, "done"); setStage(2, "active");
+      appendLedger({ msg: "<b>BluePlanner</b>: drafted evaluation plan & retrieval order for the panel", evhash: hashOf("blue-plan") }); });
+
+    // Stage 3 Six-Hat panel — reveal each hat
+    c += 650*step; at(c, function () { setStage(2, "done"); setStage(3, "active");
+      appendLedger({ cls:"l-verify", badge:"PANEL OPEN", badgeCls:"b-verify", msg: "<b>SixHatPanel</b> convened — scoring with grounded retrieval" }); });
+
+    HATS.forEach(function (h, i) {
+      c += 520*step; at(c, function () { revealHat(h); });
+    });
+    // blue meta entry
+    c += 520*step; at(c, function () {
+      appendLedger({ msg: "<b>Blue Hat</b> (process synthesis) scored <b>" + BLUE_META.toFixed(1) + "</b>/10 · meta-integrity", evhash: hashOf("blue-meta") });
+    });
+
+    // Stage 4 Audit + self-correction
+    c += 600*step; at(c, function () { setStage(3, "done"); setStage(4, "active");
+      appendLedger({ cls:"l-verify", badge:"AUDIT", badgeCls:"b-verify", msg: "<b>Audit</b> cross-checks each hat's confidence vs evidence strength" }); });
+    c += 650*step; at(c, function () { correctYellow(); });
+
+    // Stage 5 Final seal
+    c += (reduce ? 80 : 1700)*step; at(c, function () {
+      setStage(4, "done"); setStage(5, "active");
+      appendLedger({ msg: "All 6 sub-scores re-totaled after correction → native <b>" + FINAL_NATIVE + "</b>/50" });
+    });
+    c += 500*step; at(c, function () {
+      var root = ledgerChain;
+      var finalEntry = appendLedger({
+        cls: "l-final", badge: "SEALED", badgeCls: "b-verify",
+        msg: "<b>Final score sealed</b> · " + FINAL_NATIVE + "/50 · 1 self-correction · root committed"
+      });
+      setStage(5, "done");
+      rootHashEl.textContent = ledgerChain;
+      finalEl.classList.add("in");
+      animateFinal(FINAL_NATIVE);
+      document.getElementById("finalNote").innerHTML =
+        "After <b>1 self-correction</b> (Yellow 9.0→7.8), the panel score is sealed against the ledger root hash. Every sub-score above is reproducible from its logged evidence hash.";
+      verifyPill.style.opacity = "1"; verifyTxt.textContent = "VERIFIED"; verifyPill.style.color = "var(--seal)"; verifyPill.style.borderColor = "var(--seal)";
+      runNote.textContent = "Evaluation complete · open any evidence above to inspect the source";
+      runBtn.disabled = false; running = false;
+    });
+
+    // dispatch the queue
+    Q.forEach(function (item) { setTimeout(item[1], item[0]); });
+  }
+
+  function animateFinal(target) {
+    target = parseFloat(target);
+    if (reduce) { finalScoreEl.textContent = target.toFixed(1); return; }
+    var start = performance.now(), dur = 1000;
+    (function tick(t) {
+      var p = Math.min(1, (t - start) / dur);
+      var v = target * (1 - Math.pow(1 - p, 3));
+      finalScoreEl.textContent = v.toFixed(1);
+      if (p < 1) requestAnimationFrame(tick);
+    })(performance.now());
+  }
+
+  runBtn.addEventListener("click", run);
+
+  // auto-run shortly after load so the receipt feels alive on open
+  setTimeout(run, reduce ? 200 : 700);
+})();
+</script>
+</body>
+</html>

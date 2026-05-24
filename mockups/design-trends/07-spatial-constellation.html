@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>glasshat · Constellation Evaluation</title>
+<style>
+  :root {
+    --bg-0: oklch(14% 0.03 270);
+    --bg-1: oklch(18% 0.04 275);
+    --ink: oklch(96% 0.01 270);
+    --ink-dim: oklch(72% 0.02 270);
+    --ink-faint: oklch(54% 0.02 270);
+    --glow: oklch(80% 0.16 250);
+    --line: oklch(70% 0.10 250);
+    --white-hat: oklch(92% 0.02 270);
+    --red-hat: oklch(68% 0.20 25);
+    --yellow-hat: oklch(86% 0.16 95);
+    --black-hat: oklch(58% 0.05 285);
+    --green-hat: oklch(78% 0.18 150);
+    --blue-hat: oklch(72% 0.16 245);
+    --good: oklch(80% 0.16 150);
+    --warn: oklch(82% 0.16 75);
+    --panel: oklch(20% 0.035 275 / 0.55);
+    --panel-brd: oklch(60% 0.06 260 / 0.28);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%;
+    background: radial-gradient(120% 120% at 50% 0%, var(--bg-1), var(--bg-0) 70%);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    overflow: hidden;
+  }
+  #stage { position: fixed; inset: 0; }
+  #constellation { position: absolute; inset: 0; display: block; }
+
+  /* ---- Top bar ---- */
+  header {
+    position: absolute; top: 0; left: 0; right: 0;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 26px; z-index: 30;
+    pointer-events: none;
+  }
+  .brand { display: flex; align-items: center; gap: 11px; pointer-events: auto; }
+  .brand .mark {
+    width: 30px; height: 30px; border-radius: 9px;
+    background: linear-gradient(135deg, var(--glow), var(--blue-hat));
+    box-shadow: 0 0 22px oklch(80% 0.16 250 / 0.55);
+    position: relative;
+  }
+  .brand .mark::after {
+    content: ""; position: absolute; inset: 7px;
+    border-radius: 4px; background: var(--bg-0); opacity: 0.55;
+  }
+  .brand h1 { font-size: 17px; font-weight: 650; letter-spacing: -0.01em; }
+  .brand .sub { font-size: 12px; color: var(--ink-faint); margin-left: 3px; }
+  .pill {
+    pointer-events: auto;
+    font-size: 11.5px; color: var(--ink-dim);
+    padding: 6px 12px; border-radius: 999px;
+    background: var(--panel);
+    border: 1px solid var(--panel-brd);
+    backdrop-filter: blur(14px);
+    display: flex; align-items: center; gap: 7px;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--good);
+    box-shadow: 0 0 9px var(--good); }
+  .dot.live { animation: pulse 1.8s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+  /* ---- Left: pipeline ---- */
+  #pipeline {
+    position: absolute; top: 78px; left: 26px; z-index: 20;
+    width: 232px;
+    background: var(--panel); border: 1px solid var(--panel-brd);
+    border-radius: 18px; padding: 16px 16px 14px;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 18px 50px oklch(10% 0.04 270 / 0.5);
+  }
+  #pipeline h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--ink-faint); margin-bottom: 13px; font-weight: 600; }
+  .step { display: flex; align-items: center; gap: 11px; padding: 7px 0; position: relative; }
+  .step .ix {
+    width: 22px; height: 22px; border-radius: 7px; flex: none;
+    display: grid; place-items: center; font-size: 11px; font-weight: 650;
+    background: oklch(30% 0.04 270); color: var(--ink-faint);
+    border: 1px solid var(--panel-brd); transition: .35s;
+  }
+  .step .lbl { font-size: 13px; color: var(--ink-faint); transition: .35s; line-height: 1.2; }
+  .step .lbl small { display: block; font-size: 10.5px; color: var(--ink-faint); opacity: .7; }
+  .step:not(:last-child)::after {
+    content: ""; position: absolute; left: 10.5px; top: 29px; height: 16px;
+    width: 1.5px; background: var(--panel-brd);
+  }
+  .step.active .ix { background: var(--glow); color: var(--bg-0);
+    box-shadow: 0 0 16px oklch(80% 0.16 250 / 0.7); border-color: transparent; }
+  .step.active .lbl { color: var(--ink); }
+  .step.done .ix { background: var(--good); color: var(--bg-0); border-color: transparent; }
+  .step.done .lbl { color: var(--ink-dim); }
+
+  /* ---- Right: input + score ---- */
+  #panelRight {
+    position: absolute; top: 78px; right: 26px; z-index: 20;
+    width: 296px; display: flex; flex-direction: column; gap: 14px;
+  }
+  .card {
+    background: var(--panel); border: 1px solid var(--panel-brd);
+    border-radius: 18px; padding: 16px;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 18px 50px oklch(10% 0.04 270 / 0.5);
+  }
+  .card h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--ink-faint); margin-bottom: 11px; font-weight: 600; }
+  textarea {
+    width: 100%; height: 88px; resize: none;
+    background: oklch(12% 0.02 270 / 0.7); color: var(--ink);
+    border: 1px solid var(--panel-brd); border-radius: 11px;
+    padding: 11px; font: inherit; font-size: 12.5px; line-height: 1.4;
+  }
+  textarea:focus { outline: none; border-color: var(--glow); }
+  .btn {
+    width: 100%; margin-top: 11px; padding: 11px;
+    border: none; border-radius: 11px; cursor: pointer;
+    font: inherit; font-size: 13.5px; font-weight: 650; letter-spacing: -0.01em;
+    background: linear-gradient(135deg, var(--glow), var(--blue-hat));
+    color: var(--bg-0);
+    box-shadow: 0 0 24px oklch(80% 0.16 250 / 0.4);
+    transition: .25s;
+  }
+  .btn:hover { filter: brightness(1.08); }
+  .btn:disabled { opacity: .5; cursor: default; filter: none; }
+
+  /* Final score */
+  #scoreCard { text-align: center; opacity: .45; transition: .5s; }
+  #scoreCard.lit { opacity: 1; }
+  .score-num { font-size: 52px; font-weight: 700; letter-spacing: -0.03em; line-height: 1;
+    background: linear-gradient(135deg, var(--good), var(--blue-hat));
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .score-scale { font-size: 13px; color: var(--ink-faint); margin-top: 5px; }
+  .score-tag { font-size: 11px; color: var(--good); margin-top: 9px;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 10px; border-radius: 999px;
+    background: oklch(80% 0.16 150 / 0.12); border: 1px solid oklch(80% 0.16 150 / 0.3); }
+  .breakdown { margin-top: 13px; text-align: left; display: flex; flex-direction: column; gap: 6px; }
+  .br-row { display: flex; align-items: center; gap: 8px; font-size: 11.5px; }
+  .br-row .nm { flex: 1; color: var(--ink-dim); }
+  .br-row .bar { flex: 1.4; height: 5px; border-radius: 3px; background: oklch(30% 0.03 270); overflow: hidden; }
+  .br-row .bar i { display: block; height: 100%; border-radius: 3px; width: 0; transition: width 1s cubic-bezier(.2,.8,.2,1); }
+  .br-row .vv { width: 30px; text-align: right; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+  /* ---- Evidence drawer ---- */
+  #evidence {
+    position: absolute; left: 50%; bottom: -340px; transform: translateX(-50%);
+    width: min(560px, calc(100vw - 52px)); z-index: 40;
+    background: oklch(17% 0.035 275 / 0.82); border: 1px solid var(--panel-brd);
+    border-radius: 20px 20px 0 0; padding: 18px 20px 22px;
+    backdrop-filter: blur(26px);
+    box-shadow: 0 -18px 60px oklch(8% 0.04 270 / 0.6);
+    transition: bottom .45s cubic-bezier(.2,.8,.2,1);
+  }
+  #evidence.open { bottom: 0; }
+  #evidence .eh { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  #evidence .et { display: flex; align-items: center; gap: 10px; }
+  #evidence .hatdot { width: 13px; height: 13px; border-radius: 50%; box-shadow: 0 0 12px currentColor; }
+  #evidence h3 { font-size: 16px; font-weight: 650; }
+  #evidence .crit { font-size: 12px; color: var(--ink-faint); }
+  #evidence .escore { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  #evidence .escore small { font-size: 13px; color: var(--ink-faint); font-weight: 500; }
+  #evidence .close { pointer-events: auto; cursor: pointer; border: none; background: oklch(30% 0.03 270);
+    color: var(--ink-dim); width: 28px; height: 28px; border-radius: 50%; font-size: 16px; }
+  .ev-list { margin-top: 14px; display: flex; flex-direction: column; gap: 9px; }
+  .ev-item { display: flex; gap: 11px; padding: 11px 12px; border-radius: 12px;
+    background: oklch(13% 0.02 270 / 0.6); border: 1px solid var(--panel-brd); }
+  .ev-item .qix { font-size: 10px; font-weight: 700; color: var(--glow);
+    background: oklch(80% 0.16 250 / 0.14); border-radius: 6px; padding: 3px 7px; height: fit-content;
+    white-space: nowrap; }
+  .ev-item .qt { font-size: 12.5px; line-height: 1.45; color: var(--ink-dim); }
+  .ev-item .qt em { color: var(--ink); font-style: normal; font-weight: 600;
+    background: oklch(80% 0.16 250 / 0.16); border-radius: 3px; padding: 0 3px; }
+  .ev-item .qs { font-size: 10.5px; color: var(--ink-faint); margin-top: 5px; }
+  .ev-foot { margin-top: 13px; font-size: 11px; color: var(--ink-faint); display: flex; align-items: center; gap: 7px; }
+
+  /* ---- Audit toast ---- */
+  #audit {
+    position: absolute; left: 50%; top: 84px; transform: translate(-50%, -16px);
+    z-index: 45; opacity: 0; pointer-events: none;
+    width: min(420px, calc(100vw - 52px));
+    background: oklch(22% 0.05 75 / 0.85); border: 1px solid oklch(82% 0.16 75 / 0.4);
+    border-radius: 14px; padding: 13px 16px;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 14px 40px oklch(10% 0.04 270 / 0.5);
+    transition: opacity .4s, transform .4s;
+  }
+  #audit.show { opacity: 1; transform: translate(-50%, 0); }
+  #audit .ah { display: flex; align-items: center; gap: 9px; font-size: 13px; font-weight: 650; color: var(--warn); }
+  #audit .ab { font-size: 12px; color: var(--ink-dim); margin-top: 6px; line-height: 1.45; }
+  #audit .ab b { color: var(--ink); font-variant-numeric: tabular-nums; }
+
+  /* ---- Hint ---- */
+  #hint {
+    position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%);
+    z-index: 15; font-size: 12px; color: var(--ink-faint);
+    background: var(--panel); border: 1px solid var(--panel-brd);
+    padding: 8px 16px; border-radius: 999px; backdrop-filter: blur(14px);
+    opacity: 0; transition: opacity .5s;
+  }
+  #hint.show { opacity: 1; }
+
+  /* ---- Static fallback ---- */
+  .reduced #constellation { opacity: .9; }
+  @media (max-width: 760px) {
+    #pipeline { display: none; }
+    #panelRight { width: 220px; }
+  }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="constellation"></canvas>
+
+  <header>
+    <div class="brand">
+      <div class="mark"></div>
+      <div>
+        <h1>glasshat <span class="sub">constellation</span></h1>
+      </div>
+    </div>
+    <div class="pill"><span class="dot live"></span> gemini-3.1-flash-lite · Vertex AI</div>
+  </header>
+
+  <aside id="pipeline">
+    <h2>Live evaluation</h2>
+    <div class="step" data-step="0"><span class="ix">1</span><span class="lbl">Input ingested<small>your pitch text</small></span></div>
+    <div class="step" data-step="1"><span class="ix">2</span><span class="lbl">RubricSynthesizer<small>maps official rubric</small></span></div>
+    <div class="step" data-step="2"><span class="ix">3</span><span class="lbl">BluePlanner<small>routes the hats</small></span></div>
+    <div class="step" data-step="3"><span class="ix">4</span><span class="lbl">SixHatPanel<small>scores w/ evidence</small></span></div>
+    <div class="step" data-step="4"><span class="ix">5</span><span class="lbl">Self-Audit<small>calibration check</small></span></div>
+    <div class="step" data-step="5"><span class="ix">6</span><span class="lbl">Final score<small>rubric-native scale</small></span></div>
+  </aside>
+
+  <section id="panelRight">
+    <div class="card">
+      <h2>Your pitch</h2>
+      <textarea id="pitch" spellcheck="false">SeedMesh — a B2B marketplace that auto-matches micro-creators to brand campaigns. We ran 3 paid pilots (2 renewed), $4.1k MRR, retrieval-augmented matching cuts brand sourcing time 71%. Asking for design partners.</textarea>
+      <button class="btn" id="runBtn">Evaluate transparently</button>
+    </div>
+
+    <div class="card" id="scoreCard">
+      <h2>Final score</h2>
+      <div class="score-num" id="scoreNum">—</div>
+      <div class="score-scale">out of 50 · official rubric</div>
+      <div class="score-tag" id="scoreTag" style="visibility:hidden"><span class="dot"></span> audited &amp; calibrated</div>
+      <div class="breakdown" id="breakdown"></div>
+    </div>
+  </section>
+
+  <div id="audit">
+    <div class="ah"><span>⚖︎</span> Self-audit caught an over-confident hat</div>
+    <div class="ab" id="auditBody">YELLOW rated <b>Market</b> at <b>9.0</b> — evidence depth doesn't support it. Recalibrating to <b>7.8</b> before finalizing.</div>
+  </div>
+
+  <!-- Evidence drawer -->
+  <div id="evidence">
+    <div class="eh">
+      <div class="et">
+        <span class="hatdot" id="evDot"></span>
+        <div>
+          <h3 id="evTitle">Criterion</h3>
+          <div class="crit" id="evCrit">rubric criterion</div>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div class="escore" id="evScore">—<small>/10</small></div>
+      </div>
+      <button class="close" id="evClose">×</button>
+    </div>
+    <div class="ev-list" id="evList"></div>
+    <div class="ev-foot"><span class="dot"></span> 3 passages retrieved &amp; cited · trace logged to Arize AX</div>
+  </div>
+
+  <div id="hint">Click any glowing node to open the evidence behind its score</div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduced) document.body.classList.add("reduced");
+
+  const canvas = document.getElementById("constellation");
+  const ctx = canvas.getContext("2d");
+  let W = 0, H = 0, DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+  function resize() {
+    W = window.innerWidth; H = window.innerHeight;
+    canvas.width = W * DPR; canvas.height = H * DPR;
+    canvas.style.width = W + "px"; canvas.style.height = H + "px";
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+  window.addEventListener("resize", resize);
+  resize();
+
+  // Hat color lookup (resolved from CSS vars)
+  function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+  const HAT = {
+    white:  { c: cssVar("--white-hat"),  name: "WHITE",  facet: "Facts & Traction" },
+    red:    { c: cssVar("--red-hat"),    name: "RED",    facet: "Gut & Desirability" },
+    yellow: { c: cssVar("--yellow-hat"), name: "YELLOW", facet: "Upside & Market" },
+    black:  { c: cssVar("--black-hat"),  name: "BLACK",  facet: "Risk & Defensibility" },
+    green:  { c: cssVar("--green-hat"),  name: "GREEN",  facet: "Innovation" },
+    blue:   { c: cssVar("--blue-hat"),   name: "BLUE",   facet: "Process & Clarity" }
+  };
+
+  // Six rubric criteria → one per hat. Position by score (radius) / weight (angle) / depth (size).
+  // 3D coordinates: we place on a sphere-ish shell and project.
+  const RUBRIC = [
+    { hat: "white",  crit: "Traction & Evidence",  weight: 10, score: 8.4, depth: 3, ang: 0.0 },
+    { hat: "yellow", crit: "Market Opportunity",   weight: 8,  score: 9.0, depth: 1, ang: 1.05, overconf: true, corrected: 7.8 },
+    { hat: "green",  crit: "Innovation",            weight: 8,  score: 8.1, depth: 2, ang: 2.10 },
+    { hat: "blue",   crit: "Clarity & Process",     weight: 6,  score: 8.6, depth: 3, ang: 3.14 },
+    { hat: "black",  crit: "Risk & Defensibility",  weight: 9,  score: 6.9, depth: 3, ang: 4.19 },
+    { hat: "red",    crit: "Desirability",          weight: 9,  score: 7.7, depth: 2, ang: 5.24 }
+  ];
+
+  // node 3d positions on a tilted ring; depth pushes toward/away
+  const cx = () => W / 2, cy = () => H / 2 + 8;
+  const RING = () => Math.min(W, H) * 0.27;
+  RUBRIC.forEach(n => {
+    n.cur = n.overconf ? n.score : n.score; // current displayed score
+    n.tScore = n.cur;
+    n.pulse = Math.random() * Math.PI * 2;
+    n.r = 5 + n.depth * 2.5;
+  });
+
+  // 3D rotation state
+  let rotY = 0, rotX = -0.32;
+  let targetRotY = 0;
+  let mouseX = 0.5, mouseY = 0.5;
+
+  function project(node, t) {
+    // base angle around ring, radius depends on score (lower score = further out a touch)
+    const radius = RING() * (0.7 + (10 - node.cur) * 0.018);
+    // tilt: ring lies in 3D, depth offset along z
+    const a = node.ang + rotY;
+    let x = Math.cos(a) * radius;
+    let z = Math.sin(a) * radius;
+    let y = (node.depth - 2) * 26; // evidence-depth raises/lowers
+    // apply rotX tilt
+    const y2 = y * Math.cos(rotX) - z * Math.sin(rotX);
+    const z2 = y * Math.sin(rotX) + z * Math.cos(rotX);
+    // perspective
+    const persp = 620 / (620 + z2);
+    return {
+      x: cx() + x * persp,
+      y: cy() + y2 * persp,
+      scale: persp,
+      z: z2
+    };
+  }
+
+  // Background stars
+  const STARS = [];
+  for (let i = 0; i < 140; i++) {
+    STARS.push({ x: Math.random(), y: Math.random(), s: Math.random() * 1.6 + 0.3, tw: Math.random() * Math.PI * 2 });
+  }
+
+  // ---- State machine ----
+  let phase = "idle";       // idle | running | done
+  let revealCount = 0;       // how many nodes have "scored"
+  let auditing = false;
+  let auditProgress = 0;     // 0..1 lerp for the corrected node
+  let t0 = performance.now();
+  let activeNode = null;
+
+  const steps = [...document.querySelectorAll(".step")];
+  function setStep(i) {
+    steps.forEach((s, k) => {
+      s.classList.toggle("done", k < i);
+      s.classList.toggle("active", k === i);
+    });
+  }
+
+  // ---- Render loop ----
+  function frame(now) {
+    const t = (now - t0) / 1000;
+    if (!reduced) {
+      rotY += (targetRotY - rotY) * 0.05;
+      targetRotY += 0.0016; // gentle drift
+      rotX = -0.32 + (mouseY - 0.5) * 0.18;
+    }
+    draw(t);
+    requestAnimationFrame(frame);
+  }
+
+  function withAlpha(col, a) {
+    // col is oklch(...) string; append alpha
+    if (col.startsWith("oklch")) {
+      return col.replace(/\)$/, " / " + a + ")");
+    }
+    return col;
+  }
+
+  function draw(t) {
+    ctx.clearRect(0, 0, W, H);
+
+    // stars
+    for (const s of STARS) {
+      const tw = reduced ? 0.6 : 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(t * 1.4 + s.tw));
+      ctx.fillStyle = withAlpha("oklch(90% 0.02 260)", (0.18 + tw * 0.5).toFixed(3));
+      ctx.beginPath();
+      ctx.arc(s.x * W, s.y * H, s.s, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // compute projected positions
+    const pts = RUBRIC.map(n => ({ n, p: project(n, t) }));
+    // sort by z for painter's order
+    pts.sort((a, b) => a.p.z - b.p.z);
+
+    const visibleCount = phase === "idle" ? 0 : revealCount;
+
+    // connecting luminous lines (only among revealed nodes)
+    if (visibleCount >= 2) {
+      const rev = pts.filter((_, i) => true).filter(o => RUBRIC.indexOf(o.n) < visibleCount);
+      // sort revealed by original index so lines form a coherent ring
+      const revOrdered = rev.slice().sort((a, b) => RUBRIC.indexOf(a.n) - RUBRIC.indexOf(b.n));
+      ctx.lineWidth = 1;
+      for (let i = 0; i < revOrdered.length; i++) {
+        const A = revOrdered[i], B = revOrdered[(i + 1) % revOrdered.length];
+        if (revOrdered.length < 2) break;
+        if (revOrdered.length === RUBRIC.length || i < revOrdered.length - 1) {
+          const grad = ctx.createLinearGradient(A.p.x, A.p.y, B.p.x, B.p.y);
+          grad.addColorStop(0, withAlpha(HAT[A.n.hat].c, 0.28));
+          grad.addColorStop(1, withAlpha(HAT[B.n.hat].c, 0.28));
+          ctx.strokeStyle = grad;
+          ctx.beginPath();
+          ctx.moveTo(A.p.x, A.p.y);
+          ctx.lineTo(B.p.x, B.p.y);
+          ctx.stroke();
+        }
+      }
+      // central hub lines (BluePlanner core)
+      for (const o of revOrdered) {
+        ctx.strokeStyle = withAlpha("oklch(72% 0.10 250)", 0.10);
+        ctx.beginPath();
+        ctx.moveTo(cx(), cy());
+        ctx.lineTo(o.p.x, o.p.y);
+        ctx.stroke();
+      }
+    }
+
+    // central core node (the panel synthesizer)
+    const corePulse = reduced ? 1 : 0.85 + 0.15 * Math.sin(t * 2);
+    const coreGrad = ctx.createRadialGradient(cx(), cy(), 0, cx(), cy(), 46 * corePulse);
+    coreGrad.addColorStop(0, withAlpha("oklch(82% 0.14 250)", 0.55));
+    coreGrad.addColorStop(1, withAlpha("oklch(82% 0.14 250)", 0));
+    ctx.fillStyle = coreGrad;
+    ctx.beginPath(); ctx.arc(cx(), cy(), 46 * corePulse, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "oklch(92% 0.04 250)";
+    ctx.beginPath(); ctx.arc(cx(), cy(), 6, 0, Math.PI * 2); ctx.fill();
+
+    // nodes
+    for (let i = 0; i < pts.length; i++) {
+      const { n, p } = pts[i];
+      const origIx = RUBRIC.indexOf(n);
+      if (origIx >= visibleCount) continue;
+      const col = HAT[n.hat].c;
+      n.pulse += reduced ? 0 : 0.04;
+      const breathe = reduced ? 1 : 0.92 + 0.08 * Math.sin(n.pulse);
+      const r = n.r * p.scale * breathe;
+
+      // store screen pos for hit testing
+      n.sx = p.x; n.sy = p.y; n.sr = r;
+
+      // glow halo
+      const haloR = r * (n === activeNode ? 6 : 4);
+      const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, haloR);
+      const intensity = (n.overconf && auditing) ? 0.7 : 0.42;
+      g.addColorStop(0, withAlpha(col, intensity));
+      g.addColorStop(1, withAlpha(col, 0));
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(p.x, p.y, haloR, 0, Math.PI * 2); ctx.fill();
+
+      // core dot
+      ctx.fillStyle = col;
+      ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = withAlpha("oklch(98% 0.01 250)", 0.85);
+      ctx.beginPath(); ctx.arc(p.x - r * 0.28, p.y - r * 0.28, r * 0.32, 0, Math.PI * 2); ctx.fill();
+
+      // ring for active
+      if (n === activeNode) {
+        ctx.strokeStyle = withAlpha(col, 0.8);
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(p.x, p.y, r + 8, 0, Math.PI * 2); ctx.stroke();
+      }
+
+      // label
+      const fade = Math.min(1, p.scale);
+      ctx.font = "600 11.5px system-ui, sans-serif";
+      ctx.fillStyle = withAlpha("oklch(96% 0.01 270)", (0.55 + fade * 0.45).toFixed(2));
+      ctx.textAlign = "center";
+      ctx.fillText(n.crit, p.x, p.y - r - 11);
+      // score
+      ctx.font = "700 12px system-ui, sans-serif";
+      ctx.fillStyle = withAlpha(col, 0.95);
+      ctx.fillText(n.cur.toFixed(1), p.x, p.y + r + 18);
+    }
+
+    // audit re-position glow trail on corrected node
+    if (auditing) {
+      const cn = RUBRIC.find(n => n.overconf);
+      if (cn && cn.sx) {
+        ctx.strokeStyle = withAlpha(cssVar("--warn"), 0.5 + 0.3 * Math.sin(t * 6));
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 5]);
+        ctx.beginPath(); ctx.arc(cn.sx, cn.sy, cn.sr + 16, 0, Math.PI * 2); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+  }
+  requestAnimationFrame(frame);
+
+  // ---- Pointer interaction ----
+  window.addEventListener("pointermove", (e) => {
+    mouseX = e.clientX / W; mouseY = e.clientY / H;
+  });
+
+  canvas.addEventListener("click", (e) => {
+    if (phase !== "done") return;
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    let hit = null, best = 999;
+    for (const n of RUBRIC) {
+      if (!n.sx) continue;
+      const d = Math.hypot(mx - n.sx, my - n.sy);
+      if (d < n.sr + 16 && d < best) { best = d; hit = n; }
+    }
+    if (hit) openEvidence(hit);
+  });
+
+  // ---- Evidence content ----
+  const EVIDENCE = {
+    white: [
+      { ix: "TRACTION", q: "ran <em>3 paid pilots</em>, 2 renewed", s: "deck line 1 · retrieved 0.91" },
+      { ix: "REVENUE", q: "<em>$4.1k MRR</em> stated explicitly", s: "deck line 1 · retrieved 0.88" },
+      { ix: "EFFICIENCY", q: "matching <em>cuts sourcing time 71%</em>", s: "deck line 1 · retrieved 0.82" }
+    ],
+    yellow: [
+      { ix: "MARKET", q: "B2B creator-brand matching is a real spend category", s: "deck line 1 · retrieved 0.74" },
+      { ix: "GAP", q: "no TAM / SAM / growth rate given in pitch", s: "audit flag · evidence depth = 1" },
+      { ix: "NOTE", q: "score capped — claim outpaces cited support", s: "self-audit · calibration" }
+    ],
+    green: [
+      { ix: "RAG", q: "<em>retrieval-augmented matching</em> as core mechanic", s: "deck line 1 · retrieved 0.85" },
+      { ix: "WEDGE", q: "auto-match removes manual sourcing step", s: "deck line 1 · retrieved 0.79" },
+      { ix: "NOTE", q: "novelty moderate — RAG matching is emerging-common", s: "panel reasoning" }
+    ],
+    blue: [
+      { ix: "ASK", q: "clear ask: <em>design partners</em>", s: "deck line 1 · retrieved 0.90" },
+      { ix: "STRUCTURE", q: "problem → mechanic → metric → ask, in order", s: "panel reasoning · 0.86" },
+      { ix: "NOTE", q: "concise; lacks roadmap detail", s: "panel reasoning" }
+    ],
+    black: [
+      { ix: "MOAT", q: "no stated defensibility vs incumbents", s: "audit flag · evidence depth = 3" },
+      { ix: "CHURN", q: "2 of 3 renewed — 1 churn unaddressed", s: "deck line 1 · retrieved 0.81" },
+      { ix: "SCALE", q: "marketplace cold-start risk not discussed", s: "panel reasoning" }
+    ],
+    red: [
+      { ix: "PULL", q: "renewals signal genuine <em>desirability</em>", s: "deck line 1 · retrieved 0.83" },
+      { ix: "EMOTION", q: "pain (sourcing time) is felt, not abstract", s: "panel reasoning · 0.77" },
+      { ix: "NOTE", q: "sample small — gut confidence tempered", s: "panel reasoning" }
+    ]
+  };
+
+  const ev = document.getElementById("evidence");
+  function openEvidence(n) {
+    activeNode = n;
+    document.getElementById("evDot").style.color = HAT[n.hat].c;
+    document.getElementById("evDot").style.background = HAT[n.hat].c;
+    document.getElementById("evTitle").textContent = n.crit;
+    document.getElementById("evCrit").textContent = HAT[n.hat].name + " hat · " + HAT[n.hat].facet + " · weight " + n.weight;
+    document.getElementById("evScore").innerHTML = n.cur.toFixed(1) + "<small>/10</small>";
+    const list = document.getElementById("evList");
+    list.innerHTML = "";
+    EVIDENCE[n.hat].forEach(e => {
+      const d = document.createElement("div");
+      d.className = "ev-item";
+      d.innerHTML = '<span class="qix">' + e.ix + '</span><div><div class="qt">' + e.q + '</div><div class="qs">' + e.s + '</div></div>';
+      list.appendChild(d);
+    });
+    ev.classList.add("open");
+  }
+  document.getElementById("evClose").addEventListener("click", () => {
+    ev.classList.remove("open"); activeNode = null;
+  });
+
+  // ---- Run sequence ----
+  const runBtn = document.getElementById("runBtn");
+  const scoreCard = document.getElementById("scoreCard");
+  const scoreNum = document.getElementById("scoreNum");
+  const scoreTag = document.getElementById("scoreTag");
+  const breakdown = document.getElementById("breakdown");
+  const auditEl = document.getElementById("audit");
+  const hint = document.getElementById("hint");
+
+  function delay(ms) { return new Promise(r => setTimeout(r, reduced ? Math.min(ms, 120) : ms)); }
+
+  async function run() {
+    if (phase === "running") return;
+    phase = "running";
+    runBtn.disabled = true; runBtn.textContent = "Evaluating…";
+    revealCount = 0; auditing = false; activeNode = null;
+    ev.classList.remove("open");
+    scoreCard.classList.remove("lit");
+    scoreNum.textContent = "—";
+    scoreTag.style.visibility = "hidden";
+    breakdown.innerHTML = "";
+    hint.classList.remove("show");
+    // reset corrected node back to over-confident
+    const cn = RUBRIC.find(n => n.overconf);
+    cn.cur = 9.0;
+
+    // Step 1: Input
+    setStep(0); await delay(700);
+    // Step 2: RubricSynthesizer
+    setStep(1); await delay(900);
+    // Step 3: BluePlanner
+    setStep(2); await delay(800);
+    // Step 4: SixHatPanel — reveal nodes one by one
+    setStep(3);
+    for (let i = 0; i < RUBRIC.length; i++) {
+      revealCount = i + 1;
+      await delay(reduced ? 60 : 380);
+    }
+    await delay(500);
+
+    // Step 5: Self-Audit — catch over-confident YELLOW and re-position
+    setStep(4);
+    auditEl.classList.add("show");
+    auditing = true;
+    await delay(reduced ? 200 : 1400);
+    // animate score correction 9.0 -> 7.8 and node re-position (radius changes w/ score)
+    const from = 9.0, to = 7.8, dur = reduced ? 200 : 1100;
+    await animateScore(cn, from, to, dur);
+    auditing = false;
+    await delay(700);
+    auditEl.classList.remove("show");
+
+    // Step 6: Final score
+    setStep(5);
+    steps[5].classList.add("active");
+    await delay(400);
+    finalize();
+    phase = "done";
+    runBtn.disabled = false; runBtn.textContent = "Re-evaluate";
+    hint.classList.add("show");
+  }
+
+  function animateScore(node, from, to, dur) {
+    return new Promise(res => {
+      const start = performance.now();
+      function tick(now) {
+        const k = Math.min(1, (now - start) / dur);
+        const e = 1 - Math.pow(1 - k, 3);
+        node.cur = from + (to - from) * e;
+        if (k < 1) requestAnimationFrame(tick); else res();
+      }
+      requestAnimationFrame(tick);
+    });
+  }
+
+  function finalize() {
+    // weighted total on 0..50 rubric scale
+    const totW = RUBRIC.reduce((a, n) => a + n.weight, 0);
+    const weighted = RUBRIC.reduce((a, n) => a + n.cur * n.weight, 0) / totW; // 0..10
+    const final50 = (weighted / 10) * 50;
+    scoreCard.classList.add("lit");
+    scoreTag.style.visibility = "visible";
+    // count up
+    const target = final50;
+    const start = performance.now();
+    const dur = reduced ? 120 : 900;
+    function tick(now) {
+      const k = Math.min(1, (now - start) / dur);
+      scoreNum.textContent = (target * (1 - Math.pow(1 - k, 3))).toFixed(1);
+      if (k < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+
+    // breakdown bars
+    breakdown.innerHTML = "";
+    RUBRIC.slice().sort((a, b) => b.weight - a.weight).forEach(n => {
+      const row = document.createElement("div");
+      row.className = "br-row";
+      row.innerHTML = '<span class="nm">' + n.crit + '</span>' +
+        '<span class="bar"><i style="background:' + HAT[n.hat].c + '"></i></span>' +
+        '<span class="vv">' + n.cur.toFixed(1) + '</span>';
+      breakdown.appendChild(row);
+      requestAnimationFrame(() => {
+        row.querySelector("i").style.width = (n.cur * 10) + "%";
+      });
+    });
+  }
+
+  runBtn.addEventListener("click", run);
+
+  // Auto-run shortly after load so the experience feels alive on open
+  setTimeout(run, reduced ? 200 : 900);
+})();
+</script>
+</body>
+</html>

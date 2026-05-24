@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>glasshat — Guided Evaluation Walkthrough</title>
+<style>
+  :root {
+    /* OKLCH palette — calm, didactic, legible */
+    --bg:        oklch(98.5% 0.006 250);
+    --surface:   oklch(100% 0 0);
+    --surface-2: oklch(97% 0.01 250);
+    --ink:       oklch(28% 0.03 260);
+    --ink-soft:  oklch(48% 0.02 260);
+    --ink-faint: oklch(62% 0.015 260);
+    --line:      oklch(91% 0.01 260);
+    --accent:    oklch(58% 0.14 255);
+    --accent-soft: oklch(95% 0.04 255);
+    --ok:        oklch(64% 0.15 150);
+    --warn:      oklch(72% 0.16 75);
+    --bad:       oklch(60% 0.18 25);
+    --shadow: 0 1px 2px oklch(28% 0.03 260 / .06), 0 8px 24px oklch(28% 0.03 260 / .08);
+
+    /* hat colors */
+    --hat-white: oklch(80% 0.01 260);
+    --hat-red:   oklch(62% 0.19 25);
+    --hat-yellow:oklch(78% 0.15 90);
+    --hat-black: oklch(38% 0.02 260);
+    --hat-green: oklch(64% 0.15 150);
+    --hat-blue:  oklch(58% 0.14 255);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 20px; }
+
+  /* ---- top bar ---- */
+  header {
+    position: sticky; top: 0; z-index: 40;
+    background: oklch(100% 0 0 / .85);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .bar { display: flex; align-items: center; gap: 12px; padding: 14px 20px; max-width: 880px; margin: 0 auto; }
+  .logo { display: flex; align-items: center; gap: 9px; font-weight: 700; letter-spacing: -.02em; }
+  .logo svg { display:block; }
+  .badge {
+    margin-left: auto; font-size: 12px; color: var(--ink-soft);
+    background: var(--surface-2); border: 1px solid var(--line);
+    border-radius: 999px; padding: 4px 11px;
+  }
+  .progress-track { height: 3px; background: var(--line); }
+  .progress-bar { height: 100%; width: 0%; background: var(--accent); transition: width .4s ease; }
+
+  /* ---- hero / input ---- */
+  .hero { padding: 46px 0 8px; }
+  h1 { font-size: clamp(26px, 4vw, 38px); line-height: 1.15; letter-spacing: -.03em; margin: 0 0 12px; }
+  .lede { font-size: 17px; color: var(--ink-soft); max-width: 60ch; margin: 0 0 26px; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 16px; box-shadow: var(--shadow); padding: 22px;
+  }
+  label.fld { display:block; font-size: 13px; font-weight: 600; color: var(--ink-soft); margin-bottom: 8px; }
+  textarea {
+    width: 100%; min-height: 130px; resize: vertical;
+    font: inherit; font-size: 14.5px; color: var(--ink);
+    border: 1px solid var(--line); border-radius: 11px; padding: 13px 14px;
+    background: var(--surface-2);
+  }
+  textarea:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+  .row { display: flex; gap: 12px; align-items: center; margin-top: 16px; flex-wrap: wrap; }
+  .rubric-pick {
+    font: inherit; font-size: 13.5px; padding: 9px 12px; border-radius: 10px;
+    border: 1px solid var(--line); background: var(--surface-2); color: var(--ink);
+  }
+  button.primary {
+    font: inherit; font-weight: 650; font-size: 15px; cursor: pointer;
+    background: var(--accent); color: oklch(100% 0 0);
+    border: none; border-radius: 11px; padding: 12px 20px;
+    display: inline-flex; align-items: center; gap: 9px;
+    box-shadow: 0 4px 14px oklch(58% 0.14 255 / .35);
+    transition: transform .12s ease, filter .12s ease;
+  }
+  button.primary:hover { filter: brightness(1.05); }
+  button.primary:active { transform: translateY(1px); }
+  button.primary:disabled { opacity: .55; cursor: default; box-shadow: none; }
+  .hint { font-size: 12.5px; color: var(--ink-faint); margin-left: auto; }
+
+  /* ---- teaching callout ---- */
+  .teach {
+    display: flex; gap: 12px; align-items: flex-start;
+    background: var(--accent-soft); border: 1px solid oklch(85% 0.06 255);
+    border-radius: 13px; padding: 13px 15px; margin-top: 18px;
+    font-size: 13.5px; color: oklch(40% 0.08 258);
+  }
+  .teach b { color: oklch(34% 0.1 258); }
+  .teach .ic { flex: 0 0 auto; margin-top: 1px; }
+
+  /* ---- pipeline section ---- */
+  .stage { padding: 34px 0; }
+  .stage h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .12em; color: var(--ink-faint); margin: 0 0 18px; font-weight: 700; }
+
+  .pipeline { display: flex; flex-direction: column; gap: 0; }
+  .step {
+    position: relative; display: flex; gap: 16px; padding: 0 0 4px;
+    opacity: .4; filter: saturate(.4);
+    transition: opacity .5s ease, filter .5s ease;
+  }
+  .step.active, .step.done { opacity: 1; filter: none; }
+  .step .gutter { flex: 0 0 34px; display: flex; flex-direction: column; align-items: center; }
+  .node {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--surface); border: 2px solid var(--line);
+    display: grid; place-items: center; font-size: 13px; font-weight: 700; color: var(--ink-faint);
+    z-index: 2; transition: all .35s ease;
+  }
+  .step.active .node { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 0 5px var(--accent-soft); }
+  .step.done .node { background: var(--ok); border-color: var(--ok); color: oklch(100% 0 0); }
+  .connector { flex: 1; width: 2px; background: var(--line); margin: 2px 0; }
+  .step:last-child .connector { display: none; }
+  .step.done .connector { background: var(--ok); }
+
+  .step .body { flex: 1; padding-bottom: 22px; }
+  .step .body .t { font-weight: 650; font-size: 15.5px; display:flex; align-items:center; gap:8px; }
+  .pill {
+    font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px;
+    background: var(--surface-2); color: var(--ink-faint); border: 1px solid var(--line);
+  }
+  .step.active .pill { background: var(--accent-soft); color: var(--accent); border-color: oklch(85% 0.06 255); }
+  .step.done .pill { background: oklch(95% 0.06 150); color: oklch(45% 0.12 150); border-color: oklch(85% 0.07 150); }
+  .step .body .cap {
+    font-size: 13.5px; color: var(--ink-soft); margin-top: 5px;
+    max-height: 0; overflow: hidden; opacity: 0; transition: max-height .5s ease, opacity .4s ease, margin .4s ease;
+  }
+  .step.active .body .cap, .step.done .body .cap { max-height: 140px; opacity: 1; margin-top: 7px; }
+  .step .body .cap .why { color: var(--ink); }
+
+  /* ---- hats grid ---- */
+  .hats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 14px; }
+  @media (max-width: 560px){ .hats { grid-template-columns: 1fr; } }
+  .hat {
+    border: 1px solid var(--line); border-radius: 13px; background: var(--surface);
+    padding: 13px 14px; opacity: 0; transform: translateY(8px);
+    transition: opacity .45s ease, transform .45s ease, border-color .3s ease, box-shadow .3s ease;
+  }
+  .hat.in { opacity: 1; transform: none; }
+  .hat .hh { display: flex; align-items: center; gap: 9px; }
+  .dot { width: 14px; height: 14px; border-radius: 50%; border: 1px solid oklch(0% 0 0 / .12); flex:0 0 auto; }
+  .hat .name { font-weight: 650; font-size: 14px; }
+  .hat .role { font-size: 11.5px; color: var(--ink-faint); margin-left: auto; }
+  .hat .desc { font-size: 12.5px; color: var(--ink-soft); margin: 7px 0 9px; min-height: 32px; }
+  .scoreline { display: flex; align-items: center; gap: 8px; }
+  .scoreval { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 18px; letter-spacing: -.02em; }
+  .scorebar { flex:1; height: 7px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+  .scorefill { height: 100%; width: 0%; border-radius: 999px; transition: width .8s cubic-bezier(.2,.7,.2,1); }
+  .evbtn {
+    margin-top: 9px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
+    background: var(--surface-2); border: 1px solid var(--line); color: var(--accent);
+    border-radius: 8px; padding: 6px 10px; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .evbtn:hover { background: var(--accent-soft); }
+  .evidence {
+    max-height: 0; overflow: hidden; opacity: 0;
+    transition: max-height .45s ease, opacity .3s ease, margin .3s ease;
+    border-left: 2px solid var(--line); padding-left: 11px; font-size: 12px; color: var(--ink-soft);
+  }
+  .evidence.open { max-height: 260px; opacity: 1; margin-top: 10px; }
+  .evidence .q { color: var(--ink); border-bottom: 1px dotted var(--line); padding: 6px 0; }
+  .evidence .src { display: inline-block; font-size: 10.5px; color: var(--accent); margin-top: 4px; }
+
+  /* hat audit-flag state */
+  .hat.flagged { border-color: var(--warn); box-shadow: 0 0 0 3px oklch(72% 0.16 75 / .12); }
+  .hat .auditmsg {
+    max-height: 0; overflow: hidden; opacity: 0;
+    transition: max-height .5s ease, opacity .4s ease, margin .4s ease;
+    font-size: 12px; background: oklch(96% 0.06 75); border: 1px solid oklch(85% 0.1 75);
+    color: oklch(45% 0.13 70); border-radius: 9px; padding: 0 11px;
+  }
+  .hat .auditmsg.show { max-height: 130px; opacity: 1; margin-top: 9px; padding: 9px 11px; }
+  .strike { text-decoration: line-through; color: var(--ink-faint); font-weight: 600; }
+
+  /* ---- audit banner ---- */
+  .audit {
+    margin-top: 18px; border: 1px solid oklch(85% 0.1 75); background: oklch(97.5% 0.03 80);
+    border-radius: 14px; padding: 16px 18px; display: none; gap: 13px;
+  }
+  .audit.show { display: flex; }
+  .audit .ic { flex:0 0 auto; }
+  .audit h3 { margin: 0 0 4px; font-size: 15px; }
+  .audit p { margin: 0; font-size: 13.5px; color: oklch(42% 0.08 70); }
+  .audit .teachtag { display:inline-block; margin-top:8px; font-size:11.5px; font-weight:600; color: oklch(40% 0.1 70); background: oklch(93% 0.06 80); border-radius:999px; padding:3px 10px; }
+
+  /* ---- final score ---- */
+  .final {
+    margin-top: 22px; border-radius: 18px; padding: 0;
+    background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow);
+    overflow: hidden; opacity: 0; transform: translateY(10px);
+    transition: opacity .6s ease, transform .6s ease;
+  }
+  .final.in { opacity: 1; transform: none; }
+  .final .head {
+    display: flex; align-items: center; gap: 20px; padding: 24px;
+    background: linear-gradient(135deg, oklch(96% 0.04 255), oklch(97% 0.03 150));
+    border-bottom: 1px solid var(--line); flex-wrap: wrap;
+  }
+  .ring { position: relative; width: 116px; height: 116px; flex: 0 0 auto; }
+  .ring svg { transform: rotate(-90deg); }
+  .ring .num { position:absolute; inset:0; display:grid; place-items:center; text-align:center; }
+  .ring .num b { font-size: 30px; letter-spacing:-.03em; font-variant-numeric: tabular-nums; display:block; }
+  .ring .num span { font-size: 11px; color: var(--ink-faint); }
+  .final .head .meta h3 { margin: 0 0 4px; font-size: 19px; letter-spacing:-.02em; }
+  .final .head .meta p { margin: 0; font-size: 13.5px; color: var(--ink-soft); max-width: 42ch; }
+  .breakdown { padding: 18px 24px 24px; }
+  .breakdown h4 { font-size: 12px; text-transform: uppercase; letter-spacing:.1em; color: var(--ink-faint); margin: 0 0 12px; }
+  .brow { display:flex; align-items:center; gap:12px; padding: 7px 0; border-bottom: 1px dashed var(--line); font-size: 13.5px; }
+  .brow:last-child { border-bottom: none; }
+  .brow .lbl { flex: 0 0 168px; color: var(--ink-soft); }
+  .brow .bar { flex:1; height: 8px; background: var(--surface-2); border-radius: 999px; overflow:hidden; }
+  .brow .bar i { display:block; height:100%; width:0; background: var(--accent); border-radius:999px; transition: width 1s cubic-bezier(.2,.7,.2,1); }
+  .brow .v { flex:0 0 64px; text-align:right; font-variant-numeric: tabular-nums; font-weight:650; }
+  .corrected { font-size: 11px; color: var(--warn); }
+
+  footer { padding: 40px 0 60px; text-align:center; color: var(--ink-faint); font-size: 12.5px; }
+
+  .visually-hidden { position:absolute; width:1px; height:1px; overflow:hidden; clip: rect(0 0 0 0); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <span class="logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M4 9 L12 4 L20 9 L12 14 Z" fill="oklch(58% 0.14 255)"/>
+        <path d="M4 9 L12 14 L20 9 L20 13 L12 18 L4 13 Z" fill="oklch(78% 0.08 255)"/>
+      </svg>
+      glasshat
+    </span>
+    <span class="badge">Transparent evaluation · 6-hat panel</span>
+  </div>
+  <div class="progress-track"><div class="progress-bar" id="prog"></div></div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <h1>See exactly how — and why — your pitch is scored.</h1>
+      <p class="lede">Paste your pitch. A six-perspective AI panel evaluates it against the official rubric, live on this page. Every number is grounded in evidence you can open, and the system audits itself before it commits to a final score.</p>
+
+      <div class="card">
+        <label class="fld" for="pitch">Your pitch / deck text</label>
+        <textarea id="pitch" spellcheck="false">Glasshat is an evaluation-transparency layer for hackathons. Founders paste their pitch and watch a six-perspective AI panel score it against the official rubric in real time — every sub-score links to the exact sentence that justified it, and the panel self-audits to catch over-confident judgments before finalizing. Live on gemini-3.1-flash-lite (Vertex AI), instrumented end-to-end with Arize AX.</textarea>
+        <div class="row">
+          <select class="rubric-pick" id="rubric" aria-label="Rubric">
+            <option>Official Hackathon Rubric · 0–10 scale</option>
+            <option>Lean Startup Rubric · 0–10 scale</option>
+          </select>
+          <button class="primary" id="run">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 4l14 8-14 8z" fill="currentColor"/></svg>
+            Evaluate my pitch
+          </button>
+          <span class="hint">≈ 12s · gemini-3.1-flash-lite</span>
+        </div>
+
+        <div class="teach">
+          <svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="oklch(58% 0.14 255)" stroke-width="1.6"/><path d="M12 11v5" stroke="oklch(58% 0.14 255)" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.1" fill="oklch(58% 0.14 255)"/></svg>
+          <div><b>What you'll see:</b> the evaluation runs as a visible pipeline. We'll explain each step in plain language as it happens — including the moment the panel corrects one of its own hats. Nothing is hidden.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="stage" id="pipeStage" aria-live="polite">
+    <div class="wrap">
+      <h2>Live evaluation pipeline</h2>
+      <div class="pipeline" id="pipeline">
+
+        <div class="step" data-step="0">
+          <div class="gutter"><div class="node">1</div><div class="connector"></div></div>
+          <div class="body">
+            <div class="t">Reading your input <span class="pill">step</span></div>
+            <div class="cap">We parse your pitch and detect claims, asks, and proof points. <span class="why">Why this matters: later steps cite back to these exact spans, so nothing is invented.</span></div>
+          </div>
+        </div>
+
+        <div class="step" data-step="1">
+          <div class="gutter"><div class="node">2</div><div class="connector"></div></div>
+          <div class="body">
+            <div class="t">RubricSynthesizer <span class="pill">step</span></div>
+            <div class="cap">We translate the <em>official rubric</em> into measurable criteria — clarity, evidence, feasibility, impact. <span class="why">Why: the panel scores against the rubric you chose, not a generic opinion.</span></div>
+          </div>
+        </div>
+
+        <div class="step" data-step="2">
+          <div class="gutter"><div class="node">3</div><div class="connector"></div></div>
+          <div class="body">
+            <div class="t">BluePlanner <span class="pill">step</span></div>
+            <div class="cap">The Blue (process) hat assigns each criterion to the right thinking hat and sets the evidence each will need to retrieve. <span class="why">Why: it keeps the six perspectives independent so they don't echo each other.</span></div>
+          </div>
+        </div>
+
+        <div class="step" data-step="3">
+          <div class="gutter"><div class="node">4</div><div class="connector"></div></div>
+          <div class="body">
+            <div class="t">Six-Hat Panel <span class="pill">step</span></div>
+            <div class="cap">Each hat scores its angle and shows its work. Open any score to read the evidence behind it. <span class="why">Why: a number alone isn't trustworthy — the citation is.</span></div>
+            <div class="hats" id="hats"></div>
+          </div>
+        </div>
+
+        <div class="step" data-step="4">
+          <div class="gutter"><div class="node">5</div><div class="connector"></div></div>
+          <div class="body">
+            <div class="t">Self-Audit <span class="pill">step</span></div>
+            <div class="cap">Before finalizing, an auditor re-checks every hat against its own evidence and flags over-confidence. <span class="why">Why: this is the fairness step — a score that the evidence can't support gets pulled back.</span></div>
+            <div class="audit" id="auditBanner">
+              <svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l8 4v5c0 4.5-3 7.5-8 9-5-1.5-8-4.5-8-9V7z" stroke="oklch(72% 0.16 75)" stroke-width="1.6"/><path d="M8.5 12l2.4 2.4L16 9.5" stroke="oklch(72% 0.16 75)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <div>
+                <h3>Caught an over-confident score</h3>
+                <p>The <b>Yellow</b> (optimism) hat rated <b>Market Impact 9.0</b>, but its retrieved evidence supported one validated channel — not the broad traction that score implies. The auditor pulled it back to <b>7.8</b> and recorded why.</p>
+                <span class="teachtag">Teachable moment: a confident hat is still held to its evidence.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step" data-step="5">
+          <div class="gutter"><div class="node">6</div></div>
+          <div class="body">
+            <div class="t">Final score <span class="pill">step</span></div>
+            <div class="cap">We combine the audited hat scores onto the rubric's native scale, with a transparent breakdown. <span class="why">Why: you can trace the final number back to every step above.</span></div>
+
+            <div class="final" id="final">
+              <div class="head">
+                <div class="ring" aria-hidden="true">
+                  <svg width="116" height="116" viewBox="0 0 116 116">
+                    <circle cx="58" cy="58" r="50" fill="none" stroke="var(--line)" stroke-width="10"/>
+                    <circle id="ringArc" cx="58" cy="58" r="50" fill="none" stroke="var(--accent)" stroke-width="10" stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="314"/>
+                  </svg>
+                  <div class="num"><b id="finalNum">0.0</b><span>/ 10 rubric</span></div>
+                </div>
+                <div class="meta">
+                  <h3>Solid, evidence-backed pitch</h3>
+                  <p>Strong clarity and a credible plan. Your weakest grounded area is breadth of market validation — the panel saw one proven channel, not many.</p>
+                </div>
+              </div>
+              <div class="breakdown">
+                <h4>How the score breaks down</h4>
+                <div id="breakRows"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">Evaluated by glasshat · gemini-3.1-flash-lite on Vertex AI · traced with Arize AX · calibrated via Phoenix.<br/>Every score on this page is grounded in evidence you can open. This is a design preview with representative data.</div>
+  </footer>
+</main>
+
+<script>
+(() => {
+  "use strict";
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // ---- hat data ----
+  const HATS = [
+    { key:"white", name:"White · Facts",   color:"var(--hat-white)", desc:"Checks what is objectively stated and what is missing.",
+      score:8.2, crit:"Evidence completeness",
+      evidence:[
+        {q:"“every sub-score links to the exact sentence that justified it”", src:"input span 2 · verbatim claim"},
+        {q:"No quantified user count or revenue cited yet.", src:"audit note · gap flagged"}
+      ]},
+    { key:"red", name:"Red · Instinct",   color:"var(--hat-red)", desc:"Reads gut reaction, emotional pull, and credibility feel.",
+      score:7.5, crit:"Narrative pull",
+      evidence:[
+        {q:"“watch a six-perspective AI panel score it … in real time”", src:"input span 1 · evokes trust"},
+        {q:"Tone is confident without overselling.", src:"sentiment pass"}
+      ]},
+    { key:"yellow", name:"Yellow · Optimism", color:"var(--hat-yellow)", desc:"Surfaces upside, best-case impact, and growth potential.",
+      score:9.0, scoreCorrected:7.8, flagged:true, crit:"Market impact",
+      evidence:[
+        {q:"“instrumented end-to-end with Arize AX”", src:"input span 4 · one validated channel"},
+        {q:"No multi-segment traction evidence retrieved.", src:"retrieval · 0 of 3 expected sources"}
+      ]},
+    { key:"black", name:"Black · Caution", color:"var(--hat-black)", desc:"Probes risks, weak claims, and what could fail.",
+      score:6.9, crit:"Risk & feasibility",
+      evidence:[
+        {q:"Depends on rubric-translation accuracy — single point of failure.", src:"risk model"},
+        {q:"“Live on gemini-3.1-flash-lite (Vertex AI)” — cost at scale unproven.", src:"input span 4"}
+      ]},
+    { key:"green", name:"Green · Creativity", color:"var(--hat-green)", desc:"Looks for novelty and differentiated approach.",
+      score:8.6, crit:"Originality",
+      evidence:[
+        {q:"“the panel self-audits to catch over-confident judgments”", src:"input span 3 · novel mechanism"},
+        {q:"Self-correction as a product feature is uncommon.", src:"comparative pass"}
+      ]},
+    { key:"blue", name:"Blue · Process", color:"var(--hat-blue)", desc:"Judges structure, clarity, and how well the case is organized.",
+      score:8.4, crit:"Clarity & structure",
+      evidence:[
+        {q:"“Founders paste their pitch and watch …” — clear core loop.", src:"input span 1"},
+        {q:"Ask and proof are sequenced logically.", src:"structure pass"}
+      ]}
+  ];
+
+  const fmt = n => n.toFixed(1);
+  const scoreColor = s => s >= 8 ? "var(--ok)" : s >= 6.5 ? "var(--accent)" : "var(--warn)";
+
+  // ---- build hat cards ----
+  const hatsEl = document.getElementById("hats");
+  HATS.forEach((h, i) => {
+    const el = document.createElement("div");
+    el.className = "hat";
+    el.dataset.key = h.key;
+    el.innerHTML = `
+      <div class="hh">
+        <span class="dot" style="background:${h.color}"></span>
+        <span class="name">${h.name}</span>
+        <span class="role">${h.crit}</span>
+      </div>
+      <div class="desc">${h.desc}</div>
+      <div class="scoreline">
+        <span class="scoreval" data-target="${h.score}">0.0</span>
+        <span class="scorebar"><i class="scorefill"></i></span>
+      </div>
+      <button class="evbtn" type="button" aria-expanded="false">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 19V5l8 4 8-4v14l-8-4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        Why this score? · open evidence
+      </button>
+      <div class="evidence">
+        ${h.evidence.map(e => `<div class="q">${e.q}<br><span class="src">↳ ${e.src}</span></div>`).join("")}
+      </div>
+      <div class="auditmsg">
+        <b>Audit:</b> retrieved evidence supports one validated channel, not broad traction.
+        Score corrected <span class="strike">9.0</span> → <b>7.8</b>.
+      </div>`;
+    hatsEl.appendChild(el);
+
+    const fill = el.querySelector(".scorefill");
+    const valEl = el.querySelector(".scoreval");
+    fill.style.background = scoreColor(h.score);
+    valEl._final = h.score;
+
+    el.querySelector(".evbtn").addEventListener("click", (ev) => {
+      const ev2 = el.querySelector(".evidence");
+      const open = ev2.classList.toggle("open");
+      ev.currentTarget.setAttribute("aria-expanded", String(open));
+      ev.currentTarget.lastChild && (ev.currentTarget.childNodes[2].textContent =
+        open ? " Hide evidence" : " Why this score? · open evidence");
+    });
+  });
+
+  // ---- counter animation helper ----
+  function countTo(el, to, dur=700) {
+    if (reduce) { el.textContent = fmt(to); return; }
+    const from = parseFloat(el.textContent) || 0;
+    const t0 = performance.now();
+    function tick(now){
+      const p = Math.min(1, (now - t0) / dur);
+      const e = 1 - Math.pow(1 - p, 3);
+      el.textContent = fmt(from + (to - from) * e);
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  const sleep = ms => new Promise(r => setTimeout(r, reduce ? Math.min(ms,120) : ms));
+
+  const steps = [...document.querySelectorAll(".step")];
+  const prog = document.getElementById("prog");
+  function setProgress(done){ prog.style.width = (done/steps.length*100) + "%"; }
+
+  function activate(i){
+    steps.forEach((s,idx)=>{
+      s.classList.toggle("active", idx===i);
+      if (idx < i) { s.classList.add("done"); s.classList.remove("active"); }
+    });
+    if (!reduce) steps[i].scrollIntoView({ behavior:"smooth", block:"center" });
+  }
+  function markDone(i){ steps[i].classList.add("done"); steps[i].classList.remove("active"); }
+
+  let running = false;
+  async function run(){
+    if (running) return; running = true;
+    const btn = document.getElementById("run");
+    btn.disabled = true; btn.querySelector("svg").style.display="none";
+    btn.childNodes[2] && (btn.childNodes[2].textContent = " Evaluating…");
+
+    // reset
+    steps.forEach(s=>s.classList.remove("active","done"));
+    document.querySelectorAll(".hat").forEach(h=>{ h.classList.remove("in","flagged"); h.querySelector(".auditmsg").classList.remove("show"); h.querySelector(".scorefill").style.width="0%"; h.querySelector(".scoreval").textContent="0.0"; });
+    document.getElementById("auditBanner").classList.remove("show");
+    document.getElementById("final").classList.remove("in");
+    document.getElementById("ringArc").style.strokeDashoffset = "314";
+    document.getElementById("breakRows").innerHTML = "";
+    setProgress(0);
+
+    // step 1: input
+    activate(0); await sleep(900); markDone(0); setProgress(1);
+    // step 2: rubric
+    activate(1); await sleep(1100); markDone(1); setProgress(2);
+    // step 3: blue planner
+    activate(2); await sleep(1100); markDone(2); setProgress(3);
+
+    // step 4: six-hat panel — reveal + score in sequence
+    activate(3);
+    const cards = [...document.querySelectorAll(".hat")];
+    for (let i=0;i<cards.length;i++){
+      const c = cards[i];
+      c.classList.add("in");
+      const fill = c.querySelector(".scorefill");
+      const val = c.querySelector(".scoreval");
+      const target = parseFloat(val.getAttribute("data-target") ?? val._final);
+      await sleep(380);
+      fill.style.width = (target*10) + "%";
+      countTo(val, target, 620);
+      await sleep(180);
+    }
+    await sleep(700); markDone(3); setProgress(4);
+
+    // step 5: self audit — flag the yellow hat, correct it visibly
+    activate(4);
+    await sleep(600);
+    const yellow = document.querySelector('.hat[data-key="yellow"]');
+    yellow.classList.add("flagged");
+    if (!reduce) yellow.scrollIntoView({behavior:"smooth", block:"center"});
+    await sleep(700);
+    yellow.querySelector(".auditmsg").classList.add("show");
+    document.getElementById("auditBanner").classList.add("show");
+    await sleep(900);
+    // visibly correct the score 9.0 -> 7.8
+    const yVal = yellow.querySelector(".scoreval");
+    const yFill = yellow.querySelector(".scorefill");
+    countTo(yVal, 7.8, 800);
+    yFill.style.width = "78%";
+    yFill.style.background = scoreColor(7.8);
+    await sleep(1100); markDone(4); setProgress(5);
+
+    // step 6: final score
+    activate(5);
+    const auditedScores = HATS.map(h => h.scoreCorrected ?? h.score);
+    const finalScore = auditedScores.reduce((a,b)=>a+b,0) / auditedScores.length; // ~8.07
+    const fNum = document.getElementById("finalNum");
+    const arc = document.getElementById("ringArc");
+    document.getElementById("final").classList.add("in");
+    await sleep(300);
+    countTo(fNum, finalScore, 1000);
+    arc.style.strokeDashoffset = String(314 - 314 * (finalScore/10));
+
+    // breakdown rows
+    const rows = document.getElementById("breakRows");
+    HATS.forEach(h=>{
+      const s = h.scoreCorrected ?? h.score;
+      const row = document.createElement("div");
+      row.className = "brow";
+      row.innerHTML = `
+        <span class="lbl"><span class="dot" style="display:inline-block;width:9px;height:9px;vertical-align:middle;margin-right:6px;background:${h.color}"></span>${h.crit}</span>
+        <span class="bar"><i></i></span>
+        <span class="v">${fmt(s)}${h.scoreCorrected ? '<div class="corrected">corrected</div>' : ''}</span>`;
+      rows.appendChild(row);
+      requestAnimationFrame(()=>{ row.querySelector("i").style.width = (s*10)+"%"; if(h.scoreCorrected) row.querySelector("i").style.background="var(--warn)"; });
+    });
+
+    await sleep(400);
+    btn.disabled = false; btn.querySelector("svg").style.display="";
+    btn.childNodes[2] && (btn.childNodes[2].textContent = " Re-run evaluation");
+    running = false;
+  }
+
+  document.getElementById("run").addEventListener("click", run);
+})();
+</script>
+</body>
+</html>

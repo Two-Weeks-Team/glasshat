@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>glasshat · Evaluation Telemetry</title>
+<style>
+  :root {
+    /* OKLCH palette — cockpit dark */
+    --bg:        oklch(0.16 0.02 265);
+    --panel:     oklch(0.21 0.025 265);
+    --panel-2:   oklch(0.25 0.03 265);
+    --line:      oklch(0.32 0.03 265);
+    --ink:       oklch(0.93 0.01 265);
+    --ink-dim:   oklch(0.68 0.02 265);
+    --ink-faint: oklch(0.52 0.02 265);
+    --accent:    oklch(0.72 0.16 230);   /* cyan-blue trace */
+    --ok:        oklch(0.78 0.16 150);   /* green */
+    --warn:      oklch(0.82 0.16 85);    /* amber */
+    --bad:       oklch(0.68 0.20 25);    /* red */
+    --white-hat: oklch(0.92 0.01 265);
+    --red-hat:   oklch(0.68 0.20 25);
+    --yellow-hat:oklch(0.83 0.16 90);
+    --black-hat: oklch(0.55 0.02 265);
+    --green-hat: oklch(0.78 0.16 150);
+    --blue-hat:  oklch(0.72 0.16 245);
+    --glow: oklch(0.72 0.16 230 / 0.35);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--ink); }
+  body {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Menlo, Consolas, monospace;
+    font-size: 13px; line-height: 1.45;
+    background-image:
+      linear-gradient(oklch(1 0 0 / 0.015) 1px, transparent 1px),
+      linear-gradient(90deg, oklch(1 0 0 / 0.015) 1px, transparent 1px);
+    background-size: 28px 28px;
+    min-height: 100vh;
+  }
+  .mono-num { font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+
+  /* ---- top bar ---- */
+  header {
+    display: flex; align-items: center; gap: 16px;
+    padding: 10px 18px; border-bottom: 1px solid var(--line);
+    background: var(--panel); position: sticky; top: 0; z-index: 20;
+  }
+  .logo { display: flex; align-items: center; gap: 9px; font-weight: 600; letter-spacing: 0.04em; }
+  .logo svg { display: block; }
+  .logo small { color: var(--ink-faint); font-weight: 400; letter-spacing: 0.12em; text-transform: uppercase; font-size: 10px; }
+  .pillbar { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 9px; border: 1px solid var(--line); border-radius: 999px;
+    color: var(--ink-dim); font-size: 11px; background: var(--panel-2);
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 0 var(--ok); }
+  .dot.live { animation: pulse 1.6s infinite; }
+  @keyframes pulse { 0%{box-shadow:0 0 0 0 oklch(0.78 0.16 150 / 0.5);} 70%{box-shadow:0 0 0 6px oklch(0.78 0.16 150 / 0);} 100%{box-shadow:0 0 0 0 oklch(0.78 0.16 150 / 0);} }
+
+  main { display: grid; grid-template-columns: 340px 1fr 320px; gap: 1px; background: var(--line); min-height: calc(100vh - 53px); }
+  .col { background: var(--bg); padding: 16px; overflow: hidden; }
+  .section-h { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-faint); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .section-h::after { content:""; flex:1; height:1px; background: var(--line); }
+
+  /* ---- input ---- */
+  textarea {
+    width: 100%; height: 150px; resize: vertical;
+    background: var(--panel); color: var(--ink); border: 1px solid var(--line);
+    border-radius: 8px; padding: 11px; font-family: inherit; font-size: 12px; line-height: 1.5;
+  }
+  textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--glow); }
+  .runbtn {
+    margin-top: 11px; width: 100%; padding: 11px;
+    background: var(--accent); color: oklch(0.16 0.02 265); border: none; border-radius: 8px;
+    font-family: inherit; font-weight: 600; font-size: 13px; letter-spacing: 0.04em; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: filter 0.15s, transform 0.05s;
+  }
+  .runbtn:hover { filter: brightness(1.08); }
+  .runbtn:active { transform: translateY(1px); }
+  .runbtn:disabled { opacity: 0.5; cursor: progress; }
+  .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+  .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 7px; padding: 9px 10px; }
+  .stat .k { font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-faint); }
+  .stat .v { font-size: 17px; margin-top: 2px; color: var(--ink); }
+  .stat .v.accent { color: var(--accent); }
+
+  /* ---- span waterfall ---- */
+  .waterfall { display: flex; flex-direction: column; gap: 6px; }
+  .span-row { display: grid; grid-template-columns: 132px 1fr 56px; align-items: center; gap: 10px; opacity: 0.4; transition: opacity 0.3s; }
+  .span-row.seen { opacity: 1; }
+  .span-name { font-size: 11.5px; color: var(--ink-dim); display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .span-name .ico { width: 8px; height: 8px; border-radius: 2px; background: var(--ink-faint); flex: none; }
+  .span-track { position: relative; height: 18px; background: var(--panel); border-radius: 4px; overflow: hidden; }
+  .span-bar {
+    position: absolute; top: 0; height: 100%; border-radius: 4px;
+    background: linear-gradient(90deg, var(--accent), oklch(0.72 0.16 250));
+    width: 0; transition: width 0.5s cubic-bezier(.4,.8,.3,1);
+  }
+  .span-bar.running { background: linear-gradient(90deg, var(--accent), oklch(0.72 0.16 250)); }
+  .span-bar.running::after {
+    content:""; position:absolute; inset:0;
+    background: linear-gradient(90deg, transparent, oklch(1 0 0 / 0.25), transparent);
+    background-size: 200% 100%; animation: shimmer 1.1s linear infinite;
+  }
+  @keyframes shimmer { 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
+  .span-bar.done { background: linear-gradient(90deg, oklch(0.5 0.07 230), var(--accent)); }
+  .span-ms { font-size: 11px; color: var(--ink-faint); text-align: right; }
+  .span-row.active .span-name { color: var(--accent); }
+  .span-row.active .span-name .ico { background: var(--accent); box-shadow: 0 0 8px var(--glow); }
+
+  /* ---- hat panel ---- */
+  .hatgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+  .hat {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 10px 11px;
+    position: relative; opacity: 0.45; transform: translateY(4px); transition: all 0.4s; cursor: pointer;
+  }
+  .hat.in { opacity: 1; transform: none; }
+  .hat:hover { border-color: var(--accent); }
+  .hat-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+  .hat-name { display: flex; align-items: center; gap: 7px; font-size: 11px; letter-spacing: 0.04em; }
+  .hat-chip { width: 11px; height: 11px; border-radius: 3px; flex: none; }
+  .hat-score { font-size: 18px; color: var(--ink); }
+  .hat-conf { font-size: 9.5px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 6px; }
+  .gauge { height: 5px; background: var(--panel-2); border-radius: 3px; margin-top: 4px; overflow: hidden; }
+  .gauge > i { display: block; height: 100%; width: 0; border-radius: 3px; transition: width 0.7s; }
+  .hat .ev { font-size: 10px; color: var(--accent); margin-top: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; user-select: none; }
+  .hat .ev:hover { text-decoration: underline; }
+  .hat.corrected { animation: flagFlash 1.6s ease; }
+  @keyframes flagFlash { 0%,100%{box-shadow:0 0 0 0 transparent;} 30%,70%{box-shadow:0 0 0 2px var(--warn);} }
+  .corr-tag {
+    position: absolute; top: -8px; right: 8px; background: var(--warn); color: oklch(0.16 0.02 265);
+    font-size: 8.5px; font-weight: 700; padding: 2px 6px; border-radius: 5px; letter-spacing: 0.06em;
+    opacity: 0; transform: scale(0.8); transition: all 0.3s;
+  }
+  .corr-tag.show { opacity: 1; transform: scale(1); }
+
+  /* ---- calibration chart ---- */
+  .calib { background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 12px; }
+  .calib svg { width: 100%; height: 110px; display: block; }
+  .calib-legend { display: flex; gap: 14px; margin-top: 9px; font-size: 10px; color: var(--ink-dim); flex-wrap: wrap; }
+  .calib-legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .lg-dot { width: 9px; height: 3px; border-radius: 2px; }
+
+  /* ---- final score ---- */
+  .final {
+    background: linear-gradient(180deg, var(--panel-2), var(--panel)); border: 1px solid var(--line);
+    border-radius: 12px; padding: 16px; text-align: center; position: relative; overflow: hidden;
+  }
+  .final::before {
+    content:""; position:absolute; inset:0; opacity: 0;
+    background: radial-gradient(120px 80px at 50% 30%, var(--glow), transparent 70%);
+    transition: opacity 0.6s;
+  }
+  .final.lit::before { opacity: 1; }
+  .final .label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.16em; color: var(--ink-faint); }
+  .final .big { font-size: 46px; line-height: 1; margin: 6px 0 2px; color: var(--ink); position: relative; }
+  .final .big b { color: var(--accent); }
+  .final .scale { font-size: 11px; color: var(--ink-dim); }
+  .breakdown { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+  .bd-row { display: grid; grid-template-columns: 92px 1fr 34px; align-items: center; gap: 8px; font-size: 10.5px; }
+  .bd-row .nm { color: var(--ink-dim); text-align: left; }
+  .bd-track { height: 6px; background: var(--panel-2); border-radius: 3px; overflow: hidden; }
+  .bd-track > i { display:block; height:100%; width:0; background: var(--accent); border-radius: 3px; transition: width 0.8s; }
+  .bd-row .vl { text-align: right; color: var(--ink); }
+
+  /* ---- evidence drawer ---- */
+  .scrim { position: fixed; inset: 0; background: oklch(0.1 0.02 265 / 0.6); opacity: 0; pointer-events: none; transition: opacity 0.25s; z-index: 40; backdrop-filter: blur(2px); }
+  .scrim.open { opacity: 1; pointer-events: auto; }
+  .drawer {
+    position: fixed; top: 0; right: 0; width: 420px; max-width: 92vw; height: 100%;
+    background: var(--panel); border-left: 1px solid var(--line); z-index: 50;
+    transform: translateX(100%); transition: transform 0.3s cubic-bezier(.3,.8,.3,1);
+    display: flex; flex-direction: column;
+  }
+  .drawer.open { transform: none; }
+  .drawer-h { padding: 14px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; }
+  .drawer-h .x { margin-left: auto; cursor: pointer; color: var(--ink-faint); font-size: 18px; line-height: 1; background:none;border:none;font-family:inherit; }
+  .drawer-h .x:hover { color: var(--ink); }
+  .drawer-body { padding: 16px; overflow-y: auto; flex: 1; }
+  .ev-card { background: var(--panel-2); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 7px; padding: 11px 12px; margin-bottom: 11px; }
+  .ev-card .src { font-size: 10px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 5px; display:flex; justify-content:space-between; }
+  .ev-card .src .rel { color: var(--ok); }
+  .ev-card .quote { font-size: 12px; color: var(--ink); line-height: 1.55; }
+  .ev-card .quote mark { background: oklch(0.72 0.16 230 / 0.22); color: var(--accent); padding: 0 2px; border-radius: 2px; }
+  .ev-trace { font-size: 10px; color: var(--ink-faint); margin-top: 7px; }
+
+  .hint { font-size: 10.5px; color: var(--ink-faint); margin-top: 10px; line-height: 1.5; }
+  .hint b { color: var(--ink-dim); }
+  .logline { font-size: 10.5px; color: var(--ink-dim); height: 17px; overflow: hidden; }
+  .logline em { color: var(--accent); font-style: normal; }
+
+  @media (max-width: 1080px) { main { grid-template-columns: 1fr; } .col { border-bottom: 1px solid var(--line); } }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    .span-row, .hat { opacity: 1 !important; transform: none !important; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">
+    <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+      <circle cx="11" cy="11" r="9" fill="none" stroke="oklch(0.72 0.16 230)" stroke-width="1.6"/>
+      <path d="M5 13 q6 -9 12 0" fill="none" stroke="oklch(0.92 0.01 265)" stroke-width="1.6"/>
+      <circle cx="11" cy="11" r="2.4" fill="oklch(0.72 0.16 230)"/>
+    </svg>
+    glasshat <small>evaluation telemetry</small>
+  </div>
+  <div class="pillbar">
+    <span class="pill"><span class="dot live"></span> session live</span>
+    <span class="pill mono-num">model · gemini-3.1-flash-lite</span>
+    <span class="pill mono-num">vertex ai · global</span>
+    <span class="pill mono-num">trace → arize ax</span>
+  </div>
+</header>
+
+<main>
+  <!-- LEFT: input + run stats -->
+  <section class="col">
+    <div class="section-h">your submission</div>
+    <textarea id="pitch" spellcheck="false">Acme Relay — a B2B API gateway that lets fintechs route ACH + RTP payments through one schema. We replaced a 6-week bank integration with a 3-line SDK call. 14 design partners, $42k MRR, 31% MoM growth. Built on idempotent ledger writes with sub-200ms p99 settlement confirmation.</textarea>
+    <button class="runbtn" id="run">▶ run live evaluation</button>
+
+    <div class="meta-grid">
+      <div class="stat"><div class="k">spans emitted</div><div class="v mono-num accent" id="m-spans">0</div></div>
+      <div class="stat"><div class="k">wall time</div><div class="v mono-num" id="m-time">0 ms</div></div>
+      <div class="stat"><div class="k">evidence docs</div><div class="v mono-num" id="m-ev">0</div></div>
+      <div class="stat"><div class="k">self-corrections</div><div class="v mono-num" id="m-corr">0</div></div>
+    </div>
+
+    <div class="section-h" style="margin-top:20px">live trace log</div>
+    <div class="logline" id="log"><em>idle</em> — paste a pitch &amp; press run</div>
+
+    <p class="hint" style="margin-top:18px">
+      <b>What you're seeing:</b> every sub-score below is a span traced to Arize AX and grounded in retrieved evidence.
+      Click <b>view evidence</b> on any hat to open the exact source. Watch the <b>calibration delta</b> when an
+      over-confident hat is pulled back before the score is finalized.
+    </p>
+  </section>
+
+  <!-- CENTER: pipeline + hats -->
+  <section class="col">
+    <div class="section-h">pipeline · span waterfall</div>
+    <div class="waterfall" id="waterfall">
+      <div class="span-row" data-span="0"><div class="span-name"><span class="ico"></span>RubricSynthesizer</div><div class="span-track"><div class="span-bar"></div></div><div class="span-ms mono-num">—</div></div>
+      <div class="span-row" data-span="1"><div class="span-name"><span class="ico"></span>BluePlanner</div><div class="span-track"><div class="span-bar"></div></div><div class="span-ms mono-num">—</div></div>
+      <div class="span-row" data-span="2"><div class="span-name"><span class="ico"></span>SixHatPanel</div><div class="span-track"><div class="span-bar"></div></div><div class="span-ms mono-num">—</div></div>
+      <div class="span-row" data-span="3"><div class="span-name"><span class="ico"></span>CalibrationAudit</div><div class="span-track"><div class="span-bar"></div></div><div class="span-ms mono-num">—</div></div>
+      <div class="span-row" data-span="4"><div class="span-name"><span class="ico"></span>FinalScore</div><div class="span-track"><div class="span-bar"></div></div><div class="span-ms mono-num">—</div></div>
+    </div>
+
+    <div class="section-h" style="margin-top:22px">six-hat panel · per-perspective gauges</div>
+    <div class="hatgrid" id="hats"></div>
+  </section>
+
+  <!-- RIGHT: calibration + final -->
+  <section class="col">
+    <div class="section-h">calibration audit</div>
+    <div class="calib">
+      <svg id="calibSvg" viewBox="0 0 300 110" preserveAspectRatio="none" aria-label="Calibration delta chart">
+        <line x1="0" y1="55" x2="300" y2="55" stroke="oklch(0.32 0.03 265)" stroke-width="1" stroke-dasharray="3 4"/>
+        <text x="4" y="14" fill="oklch(0.52 0.02 265)" font-size="8" font-family="inherit">claimed</text>
+        <text x="4" y="104" fill="oklch(0.52 0.02 265)" font-size="8" font-family="inherit">calibrated</text>
+        <polyline id="calibClaimed" fill="none" stroke="oklch(0.82 0.16 90)" stroke-width="2" points=""/>
+        <polyline id="calibFinal" fill="none" stroke="oklch(0.72 0.16 230)" stroke-width="2" points=""/>
+        <g id="calibDelta"></g>
+      </svg>
+      <div class="calib-legend">
+        <span><i class="lg-dot" style="background:oklch(0.82 0.16 90)"></i> hat self-claim</span>
+        <span><i class="lg-dot" style="background:oklch(0.72 0.16 230)"></i> audited score</span>
+        <span><i class="lg-dot" style="background:oklch(0.68 0.20 25)"></i> Δ correction</span>
+      </div>
+    </div>
+
+    <div class="section-h" style="margin-top:20px">final score</div>
+    <div class="final" id="final">
+      <div class="label">rubric · panelyst-hackathon</div>
+      <div class="big mono-num"><b id="finalNum">—</b><span class="scale"> / 50</span></div>
+      <div class="scale" id="finalNote">awaiting evaluation</div>
+      <div class="breakdown" id="breakdown"></div>
+    </div>
+
+    <p class="hint">
+      <b>Phoenix MCP:</b> calibration deltas above are written back through a Phoenix MCP path so the panel's
+      confidence stays honest across runs.
+    </p>
+  </section>
+</main>
+
+<!-- evidence drawer -->
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="drawer-h">
+    <span class="hat-chip" id="drawerChip" style="background:var(--accent)"></span>
+    <div>
+      <div id="drawerTitle" style="font-size:12px">Evidence</div>
+      <div id="drawerSub" style="font-size:10px;color:var(--ink-faint)">retrieved sources behind this sub-score</div>
+    </div>
+    <button class="x" id="drawerX" aria-label="close">×</button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+</aside>
+
+<script>
+(function(){
+  "use strict";
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // ---- hat definitions ----
+  var HATS = [
+    { id:"white", name:"WHITE · facts",       color:"var(--white-hat)",  claim:7.6, final:7.6, conf:0.81 },
+    { id:"red",   name:"RED · instinct",      color:"var(--red-hat)",    claim:6.9, final:6.9, conf:0.64 },
+    { id:"yellow",name:"YELLOW · upside",     color:"var(--yellow-hat)", claim:9.0, final:7.8, conf:0.58, corrected:true },
+    { id:"black", name:"BLACK · risk",        color:"var(--black-hat)",  claim:6.2, final:6.2, conf:0.77 },
+    { id:"green", name:"GREEN · creativity",  color:"var(--green-hat)",  claim:7.4, final:7.4, conf:0.70 },
+    { id:"blue",  name:"BLUE · synthesis",    color:"var(--blue-hat)",   claim:8.1, final:8.1, conf:0.85 }
+  ];
+
+  var EVIDENCE = {
+    white: [
+      { src:"submission · line 2", rel:"0.94", quote:"14 design partners, <mark>$42k MRR, 31% MoM growth</mark>.", trace:"span:retrieve.white · doc#1" },
+      { src:"rubric · traction", rel:"0.88", quote:"Quantified traction with named design partners satisfies the <mark>evidence-of-demand</mark> criterion.", trace:"span:retrieve.white · doc#2" }
+    ],
+    red: [
+      { src:"submission · line 1", rel:"0.71", quote:"\"<mark>3-line SDK call</mark>\" reads as a confident, opinionated developer story.", trace:"span:retrieve.red · doc#1" }
+    ],
+    yellow: [
+      { src:"submission · line 1", rel:"0.83", quote:"Replaced a <mark>6-week bank integration</mark> with a 3-line SDK call.", trace:"span:retrieve.yellow · doc#1" },
+      { src:"audit note", rel:"flagged", quote:"Upside claim of 9.0 lacked margin/retention evidence — <mark>pulled back to 7.8</mark> by CalibrationAudit.", trace:"span:audit.calibrate · Δ−1.2" }
+    ],
+    black: [
+      { src:"rubric · risk", rel:"0.90", quote:"No mention of <mark>bank partnership durability or compliance</mark> (NACHA / RTP rails) — material execution risk.", trace:"span:retrieve.black · doc#1" }
+    ],
+    green: [
+      { src:"submission · line 3", rel:"0.79", quote:"<mark>Idempotent ledger writes</mark> with sub-200ms p99 settlement is a defensible technical wedge.", trace:"span:retrieve.green · doc#1" }
+    ],
+    blue: [
+      { src:"panel synthesis", rel:"0.92", quote:"Coherent thesis: <mark>real traction + technical moat</mark>, tempered by unproven regulatory durability.", trace:"span:synthesize.blue · doc#1" }
+    ]
+  };
+
+  // ---- build hat cards ----
+  var hatsEl = document.getElementById("hats");
+  HATS.forEach(function(h, i){
+    var d = document.createElement("div");
+    d.className = "hat"; d.dataset.hat = h.id;
+    d.innerHTML =
+      '<div class="corr-tag">↓ recalibrated</div>'+
+      '<div class="hat-top"><div class="hat-name"><span class="hat-chip" style="background:'+h.color+'"></span>'+h.name+'</div>'+
+      '<div class="hat-score mono-num" data-score>—</div></div>'+
+      '<div class="hat-conf">confidence <span class="mono-num" data-conf>—</span></div>'+
+      '<div class="gauge"><i data-gauge style="background:'+h.color+'"></i></div>'+
+      '<div class="ev" data-ev="'+h.id+'">▤ view evidence ('+ (EVIDENCE[h.id]||[]).length +')</div>';
+    hatsEl.appendChild(d);
+  });
+
+  // ---- elements ----
+  var rows = Array.prototype.slice.call(document.querySelectorAll(".span-row"));
+  var runBtn = document.getElementById("run");
+  var log = document.getElementById("log");
+  var mSpans = document.getElementById("m-spans"), mTime = document.getElementById("m-time"),
+      mEv = document.getElementById("m-ev"), mCorr = document.getElementById("m-corr");
+
+  var SPAN_MS = [430, 280, 1180, 540, 190];
+  var SPAN_NAMES = ["RubricSynthesizer","BluePlanner","SixHatPanel","CalibrationAudit","FinalScore"];
+
+  function setLog(html){ log.innerHTML = html; }
+  function countUp(el, to, dur, fmt){
+    if (reduce){ el.textContent = fmt? fmt(to) : to; return; }
+    var start = performance.now(), from = 0;
+    function step(t){
+      var p = Math.min(1, (t-start)/dur);
+      var v = from + (to-from)*(p*(2-p));
+      el.textContent = fmt? fmt(v) : Math.round(v);
+      if (p<1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  var running = false;
+  function run(){
+    if (running) return;
+    running = true; runBtn.disabled = true; runBtn.textContent = "running…";
+    // reset
+    document.getElementById("final").classList.remove("lit");
+    document.getElementById("finalNum").textContent = "—";
+    document.getElementById("finalNote").textContent = "evaluating…";
+    document.getElementById("breakdown").innerHTML = "";
+    document.querySelectorAll(".hat").forEach(function(h){
+      h.classList.remove("in","corrected");
+      h.querySelector(".corr-tag").classList.remove("show");
+      h.querySelector("[data-score]").textContent = "—";
+      h.querySelector("[data-conf]").textContent = "—";
+      h.querySelector("[data-gauge]").style.width = "0";
+    });
+    rows.forEach(function(r){ r.classList.remove("seen","active"); var b=r.querySelector(".span-bar"); b.className="span-bar"; b.style.width="0"; r.querySelector(".span-ms").textContent="—"; });
+    document.getElementById("calibClaimed").setAttribute("points","");
+    document.getElementById("calibFinal").setAttribute("points","");
+    document.getElementById("calibDelta").innerHTML="";
+    mSpans.textContent="0"; mTime.textContent="0 ms"; mEv.textContent="0"; mCorr.textContent="0";
+
+    var step = reduce ? 90 : 1;
+    var wall = 0, idx = 0;
+    function nextSpan(){
+      if (idx >= rows.length){ finish(); return; }
+      var row = rows[idx], bar = row.querySelector(".span-bar"), msEl = row.querySelector(".span-ms");
+      row.classList.add("seen","active");
+      bar.classList.add("running");
+      setLog('<em>span '+(idx+1)+'/5</em> '+SPAN_NAMES[idx]+' · running…');
+      countUp(mSpans, idx+1, 200);
+      var dur = reduce ? 40 : SPAN_MS[idx]*0.6;
+      // animate bar fill
+      requestAnimationFrame(function(){ bar.style.width = "100%"; });
+      setTimeout(function(){
+        bar.classList.remove("running"); bar.classList.add("done");
+        row.classList.remove("active");
+        msEl.textContent = SPAN_MS[idx] + " ms";
+        wall += SPAN_MS[idx];
+        mTime.textContent = wall + " ms";
+        // side effects per span
+        if (idx === 2){ revealHats(); }
+        if (idx === 3){ runCalibration(); }
+        idx++;
+        nextSpan();
+      }, dur + 80);
+    }
+    nextSpan();
+  }
+
+  // reveal hats one-by-one with their CLAIMED score first
+  function revealHats(){
+    setLog('<em>SixHatPanel</em> · 6 perspectives scoring against rubric…');
+    var cards = document.querySelectorAll(".hat");
+    HATS.forEach(function(h,i){
+      var card = cards[i];
+      var delay = reduce ? 0 : i*130;
+      setTimeout(function(){
+        card.classList.add("in");
+        animScore(card.querySelector("[data-score]"), h.claim);
+        card.querySelector("[data-conf]").textContent = (h.conf*100|0)+"%";
+        card.querySelector("[data-gauge]").style.width = (h.conf*100)+"%";
+      }, delay);
+    });
+    var ev = 0; HATS.forEach(function(h){ ev += (EVIDENCE[h.id]||[]).length; });
+    setTimeout(function(){ countUp(mEv, ev, 400); }, reduce?0:300);
+  }
+
+  function animScore(el, val){
+    if (reduce){ el.textContent = val.toFixed(1); return; }
+    countUp(el, val, 500, function(v){ return v.toFixed(1); });
+  }
+
+  // the SELF-CORRECTION moment
+  function runCalibration(){
+    setLog('<em>CalibrationAudit</em> · scanning for over-confident hats…');
+    var W = 300, padX = 18;
+    var n = HATS.length;
+    function x(i){ return padX + i*((W-2*padX)/(n-1)); }
+    function y(score){ // map 0..10 → svg (top=10, bottom=0), scaled to 18..92
+      return 92 - (score/10)*74;
+    }
+    var claimedPts = HATS.map(function(h,i){ return x(i)+","+y(h.claim); }).join(" ");
+    document.getElementById("calibClaimed").setAttribute("points", claimedPts);
+
+    // find the corrected hat
+    var corrIdx = -1; HATS.forEach(function(h,i){ if(h.corrected) corrIdx=i; });
+
+    setTimeout(function(){
+      // draw final line + delta marker, flash corrected card
+      var finalPts = HATS.map(function(h,i){ return x(i)+","+y(h.final); }).join(" ");
+      document.getElementById("calibFinal").setAttribute("points", finalPts);
+
+      if (corrIdx >= 0){
+        var h = HATS[corrIdx];
+        var dx = x(corrIdx);
+        var g = document.getElementById("calibDelta");
+        g.innerHTML =
+          '<line x1="'+dx+'" y1="'+y(h.claim)+'" x2="'+dx+'" y2="'+y(h.final)+'" stroke="oklch(0.68 0.20 25)" stroke-width="2"/>'+
+          '<circle cx="'+dx+'" cy="'+y(h.claim)+'" r="3.5" fill="oklch(0.82 0.16 90)"/>'+
+          '<circle cx="'+dx+'" cy="'+y(h.final)+'" r="3.5" fill="oklch(0.72 0.16 230)"/>'+
+          '<text x="'+(dx+6)+'" y="'+((y(h.claim)+y(h.final))/2)+'" fill="oklch(0.68 0.20 25)" font-size="9" font-family="inherit">Δ−'+(h.claim-h.final).toFixed(1)+'</text>';
+
+        var card = document.querySelectorAll(".hat")[corrIdx];
+        card.classList.add("corrected");
+        card.querySelector(".corr-tag").classList.add("show");
+        // visibly drop the score 9.0 → 7.8
+        if (reduce){ card.querySelector("[data-score]").textContent = h.final.toFixed(1); }
+        else { countUp(card.querySelector("[data-score]"), h.final, 700, function(v){return v.toFixed(1);}); }
+        card.querySelector("[data-conf]").textContent = (h.conf*100|0)+"% ▼";
+        card.querySelector("[data-gauge]").style.width = (h.conf*100)+"%";
+        countUp(mCorr, 1, 300);
+        setLog('<em>self-correction</em> YELLOW 9.0 → 7.8 · over-confident upside pulled back (Phoenix MCP write-back)');
+      }
+    }, reduce ? 0 : 650);
+  }
+
+  function finish(){
+    setLog('<em>FinalScore</em> · committed · trace flushed to Arize AX ✓');
+    // final = sum of audited scores normalized to /50
+    var sum = HATS.reduce(function(a,h){ return a + h.final; }, 0); // out of 60
+    var scaled = (sum/60)*50; // → /50 rubric native scale
+    var fnum = document.getElementById("finalNum");
+    var fin = document.getElementById("final");
+    fin.classList.add("lit");
+    if (reduce){ fnum.textContent = scaled.toFixed(1); }
+    else { countUp(fnum, scaled, 900, function(v){ return v.toFixed(1); }); }
+    document.getElementById("finalNote").textContent = "audited · 1 self-correction applied · grounded in 8 sources";
+
+    // breakdown
+    var bd = document.getElementById("breakdown");
+    bd.innerHTML = "";
+    HATS.forEach(function(h){
+      var r = document.createElement("div"); r.className="bd-row";
+      var nm = h.name.split(" · ")[0];
+      r.innerHTML = '<div class="nm">'+nm+'</div><div class="bd-track"><i style="background:'+h.color+'"></i></div><div class="vl mono-num">'+h.final.toFixed(1)+'</div>';
+      bd.appendChild(r);
+      setTimeout(function(){ r.querySelector("i").style.width = (h.final/10*100)+"%"; }, reduce?0:60);
+    });
+
+    running = false; runBtn.disabled = false; runBtn.textContent = "▶ re-run evaluation";
+  }
+
+  runBtn.addEventListener("click", run);
+
+  // ---- evidence drawer ----
+  var scrim = document.getElementById("scrim"), drawer = document.getElementById("drawer");
+  function openEvidence(hatId){
+    var h = HATS.filter(function(x){return x.id===hatId;})[0];
+    var docs = EVIDENCE[hatId] || [];
+    document.getElementById("drawerChip").style.background = h.color;
+    document.getElementById("drawerTitle").textContent = h.name + "  →  " + h.final.toFixed(1);
+    document.getElementById("drawerSub").textContent = docs.length + " retrieved source(s) grounding this sub-score";
+    var body = document.getElementById("drawerBody"); body.innerHTML = "";
+    docs.forEach(function(d){
+      var c = document.createElement("div"); c.className = "ev-card";
+      c.innerHTML =
+        '<div class="src"><span>'+d.src+'</span><span class="rel">relevance '+d.rel+'</span></div>'+
+        '<div class="quote">'+d.quote+'</div>'+
+        '<div class="ev-trace mono-num">'+d.trace+'</div>';
+      body.appendChild(c);
+    });
+    scrim.classList.add("open"); drawer.classList.add("open"); drawer.setAttribute("aria-hidden","false");
+  }
+  function closeEvidence(){ scrim.classList.remove("open"); drawer.classList.remove("open"); drawer.setAttribute("aria-hidden","true"); }
+
+  hatsEl.addEventListener("click", function(e){
+    var ev = e.target.closest("[data-ev]");
+    var card = e.target.closest(".hat");
+    if (ev){ openEvidence(ev.getAttribute("data-ev")); return; }
+    if (card && card.classList.contains("in")){ openEvidence(card.dataset.hat); }
+  });
+  document.getElementById("drawerX").addEventListener("click", closeEvidence);
+  scrim.addEventListener("click", closeEvidence);
+  document.addEventListener("keydown", function(e){ if(e.key==="Escape") closeEvidence(); });
+
+  // auto-run once shortly after load so the cockpit feels alive
+  setTimeout(run, reduce ? 200 : 700);
+})();
+</script>
+</body>
+</html>
