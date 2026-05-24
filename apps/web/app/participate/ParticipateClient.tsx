@@ -7,6 +7,7 @@ import { AuditCallout } from "@/components/AuditCallout";
 import { Badge } from "@/components/Badge";
 import { CountUp } from "@/components/CountUp";
 import { EvidenceList } from "@/components/EvidenceList";
+import { ProofReceipt } from "@/components/ProofReceipt";
 import { ProofStrip } from "@/components/ProofStrip";
 import { ProofTimeline, type TimelineCorrection } from "@/components/ProofTimeline";
 import { Reveal } from "@/components/Reveal";
@@ -368,6 +369,10 @@ function ResultsView({
           Axes: score · weight · evidence depth. <span className="text-[#f0b429]">Amber</span>{" "}
           nodes were self-corrected and reshape from their over-confident origin.
         </p>
+      </Reveal>
+
+      <Reveal>
+        <ProofReceipt record={record} sample={sample} />
       </Reveal>
 
       {weakest && !sample && (
