@@ -58,9 +58,10 @@ const scaleMax = (finalScale: string): string => finalScale.split("-").at(-1) ??
 function topAudit(record: RunRecord): AuditCorrection | null {
   const cs = record.audit_corrections;
   if (cs.length === 0) return null;
-  return [...cs].sort(
-    (a, b) => Math.abs(b.original - b.corrected) - Math.abs(a.original - a.corrected),
-  )[0];
+  // O(N) single pass — only the largest-magnitude correction is needed.
+  return cs.reduce((top, c) =>
+    Math.abs(c.original - c.corrected) > Math.abs(top.original - top.corrected) ? c : top,
+  );
 }
 
 /** The headline correction formatted for the proof timeline's Audit node. */
@@ -291,6 +292,13 @@ function ResultsView({
   const rows = scoreRows(record);
   const weakest = weakestAxis(rows);
   const topCorrection = topAudit(record);
+  const timelineCorrection: TimelineCorrection | null = topCorrection
+    ? {
+        label: `${topCorrection.hat} hat · ${topCorrection.criterion_id}`,
+        from: topCorrection.original,
+        to: topCorrection.corrected,
+      }
+    : null;
   // The 3D graph pulls in three.js; for the first-paint SAMPLE preview defer it
   // behind a click so the initial load stays light (Lighthouse perf ≥90). A real
   // run (not perf-measured) renders it immediately.
@@ -307,7 +315,7 @@ function ResultsView({
       {sample && (
         <section className="elevate rounded-2xl p-5">
           <h2 className="mb-4 text-lg font-medium">Evaluation pipeline</h2>
-          <ProofTimeline done correction={headlineCorrection(record)} />
+          <ProofTimeline done correction={timelineCorrection} />
         </section>
       )}
       <Reveal className="grid gap-3 sm:grid-cols-3">

@@ -48,4 +48,15 @@ describe("ProofTimeline", () => {
     expect(screen.getByTestId("timeline-node-panel")).toHaveAttribute("data-state", "active");
     expect(screen.getByTestId("timeline-node-score")).toHaveAttribute("data-state", "pending");
   });
+
+  it("lights both RubricSynthesizer and BluePlanner during planning (no skipped node)", () => {
+    render(<ProofTimeline stage="planning" />);
+    expect(screen.getByTestId("timeline-node-rubric")).toHaveAttribute("data-state", "active");
+    expect(screen.getByTestId("timeline-node-planner")).toHaveAttribute("data-state", "active");
+  });
+
+  it("renders a no-change correction neutrally (not as a raise)", () => {
+    render(<ProofTimeline done correction={{ label: "x", from: 8, to: 8 }} />);
+    expect(screen.getByTestId("timeline-correction")).toHaveAttribute("data-direction", "held");
+  });
 });

@@ -23,8 +23,19 @@ const clamp01 = (v: number): number => Math.max(0, Math.min(1, v));
  */
 export function SelfCorrectionCard({ correction, scale = 10 }: SelfCorrectionCardProps) {
   const { hat, criterion_id, original, corrected, mean_delta, n, reason } = correction;
-  const lowered = corrected < original;
+  const direction = corrected < original ? "lowered" : corrected > original ? "raised" : "held";
+  const lowered = direction === "lowered";
   const delta = corrected - original;
+  const phrase =
+    direction === "lowered"
+      ? "over-scored"
+      : direction === "raised"
+        ? "under-scored"
+        : "held its score on";
+  const message =
+    direction === "raised"
+      ? "Glasshat catches its own under-confidence and corrects the score before the judge locks it."
+      : "Glasshat catches its own over-confidence and corrects the score before the judge locks it.";
   const origFrac = clamp01(original / scale);
   const corrFrac = clamp01(corrected / scale);
 
@@ -39,13 +50,13 @@ export function SelfCorrectionCard({ correction, scale = 10 }: SelfCorrectionCar
   return (
     <div
       data-testid="self-correction-card"
-      data-direction={lowered ? "lowered" : corrected > original ? "raised" : "held"}
+      data-direction={direction}
       className="overflow-hidden rounded-2xl border border-[var(--color-warn)]/45 bg-[color-mix(in_oklch,var(--color-warn)_7%,var(--color-surface))] p-5"
     >
       <div className="flex flex-wrap items-center gap-2">
         <Badge tone="warn">audit · self-correction</Badge>
         <span className="text-sm font-medium">
-          <span className="uppercase">{hat}</span> hat over-scored{" "}
+          <span className="uppercase">{hat}</span> hat {phrase}{" "}
           <span className="font-mono">{criterion_id}</span>
         </span>
       </div>
@@ -106,7 +117,7 @@ export function SelfCorrectionCard({ correction, scale = 10 }: SelfCorrectionCar
       {reason && <p className="mt-1 text-xs italic text-[var(--color-muted)]">{reason}</p>}
 
       <p className="mt-4 border-t border-[var(--color-border)]/40 pt-3 text-sm font-medium text-[var(--color-ink)]">
-        Glasshat catches its own over-confidence and corrects the score before the judge locks it.
+        {message}
       </p>
     </div>
   );

@@ -88,7 +88,10 @@ export function activeIndex(stage: string | undefined, done: boolean | undefined
   return STAGE_TO_INDEX[stage] ?? -1;
 }
 
-function nodeState(index: number, active: number): NodeState {
+function nodeState(index: number, active: number, stage: string | undefined): NodeState {
+  // "planning" is a single SSE stage covering both RubricSynthesizer (1) and
+  // BluePlanner (2); light both so no node is skipped over during a live run.
+  if (stage === "planning" && (index === 1 || index === 2)) return "active";
   if (index < active) return "done";
   if (index === active) return "active";
   return "pending";
@@ -119,7 +122,7 @@ export function ProofTimeline({
       {/* Agent pipeline */}
       <ol className="flex flex-wrap items-stretch gap-2">
         {TIMELINE_NODES.map((n, i) => {
-          const state = nodeState(i, active);
+          const state = nodeState(i, active, stage);
           const isAudit = n.id === "audit";
           return (
             <li
@@ -205,11 +208,19 @@ export function ProofTimeline({
 }
 
 function CorrectionDelta({ correction }: { correction: TimelineCorrection }) {
-  const lowered = correction.to < correction.from;
-  const tone = lowered ? "var(--color-warn)" : "var(--color-good)";
+  const delta = correction.to - correction.from;
+  const direction = delta < 0 ? "lowered" : delta > 0 ? "raised" : "held";
+  const tone =
+    direction === "lowered"
+      ? "var(--color-warn)"
+      : direction === "raised"
+        ? "var(--color-good)"
+        : "var(--color-muted)";
+  const caret = direction === "lowered" ? "▾" : direction === "raised" ? "▴" : "—";
   return (
     <span
       data-testid="timeline-correction"
+      data-direction={direction}
       className="mt-1 inline-flex items-center gap-1 font-mono tabular-nums"
       style={{ color: tone }}
       title={correction.label}
@@ -217,7 +228,7 @@ function CorrectionDelta({ correction }: { correction: TimelineCorrection }) {
       {correction.from.toFixed(1)}
       <span aria-hidden>→</span>
       {correction.to.toFixed(1)}
-      <span aria-hidden>{lowered ? "▾" : "▴"}</span>
+      <span aria-hidden>{caret}</span>
     </span>
   );
 }

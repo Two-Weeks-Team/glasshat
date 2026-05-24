@@ -39,4 +39,13 @@ describe("SelfCorrectionCard", () => {
     render(<SelfCorrectionCard correction={lowered} />);
     expect(screen.getByTestId("correction-bar")).toBeInTheDocument();
   });
+
+  it("phrases a raised (under-confidence) correction correctly", () => {
+    render(<SelfCorrectionCard correction={{ ...lowered, original: 6, corrected: 7.5 }} />);
+    const card = screen.getByTestId("self-correction-card");
+    expect(card).toHaveAttribute("data-direction", "raised");
+    expect(card).toHaveTextContent(/under-scored/i);
+    expect(card).toHaveTextContent(/under-confidence/i);
+    expect(card).not.toHaveTextContent(/over-scored/i);
+  });
 });

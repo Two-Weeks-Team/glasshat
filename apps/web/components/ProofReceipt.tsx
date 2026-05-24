@@ -27,6 +27,7 @@ export function ProofReceipt({ record, sample = false }: ProofReceiptProps) {
   const [copied, setCopied] = useState(false);
 
   const copyRunId = async () => {
+    if (!navigator?.clipboard) return;
     try {
       await navigator.clipboard.writeText(record.run_id);
       setCopied(true);
@@ -66,6 +67,7 @@ export function ProofReceipt({ record, sample = false }: ProofReceiptProps) {
           {record.run_id}
         </code>
         <button
+          type="button"
           onClick={copyRunId}
           className="ml-auto rounded-lg border border-[var(--color-border)] px-2.5 py-1 text-xs transition hover:bg-[var(--color-surface-2)]"
         >
