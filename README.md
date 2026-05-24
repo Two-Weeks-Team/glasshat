@@ -10,6 +10,21 @@ Glasshat ingests a pitch deck + a GitHub repo + **the evaluator's official rules
 - Web: **https://glasshat-web-o366v7tl2q-uc.a.run.app** (`/judge` · `/participate`)
 - API: **https://glasshat-api-o366v7tl2q-uc.a.run.app** (`/health` · `/api/evaluate`)
 
+### ✅ Rapid Agent · Arize track — compliance at a glance
+
+> Verify everything below in ≈60s. Full detail + run-it-yourself commands:
+> **[`docs/rapid-agent-compliance.md`](docs/rapid-agent-compliance.md)** ·
+> **[`docs/evidence-matrix.md`](docs/evidence-matrix.md)**.
+
+| Requirement | Implementation | Code path | Verify | Status |
+|---|---|---|---|---|
+| **Gemini / Vertex AI** | live `gemini-3.1-flash-lite` on the Vertex `global` endpoint (+ `gemini-3.1-pro-preview` for rubric synthesis) | `packages/shared/src/glasshat/shared/llm.py` (`VertexLlmClient`) | `POST <API>/api/evaluate` → real-Gemini `RunRecord` | ✅ Live |
+| **Agent runtime** ("Agent Builder") | the **Arize track** mandates a *code-owned* runtime and states **visual Agent Builder alone is insufficient** → **Google ADK + Cloud Run** | `services/pipeline-orchestrator/src/glasshat/pipeline/adk_runtime.py`; `infra/deploy.sh` | [compliance §2](docs/rapid-agent-compliance.md#2-agent-builder-ambiguity--resolved) | ✅ Resolved |
+| **Arize partner integration** | OpenInference/OTLP → **Arize AX** (`otlp.arize.com`); one span per agent + per hat | `packages/shared/src/glasshat/shared/tracing.py` (`ArizeTracer`); `…/pipeline/engine.py:115-149` | `uv run python scripts/real_arize_ax_e2e.py` | ✅ Live |
+| **Phoenix MCP server** | ADK `MCPToolset` over stdio → `npx @arizeai/phoenix-mcp@latest`; audit consultant calls the MCP `get-dataset-examples` tool | `…/pipeline/adk_runtime.py` (`build_phoenix_mcp_toolset`, `PhoenixMcpConsultant`) | `uv run python scripts/real_e2e.py` | ✅ Wired (e2e) — deployed audit uses the spike-D calibrated table; MCP is the live-trace variant ([§3](docs/rapid-agent-compliance.md#3-arize-partner-mcp-path-agent--mcp--traceeval--report)) |
+| **Cloud Run** | API + web, project `panelyst-hackathon`, us-central1, min-instances=0 | `infra/deploy.sh`, `infra/cloudbuild-*.yaml`, `infra/Dockerfile.*` | `curl -fsS <API>/health` → 200 | ✅ Live |
+| **CI / tests / Lighthouse / live API** | GH Actions: ruff + mypy + pytest (cov ≥ 90) · web lint/tsc/vitest/build · docker | `.github/workflows/ci.yml` | `uv run pytest` → 161 passed; web 40 passed; Lighthouse ≥ 90 all pages | ✅ Green |
+
 ### Try the live demo (≈60 seconds, no install)
 
 1. Open **https://glasshat-web-o366v7tl2q-uc.a.run.app/participate**.
@@ -130,6 +145,23 @@ Engine, API, and web are built and **CI-green** (SDD + TDD; one PR per phase —
 - **3D self-correction**: `/participate` runs the pipeline and reshapes the constellation from real output — `claudedocs/assets/glasshat-3d-self-correction.png`.
 
 See `docs/superpowers/plans/` for the per-phase build plans.
+
+## Lineage and no-code-reuse
+
+Glasshat is a **new project created during the Contest Period** (May 5 – Jun 11, 2026), as the
+rules require ("newly created … not a modification or extension of … existing work"). Detail +
+audit commands in [`docs/rapid-agent-compliance.md` §5](docs/rapid-agent-compliance.md#5-lineage-and-no-code-reuse).
+
+- **First commit `dda8dc1` = 2026-05-13** — inside the period. The repo began as an empty
+  scaffold ("Initial commit"); it was first named **Panelyst** and renamed to **Glasshat** in
+  PR #1 — a rename inside this same fresh repo, not an import of prior code.
+- **Public + open source**: https://github.com/Two-Weeks-Team/glasshat, **Apache-2.0**
+  ([`LICENSE`](LICENSE)) — present since the first commit, visible at the repo root.
+- **fairthon is concept lineage only.** It seeded the *idea* of fairness-aware evaluation;
+  **no fairthon source code is reused** (`grep -rli fairthon --include='*.py' .` → no matches).
+  The engine — rubric synthesizer, 6-hat panel, audit self-correction, ADK + Phoenix-MCP
+  runtime, in-code hybrid retrieval — was authored from scratch in this repo (see the
+  key-files list in compliance §5).
 
 ## License
 
