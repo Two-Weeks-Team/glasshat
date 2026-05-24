@@ -22,6 +22,19 @@ REGION="us-central1"
 REPO="glasshat"
 ARIZE_SPACE_ID="${ARIZE_SPACE_ID:-}"
 
+# --- Judging-window knobs (env-overridable) ---
+# MIN_INSTANCES=1 keeps one warm instance so the first judge click is fast
+# instead of a 5-7s cold start. Roll back after judging with:
+#   MIN_INSTANCES=0 bash infra/deploy.sh --confirm
+# Cost: one always-on instance per service while set to 1.
+MIN_INSTANCES="${MIN_INSTANCES:-1}"
+# The docstore default (memory) is process-local: /api/runs lookups are not
+# durable across cold restarts. For durable run history set the backend to
+# firestore AND grant the Cloud Run runtime SA roles/datastore.user with a
+# Firestore (native mode) database present, then verify a run fetch across a
+# cold-instance boundary. Default stays memory to avoid overclaiming persistence.
+DOCSTORE_BACKEND="${DOCSTORE_BACKEND:-memory}"
+
 MODE="real"
 CONFIRMED=""
 NO_PHOENIX=""
@@ -67,7 +80,7 @@ GEMINI_ENV="GLASSHAT_GEMINI_PRO=gemini-3.1-pro-preview,GLASSHAT_GEMINI_FLASH=gem
 if [[ "$MODE" == "real" && "$NO_PHOENIX" == "yes" ]]; then
   echo "==> Mode: REAL Vertex Gemini, tracing OFF (NoOp — phoenix extra omitted)"
   UV_EXTRAS="--extra vertex"
-  API_ENV="LLM_BACKEND=vertex,MONITOR_BACKEND=phoenix-cloud,DOCSTORE_BACKEND=memory,GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_REGION=${REGION},GOOGLE_GENAI_USE_VERTEXAI=true,${GEMINI_ENV}"
+  API_ENV="LLM_BACKEND=vertex,MONITOR_BACKEND=phoenix-cloud,DOCSTORE_BACKEND=${DOCSTORE_BACKEND},GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_REGION=${REGION},GOOGLE_GENAI_USE_VERTEXAI=true,${GEMINI_ENV}"
   API_SECRETS=()
 elif [[ "$MODE" == "real" ]]; then
   echo "==> Mode: REAL (Vertex Gemini + Arize AX tracing)"
@@ -81,12 +94,12 @@ elif [[ "$MODE" == "real" ]]; then
     exit 3
   fi
   UV_EXTRAS="--extra vertex --extra arize"
-  API_ENV="LLM_BACKEND=vertex,MONITOR_BACKEND=arize,DOCSTORE_BACKEND=memory,GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_REGION=${REGION},GOOGLE_GENAI_USE_VERTEXAI=true,${GEMINI_ENV},ARIZE_SPACE_ID=${ARIZE_SPACE_ID},PHOENIX_PROJECT_NAME=glasshat"
+  API_ENV="LLM_BACKEND=vertex,MONITOR_BACKEND=arize,DOCSTORE_BACKEND=${DOCSTORE_BACKEND},GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_REGION=${REGION},GOOGLE_GENAI_USE_VERTEXAI=true,${GEMINI_ENV},ARIZE_SPACE_ID=${ARIZE_SPACE_ID},PHOENIX_PROJECT_NAME=glasshat"
   API_SECRETS=(--set-secrets "PHOENIX_API_KEY=phoenix-api-key:latest")
 else
   echo "==> Mode: MOCK (deterministic, no credentials)"
   UV_EXTRAS=""
-  API_ENV="LLM_BACKEND=mock,MONITOR_BACKEND=phoenix-local,DOCSTORE_BACKEND=memory,GOOGLE_CLOUD_PROJECT=${PROJECT}"
+  API_ENV="LLM_BACKEND=mock,MONITOR_BACKEND=phoenix-local,DOCSTORE_BACKEND=${DOCSTORE_BACKEND},GOOGLE_CLOUD_PROJECT=${PROJECT}"
   API_SECRETS=()
 fi
 
@@ -95,9 +108,9 @@ gcloud builds submit --project="$PROJECT" \
   --config=infra/cloudbuild-api.yaml \
   --substitutions=_IMAGE="$API_IMAGE",_UV_EXTRAS="$UV_EXTRAS" .
 
-echo "==> Deploying API to Cloud Run (min-instances=0)..."
+echo "==> Deploying API to Cloud Run (min-instances=${MIN_INSTANCES})..."
 gcloud run deploy glasshat-api --project="$PROJECT" --region="$REGION" \
-  --image="$API_IMAGE" --min-instances=0 --allow-unauthenticated \
+  --image="$API_IMAGE" --min-instances="$MIN_INSTANCES" --allow-unauthenticated \
   --set-env-vars="$API_ENV" ${API_SECRETS[@]+"${API_SECRETS[@]}"}
 
 API_URL=$(gcloud run services describe glasshat-api \
@@ -112,7 +125,7 @@ gcloud builds submit --project="$PROJECT" \
 
 echo "==> Deploying web to Cloud Run..."
 gcloud run deploy glasshat-web --project="$PROJECT" --region="$REGION" \
-  --image="$WEB_IMAGE" --min-instances=0 --allow-unauthenticated \
+  --image="$WEB_IMAGE" --min-instances="$MIN_INSTANCES" --allow-unauthenticated \
   --set-env-vars="NEXT_PUBLIC_API_BASE=${API_URL}"
 
 WEB_URL=$(gcloud run services describe glasshat-web \

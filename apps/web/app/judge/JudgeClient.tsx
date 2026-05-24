@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { Badge } from "@/components/Badge";
+import { ProofStrip } from "@/components/ProofStrip";
 import { ScoreBar } from "@/components/ScoreBar";
 import { StatCard } from "@/components/StatCard";
 import {
@@ -163,6 +164,9 @@ export function JudgeClient() {
           ordered tie-break, override a score at the human gate, and lock the official result.
         </p>
       </header>
+
+      {/* ── First-screen Rapid Agent stack proof (judge-visible in <3s) ── */}
+      <ProofStrip className="mb-6" />
 
       {/* Controls */}
       <section className="elevate rounded-2xl p-5">
