@@ -7,6 +7,7 @@ import { AuditCallout } from "@/components/AuditCallout";
 import { Badge } from "@/components/Badge";
 import { CountUp } from "@/components/CountUp";
 import { EvidenceList } from "@/components/EvidenceList";
+import { ProofStrip } from "@/components/ProofStrip";
 import { Reveal } from "@/components/Reveal";
 import { RubricTable } from "@/components/RubricTable";
 import { ScoreBar } from "@/components/ScoreBar";
@@ -115,6 +116,9 @@ export function ParticipateClient() {
           over-confidence live, then iterate on your weakest axis.
         </p>
       </header>
+
+      {/* ── First-screen Rapid Agent stack proof (judge-visible in <3s) ── */}
+      <ProofStrip className="mb-6" />
 
       {/* ── Input form ── */}
       <section className="elevate rounded-2xl p-5">
