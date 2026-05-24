@@ -8,6 +8,7 @@ import { Badge } from "@/components/Badge";
 import { CountUp } from "@/components/CountUp";
 import { EvidenceList } from "@/components/EvidenceList";
 import { ProofStrip } from "@/components/ProofStrip";
+import { ProofTimeline, type TimelineCorrection } from "@/components/ProofTimeline";
 import { Reveal } from "@/components/Reveal";
 import { RubricTable } from "@/components/RubricTable";
 import { ScoreBar } from "@/components/ScoreBar";
@@ -49,6 +50,16 @@ const SAMPLE_DECK =
 type Phase = "form" | "planning" | "plan" | "running" | "done" | "error";
 
 const scaleMax = (finalScale: string): string => finalScale.split("-").at(-1) ?? finalScale;
+
+/** The largest-magnitude self-correction, formatted for the proof timeline's Audit node. */
+function headlineCorrection(record: RunRecord): TimelineCorrection | null {
+  const cs = record.audit_corrections;
+  if (cs.length === 0) return null;
+  const top = [...cs].sort(
+    (a, b) => Math.abs(b.original - b.corrected) - Math.abs(a.original - a.corrected),
+  )[0];
+  return { label: `${top.hat} hat · ${top.criterion_id}`, from: top.original, to: top.corrected };
+}
 
 export function ParticipateClient() {
   const [presets, setPresets] = useState<PresetInfo[]>([]);
@@ -106,6 +117,12 @@ export function ParticipateClient() {
   }
 
   const busy = phase === "planning" || phase === "running";
+  const lastLive = run.corrections.at(-1);
+  const liveCorrection: TimelineCorrection | null = lastLive
+    ? { label: lastLive.criterion, from: lastLive.from, to: lastLive.to }
+    : record
+      ? headlineCorrection(record)
+      : null;
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-10">
@@ -230,7 +247,14 @@ export function ParticipateClient() {
       {(phase === "running" || phase === "done") && (
         <section className="elevate mt-6 rounded-2xl p-5">
           <h2 className="mb-4 text-lg font-medium">Live pipeline</h2>
-          <StageTimeline current={run.current} beats={run.beats} done={run.done} />
+          <ProofTimeline
+            stage={phase === "done" ? undefined : run.current}
+            done={phase === "done" || run.done}
+            correction={liveCorrection}
+          />
+          <div className="mt-5 border-t border-[var(--color-border)]/40 pt-4">
+            <StageTimeline current={run.current} beats={run.beats} done={run.done} />
+          </div>
         </section>
       )}
 
@@ -268,6 +292,12 @@ function ResultsView({
           <span className="font-mono">gemini-3.1-flash-lite</span> evaluation so you can see the
           output shape. Submit your own above to run it live.
         </p>
+      )}
+      {sample && (
+        <section className="elevate rounded-2xl p-5">
+          <h2 className="mb-4 text-lg font-medium">Evaluation pipeline</h2>
+          <ProofTimeline done correction={headlineCorrection(record)} />
+        </section>
       )}
       <Reveal className="grid gap-3 sm:grid-cols-3">
         <StatCard
