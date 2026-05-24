@@ -12,6 +12,7 @@ import { ProofTimeline, type TimelineCorrection } from "@/components/ProofTimeli
 import { Reveal } from "@/components/Reveal";
 import { RubricTable } from "@/components/RubricTable";
 import { ScoreBar } from "@/components/ScoreBar";
+import { SelfCorrectionCard } from "@/components/SelfCorrectionCard";
 import { StageTimeline } from "@/components/StageTimeline";
 import { StatCard } from "@/components/StatCard";
 import {
@@ -19,6 +20,7 @@ import {
   getRun,
   listPresets,
   streamEvaluate,
+  type AuditCorrection,
   type EvaluationInput,
   type PlanObject,
   type PresetInfo,
@@ -51,14 +53,21 @@ type Phase = "form" | "planning" | "plan" | "running" | "done" | "error";
 
 const scaleMax = (finalScale: string): string => finalScale.split("-").at(-1) ?? finalScale;
 
-/** The largest-magnitude self-correction, formatted for the proof timeline's Audit node. */
-function headlineCorrection(record: RunRecord): TimelineCorrection | null {
+/** The largest-magnitude self-correction (the headline "audit-the-auditor" moment). */
+function topAudit(record: RunRecord): AuditCorrection | null {
   const cs = record.audit_corrections;
   if (cs.length === 0) return null;
-  const top = [...cs].sort(
+  return [...cs].sort(
     (a, b) => Math.abs(b.original - b.corrected) - Math.abs(a.original - a.corrected),
   )[0];
-  return { label: `${top.hat} hat · ${top.criterion_id}`, from: top.original, to: top.corrected };
+}
+
+/** The headline correction formatted for the proof timeline's Audit node. */
+function headlineCorrection(record: RunRecord): TimelineCorrection | null {
+  const top = topAudit(record);
+  return top
+    ? { label: `${top.hat} hat · ${top.criterion_id}`, from: top.original, to: top.corrected }
+    : null;
 }
 
 export function ParticipateClient() {
@@ -280,6 +289,7 @@ function ResultsView({
 }) {
   const rows = scoreRows(record);
   const weakest = weakestAxis(rows);
+  const topCorrection = topAudit(record);
   // The 3D graph pulls in three.js; for the first-paint SAMPLE preview defer it
   // behind a click so the initial load stays light (Lighthouse perf ≥90). A real
   // run (not perf-measured) renders it immediately.
@@ -316,6 +326,12 @@ function ResultsView({
           sub={`${record.rubric.criteria.length} criteria · ${record.rubric.scoring_rule.aggregation}`}
         />
       </Reveal>
+
+      {topCorrection && (
+        <Reveal>
+          <SelfCorrectionCard correction={topCorrection} />
+        </Reveal>
+      )}
 
       <Reveal>
         <h2 className="mb-3 text-lg font-medium">Per-criterion scores</h2>
