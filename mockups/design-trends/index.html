@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Glasshat — Design-Trend Gallery (participant transparency)</title>
+<style>
+  :root {
+    --bg: #0d0f1a; --surface: #161a2b; --surface2: #1e2338; --border: #2c3350;
+    --ink: #f3f5ff; --muted: #9aa3c7; --violet: #8b6dff; --cyan: #56d4ff; --magenta: #ff6ad5;
+    --good: #5ee0a0; --warn: #f0c24b;
+    --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); }
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(40rem 30rem at 6% -10%, rgba(139,109,255,.22), transparent 60%),
+      radial-gradient(36rem 28rem at 104% 0%, rgba(86,212,255,.16), transparent 58%),
+      radial-gradient(42rem 34rem at 50% 116%, rgba(255,106,213,.14), transparent 60%);
+  }
+  header { max-width: 1200px; margin: 0 auto; padding: 56px 24px 8px; }
+  h1 { font-size: clamp(28px, 4vw, 44px); letter-spacing: -.02em; margin: 0 0 10px; }
+  .grad { background: linear-gradient(100deg, var(--violet), var(--magenta) 45%, var(--cyan)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .lede { color: var(--muted); max-width: 70ch; line-height: 1.55; font-size: 16px; }
+  .meta { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .pill { font-size: 12px; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 5px 11px; background: rgba(255,255,255,.02); }
+  .pill b { color: var(--ink); font-weight: 600; }
+  main { max-width: 1200px; margin: 0 auto; padding: 24px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 18px; }
+  .card { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); overflow: hidden; transition: transform .25s cubic-bezier(.16,1,.3,1), border-color .25s; text-decoration: none; color: inherit; }
+  .card:hover { transform: translateY(-4px); border-color: rgba(139,109,255,.6); }
+  .frame { position: relative; aspect-ratio: 16/10; background: var(--surface2); border-bottom: 1px solid var(--border); overflow: hidden; }
+  .frame iframe { position: absolute; top: 0; left: 0; width: 200%; height: 200%; transform: scale(.5); transform-origin: top left; border: 0; pointer-events: none; background: var(--bg); }
+  .frame .open { position: absolute; right: 10px; bottom: 10px; font-size: 12px; font-weight: 600; color: var(--ink); background: rgba(13,15,26,.72); border: 1px solid var(--border); border-radius: 8px; padding: 5px 10px; backdrop-filter: blur(6px); }
+  .num { position: absolute; left: 10px; top: 10px; font-family: var(--mono); font-size: 12px; color: var(--muted); background: rgba(13,15,26,.72); border: 1px solid var(--border); border-radius: 8px; padding: 3px 8px; }
+  .body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 8px; }
+  .trend { font-size: 17px; font-weight: 650; letter-spacing: -.01em; }
+  .persona { font-family: var(--mono); font-size: 11.5px; color: var(--cyan); }
+  .desc { font-size: 13.5px; color: var(--muted); line-height: 1.5; }
+  .demo { font-size: 12.5px; color: var(--ink); border-top: 1px dashed var(--border); padding-top: 9px; }
+  .demo span { color: var(--warn); font-weight: 600; }
+  footer { max-width: 1200px; margin: 0 auto; padding: 8px 24px 64px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+  @media (prefers-reduced-motion: reduce) { .card { transition: none; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Glasshat — <span class="grad">design-trend gallery</span></h1>
+  <p class="lede">Thirteen from-scratch, participant-facing reimaginings of one idea: a user pastes their pitch
+  and <b style="color:var(--ink)">feels</b>, live and dynamically, that glasshat evaluates them <b style="color:var(--ink)">transparently</b> —
+  the pipeline animates, evidence is surfaced behind every score, and the panel visibly catches and corrects its own
+  over-confidence before finalizing. Each tile is a distinct visual/UX/motion trend, authored by a different pf persona advocate.
+  No judge / evaluator mode — this is the person being evaluated.</p>
+  <div class="meta">
+    <span class="pill"><b>13</b> trends</span>
+    <span class="pill"><b>pf</b> persona advocates</span>
+    <span class="pill">self-contained · <b>offline</b></span>
+    <span class="pill">model <b>gemini-3.1-flash-lite</b></span>
+    <span class="pill">see <b>demo-actions.md</b></span>
+  </div>
+</header>
+<main>
+  <div class="grid">
+
+    <a class="card" href="01-aurora-glassmorphism.html">
+      <div class="frame"><iframe src="01-aurora-glassmorphism.html" loading="lazy" title="Aurora Glassmorphism preview" tabindex="-1" aria-hidden="true"></iframe><span class="num">01</span><span class="open">Open ↗</span></div>
+      <div class="body"><div class="trend">Aurora Glassmorphism</div><div class="persona">the-design-forward</div>
+      <div class="desc">Frosted translucent glass cards over a drifting aurora mesh; the live AI surfaces float as luminous glass panels.</div>
+      <div class="demo"><span>Demo:</span> evaluate → glass evidence drawers open per hat; YELLOW self-corrects 9.0 → 7.8 before the final ring resolves.</div></div>
+    </a>
+
+    <a class="card" href="02-ai-native-canvas.html">
+      <div class="frame"><iframe src="02-ai-native-canvas.html" loading="lazy" title="AI-Native Canvas preview" tabindex="-1" aria-hidden="true"></iframe><span class="num">02</span><span class="open">Open ↗</span></div>
+      <div class="body"><div class="trend">Generative AI-Native Canvas</div><div class="persona">the-ai-native</div>
+      <div class="desc">An LLM working surface — the six hats stream token-by-token and compose themselves as agentic cards.</div>
+      <div class="demo"><span>Demo:</span> "Open evidence" reveals the retrieved sentence; the Audit card pulls Yellow 9.0 → 7.8 in place.</div></div>
+    </a>
+
+    <a class="card" href="03-gamified-quest.html">
+      <div class="frame"><iframe src="03-gamified-quest.html" loading="lazy" title="Gamified Quest preview" tabindex="-1" aria-hidden="true"></iframe><span class="num">03</span><span class="open">Open ↗</span></div>
+      <div class="body"><div class="trend">Gamified Evaluation Quest</div><div class="persona">the-game-designer</div>
+      <div class="desc">A fair level-up: six hat "characters", XP-style score reveals, evidence badges, a fairness power-up.</div>
+      <div class="demo"><span>Demo:</span> the BLUE referee's "Fairness Power-Up" visibly corrects YELLOW 9.0 → 7.8 to match the evidence found.</div></div>
+    </a>
+
+    <a class="card" href="04-mobile-bottomsheet.html">
+      <div class="frame"><iframe src="04-mobile-bottomsheet.html" loading="lazy" title="Mobile Bottom-Sheet preview" tabindex="-1" aria-hidden="true"></iframe><span class="num">04</span><span class="open">Open ↗</span></div>
+      <div class="body"><div class="trend">Mobile Live Bottom-Sheet</div><div class="persona">the-mobile-first</div>
+      <div class="desc">Phone-frame, thumb-first: the pipeline streams in a draggable bottom sheet of score chips.</div>
+      <div class="demo"><span>Demo:</span> tap a hat chip to open the exact retrieved deck quote; Self-audit recalibrates 9.0 → 7.8.</div></div>
+    </a>
+
+    <a class="card" href="05-editorial-kinetic-type.html">
+      <div class="frame"><iframe src="05-editorial-kinetic-type.html" loading="lazy" title="Editorial Kinetic Type preview" tabindex="-1" aria-hidden="true"></iframe><span class="num">05</span><span class="open">Open ↗</span></div>
+      <div class="body"><div class="trend">Editorial Kinetic Typography</div><div class="persona">the-designer</div>
+      <div class="desc">Bold Swiss/editorial layout; oversized type reveals kinetically, scores count up, evidence as marginalia.</div>
+      <div class="demo"><span>Demo:</span> Yellow's 9.0 kinetically counts DOWN to 7.8 with a struck-through "recalibrated" flag.</div></div>
+    </a>
+
+    <a class="card" href="06-telemetry-cockpit.html">
+      <div class="frame"><iframe src="06-telemetry-cockpit.html" loading="lazy" title="Telemetry Cockpit preview" tabindex="-1" aria-hidden="true"></iframe><span class="num">06</span><span class="open">Open ↗</span></div>
+      <div class="body"><div class="trend">Live Telemetry Cockpit</div><div class="persona">the-data-nerd</div>
+      <div class="desc">Observability dashboard: a live trace-span waterfall, per-hat confidence gauges, a calibration-delta chart.</div>
+      <div class="demo"><span>Demo:</span> the CalibrationAudit span draws Δ−1.2 and pulls YELLOW 9.0 → 7.8 before the score commits.</div></div>
+    </a>
+
+    <a class="card" href="07-spatial-constellation.html">
+      <div class="frame"><iframe src="07-spatial-constellation.html" loading="lazy" title="Spatial Constellation preview" tabindex="-1" aria-hidden="true"></iframe><span class="num">07</span><span class="open">Open ↗</span></div>
+      <div class="body"><div class="trend">Spatial 3D Constellation</div><div class="persona">the-dreamer</div>
+      <div class="desc">A starfield where each criterion is a node placed by score · weight · evidence-depth, wired by light.</div>
+      <div class="demo"><span>Demo:</span> the over-confident YELLOW node visibly drifts as it self-corrects 9.0 → 7.8; click a node for evidence.</div></div>
+    </a>
+
+    <a class="card" href="08-trust-ledger.html">
+      <div class="frame"><iframe src="08-trust-ledger.html" loading="lazy" title="Trust Ledger preview" tabindex="-1" aria-hidden="true"></iframe><span class="num">08</span><span class="open">Open ↗</span></div>
+      <div class="body"><div class="trend">Transparent Trust Ledger</div><div class="persona">the-privacy-hawk</div>
+      <div class="desc">A verifiable proof-receipt: every sub-score is an immutable timestamped entry with its evidence hash.</div>
+      <div class="demo"><span>Demo:</span> the self-correction is logged as a "SELF-CORRECTED" ledger entry (9.0 → 7.8) before the score is sealed.</div></div>
+    </a>
+
+    <a class="card" href="09-guided-explainer.html">
+      <div class="frame"><iframe src="09-guided-explainer.html" loading="lazy" title="Guided Explainer preview" tabindex="-1" aria-hidden="true"></iframe><span class="num">09</span><span class="open">Open ↗</span></div>
+      <div class="body"><div class="trend">Guided Step-Reveal Explainer</div><div class="persona">the-educator</div>
+      <div class="desc">A calm walkthrough that teaches what each stage does as it happens, with "why this score?" tooltips.</div>
+      <div class="demo"><span>Demo:</span> the Self-Audit step explains the fairness moment, then corrects Yellow 9.0 → 7.8 in plain language.</div></div>
+    </a>
+
+    <a class="card" href="10-instant-minimal.html">
+      <div class="frame"><iframe src="10-instant-minimal.html" loading="lazy" title="Instant Minimal preview" tabindex="-1" aria-hidden="true"></iframe><span class="num">10</span><span class="open">Open ↗</span></div>
+      <div class="body"><div class="trend">Instant Optimistic Minimal</div><div class="persona">the-speed-obsessed</div>
+      <div class="desc">Near-zero chrome, monochrome + one accent; the whole transparent run resolves in one snappy viewport.</div>
+      <div class="demo"><span>Demo:</span> the Audit step flips YELLOW's number 9.0 → 7.8 inline; click any hat for its evidence.</div></div>
+    </a>
+
+    <a class="card" href="11-neo-brutalist.html">
+      <div class="frame"><iframe src="11-neo-brutalist.html" loading="lazy" title="Neo-Brutalist preview" tabindex="-1" aria-hidden="true"></iframe><span class="num">11</span><span class="open">Open ↗</span></div>
+      <div class="body"><div class="trend">Neo-Brutalist</div><div class="persona">the-contrarian</div>
+      <div class="desc">Raw, high-contrast machinery: thick borders, hard shadows, a monospace terminal that shows the mechanism bluntly.</div>
+      <div class="demo"><span>Demo:</span> the green terminal log FLAGS YELLOW and self-corrects 9.0 → 7.8 (struck) before the final weighted score.</div></div>
+    </a>
+
+    <a class="card" href="12-bold-conversion-landing.html">
+      <div class="frame"><iframe src="12-bold-conversion-landing.html" loading="lazy" title="Bold Conversion Landing preview" tabindex="-1" aria-hidden="true"></iframe><span class="num">12</span><span class="open">Open ↗</span></div>
+      <div class="body"><div class="trend">Bold Conversion Landing</div><div class="persona">the-indie-hacker</div>
+      <div class="desc">A high-energy landing whose CTA drops you straight into an inline live transparent-evaluation demo.</div>
+      <div class="demo"><span>Demo:</span> "See the evidence" opens the pitch lines behind a score; the Audit pulls Yellow 9.0 → 7.8 before the final.</div></div>
+    </a>
+
+    <a class="card" href="13-provenance-citations.html">
+      <div class="frame"><iframe src="13-provenance-citations.html" loading="lazy" title="Provenance & Citations preview" tabindex="-1" aria-hidden="true"></iframe><span class="num">13</span><span class="open">Open ↗</span></div>
+      <div class="body"><div class="trend">Provenance &amp; Citations</div><div class="persona">the-researcher</div>
+      <div class="desc">An academic report: every sub-score carries superscript citations resolving to the user's own pitch lines.</div>
+      <div class="demo"><span>Demo:</span> click a citation [n] to highlight its grounding passage; the Auditor corrects Yellow 9.0 → 7.8 with a calibration note.</div></div>
+    </a>
+
+  </div>
+</main>
+<footer>
+  Each mockup is a single self-contained HTML file (inline CSS/JS, no network) — open any tile directly, or double-click the file.
+  Persona → trend → demo-action mapping: <b>demo-actions.md</b>. Generated via pf persona advocates; participant perspective only.
+</footer>
+</body>
+</html>

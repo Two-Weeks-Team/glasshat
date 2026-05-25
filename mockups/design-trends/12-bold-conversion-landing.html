@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>glasshat — Evaluate your pitch. Transparently.</title>
+<style>
+  :root {
+    --bg: oklch(0.16 0.03 270);
+    --bg-2: oklch(0.20 0.04 275);
+    --surface: oklch(0.23 0.035 272);
+    --surface-2: oklch(0.27 0.04 272);
+    --line: oklch(0.34 0.04 272);
+    --txt: oklch(0.96 0.01 270);
+    --txt-dim: oklch(0.74 0.02 272);
+    --txt-faint: oklch(0.60 0.02 272);
+    --accent: oklch(0.72 0.20 295);
+    --accent-2: oklch(0.78 0.17 200);
+    --glow: oklch(0.72 0.20 295 / 0.45);
+    --ok: oklch(0.78 0.17 150);
+    --warn: oklch(0.80 0.16 75);
+    --bad: oklch(0.68 0.20 25);
+    /* hat colors */
+    --white: oklch(0.92 0.01 270);
+    --red: oklch(0.66 0.21 22);
+    --yellow: oklch(0.84 0.16 92);
+    --black: oklch(0.45 0.02 272);
+    --green: oklch(0.74 0.17 150);
+    --blue: oklch(0.68 0.16 245);
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background:
+      radial-gradient(1100px 700px at 78% -8%, oklch(0.30 0.10 295 / 0.55), transparent 60%),
+      radial-gradient(900px 600px at 5% 8%, oklch(0.28 0.09 210 / 0.40), transparent 58%),
+      var(--bg);
+    color: var(--txt);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  .wrap { max-width: 1140px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---------- NAV ---------- */
+  nav {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: blur(14px);
+    background: oklch(0.16 0.03 270 / 0.72);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav-in { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 19px; letter-spacing: -0.02em; }
+  .brand .dot { width: 26px; height: 26px; border-radius: 8px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); box-shadow: 0 0 18px var(--glow); }
+  .nav-links { display: flex; gap: 26px; align-items: center; }
+  .nav-links a { color: var(--txt-dim); text-decoration: none; font-size: 14px; font-weight: 600; }
+  .nav-links a:hover { color: var(--txt); }
+  .nav-cta { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: oklch(0.14 0.02 270); padding: 9px 16px; border-radius: 10px; font-weight: 700; font-size: 14px; }
+  @media (max-width: 720px){ .nav-links a:not(.nav-cta){ display:none; } }
+
+  /* ---------- HERO ---------- */
+  header { padding: 70px 0 30px; text-align: center; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--surface); border: 1px solid var(--line);
+    padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--txt-dim);
+    margin-bottom: 26px;
+  }
+  .pill .live { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 0 var(--ok); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%{ box-shadow: 0 0 0 0 oklch(0.78 0.17 150 / 0.6);} 70%{ box-shadow: 0 0 0 8px oklch(0.78 0.17 150 / 0);} 100%{ box-shadow: 0 0 0 0 oklch(0.78 0.17 150 / 0);} }
+
+  h1 {
+    font-size: clamp(38px, 6.4vw, 70px); line-height: 1.02; letter-spacing: -0.035em; font-weight: 850;
+    max-width: 16ch; margin: 0 auto;
+  }
+  h1 .grad { background: linear-gradient(105deg, var(--accent) 10%, var(--accent-2) 90%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .sub { font-size: clamp(16px, 2.2vw, 20px); color: var(--txt-dim); max-width: 56ch; margin: 22px auto 0; }
+
+  .hero-cta { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-top: 32px; }
+  .btn-primary {
+    border: none; cursor: pointer; font-family: inherit;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: oklch(0.13 0.02 270); font-weight: 800; font-size: 17px;
+    padding: 16px 30px; border-radius: 14px;
+    box-shadow: 0 10px 40px -8px var(--glow);
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 16px 50px -8px var(--glow); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-ghost {
+    border: 1px solid var(--line); cursor: pointer; font-family: inherit;
+    background: var(--surface); color: var(--txt); font-weight: 700; font-size: 16px;
+    padding: 16px 26px; border-radius: 14px;
+  }
+  .btn-ghost:hover { background: var(--surface-2); }
+
+  .social { margin-top: 34px; color: var(--txt-faint); font-size: 13px; display: flex; gap: 26px; justify-content: center; flex-wrap: wrap; }
+  .social b { color: var(--txt); }
+
+  /* ---------- DEMO PANEL ---------- */
+  .demo-shell {
+    margin: 40px auto 0; max-width: 1000px;
+    background: linear-gradient(180deg, var(--bg-2), var(--bg));
+    border: 1px solid var(--line); border-radius: 22px;
+    box-shadow: 0 40px 120px -40px oklch(0.10 0.05 270), inset 0 1px 0 oklch(1 0 0 / 0.04);
+    overflow: hidden;
+  }
+  .demo-top { display: flex; align-items: center; gap: 8px; padding: 12px 18px; border-bottom: 1px solid var(--line); background: oklch(0.18 0.03 272 / 0.7); }
+  .demo-top .tdot { width: 11px; height: 11px; border-radius: 50%; background: var(--line); }
+  .demo-top .tdot.r { background: var(--bad); } .demo-top .tdot.y { background: var(--warn); } .demo-top .tdot.g { background: var(--ok); }
+  .demo-top .ttitle { margin-left: 10px; font-size: 13px; color: var(--txt-faint); font-weight: 600; }
+  .demo-top .model { margin-left: auto; font-size: 12px; color: var(--txt-faint); display: flex; align-items: center; gap: 6px; }
+  .demo-top .model .live { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); animation: pulse 2s infinite; }
+
+  .demo-body { padding: 22px; }
+
+  .input-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  textarea {
+    flex: 1; min-width: 280px; min-height: 92px; resize: vertical;
+    background: var(--surface); border: 1px solid var(--line); color: var(--txt);
+    border-radius: var(--radius-sm); padding: 14px; font-family: inherit; font-size: 14px; line-height: 1.5;
+  }
+  textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px oklch(0.72 0.20 295 / 0.18); }
+  .run-col { display: flex; flex-direction: column; gap: 10px; min-width: 180px; }
+  .run-col .btn-primary { font-size: 15px; padding: 14px 20px; }
+  .run-col .hint { font-size: 12px; color: var(--txt-faint); text-align: center; }
+
+  /* pipeline */
+  .pipeline { display: flex; align-items: stretch; gap: 8px; margin-top: 24px; overflow-x: auto; padding-bottom: 4px; }
+  .stage {
+    flex: 1; min-width: 110px; background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius-sm); padding: 12px 12px 13px; position: relative;
+    opacity: 0.45; transition: opacity .35s ease, border-color .35s ease, box-shadow .35s ease, transform .35s ease;
+  }
+  .stage .num { font-size: 11px; color: var(--txt-faint); font-weight: 700; }
+  .stage .nm { font-size: 13px; font-weight: 700; margin-top: 3px; letter-spacing: -0.01em; }
+  .stage .st { font-size: 11px; color: var(--txt-faint); margin-top: 7px; min-height: 14px; }
+  .stage .bar { height: 3px; border-radius: 3px; background: var(--line); margin-top: 9px; overflow: hidden; }
+  .stage .bar i { display: block; height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width .5s ease; }
+  .stage.active { opacity: 1; border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 8px 30px -12px var(--glow); transform: translateY(-2px); }
+  .stage.done { opacity: 1; border-color: oklch(0.78 0.17 150 / 0.6); }
+  .stage.done .st { color: var(--ok); }
+  .stage.active .st { color: var(--accent-2); }
+  @media (max-width: 760px){ .pipeline{ gap:6px; } .stage{ min-width: 96px; } }
+
+  /* hats grid */
+  .hats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 22px; }
+  @media (max-width: 680px){ .hats{ grid-template-columns: repeat(2,1fr); } }
+  .hat {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm);
+    padding: 13px; opacity: 0; transform: translateY(8px);
+    transition: opacity .45s ease, transform .45s ease, border-color .35s ease, box-shadow .35s ease;
+  }
+  .hat.show { opacity: 1; transform: none; }
+  .hat-head { display: flex; align-items: center; gap: 8px; }
+  .hat-chip { width: 22px; height: 22px; border-radius: 7px; flex: none; box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.12); }
+  .hat-name { font-size: 13px; font-weight: 800; letter-spacing: -0.01em; }
+  .hat-role { font-size: 11px; color: var(--txt-faint); }
+  .hat-score { margin-left: auto; font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .hat-note { font-size: 11.5px; color: var(--txt-dim); margin-top: 9px; line-height: 1.45; }
+  .ev-btn {
+    margin-top: 10px; width: 100%; cursor: pointer; font-family: inherit;
+    background: var(--surface-2); border: 1px solid var(--line); color: var(--txt-dim);
+    border-radius: 8px; padding: 7px 9px; font-size: 11.5px; font-weight: 700; text-align: left;
+    display: flex; align-items: center; gap: 7px; transition: background .15s, color .15s, border-color .15s;
+  }
+  .ev-btn:hover { background: var(--surface); color: var(--txt); border-color: var(--accent); }
+  .ev-btn .ic { font-size: 12px; }
+  .ev-btn .arr { margin-left: auto; transition: transform .25s; }
+  .ev-btn[aria-expanded="true"] .arr { transform: rotate(90deg); }
+  .ev-panel { max-height: 0; overflow: hidden; transition: max-height .35s ease; }
+  .ev-panel-in { padding: 10px 11px; margin-top: 8px; background: oklch(0.18 0.03 272 / 0.6); border: 1px dashed var(--line); border-radius: 8px; font-size: 11.5px; color: var(--txt-dim); }
+  .ev-quote { color: var(--txt); border-left: 2px solid var(--accent); padding-left: 9px; margin: 4px 0; font-style: italic; }
+  .ev-src { color: var(--accent-2); font-weight: 700; font-size: 11px; }
+
+  /* audit banner */
+  .audit {
+    margin-top: 20px; border: 1px solid var(--warn); border-radius: var(--radius-sm);
+    background: oklch(0.30 0.10 75 / 0.16); padding: 14px 16px;
+    opacity: 0; transform: translateY(8px); transition: opacity .45s, transform .45s;
+  }
+  .audit.show { opacity: 1; transform: none; }
+  .audit-head { display: flex; align-items: center; gap: 9px; font-weight: 800; font-size: 14px; }
+  .audit-head .ai { width: 24px; height: 24px; border-radius: 7px; background: var(--warn); color: oklch(0.18 0.04 75); display: grid; place-items: center; font-size: 14px; font-weight: 900; }
+  .audit-body { font-size: 12.5px; color: var(--txt-dim); margin-top: 9px; line-height: 1.5; }
+  .audit-corr { display: inline-flex; align-items: center; gap: 8px; margin-top: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px 11px; font-weight: 800; font-size: 13px; font-variant-numeric: tabular-nums; }
+  .audit-corr .from { color: var(--bad); text-decoration: line-through; opacity: .8; }
+  .audit-corr .to { color: var(--ok); }
+  .audit-corr .ar { color: var(--txt-faint); }
+
+  /* final */
+  .final {
+    margin-top: 20px; display: grid; grid-template-columns: 200px 1fr; gap: 20px; align-items: center;
+    background: linear-gradient(135deg, oklch(0.26 0.07 295 / 0.5), oklch(0.24 0.06 210 / 0.4));
+    border: 1px solid var(--line); border-radius: var(--radius); padding: 20px;
+    opacity: 0; transform: translateY(10px); transition: opacity .5s, transform .5s;
+  }
+  .final.show { opacity: 1; transform: none; }
+  @media (max-width: 620px){ .final{ grid-template-columns: 1fr; text-align:center; } }
+  .score-ring { position: relative; width: 160px; height: 160px; margin: 0 auto; }
+  .score-ring svg { transform: rotate(-90deg); }
+  .score-ring .val { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+  .score-ring .val .big { font-size: 40px; font-weight: 850; line-height: 1; font-variant-numeric: tabular-nums; }
+  .score-ring .val .scale { font-size: 12px; color: var(--txt-faint); margin-top: 4px; }
+  .final-h { font-size: 18px; font-weight: 800; }
+  .breakdown { margin-top: 12px; display: flex; flex-direction: column; gap: 7px; }
+  .bd-row { display: grid; grid-template-columns: 96px 1fr 42px; gap: 10px; align-items: center; font-size: 12px; }
+  .bd-row .lbl { color: var(--txt-dim); }
+  .bd-track { height: 6px; border-radius: 4px; background: var(--surface); overflow: hidden; }
+  .bd-track i { display: block; height: 100%; width: 0; border-radius: 4px; transition: width .8s ease; }
+  .bd-row .v { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--txt); }
+
+  /* section */
+  section.feat { padding: 90px 0 30px; }
+  .sec-h { text-align: center; max-width: 60ch; margin: 0 auto 44px; }
+  .sec-h .eyebrow { color: var(--accent); font-weight: 800; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
+  .sec-h h2 { font-size: clamp(28px, 4vw, 42px); letter-spacing: -0.03em; margin-top: 10px; }
+  .sec-h p { color: var(--txt-dim); margin-top: 12px; font-size: 16px; }
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 820px){ .cards{ grid-template-columns: 1fr; } }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; }
+  .card .icon { width: 42px; height: 42px; border-radius: 11px; display: grid; place-items: center; background: linear-gradient(135deg, oklch(0.30 0.10 295 / 0.5), oklch(0.28 0.08 210 / 0.4)); border: 1px solid var(--line); margin-bottom: 14px; }
+  .card h3 { font-size: 17px; letter-spacing: -0.01em; }
+  .card p { color: var(--txt-dim); font-size: 14px; margin-top: 8px; }
+
+  /* bottom cta */
+  .bigcta { text-align: center; padding: 90px 0 100px; }
+  .bigcta h2 { font-size: clamp(30px, 5vw, 50px); letter-spacing: -0.03em; max-width: 18ch; margin: 0 auto; }
+  .bigcta p { color: var(--txt-dim); margin: 16px auto 0; max-width: 50ch; }
+
+  footer { border-top: 1px solid var(--line); padding: 26px 0; color: var(--txt-faint); font-size: 13px; }
+  .foot-in { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap nav-in">
+    <div class="brand"><span class="dot"></span> glasshat</div>
+    <div class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="#trust">Why it's fair</a>
+      <a href="#try" class="nav-cta">Evaluate my pitch</a>
+    </div>
+  </div>
+</nav>
+
+<header>
+  <div class="wrap">
+    <div class="pill"><span class="live"></span> Live evaluation · gemini-3.1-flash-lite · observed end-to-end</div>
+    <h1>Get your pitch judged the way the <span class="grad">official rubric</span> actually scores it.</h1>
+    <p class="sub">Paste your pitch. Watch a 6-perspective AI panel evaluate it live — every sub-score grounded in evidence you can open, and a self-audit that catches its own overconfidence before the final number lands.</p>
+    <div class="hero-cta">
+      <button class="btn-primary" onclick="document.getElementById('try').scrollIntoView();document.getElementById('runBtn').focus();">Evaluate my pitch →</button>
+      <a class="btn-ghost" href="#how">See how scoring works</a>
+    </div>
+    <div class="social">
+      <span><b>1,840+</b> pitches evaluated</span>
+      <span><b>6</b> perspectives per run (Six Thinking Hats)</span>
+      <span><b>100%</b> of sub-scores show their evidence</span>
+    </div>
+  </div>
+</header>
+
+<!-- INLINE LIVE DEMO -->
+<div class="wrap" id="try">
+  <div class="demo-shell">
+    <div class="demo-top">
+      <span class="tdot r"></span><span class="tdot y"></span><span class="tdot g"></span>
+      <span class="ttitle">glasshat — transparent evaluation</span>
+      <span class="model"><span class="live"></span> gemini-3.1-flash-lite · Arize AX</span>
+    </div>
+    <div class="demo-body">
+      <div class="input-row">
+        <textarea id="pitch" aria-label="Your pitch text">Pulse is a real-time burnout-detection layer for engineering teams. We read calendar load, PR review latency, and on-call rotation from tools teams already use, and flag at-risk engineers two weeks before attrition. 3 design partners, $4k MRR, 22% WoW growth. We win on data depth, not surveys.</textarea>
+        <div class="run-col">
+          <button class="btn-primary" id="runBtn">▶ Run live evaluation</button>
+          <span class="hint">Scored on the official rubric · 0–10 scale</span>
+        </div>
+      </div>
+
+      <!-- PIPELINE -->
+      <div class="pipeline" id="pipeline" aria-label="Evaluation pipeline">
+        <div class="stage" data-s="0"><div class="num">01</div><div class="nm">Input</div><div class="st">waiting</div><div class="bar"><i></i></div></div>
+        <div class="stage" data-s="1"><div class="num">02</div><div class="nm">RubricSynthesizer</div><div class="st">waiting</div><div class="bar"><i></i></div></div>
+        <div class="stage" data-s="2"><div class="num">03</div><div class="nm">BluePlanner</div><div class="st">waiting</div><div class="bar"><i></i></div></div>
+        <div class="stage" data-s="3"><div class="num">04</div><div class="nm">SixHatPanel</div><div class="st">waiting</div><div class="bar"><i></i></div></div>
+        <div class="stage" data-s="4"><div class="num">05</div><div class="nm">Audit</div><div class="st">waiting</div><div class="bar"><i></i></div></div>
+        <div class="stage" data-s="5"><div class="num">06</div><div class="nm">Final score</div><div class="st">waiting</div><div class="bar"><i></i></div></div>
+      </div>
+
+      <!-- HATS -->
+      <div class="hats" id="hats"></div>
+
+      <!-- AUDIT -->
+      <div class="audit" id="audit" role="status">
+        <div class="audit-head"><span class="ai">⚖</span> Self-audit triggered — overconfidence detected</div>
+        <div class="audit-body">
+          The <b style="color:var(--yellow)">Yellow</b> hat scored optimism at <b>9.0</b>, but the Audit pass found the claim
+          “22% WoW growth” is asserted without a supporting time-window or cohort. Unsupported upside is discounted, so the score is pulled back
+          <b>before</b> it reaches the final total.
+          <div class="audit-corr"><span class="from">Yellow 9.0</span><span class="ar">→ corrected →</span><span class="to">Yellow 7.8</span></div>
+        </div>
+      </div>
+
+      <!-- FINAL -->
+      <div class="final" id="final">
+        <div class="score-ring">
+          <svg width="160" height="160" viewBox="0 0 160 160">
+            <circle cx="80" cy="80" r="68" fill="none" stroke="oklch(0.30 0.04 272)" stroke-width="12"/>
+            <circle id="ringFill" cx="80" cy="80" r="68" fill="none" stroke="url(#g1)" stroke-width="12"
+                    stroke-linecap="round" stroke-dasharray="427" stroke-dashoffset="427"/>
+            <defs>
+              <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="oklch(0.72 0.20 295)"/>
+                <stop offset="100%" stop-color="oklch(0.78 0.17 200)"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <div class="val"><div class="big" id="finalNum">0.0</div><div class="scale">/ 10 · official scale</div></div>
+        </div>
+        <div>
+          <div class="final-h">Final score — audited &amp; grounded</div>
+          <p style="color:var(--txt-dim);font-size:13px;margin-top:4px;">Weighted across the rubric. Every line below opens its retrieved evidence above. Nothing here is a black box.</p>
+          <div class="breakdown" id="breakdown"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section class="feat" id="how">
+  <div class="wrap">
+    <div class="sec-h">
+      <div class="eyebrow">How it works</div>
+      <h2>Six perspectives. One transparent score.</h2>
+      <p>Each AI hat evaluates a different dimension of your pitch, the Blue hat plans the run, and the Audit pass keeps any single hat from inflating the result.</p>
+    </div>
+    <div class="cards">
+      <div class="card">
+        <div class="icon">🎬</div>
+        <h3>You watch it think</h3>
+        <p>The pipeline runs on screen, stage by stage: Input → RubricSynthesizer → BluePlanner → SixHatPanel → Audit → Final. No spinner, no mystery.</p>
+      </div>
+      <div class="card">
+        <div class="icon">🔎</div>
+        <h3>Every score has receipts</h3>
+        <p>Open any sub-score to read the exact lines of your pitch that drove it, plus the rubric criterion it maps to. Grounded, not guessed.</p>
+      </div>
+      <div class="card">
+        <div class="icon">⚖</div>
+        <h3>It audits itself</h3>
+        <p>An over-confident hat gets caught and corrected before finalizing. You see the 9.0 → 7.8 moment happen — calibration is part of the run.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRUST -->
+<section class="feat" id="trust" style="padding-top:20px;">
+  <div class="wrap">
+    <div class="sec-h">
+      <div class="eyebrow">Why it's fair</div>
+      <h2>Evaluated transparently — you see exactly how and why.</h2>
+      <p>Built on gemini-3.1-flash-lite via Vertex AI, observed end-to-end with Arize AX, and calibrated through a Phoenix evaluation path so the panel stays honest run after run.</p>
+    </div>
+  </div>
+</section>
+
+<!-- BOTTOM CTA -->
+<div class="wrap">
+  <div class="bigcta">
+    <h2>See your real score in under a minute.</h2>
+    <p>No sign-up to try. Paste your pitch, hit run, and watch the panel work — every number open to inspection.</p>
+    <div class="hero-cta" style="margin-top:28px;">
+      <button class="btn-primary" onclick="document.getElementById('try').scrollIntoView();document.getElementById('pitch').focus();">Evaluate my pitch →</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot-in">
+    <span>glasshat — transparent pitch evaluation</span>
+    <span>gemini-3.1-flash-lite · Vertex AI · observed with Arize AX</span>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Hat definitions (pre-audit yellow = 9.0; audit corrects to 7.8)
+  var HATS = [
+    { key:'white', name:'White', role:'Facts & evidence', color:'var(--white)', score:7.4,
+      note:'Clear quantified traction: 3 design partners, $4k MRR. Data sources named.',
+      ev:{ quote:'“3 design partners, $4k MRR, 22% WoW growth.”', src:'Pitch · line 3 → Rubric: Traction / Evidence' } },
+    { key:'red', name:'Red', role:'Gut & emotion', color:'var(--red)', score:6.9,
+      note:'“Two weeks before attrition” lands emotionally — a real, felt pain for eng leads.',
+      ev:{ quote:'“flag at-risk engineers two weeks before attrition.”', src:'Pitch · line 2 → Rubric: Problem resonance' } },
+    { key:'yellow', name:'Yellow', role:'Optimism & upside', color:'var(--yellow)', score:9.0, corrected:7.8,
+      note:'Strong upside framing — but the 22% growth claim lacks a time-window/cohort.',
+      ev:{ quote:'“22% WoW growth” — no window, no cohort, no baseline given.', src:'Audit flag → Rubric: Claim support (discounted)' } },
+    { key:'black', name:'Black', role:'Risk & caution', color:'var(--black)', score:6.2,
+      note:'Integration moat is thin; “data depth not surveys” needs a defensibility story.',
+      ev:{ quote:'“We win on data depth, not surveys.”', src:'Pitch · line 4 → Rubric: Defensibility risk' } },
+    { key:'green', name:'Green', role:'Creativity & ideas', color:'var(--green)', score:7.1,
+      note:'Reading existing signals (PR latency, on-call) instead of surveys is a fresh wedge.',
+      ev:{ quote:'“We read calendar load, PR review latency, and on-call rotation.”', src:'Pitch · line 1 → Rubric: Novelty' } },
+    { key:'blue', name:'Blue', role:'Process & control', color:'var(--blue)', score:7.6,
+      note:'Coherent narrative: problem → mechanism → traction → wedge. Well-structured run.',
+      ev:{ quote:'Structure scored across all 4 pitch lines for completeness.', src:'BluePlanner → Rubric: Clarity & structure' } }
+  ];
+
+  var stages = [].slice.call(document.querySelectorAll('.stage'));
+  var stageMsg = ['received','synthesizing criteria','planning panel','6 hats scoring','calibrating','aggregating'];
+  var hatsEl = document.getElementById('hats');
+  var auditEl = document.getElementById('audit');
+  var finalEl = document.getElementById('final');
+  var runBtn = document.getElementById('runBtn');
+  var ring = document.getElementById('ringFill');
+  var finalNum = document.getElementById('finalNum');
+  var breakdownEl = document.getElementById('breakdown');
+  var running = false;
+  var timers = [];
+
+  function clearTimers(){ timers.forEach(clearTimeout); timers = []; }
+  function later(fn, ms){ var t = setTimeout(fn, ms); timers.push(t); return t; }
+
+  function setStage(i, state, pct){
+    var s = stages[i]; if(!s) return;
+    s.classList.remove('active','done');
+    if(state) s.classList.add(state);
+    s.querySelector('.st').textContent = state === 'done' ? 'done ✓' : (state === 'active' ? stageMsg[i] : 'waiting');
+    if(pct != null) s.querySelector('.bar i').style.width = pct + '%';
+  }
+
+  function reset(){
+    clearTimers();
+    stages.forEach(function(s,i){ setStage(i,null,0); });
+    hatsEl.innerHTML = '';
+    auditEl.classList.remove('show');
+    finalEl.classList.remove('show');
+    finalNum.textContent = '0.0';
+    ring.style.strokeDashoffset = 427;
+    breakdownEl.innerHTML = '';
+  }
+
+  function chipStyle(c){ return 'background:'+c+';'; }
+
+  function buildHatCard(h, idx){
+    var card = document.createElement('div');
+    card.className = 'hat';
+    var displayScore = h.corrected != null ? h.corrected : h.score;
+    card.innerHTML =
+      '<div class="hat-head">'+
+        '<span class="hat-chip" style="'+chipStyle(h.color)+'"></span>'+
+        '<div><div class="hat-name">'+h.name+'</div><div class="hat-role">'+h.role+'</div></div>'+
+        '<div class="hat-score" data-final="'+displayScore.toFixed(1)+'">'+h.score.toFixed(1)+'</div>'+
+      '</div>'+
+      '<div class="hat-note">'+h.note+'</div>'+
+      '<button class="ev-btn" aria-expanded="false"><span class="ic">📎</span> See the evidence<span class="arr">›</span></button>'+
+      '<div class="ev-panel"><div class="ev-panel-in">'+
+        '<div class="ev-quote">'+h.ev.quote+'</div>'+
+        '<div class="ev-src">'+h.ev.src+'</div>'+
+      '</div></div>';
+    // evidence toggle
+    var btn = card.querySelector('.ev-btn');
+    var panel = card.querySelector('.ev-panel');
+    btn.addEventListener('click', function(){
+      var open = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+      panel.style.maxHeight = open ? '0px' : (panel.firstElementChild.offsetHeight + 16) + 'px';
+    });
+    return card;
+  }
+
+  function run(){
+    if(running) return;
+    running = true;
+    runBtn.disabled = true;
+    runBtn.textContent = '● Evaluating…';
+    reset();
+
+    var step = reduce ? 1 : 1; // timing scale
+    var t = 0;
+    var dt = reduce ? 60 : 1;
+
+    // Stage 0: Input
+    later(function(){ setStage(0,'active',40); }, 100*dt);
+    later(function(){ setStage(0,'done',100); }, 650*dt);
+    // Stage 1: RubricSynthesizer
+    later(function(){ setStage(1,'active',55); }, 700*dt);
+    later(function(){ setStage(1,'done',100); }, 1350*dt);
+    // Stage 2: BluePlanner
+    later(function(){ setStage(2,'active',60); }, 1400*dt);
+    later(function(){ setStage(2,'done',100); }, 2000*dt);
+    // Stage 3: SixHatPanel — reveal hats one by one
+    later(function(){ setStage(3,'active',20); }, 2050*dt);
+    HATS.forEach(function(h, i){
+      later(function(){
+        var card = buildHatCard(h, i);
+        hatsEl.appendChild(card);
+        requestAnimationFrame(function(){ card.classList.add('show'); });
+        setStage(3,'active', 20 + Math.round((i+1)/HATS.length*70));
+      }, (2200 + i*240)*dt);
+    });
+    later(function(){ setStage(3,'done',100); }, (2200 + HATS.length*240 + 150)*dt);
+
+    // Stage 4: Audit — show banner, correct yellow visibly
+    var auditAt = (2200 + HATS.length*240 + 250)*dt;
+    later(function(){ setStage(4,'active',45); }, auditAt);
+    later(function(){
+      auditEl.classList.add('show');
+      auditEl.scrollIntoView({ block:'nearest' });
+    }, auditAt + 200*dt);
+    later(function(){
+      // visibly correct the yellow hat score 9.0 -> 7.8
+      var yellowCard = hatsEl.children[2];
+      if(yellowCard){
+        var scoreEl = yellowCard.querySelector('.hat-score');
+        var target = parseFloat(scoreEl.getAttribute('data-final'));
+        animateNum(scoreEl, 9.0, target, 700*dt);
+        yellowCard.style.borderColor = 'var(--warn)';
+        yellowCard.style.boxShadow = '0 0 0 1px var(--warn)';
+        later(function(){ yellowCard.style.boxShadow = ''; yellowCard.style.borderColor = 'oklch(0.78 0.17 150 / 0.6)'; }, 1100*dt);
+      }
+    }, auditAt + 500*dt);
+    later(function(){ setStage(4,'done',100); }, auditAt + 1400*dt);
+
+    // Stage 5: Final
+    var finalAt = auditAt + 1500*dt;
+    later(function(){ setStage(5,'active',55); }, finalAt);
+    later(function(){
+      finalEl.classList.add('show');
+      computeAndShowFinal(700*dt);
+      setStage(5,'done',100);
+      running = false;
+      runBtn.disabled = false;
+      runBtn.textContent = '▶ Run again';
+    }, finalAt + 300*dt);
+  }
+
+  function animateNum(el, from, to, dur){
+    if(reduce){ el.textContent = to.toFixed(1); return; }
+    var start = performance.now();
+    function frame(now){
+      var p = Math.min(1, (now-start)/dur);
+      var eased = 1 - Math.pow(1-p, 3);
+      el.textContent = (from + (to-from)*eased).toFixed(1);
+      if(p < 1) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function computeAndShowFinal(dur){
+    // weighted final using corrected scores
+    var weights = { white:0.22, red:0.10, yellow:0.16, black:0.18, green:0.14, blue:0.20 };
+    var total = 0;
+    HATS.forEach(function(h){
+      var s = (h.corrected != null ? h.corrected : h.score);
+      total += s * weights[h.key];
+    });
+    total = Math.round(total*10)/10; // ~7.2
+
+    // ring: circumference ~427 for r=68
+    var circ = 427;
+    var offset = circ - (total/10)*circ;
+    later(function(){ ring.style.strokeDashoffset = offset; }, 60);
+    animateNum(finalNum, 0, total, dur);
+
+    // breakdown rows
+    breakdownEl.innerHTML = '';
+    HATS.forEach(function(h){
+      var s = (h.corrected != null ? h.corrected : h.score);
+      var row = document.createElement('div');
+      row.className = 'bd-row';
+      row.innerHTML =
+        '<span class="lbl">'+h.name+'</span>'+
+        '<span class="bd-track"><i style="background:'+h.color+'"></i></span>'+
+        '<span class="v">'+s.toFixed(1)+'</span>';
+      breakdownEl.appendChild(row);
+      later(function(){ row.querySelector('i').style.width = (s/10*100)+'%'; }, 120);
+    });
+  }
+
+  runBtn.addEventListener('click', run);
+})();
+</script>
+</body>
+</html>

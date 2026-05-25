@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>glasshat — Transparent AI Evaluation</title>
+<style>
+  :root {
+    --bg-0: oklch(16% 0.03 280);
+    --bg-1: oklch(20% 0.05 290);
+    --glass-fill: oklch(80% 0.04 280 / 0.08);
+    --glass-stroke: oklch(92% 0.03 280 / 0.18);
+    --glass-fill-strong: oklch(85% 0.05 280 / 0.13);
+    --txt-hi: oklch(97% 0.01 280);
+    --txt-mid: oklch(80% 0.02 280);
+    --txt-lo: oklch(64% 0.02 280);
+    --accent: oklch(78% 0.16 200);
+    --accent-2: oklch(74% 0.18 320);
+    --good: oklch(82% 0.17 150);
+    --warn: oklch(83% 0.16 75);
+    --bad: oklch(72% 0.18 25);
+    --white-hat: oklch(94% 0.01 280);
+    --red-hat: oklch(72% 0.18 20);
+    --yellow-hat: oklch(86% 0.15 90);
+    --black-hat: oklch(60% 0.03 280);
+    --green-hat: oklch(80% 0.16 150);
+    --blue-hat: oklch(75% 0.15 250);
+    --radius: 22px;
+    --blur: 22px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg-0);
+    color: var(--txt-hi);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+    overflow-x: hidden;
+  }
+
+  /* ---------- Aurora mesh background ---------- */
+  .aurora {
+    position: fixed;
+    inset: -20%;
+    z-index: -2;
+    filter: blur(60px);
+    opacity: 0.9;
+  }
+  .aurora span {
+    position: absolute;
+    border-radius: 50%;
+    mix-blend-mode: screen;
+    animation: drift 22s ease-in-out infinite alternate;
+  }
+  .aurora .b1 { width: 52vw; height: 52vw; left: -8vw; top: -10vw;
+    background: radial-gradient(circle, oklch(70% 0.20 280 / 0.55), transparent 65%); animation-duration: 26s; }
+  .aurora .b2 { width: 46vw; height: 46vw; right: -6vw; top: 4vw;
+    background: radial-gradient(circle, oklch(74% 0.18 200 / 0.5), transparent 65%); animation-duration: 30s; }
+  .aurora .b3 { width: 48vw; height: 48vw; left: 18vw; bottom: -16vw;
+    background: radial-gradient(circle, oklch(72% 0.20 330 / 0.5), transparent 65%); animation-duration: 34s; }
+  .aurora .b4 { width: 34vw; height: 34vw; right: 14vw; bottom: -8vw;
+    background: radial-gradient(circle, oklch(78% 0.16 150 / 0.4), transparent 65%); animation-duration: 28s; }
+  @keyframes drift {
+    0%   { transform: translate(0,0) scale(1); }
+    50%  { transform: translate(4vw,-3vw) scale(1.12); }
+    100% { transform: translate(-3vw,4vw) scale(0.96); }
+  }
+  .grain {
+    position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    opacity: 0.4;
+    background-image: radial-gradient(oklch(100% 0 0 / 0.02) 1px, transparent 1px);
+    background-size: 3px 3px;
+  }
+
+  /* ---------- Layout ---------- */
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 22px 0 14px;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 19px; letter-spacing: 0.2px; }
+  .brand .logo {
+    width: 34px; height: 34px; border-radius: 11px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: grid; place-items: center;
+    box-shadow: 0 0 22px oklch(74% 0.18 280 / 0.5);
+  }
+  .brand .logo svg { width: 20px; height: 20px; }
+  .nav-pill {
+    font-size: 13px; color: var(--txt-mid);
+    padding: 8px 16px; border-radius: 999px;
+    background: var(--glass-fill); border: 1px solid var(--glass-stroke);
+    backdrop-filter: blur(10px);
+  }
+  .nav-pill b { color: var(--good); }
+
+  .glass {
+    background: var(--glass-fill);
+    border: 1px solid var(--glass-stroke);
+    border-radius: var(--radius);
+    backdrop-filter: blur(var(--blur));
+    -webkit-backdrop-filter: blur(var(--blur));
+    box-shadow: 0 18px 50px oklch(10% 0.04 280 / 0.45),
+                inset 0 1px 0 oklch(100% 0 0 / 0.12);
+  }
+
+  /* ---------- Hero ---------- */
+  .hero { text-align: center; padding: 30px 0 16px; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12.5px; color: var(--txt-mid);
+    padding: 7px 14px; border-radius: 999px; margin-bottom: 18px;
+    background: var(--glass-fill); border: 1px solid var(--glass-stroke);
+    backdrop-filter: blur(10px);
+  }
+  .badge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--good);
+    box-shadow: 0 0 10px var(--good); animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: 0.35; } }
+  h1 {
+    font-size: clamp(30px, 5vw, 50px); line-height: 1.08; font-weight: 800;
+    letter-spacing: -1px;
+    background: linear-gradient(120deg, var(--txt-hi), oklch(80% 0.12 280), var(--txt-hi));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero p { color: var(--txt-mid); max-width: 620px; margin: 16px auto 0; font-size: 16px; }
+
+  /* ---------- Input panel ---------- */
+  .input-panel { padding: 22px; margin-top: 26px; }
+  .input-panel label { font-size: 13px; color: var(--txt-lo); display: block; margin-bottom: 10px; }
+  textarea {
+    width: 100%; min-height: 120px; resize: vertical;
+    background: oklch(14% 0.02 280 / 0.55);
+    border: 1px solid var(--glass-stroke); border-radius: 14px;
+    color: var(--txt-hi); padding: 14px 16px; font-size: 14.5px;
+    font-family: inherit; line-height: 1.55;
+    transition: border-color 0.25s, box-shadow 0.25s;
+  }
+  textarea:focus { outline: none; border-color: var(--accent);
+    box-shadow: 0 0 0 4px oklch(74% 0.16 200 / 0.18); }
+  .input-row { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; gap: 14px; flex-wrap: wrap; }
+  .rubric-tag { font-size: 12.5px; color: var(--txt-lo); display: flex; align-items: center; gap: 8px; }
+  .rubric-tag svg { width: 15px; height: 15px; opacity: 0.7; }
+  .btn {
+    border: none; cursor: pointer; font-family: inherit; font-weight: 650;
+    font-size: 14.5px; color: oklch(15% 0.02 280);
+    padding: 13px 26px; border-radius: 13px;
+    background: linear-gradient(120deg, var(--accent), var(--accent-2));
+    box-shadow: 0 10px 28px oklch(74% 0.16 280 / 0.45);
+    transition: transform 0.18s, box-shadow 0.18s, opacity 0.2s;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 14px 34px oklch(74% 0.16 280 / 0.55); }
+  .btn:active { transform: translateY(0); }
+  .btn:disabled { opacity: 0.55; cursor: progress; transform: none; }
+
+  /* ---------- Pipeline ---------- */
+  .stage { margin-top: 30px; }
+  .stage-title { font-size: 13px; text-transform: uppercase; letter-spacing: 1.4px;
+    color: var(--txt-lo); margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+  .stage-title .line { flex: 1; height: 1px; background: linear-gradient(90deg, var(--glass-stroke), transparent); }
+
+  .pipeline { display: flex; align-items: stretch; gap: 10px; overflow-x: auto; padding-bottom: 6px; }
+  .pnode {
+    flex: 1 0 0; min-width: 130px; padding: 16px 14px; position: relative;
+    opacity: 0.42; filter: saturate(0.5);
+    transition: opacity 0.5s, filter 0.5s, transform 0.5s, box-shadow 0.5s;
+  }
+  .pnode.active {
+    opacity: 1; filter: none; transform: translateY(-4px);
+    box-shadow: 0 18px 44px oklch(74% 0.16 280 / 0.4),
+                inset 0 1px 0 oklch(100% 0 0 / 0.16),
+                0 0 0 1px oklch(78% 0.16 200 / 0.4);
+  }
+  .pnode.done { opacity: 1; filter: none; }
+  .pnode .pn-ic { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center;
+    background: var(--glass-fill-strong); margin-bottom: 10px; }
+  .pnode .pn-ic svg { width: 17px; height: 17px; }
+  .pnode .pn-name { font-size: 13.5px; font-weight: 650; }
+  .pnode .pn-sub { font-size: 11.5px; color: var(--txt-lo); margin-top: 3px; }
+  .pnode .pn-status { position: absolute; top: 14px; right: 14px; font-size: 11px; }
+  .pnode .pn-bar { height: 3px; border-radius: 999px; margin-top: 12px;
+    background: oklch(100% 0 0 / 0.08); overflow: hidden; }
+  .pnode .pn-bar i { display: block; height: 100%; width: 0;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    transition: width 0.6s ease; }
+  .pnode.active .pn-bar i { width: 100%; }
+  .pnode.done .pn-bar i { width: 100%; }
+  .pnode.done .pn-status { color: var(--good); }
+  .spinner { width: 13px; height: 13px; border: 2px solid oklch(100% 0 0 / 0.25);
+    border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---------- Hat panel ---------- */
+  .hats-wrap { margin-top: 28px; }
+  .hats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .hat {
+    padding: 16px; position: relative; overflow: hidden;
+    opacity: 0; transform: translateY(14px);
+    transition: opacity 0.5s, transform 0.5s, box-shadow 0.4s;
+  }
+  .hat.in { opacity: 1; transform: translateY(0); }
+  .hat::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 4px;
+    background: var(--hc); }
+  .hat .h-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .hat .h-name { display: flex; align-items: center; gap: 9px; font-weight: 650; font-size: 14px; }
+  .hat .h-chip { width: 22px; height: 22px; border-radius: 7px; background: var(--hc);
+    box-shadow: 0 0 14px var(--hc); display: grid; place-items: center; }
+  .hat .h-chip svg { width: 12px; height: 12px; }
+  .hat .h-score { font-size: 19px; font-weight: 800; font-variant-numeric: tabular-nums;
+    transition: color 0.4s; }
+  .hat .h-take { font-size: 12.5px; color: var(--txt-mid); margin-top: 10px; line-height: 1.5; }
+  .hat .h-ev {
+    margin-top: 12px; display: inline-flex; align-items: center; gap: 7px;
+    font-size: 11.5px; color: var(--txt-mid); cursor: pointer;
+    padding: 6px 11px; border-radius: 999px;
+    background: oklch(100% 0 0 / 0.05); border: 1px solid var(--glass-stroke);
+    transition: background 0.2s, color 0.2s;
+  }
+  .hat .h-ev:hover { background: oklch(100% 0 0 / 0.1); color: var(--txt-hi); }
+  .hat .h-ev svg { width: 13px; height: 13px; }
+  .hat .h-ev .cnt { color: var(--accent); font-weight: 700; }
+
+  /* correction flash on yellow */
+  .hat.correcting { animation: shakeglow 0.7s ease; box-shadow: 0 0 0 2px var(--warn), 0 14px 40px oklch(83% 0.16 75 / 0.35); }
+  @keyframes shakeglow {
+    0%,100% { transform: translateX(0); }
+    20% { transform: translateX(-4px); } 40% { transform: translateX(4px); }
+    60% { transform: translateX(-3px); } 80% { transform: translateX(2px); }
+  }
+  .h-correction {
+    margin-top: 11px; font-size: 11.5px; line-height: 1.5;
+    padding: 9px 11px; border-radius: 10px;
+    background: oklch(83% 0.16 75 / 0.12); border: 1px solid oklch(83% 0.16 75 / 0.3);
+    color: var(--warn); display: none;
+  }
+  .h-correction.show { display: block; animation: fadeIn 0.5s ease; }
+  .h-correction b { color: oklch(90% 0.13 75); }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } }
+  .old-score { text-decoration: line-through; color: var(--txt-lo); font-size: 14px; font-weight: 600; margin-right: 7px; }
+
+  /* ---------- Audit banner ---------- */
+  .audit {
+    margin-top: 22px; padding: 18px 20px; display: none;
+    border-color: oklch(83% 0.16 75 / 0.4);
+    background: linear-gradient(120deg, oklch(83% 0.16 75 / 0.1), var(--glass-fill));
+  }
+  .audit.show { display: block; animation: fadeIn 0.6s ease; }
+  .audit .a-top { display: flex; align-items: center; gap: 12px; }
+  .audit .a-ic { width: 34px; height: 34px; border-radius: 10px; flex: none; display: grid; place-items: center;
+    background: oklch(83% 0.16 75 / 0.2); box-shadow: 0 0 18px oklch(83% 0.16 75 / 0.3); }
+  .audit .a-ic svg { width: 19px; height: 19px; }
+  .audit .a-title { font-weight: 700; font-size: 15px; color: var(--warn); }
+  .audit .a-body { font-size: 13px; color: var(--txt-mid); margin-top: 8px; line-height: 1.55; }
+  .audit .a-body b { color: var(--txt-hi); }
+
+  /* ---------- Final score ---------- */
+  .final { margin-top: 26px; padding: 26px; display: none; }
+  .final.show { display: block; animation: riseIn 0.7s cubic-bezier(.2,.7,.2,1); }
+  @keyframes riseIn { from { opacity: 0; transform: translateY(24px) scale(0.98); } }
+  .final-grid { display: grid; grid-template-columns: 230px 1fr; gap: 30px; align-items: center; }
+  .ring-wrap { position: relative; display: grid; place-items: center; }
+  .ring-wrap svg { width: 200px; height: 200px; transform: rotate(-90deg); }
+  .ring-bg { fill: none; stroke: oklch(100% 0 0 / 0.08); stroke-width: 14; }
+  .ring-fg { fill: none; stroke: url(#grad); stroke-width: 14; stroke-linecap: round;
+    stroke-dasharray: 534; stroke-dashoffset: 534; transition: stroke-dashoffset 1.4s cubic-bezier(.2,.8,.2,1); }
+  .ring-center { position: absolute; text-align: center; }
+  .ring-center .num { font-size: 46px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1; }
+  .ring-center .den { font-size: 15px; color: var(--txt-lo); margin-top: 2px; }
+  .ring-center .lbl { font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--txt-lo); margin-top: 8px; }
+
+  .breakdown h3 { font-size: 14px; margin-bottom: 4px; }
+  .breakdown .bd-sub { font-size: 12px; color: var(--txt-lo); margin-bottom: 16px; }
+  .bd-row { display: grid; grid-template-columns: 150px 1fr 46px; align-items: center; gap: 12px; margin-bottom: 11px; }
+  .bd-row .bd-name { font-size: 12.5px; color: var(--txt-mid); }
+  .bd-track { height: 8px; border-radius: 999px; background: oklch(100% 0 0 / 0.07); overflow: hidden; }
+  .bd-track i { display: block; height: 100%; width: 0; border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width 1s ease; }
+  .bd-val { font-size: 13px; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+  .final-foot { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--glass-stroke);
+    font-size: 12px; color: var(--txt-lo); display: flex; gap: 18px; flex-wrap: wrap; align-items: center; }
+  .final-foot span { display: inline-flex; align-items: center; gap: 6px; }
+  .final-foot svg { width: 13px; height: 13px; opacity: 0.7; }
+
+  /* ---------- Evidence drawer ---------- */
+  .scrim { position: fixed; inset: 0; background: oklch(8% 0.03 280 / 0.5);
+    backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 40; }
+  .scrim.open { opacity: 1; pointer-events: auto; }
+  .drawer {
+    position: fixed; top: 0; right: 0; height: 100%; width: min(440px, 92vw);
+    z-index: 50; padding: 26px; overflow-y: auto;
+    transform: translateX(100%); transition: transform 0.4s cubic-bezier(.2,.8,.2,1);
+    border-radius: 26px 0 0 26px;
+    background: oklch(18% 0.03 280 / 0.78);
+    border-left: 1px solid var(--glass-stroke);
+    backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+  }
+  .drawer.open { transform: translateX(0); }
+  .drawer .d-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .drawer .d-title { font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 9px; }
+  .drawer .d-chip { width: 22px; height: 22px; border-radius: 7px; display: grid; place-items: center; }
+  .drawer .d-close { background: oklch(100% 0 0 / 0.07); border: 1px solid var(--glass-stroke);
+    color: var(--txt-mid); width: 32px; height: 32px; border-radius: 9px; cursor: pointer; font-size: 16px; }
+  .drawer .d-sub { font-size: 12.5px; color: var(--txt-lo); margin-bottom: 18px; }
+  .ev-card { padding: 14px; border-radius: 13px; margin-bottom: 12px;
+    background: oklch(100% 0 0 / 0.04); border: 1px solid var(--glass-stroke); }
+  .ev-card .ev-src { font-size: 11px; color: var(--accent); display: flex; align-items: center; gap: 6px; margin-bottom: 7px; }
+  .ev-card .ev-src svg { width: 12px; height: 12px; }
+  .ev-card .ev-quote { font-size: 13px; line-height: 1.55; color: var(--txt-mid);
+    border-left: 2px solid var(--glass-stroke); padding-left: 12px; }
+  .ev-card .ev-quote mark { background: oklch(78% 0.16 200 / 0.25); color: var(--txt-hi); border-radius: 3px; padding: 0 2px; }
+  .ev-card .ev-meta { font-size: 11px; color: var(--txt-lo); margin-top: 9px; display: flex; gap: 12px; }
+
+  footer { text-align: center; color: var(--txt-lo); font-size: 12px; padding: 40px 0 30px; }
+
+  @media (max-width: 760px) {
+    .hats { grid-template-columns: 1fr; }
+    .final-grid { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+    .bd-row { grid-template-columns: 110px 1fr 40px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important; }
+    .aurora span { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="aurora" aria-hidden="true">
+  <span class="b1"></span><span class="b2"></span><span class="b3"></span><span class="b4"></span>
+</div>
+<div class="grain" aria-hidden="true"></div>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <span class="logo">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 3l8 4-8 4-8-4 8-4z" stroke="oklch(15% 0.02 280)" stroke-width="1.6" stroke-linejoin="round"/><path d="M4 12l8 4 8-4M4 16l8 4 8-4" stroke="oklch(15% 0.02 280)" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      </span>
+      glasshat
+    </div>
+    <div class="nav-pill">Model: <b>gemini-3.1-flash-lite</b> · traced on Arize AX</div>
+  </header>
+
+  <section class="hero">
+    <div class="badge"><span class="dot"></span> Transparent, evidence-grounded scoring</div>
+    <h1>See exactly how — and why — your pitch is scored.</h1>
+    <p>Paste your pitch. A six-perspective AI panel evaluates it live against the official hackathon rubric, shows the evidence behind every sub-score, and audits itself before finalizing.</p>
+  </section>
+
+  <section class="glass input-panel">
+    <label for="pitch">Your pitch / deck text</label>
+    <textarea id="pitch">Panelyst is an AI evaluation layer for hackathons. Founders paste their deck and get a transparent, rubric-aligned score from a six-perspective panel. Every sub-score links to the exact sentence it was grounded in, and the system self-audits over-confident verdicts before finalizing. Live on gemini-3.1-flash-lite, traced end-to-end on Arize AX.</textarea>
+    <div class="input-row">
+      <div class="rubric-tag">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M9 11l3 3 8-8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12v6a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        Evaluating against <b>Official Rubric v3</b> · 5 criteria · 0–10 scale
+      </div>
+      <button class="btn" id="run">Evaluate transparently</button>
+    </div>
+  </section>
+
+  <!-- PIPELINE -->
+  <section class="stage" id="stage" style="display:none">
+    <div class="stage-title"><span>Live evaluation pipeline</span><span class="line"></span><span id="elapsed" style="font-variant-numeric:tabular-nums">0.0s</span></div>
+    <div class="pipeline" id="pipeline"></div>
+  </section>
+
+  <!-- HATS -->
+  <section class="hats-wrap" id="hatsWrap" style="display:none">
+    <div class="stage-title"><span>Six Thinking Hats panel</span><span class="line"></span></div>
+    <div class="hats" id="hats"></div>
+  </section>
+
+  <!-- AUDIT -->
+  <section class="glass audit" id="audit">
+    <div class="a-top">
+      <span class="a-ic">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7l8-4z" stroke="oklch(83% 0.16 75)" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="oklch(83% 0.16 75)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+      <div>
+        <div class="a-title">Self-audit caught an over-confident verdict</div>
+        <div class="a-body" id="auditBody"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL -->
+  <section class="glass final" id="final">
+    <div class="final-grid">
+      <div class="ring-wrap">
+        <svg viewBox="0 0 200 200">
+          <defs><linearGradient id="grad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="oklch(78% 0.16 200)"/><stop offset="1" stop-color="oklch(74% 0.18 320)"/>
+          </linearGradient></defs>
+          <circle class="ring-bg" cx="100" cy="100" r="85"/>
+          <circle class="ring-fg" id="ringFg" cx="100" cy="100" r="85"/>
+        </svg>
+        <div class="ring-center">
+          <div class="num" id="finalNum">0.0</div>
+          <div class="den">/ 10.0</div>
+          <div class="lbl">Final score</div>
+        </div>
+      </div>
+      <div class="breakdown">
+        <h3>Transparent breakdown</h3>
+        <div class="bd-sub">On the rubric's native 0–10 scale — post-audit, fully grounded.</div>
+        <div id="bdRows"></div>
+        <div class="final-foot">
+          <span><svg viewBox="0 0 24 24" fill="none"><path d="M12 2v4M12 18v4M2 12h4M18 12h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8"/></svg> 1 over-confidence correction applied</span>
+          <span><svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg> 11 evidence spans retrieved</span>
+          <span><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg> calibrated via Phoenix MCP</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>Every score links to its source. Nothing hidden. — glasshat · gemini-3.1-flash-lite on Vertex AI</footer>
+</div>
+
+<!-- Evidence drawer -->
+<div class="scrim" id="scrim"></div>
+<aside class="drawer glass" id="drawer" aria-hidden="true">
+  <div class="d-head">
+    <div class="d-title"><span class="d-chip" id="dChip"></span><span id="dTitle">Evidence</span></div>
+    <button class="d-close" id="dClose" aria-label="Close">×</button>
+  </div>
+  <div class="d-sub" id="dSub"></div>
+  <div id="evList"></div>
+</aside>
+
+<script>
+(function () {
+  "use strict";
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var delay = reduce ? 0.18 : 1; // multiplier
+
+  // ---- icon helpers ----
+  var ic = {
+    input: '<svg viewBox="0 0 24 24" fill="none"><path d="M14 4h4a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h4" stroke="oklch(94% 0.01 280)" stroke-width="1.6" stroke-linecap="round"/><path d="M9 3h6v3H9z" stroke="oklch(94% 0.01 280)" stroke-width="1.6"/></svg>',
+    rubric: '<svg viewBox="0 0 24 24" fill="none"><path d="M9 11l3 3 8-8" stroke="oklch(78% 0.16 200)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12v6a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h9" stroke="oklch(78% 0.16 200)" stroke-width="1.8" stroke-linecap="round"/></svg>',
+    plan: '<svg viewBox="0 0 24 24" fill="none"><path d="M12 3v6m0 6v6M3 12h6m6 0h6" stroke="oklch(75% 0.15 250)" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="12" r="2.5" stroke="oklch(75% 0.15 250)" stroke-width="1.6"/></svg>',
+    panel: '<svg viewBox="0 0 24 24" fill="none"><circle cx="7" cy="9" r="3" stroke="oklch(80% 0.16 150)" stroke-width="1.6"/><circle cx="17" cy="9" r="3" stroke="oklch(86% 0.15 90)" stroke-width="1.6"/><path d="M4 19c0-2 2-3 3-3M17 19c0-2 2-3 3-3" stroke="oklch(80% 0.16 150)" stroke-width="1.6" stroke-linecap="round"/></svg>',
+    audit: '<svg viewBox="0 0 24 24" fill="none"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7l8-4z" stroke="oklch(83% 0.16 75)" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="oklch(83% 0.16 75)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    final: '<svg viewBox="0 0 24 24" fill="none"><path d="M12 3l2.5 5 5.5.8-4 3.9 1 5.5L12 16.7 7 18.1l1-5.5-4-3.9 5.5-.8L12 3z" stroke="oklch(82% 0.17 150)" stroke-width="1.5" stroke-linejoin="round"/></svg>',
+    src: '<svg viewBox="0 0 24 24" fill="none"><path d="M9 7h6M9 11h6M9 15h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><rect x="5" y="3" width="14" height="18" rx="2" stroke="currentColor" stroke-width="1.6"/></svg>',
+    book: '<svg viewBox="0 0 24 24" fill="none"><path d="M4 5a2 2 0 012-2h12v18H6a2 2 0 01-2-2V5z" stroke="currentColor" stroke-width="1.5"/></svg>'
+  };
+
+  var hatIcon = '<svg viewBox="0 0 24 24" fill="none"><path d="M12 4c4 0 6 3 6 7H6c0-4 2-7 6-7z" stroke="oklch(20% 0.02 280)" stroke-width="1.5" stroke-linejoin="round"/><path d="M4 13h16" stroke="oklch(20% 0.02 280)" stroke-width="1.6" stroke-linecap="round"/></svg>';
+
+  // ---- pipeline nodes ----
+  var nodes = [
+    { name: "Input", sub: "deck parsed", icon: ic.input },
+    { name: "RubricSynthesizer", sub: "5 criteria mapped", icon: ic.rubric },
+    { name: "BluePlanner", sub: "evaluation plan", icon: ic.plan },
+    { name: "SixHatPanel", sub: "6 perspectives", icon: ic.panel },
+    { name: "Audit", sub: "self-correction", icon: ic.audit },
+    { name: "Final", sub: "score finalized", icon: ic.final }
+  ];
+
+  // ---- hats (note YELLOW gets corrected) ----
+  var hats = [
+    { key: "white", color: "var(--white-hat)", name: "White · Facts",
+      take: "Claims are concrete: a named model, a tracing layer, and a 0–10 rubric. Two metrics lack baselines.", score: 7.4, evN: 2 },
+    { key: "red", color: "var(--red-hat)", name: "Red · Intuition",
+      take: "The transparency angle feels genuinely reassuring — judges will trust a tool that shows its work.", score: 8.1, evN: 1 },
+    { key: "yellow", color: "var(--yellow-hat)", name: "Yellow · Optimism",
+      take: "Strong upside: self-auditing scoring is a real differentiator and the demo lands instantly.", score: 9.0, corrected: 7.8, evN: 2,
+      correctionNote: "Audit found <b>9.0</b> unsupported — only 2 of 4 upside claims were grounded in retrieved evidence. Pulled back to <b>7.8</b>." },
+    { key: "black", color: "var(--black-hat)", name: "Black · Caution",
+      take: "Risk: relies on a single retrieval pass; weak evidence on a criterion silently caps that sub-score.", score: 6.7, evN: 2 },
+    { key: "green", color: "var(--green-hat)", name: "Green · Creativity",
+      take: "Novel: surfacing the exact grounding span per sub-score is a fresh take on explainable scoring.", score: 8.3, evN: 2 },
+    { key: "blue", color: "var(--blue-hat)", name: "Blue · Process",
+      take: "Pipeline is coherent and ordered; the audit gate before finalize is the right control point.", score: 7.9, evN: 2 }
+  ];
+
+  // ---- evidence per hat ----
+  var evidence = {
+    white: [
+      { src: "Pitch · line 3", quote: 'Live on <mark>gemini-3.1-flash-lite</mark>, traced end-to-end on Arize AX.', score: "supports", rel: "0.91" },
+      { src: "Pitch · line 1", quote: 'a transparent, <mark>rubric-aligned score</mark> from a six-perspective panel.', score: "supports", rel: "0.84" }
+    ],
+    red: [
+      { src: "Pitch · line 2", quote: 'Every sub-score links to the <mark>exact sentence it was grounded in</mark>.', score: "supports", rel: "0.88" }
+    ],
+    yellow: [
+      { src: "Pitch · line 2", quote: 'the system <mark>self-audits over-confident verdicts</mark> before finalizing.', score: "supports", rel: "0.79" },
+      { src: "Rubric v3 · Innovation", quote: 'Reward mechanisms that are <mark>demonstrably novel</mark> vs. incremental.', score: "partial", rel: "0.52" }
+    ],
+    black: [
+      { src: "Pitch · line 2", quote: 'links to <mark>the exact sentence</mark> it was grounded in', score: "partial", rel: "0.6" },
+      { src: "Rubric v3 · Robustness", quote: 'Penalize single-point dependencies in the evaluation path.', score: "supports", rel: "0.71" }
+    ],
+    green: [
+      { src: "Pitch · line 2", quote: 'Every sub-score <mark>links to the exact sentence</mark> it was grounded in.', score: "supports", rel: "0.86" },
+      { src: "Rubric v3 · Innovation", quote: 'Reward <mark>fresh approaches to explainability</mark>.', score: "supports", rel: "0.77" }
+    ],
+    blue: [
+      { src: "Pitch · line 1", quote: 'a score from a <mark>six-perspective panel</mark>.', score: "supports", rel: "0.82" },
+      { src: "Pitch · line 2", quote: '<mark>self-audits</mark> over-confident verdicts <mark>before finalizing</mark>.', score: "supports", rel: "0.83" }
+    ]
+  };
+
+  // ---- rubric breakdown ----
+  var breakdown = [
+    { name: "Problem & Insight", val: 8.0 },
+    { name: "Innovation", val: 8.4 },
+    { name: "Execution", val: 7.6 },
+    { name: "Robustness", val: 6.9 },
+    { name: "Clarity", val: 8.2 }
+  ];
+
+  // ---- build DOM ----
+  var pipeline = document.getElementById("pipeline");
+  nodes.forEach(function (n, i) {
+    var el = document.createElement("div");
+    el.className = "glass pnode";
+    el.id = "pn" + i;
+    el.innerHTML =
+      '<div class="pn-status"></div>' +
+      '<div class="pn-ic">' + n.icon + '</div>' +
+      '<div class="pn-name">' + n.name + '</div>' +
+      '<div class="pn-sub">' + n.sub + '</div>' +
+      '<div class="pn-bar"><i></i></div>';
+    pipeline.appendChild(el);
+  });
+
+  var hatsEl = document.getElementById("hats");
+  hats.forEach(function (h, i) {
+    var el = document.createElement("div");
+    el.className = "glass hat";
+    el.id = "hat-" + h.key;
+    el.style.setProperty("--hc", h.color);
+    el.innerHTML =
+      '<div class="h-head">' +
+        '<div class="h-name"><span class="h-chip" style="background:' + h.color + ';box-shadow:0 0 14px ' + h.color + '">' + hatIcon + '</span>' + h.name + '</div>' +
+        '<div class="h-score" id="sc-' + h.key + '">–</div>' +
+      '</div>' +
+      '<div class="h-take">' + h.take + '</div>' +
+      (h.correctionNote ? '<div class="h-correction" id="corr-' + h.key + '">' + h.correctionNote + '</div>' : '') +
+      '<div class="h-ev" data-hat="' + h.key + '">' + ic.book + 'Open evidence <span class="cnt">' + h.evN + '</span></div>';
+    hatsEl.appendChild(el);
+  });
+
+  var bdRows = document.getElementById("bdRows");
+  breakdown.forEach(function (b, i) {
+    var el = document.createElement("div");
+    el.className = "bd-row";
+    el.innerHTML =
+      '<div class="bd-name">' + b.name + '</div>' +
+      '<div class="bd-track"><i id="bd-' + i + '"></i></div>' +
+      '<div class="bd-val" id="bdv-' + i + '">–</div>';
+    bdRows.appendChild(el);
+  });
+
+  // ---- evidence drawer wiring ----
+  var scrim = document.getElementById("scrim");
+  var drawer = document.getElementById("drawer");
+  function openDrawer(hatKey) {
+    var h = hats.filter(function (x) { return x.key === hatKey; })[0];
+    document.getElementById("dTitle").textContent = h.name;
+    document.getElementById("dChip").style.background = h.color;
+    document.getElementById("dChip").style.boxShadow = "0 0 14px " + h.color;
+    document.getElementById("dChip").innerHTML = hatIcon;
+    var list = evidence[hatKey] || [];
+    document.getElementById("dSub").textContent = list.length + " retrieved evidence span" + (list.length === 1 ? "" : "s") + " grounding this sub-score.";
+    var ev = document.getElementById("evList");
+    ev.innerHTML = "";
+    list.forEach(function (e) {
+      var card = document.createElement("div");
+      card.className = "ev-card";
+      var col = e.score === "supports" ? "var(--good)" : "var(--warn)";
+      card.innerHTML =
+        '<div class="ev-src">' + ic.src + e.src + '</div>' +
+        '<div class="ev-quote">' + e.quote + '</div>' +
+        '<div class="ev-meta"><span style="color:' + col + '">● ' + e.score + '</span><span>relevance ' + e.rel + '</span></div>';
+      ev.appendChild(card);
+    });
+    drawer.classList.add("open"); scrim.classList.add("open");
+    drawer.setAttribute("aria-hidden", "false");
+  }
+  function closeDrawer() {
+    drawer.classList.remove("open"); scrim.classList.remove("open");
+    drawer.setAttribute("aria-hidden", "true");
+  }
+  hatsEl.addEventListener("click", function (e) {
+    var t = e.target.closest(".h-ev");
+    if (t) openDrawer(t.getAttribute("data-hat"));
+  });
+  document.getElementById("dClose").addEventListener("click", closeDrawer);
+  scrim.addEventListener("click", closeDrawer);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDrawer(); });
+
+  // ---- timing helpers ----
+  function wait(ms) { return new Promise(function (r) { setTimeout(r, ms * delay); }); }
+
+  function setPNode(i, state) {
+    var el = document.getElementById("pn" + i);
+    el.classList.remove("active", "done");
+    if (state === "active") { el.classList.add("active"); el.querySelector(".pn-status").innerHTML = '<span class="spinner"></span>'; }
+    else if (state === "done") { el.classList.add("done"); el.querySelector(".pn-status").innerHTML = '✓'; }
+  }
+
+  // animated score count-up
+  function countTo(el, target, withDecimal) {
+    var start = 0, dur = reduce ? 1 : 600, t0 = null;
+    function step(t) {
+      if (!t0) t0 = t;
+      var p = Math.min((t - t0) / dur, 1);
+      var v = start + (target - start) * (0.5 - Math.cos(p * Math.PI) / 2);
+      el.textContent = v.toFixed(1);
+      if (p < 1) requestAnimationFrame(step);
+      else el.textContent = target.toFixed(1);
+    }
+    requestAnimationFrame(step);
+  }
+
+  // ---- elapsed clock ----
+  var elapsedEl = document.getElementById("elapsed");
+  var clock = null, t0 = 0;
+  function startClock() { t0 = performance.now(); clock = setInterval(function () {
+    elapsedEl.textContent = ((performance.now() - t0) / 1000).toFixed(1) + "s";
+  }, 100); }
+  function stopClock() { if (clock) clearInterval(clock); }
+
+  // ---- main run sequence ----
+  var btn = document.getElementById("run");
+  var running = false;
+  btn.addEventListener("click", function () {
+    if (running) return;
+    running = true;
+    run();
+  });
+
+  async function run() {
+    btn.disabled = true; btn.textContent = "Evaluating…";
+    closeDrawer();
+    // reset
+    document.getElementById("audit").classList.remove("show");
+    document.getElementById("final").classList.remove("show");
+    document.getElementById("ringFg").style.strokeDashoffset = 534;
+    document.getElementById("finalNum").textContent = "0.0";
+    nodes.forEach(function (n, i) { var el = document.getElementById("pn" + i); el.classList.remove("active", "done"); el.querySelector(".pn-status").innerHTML = ""; });
+    hats.forEach(function (h) {
+      document.getElementById("hat-" + h.key).classList.remove("in", "correcting");
+      document.getElementById("sc-" + h.key).textContent = "–";
+      document.getElementById("sc-" + h.key).style.color = "var(--txt-hi)";
+      var c = document.getElementById("corr-" + h.key); if (c) c.classList.remove("show");
+    });
+
+    document.getElementById("stage").style.display = "block";
+    document.getElementById("hatsWrap").style.display = "block";
+    startClock();
+
+    // Stage 1-3: input, rubric, plan
+    for (var i = 0; i < 3; i++) {
+      setPNode(i, "active");
+      await wait(620);
+      setPNode(i, "done");
+    }
+
+    // Stage 4: SixHatPanel — reveal hats one by one
+    setPNode(3, "active");
+    await wait(300);
+    for (var j = 0; j < hats.length; j++) {
+      var h = hats[j];
+      var card = document.getElementById("hat-" + h.key);
+      card.classList.add("in");
+      var scEl = document.getElementById("sc-" + h.key);
+      // yellow shows its inflated 9.0 first
+      var shown = h.corrected ? h.score : h.score;
+      countTo(scEl, shown, true);
+      if (h.key === "yellow") scEl.style.color = "var(--warn)";
+      await wait(360);
+    }
+    await wait(400);
+    setPNode(3, "done");
+
+    // Stage 5: Audit — self-correction moment
+    setPNode(4, "active");
+    await wait(700);
+    var audit = document.getElementById("audit");
+    document.getElementById("auditBody").innerHTML =
+      '<b>YELLOW · Optimism</b> scored <b>9.0</b>, but only 2 of its 4 upside claims were grounded in retrieved evidence. ' +
+      'Confidence exceeded support. The auditor pulls the sub-score back to <b>7.8</b> and re-weights the final total — <b>before</b> anything is finalized.';
+    audit.classList.add("show");
+    audit.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
+    await wait(600);
+
+    // visibly correct the yellow hat
+    var yCard = document.getElementById("hat-yellow");
+    yCard.classList.add("correcting");
+    var ySc = document.getElementById("sc-yellow");
+    // show struck-through old + animate to new
+    ySc.innerHTML = '<span class="old-score">9.0</span><span id="ynew">9.0</span>';
+    document.getElementById("corr-yellow").classList.add("show");
+    await wait(250);
+    countTo(document.getElementById("ynew"), 7.8, true);
+    ySc.style.color = "var(--good)";
+    await wait(700);
+    yCard.classList.remove("correcting");
+    setPNode(4, "done");
+
+    // Stage 6: Final
+    setPNode(5, "active");
+    await wait(500);
+    setPNode(5, "done");
+    stopClock();
+
+    var final = document.getElementById("final");
+    final.classList.add("show");
+    final.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
+
+    // ring + number
+    var finalScore = 7.8;
+    var circ = 534;
+    await wait(120);
+    document.getElementById("ringFg").style.strokeDashoffset = circ - (circ * (finalScore / 10));
+    countTo(document.getElementById("finalNum"), finalScore, true);
+
+    // breakdown bars
+    breakdown.forEach(function (b, i) {
+      setTimeout(function () {
+        document.getElementById("bd-" + i).style.width = (b.val * 10) + "%";
+        countTo(document.getElementById("bdv-" + i), b.val, true);
+      }, (reduce ? 0 : 200 + i * 120));
+    });
+
+    btn.disabled = false; btn.textContent = "Re-evaluate";
+    running = false;
+  }
+})();
+</script>
+</body>
+</html>
