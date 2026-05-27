@@ -5,7 +5,12 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
-from glasshat.agents.audit import ConsultResult, TableConsultant
+from glasshat.agents.audit import (
+    ConsultResult,
+    DatasetExample,
+    NullDatasetWriter,
+    TableConsultant,
+)
 from glasshat.agents.types import EvaluationInput, RunRecord
 from glasshat.pipeline.engine import Deps, default_deps, run_evaluation
 from glasshat.pipeline.events import PipelineEvent, Stage
@@ -140,3 +145,115 @@ def test_persisted_record_shape(tmp_path: Path) -> None:
     assert stored is not None
     assert stored["final_score"] == rec.final_score
     assert stored["mode"] == rec.mode
+
+
+# --- Improvement A: learning-loop wiring ------------------------------------
+
+
+class _RecordingDatasetWriter:
+    """Captures the rows passed to ``add-dataset-examples`` for assertions."""
+
+    def __init__(self) -> None:
+        self.rows: list[DatasetExample] = []
+
+    async def write(self, examples: list[DatasetExample]) -> int:
+        self.rows.extend(examples)
+        return len(examples)
+
+
+class _RaisingDatasetWriter:
+    async def write(self, examples: list[DatasetExample]) -> int:
+        raise RuntimeError("phoenix outage")
+
+
+def test_pre_audit_score_is_strictly_greater_when_yellow_gets_pulled_down(
+    tmp_path: Path,
+) -> None:
+    """The rank-flip board needs both scores on the same RunRecord — and the
+    pre-audit score must be strictly higher than the audited score whenever
+    YELLOW's over-confidence gets corrected downward."""
+    inp = EvaluationInput(
+        rubric_source={"preset_id": "rapid-agent"},
+        deck_text="we built a novel multi-agent system in python with tests and a clean design",
+        mode=RunMode.JUDGE,
+    )
+    rec = asyncio.run(run_evaluation(inp, _deps(tmp_path)))
+    assert len(rec.audit_corrections) >= 1
+    assert rec.pre_audit_final_score > rec.final_score
+    # And the SAME pipeline with no over-confident YELLOW should leave pre==post.
+
+
+def test_pre_audit_score_equals_audited_when_no_corrections(tmp_path: Path) -> None:
+    # Empty calibration table → no consultant signal → no corrections produced.
+    deps = Deps(
+        llm=MockLlmClient(embedding_dim=8),
+        retrieval=HybridIndex(),
+        docstore=MemoryDocStore(),
+        blobstore=LocalFsBlobStore(str(tmp_path)),
+        tracer=NoOpTracer(),
+        consultant=TableConsultant({}),
+    )
+    inp = EvaluationInput(
+        rubric_source={"preset_id": "rapid-agent"},
+        deck_text="we built X with tests and design",
+    )
+    rec = asyncio.run(run_evaluation(inp, deps))
+    assert rec.audit_corrections == []
+    assert rec.pre_audit_final_score == rec.final_score
+    assert rec.dataset_examples_used == 0
+    assert rec.dataset_examples_added == 0
+
+
+def test_dataset_writer_receives_one_row_per_correction(tmp_path: Path) -> None:
+    writer = _RecordingDatasetWriter()
+    deps = _deps(tmp_path)
+    deps.dataset_writer = writer
+    inp = EvaluationInput(
+        rubric_source={"preset_id": "rapid-agent"},
+        deck_text="we built a novel multi-agent system in python with tests and a clean design",
+        mode=RunMode.JUDGE,
+    )
+    rec = asyncio.run(run_evaluation(inp, deps))
+    assert len(writer.rows) == len(rec.audit_corrections) >= 1
+    assert rec.dataset_examples_added == len(writer.rows)
+    # The "n past evals informed this run" telemetry equals the max ConsultResult.n.
+    assert rec.dataset_examples_used == max(c.n for c in rec.audit_corrections)
+    # Each row's bucket is one of the spike-D evidence buckets, not None.
+    assert {row.bucket for row in writer.rows} <= {"low", "mid", "high"}
+
+
+def test_dataset_write_failure_does_not_fail_the_run(tmp_path: Path) -> None:
+    """A Phoenix outage must never poison the evaluation. The run completes,
+    the RunRecord persists, but `dataset_examples_added` is zero."""
+    deps = _deps(tmp_path)
+    deps.dataset_writer = _RaisingDatasetWriter()
+    inp = EvaluationInput(
+        rubric_source={"preset_id": "rapid-agent"},
+        deck_text="we built a novel multi-agent system in python with tests and a clean design",
+        mode=RunMode.JUDGE,
+    )
+    rec = asyncio.run(run_evaluation(inp, deps))
+    assert rec.audit_corrections  # still ran the audit
+    assert rec.dataset_examples_added == 0
+
+
+def test_sse_emits_dataset_lookup_and_write_events(tmp_path: Path) -> None:
+    deps = _deps(tmp_path)
+    deps.dataset_writer = _RecordingDatasetWriter()
+    inp = EvaluationInput(
+        rubric_source={"preset_id": "rapid-agent"},
+        deck_text="we built a novel multi-agent system in python with tests and a clean design",
+        mode=RunMode.JUDGE,
+    )
+    events: list[PipelineEvent] = []
+    asyncio.run(run_evaluation(inp, deps, on_event=events.append))
+    stages = [e.stage for e in events]
+    assert Stage.DATASET_LOOKUP in stages
+    assert Stage.DATASET_WRITE in stages
+    # DATASET_WRITE must fire *after* SCORE_CORRECTED (writes follow corrections).
+    assert stages.index(Stage.SCORE_CORRECTED) < stages.index(Stage.DATASET_WRITE)
+
+
+def test_default_deps_keeps_null_writer_for_credential_free_runs() -> None:
+    deps = default_deps()
+    assert isinstance(deps.dataset_writer, NullDatasetWriter)

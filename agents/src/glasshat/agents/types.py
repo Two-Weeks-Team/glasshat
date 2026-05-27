@@ -93,6 +93,9 @@ class RunRecord(BaseModel):
     rubric: SynthesizedRubric
     scores: list[CriterionScore]
     final_score: float
+    pre_audit_final_score: float = 0.0
     audit_corrections: list[AuditCorrection] = Field(default_factory=list)
+    dataset_examples_used: int = 0
+    dataset_examples_added: int = 0
     mode: RunMode = RunMode.PARTICIPANT
     created_at: str = ""

@@ -40,13 +40,25 @@ def assemble(
     *,
     mode: RunMode,
     created_at: str,
+    pre_audit_scores: list[CriterionScore] | None = None,
 ) -> RunRecord:
-    """Assemble the immutable run record."""
+    """Assemble the immutable run record.
+
+    ``pre_audit_scores`` is the same scoring pass but with ``corrections=[]``;
+    when supplied, its projected final score is preserved in
+    :attr:`RunRecord.pre_audit_final_score` so the rank-flip board can show
+    "without Glasshat audit" vs "with Glasshat audit" side by side.
+    """
+    audited_final = final_score(rubric, scores)
+    pre_audit_final = (
+        final_score(rubric, pre_audit_scores) if pre_audit_scores is not None else audited_final
+    )
     return RunRecord(
         run_id=run_id,
         rubric=rubric,
         scores=scores,
-        final_score=final_score(rubric, scores),
+        final_score=audited_final,
+        pre_audit_final_score=pre_audit_final,
         audit_corrections=list(corrections),
         mode=mode,
         created_at=created_at,

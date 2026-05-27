@@ -32,6 +32,9 @@ class Stage(StrEnum):
     ANCHOR_RETRIEVAL = "anchor_retrieval"
     SCORE_CORRECTED = "score_corrected"
     GRAPH_RESHAPE = "graph_reshape"
+    # learning-loop telemetry (Improvement A — "agent improves over time")
+    DATASET_LOOKUP = "dataset_lookup"
+    DATASET_WRITE = "dataset_write"
 
 
 def _now() -> str:

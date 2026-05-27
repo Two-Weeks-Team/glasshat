@@ -1,13 +1,18 @@
 import asyncio
 
 from glasshat.agents.audit import (
+    Consultant,
     ConsultResult,
+    DatasetExample,
+    FallbackConsultant,
+    NullDatasetWriter,
     TableConsultant,
     apply_correction,
     bucket_of,
+    make_dataset_examples,
     run_audit,
 )
-from glasshat.agents.types import HatAssessment
+from glasshat.agents.types import AuditCorrection, HatAssessment
 from glasshat.shared.enums import Hat
 
 
@@ -75,3 +80,119 @@ def test_run_audit_corrects_only_flagged() -> None:
     corrections = asyncio.run(run_audit(assessments, TableConsultant(table)))
     assert len(corrections) == 1
     assert corrections[0].hat == Hat.YELLOW
+
+
+# --- Improvement A: learning-loop primitives --------------------------------
+
+
+class _CountingConsultant:
+    """Phoenix-MCP stand-in that returns a configured ``ConsultResult`` and
+    counts how many times it was called — used to assert primary-vs-backup
+    ordering in :class:`FallbackConsultant`."""
+
+    def __init__(self, result: ConsultResult | None) -> None:
+        self.calls = 0
+        self._result = result
+
+    async def consult(self, hat: Hat, criterion_id: str, bucket: str) -> ConsultResult | None:
+        self.calls += 1
+        return self._result
+
+
+def test_fallback_consultant_satisfies_protocol() -> None:
+    fb = FallbackConsultant(primary=TableConsultant({}), backup=TableConsultant({}))
+    assert isinstance(fb, Consultant)
+
+
+def test_fallback_consultant_uses_primary_when_warm() -> None:
+    warm = ConsultResult(mean_delta=1.2, n=12, p25=6.0, p75=8.5)
+    primary = _CountingConsultant(warm)
+    backup = _CountingConsultant(ConsultResult(0.31, 99, 0.0, 10.0))
+    fb = FallbackConsultant(primary=primary, backup=backup)
+    out = asyncio.run(fb.consult(Hat.YELLOW, "tech-implementation", "low"))
+    assert out is warm
+    assert primary.calls == 1
+    assert backup.calls == 0  # warm primary → backup is never consulted
+
+
+def test_fallback_consultant_falls_back_on_cold_start() -> None:
+    primary = _CountingConsultant(None)  # cold Phoenix dataset
+    backup_result = ConsultResult(mean_delta=1.45, n=7, p25=0.0, p75=10.0)
+    backup = _CountingConsultant(backup_result)
+    fb = FallbackConsultant(primary=primary, backup=backup)
+    out = asyncio.run(fb.consult(Hat.YELLOW, "tech-implementation", "low"))
+    assert out is backup_result
+    assert primary.calls == 1
+    assert backup.calls == 1
+
+
+def test_fallback_consultant_falls_back_on_too_few_samples() -> None:
+    primary = _CountingConsultant(ConsultResult(mean_delta=1.0, n=2, p25=0.0, p75=10.0))
+    backup = _CountingConsultant(ConsultResult(mean_delta=1.45, n=7, p25=0.0, p75=10.0))
+    fb = FallbackConsultant(primary=primary, backup=backup)
+    out = asyncio.run(fb.consult(Hat.YELLOW, "tech-implementation", "low"))
+    assert out is not None and out.n == 7
+    assert backup.calls == 1
+
+
+def test_fallback_consultant_swallows_primary_exception() -> None:
+    class _Boom:
+        async def consult(self, *_args: object) -> ConsultResult | None:
+            raise RuntimeError("phoenix outage")
+
+    backup_result = ConsultResult(mean_delta=1.45, n=9, p25=0.0, p75=10.0)
+    fb = FallbackConsultant(primary=_Boom(), backup=_CountingConsultant(backup_result))
+    out = asyncio.run(fb.consult(Hat.YELLOW, "tech-implementation", "low"))
+    assert out is backup_result
+
+
+def test_make_dataset_examples_signs_deltas_and_recovers_bucket() -> None:
+    over = AuditCorrection(
+        hat=Hat.YELLOW,
+        criterion_id="tech-implementation",
+        original=9.0,
+        corrected=7.84,
+        mean_delta=1.45,
+        n=7,
+        reason="YELLOW over/under-confident on 'tech-implementation' "
+        "(evidence=low, mean_delta=+1.45, n=7)",
+    )
+    under = AuditCorrection(
+        hat=Hat.GREEN,
+        criterion_id="quality-of-idea",
+        original=4.0,
+        corrected=4.8,
+        mean_delta=-1.0,
+        n=12,
+        reason="GREEN over/under-confident on 'quality-of-idea' "
+        "(evidence=high, mean_delta=-1.00, n=12)",
+    )
+    rows = make_dataset_examples([over, under], run_id="run-xyz", created_at="2026-05-27T00:00:00Z")
+    assert len(rows) == 2
+    over_row = rows[0]
+    assert isinstance(over_row, DatasetExample)
+    assert over_row.bucket == "low"
+    assert over_row.delta == 1.16  # 9.0 - 7.84
+    assert over_row.run_id == "run-xyz"
+    under_row = rows[1]
+    assert under_row.bucket == "high"
+    assert under_row.delta == -0.8  # under-confident → upward correction → negative delta
+
+
+def test_make_dataset_examples_defaults_unknown_bucket_to_mid() -> None:
+    legacy = AuditCorrection(
+        hat=Hat.YELLOW,
+        criterion_id="design",
+        original=9.0,
+        corrected=7.0,
+        mean_delta=2.5,
+        n=4,
+        reason="hand-written, no evidence marker",
+    )
+    rows = make_dataset_examples([legacy], run_id="r", created_at="t")
+    assert rows[0].bucket == "mid"
+
+
+def test_null_dataset_writer_returns_zero() -> None:
+    out = asyncio.run(NullDatasetWriter().write([]))
+    assert out == 0
