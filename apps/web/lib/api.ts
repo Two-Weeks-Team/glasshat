@@ -93,8 +93,20 @@ export interface RunRecord {
   run_id: string;
   rubric: SynthesizedRubric;
   final_score: number;
+  /**
+   * Same hat outputs, same rubric, but no calibration applied — what the
+   * cohort would have ranked as without Glasshat's audit. Powers the
+   * `RankFlipBoard` on /judge. Optional for backward compatibility with
+   * cached RunRecords captured before this field shipped (legacy samples
+   * fall back to `reconstructPreAuditFinal` in `ranking.ts`).
+   */
+  pre_audit_final_score?: number;
   scores: CriterionScore[];
   audit_corrections: AuditCorrection[];
+  /** Calibration sample size that informed this run's audit (Phoenix Dataset). */
+  dataset_examples_used?: number;
+  /** New rows persisted back to the Phoenix calibration dataset by this run. */
+  dataset_examples_added?: number;
   mode: string;
   created_at: string;
 }

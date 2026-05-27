@@ -141,6 +141,32 @@ a {
   transition: width 0.8s var(--ease-out-expo);
 }
 
+/* Rank-flip board: a soft glow that fades in around a row whose rank the
+   Glasshat audit changed (RankFlipBoard). Promoted = good (green), demoted =
+   warn (amber). The glow is composite-only (box-shadow + outline) so it never
+   triggers layout. */
+@keyframes flipGlowIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.flip-row {
+  animation: flipGlowIn 0.55s var(--ease-out-expo) both;
+  transition: box-shadow 0.45s ease;
+  will-change: opacity, transform;
+}
+.flip-row-up {
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--color-good) 60%, transparent);
+}
+.flip-row-down {
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--color-warn) 70%, transparent);
+}
+
 /* Skeleton shimmer for loading states. */
 @keyframes shimmer {
   0% {
@@ -218,6 +244,9 @@ a {
     transition: none;
   }
   .skeleton {
+    animation: none;
+  }
+  .flip-row {
     animation: none;
   }
   /* Freeze the hero node in its calibrated (corrected) state. */

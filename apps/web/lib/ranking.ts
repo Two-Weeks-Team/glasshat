@@ -51,16 +51,72 @@ function effectiveScoreMap(item: EvalItem): Record<string, number> {
   return map;
 }
 
-/** Rank by effective final (desc), breaking ties by the rubric's ordered tie-break chain. */
-export function rankSubmissions(items: EvalItem[]): RankedItem[] {
+/**
+ * Standard six-hat panel size — used to back-derive a pre-audit per-criterion
+ * score for legacy RunRecords cached before `pre_audit_final_score` was added
+ * to the contract. New RunRecords carry the field directly; this is a
+ * compatibility shim for the sample cohort.
+ */
+const HATS_PER_CRITERION = 6;
+
+function nativeFromInternal(internal: number, scale: number): number {
+  return 1 + (internal / 10) * (scale - 1);
+}
+
+function internalFromNative(native: number, scale: number): number {
+  return ((native - 1) * 10) / (scale - 1);
+}
+
+/**
+ * Reconstruct each criterion's pre-audit native score from an audited
+ * RunRecord by adding back the per-hat shift that the audit applied.
+ *
+ * `audited_internal = sum(hat_scores) / N`
+ * `pre_audit_internal = audited_internal + (sum of (original − corrected)) / N`
+ *
+ * Falls back to the audited score when no corrections touched that criterion.
+ */
+export function preAuditScoreMap(record: RunRecord): Record<string, number> {
+  const map: Record<string, number> = {};
+  for (const cs of record.scores) {
+    const criterion = record.rubric.criteria.find((c) => c.id === cs.criterion_id);
+    if (!criterion) {
+      map[cs.criterion_id] = cs.score;
+      continue;
+    }
+    const deltaSum = record.audit_corrections
+      .filter((c) => c.criterion_id === cs.criterion_id)
+      .reduce((acc, c) => acc + (c.original - c.corrected), 0);
+    if (deltaSum === 0) {
+      map[cs.criterion_id] = cs.score;
+      continue;
+    }
+    const auditedInternal = internalFromNative(cs.score, criterion.scale);
+    const preInternal = auditedInternal + deltaSum / HATS_PER_CRITERION;
+    map[cs.criterion_id] = nativeFromInternal(preInternal, criterion.scale);
+  }
+  return map;
+}
+
+/**
+ * Pre-audit final score: read from the RunRecord when the engine provided it
+ * (post-PR-A); reconstruct from corrections + criterion scores for cached
+ * legacy records. Two-decimal rounded to match `finalScoreFrom`.
+ */
+export function preAuditFinalScore(record: RunRecord): number {
+  if (typeof record.pre_audit_final_score === "number" && record.pre_audit_final_score > 0) {
+    return record.pre_audit_final_score;
+  }
+  return finalScoreFrom(record.rubric, preAuditScoreMap(record));
+}
+
+function _rankBy(
+  items: EvalItem[],
+  scoreOf: (item: EvalItem) => { final: number; scores: Record<string, number> },
+): RankedItem[] {
   const enriched: RankedItem[] = items.map((it) => {
-    const effectiveScores = effectiveScoreMap(it);
-    return {
-      ...it,
-      effectiveScores,
-      effectiveFinal: finalScoreFrom(it.record.rubric, effectiveScores),
-      rank: 0,
-    };
+    const { final, scores } = scoreOf(it);
+    return { ...it, effectiveScores: scores, effectiveFinal: final, rank: 0 };
   });
 
   enriched.sort((a, b) => {
@@ -78,6 +134,27 @@ export function rankSubmissions(items: EvalItem[]): RankedItem[] {
 
   enriched.forEach((e, i) => (e.rank = i + 1));
   return enriched;
+}
+
+/** Rank by audited final (desc), breaking ties by the rubric's ordered tie-break chain. */
+export function rankSubmissions(items: EvalItem[]): RankedItem[] {
+  return _rankBy(items, (it) => {
+    const scores = effectiveScoreMap(it);
+    return { final: finalScoreFrom(it.record.rubric, scores), scores };
+  });
+}
+
+/**
+ * Rank by *pre-audit* final — the order the cohort would have had without
+ * Glasshat's calibration. Drives the left column of the rank-flip board.
+ * Overrides (gate-2) are ignored on this axis: pre-audit is the agent's
+ * raw consensus, not the human-amended verdict.
+ */
+export function rankSubmissionsPreAudit(items: EvalItem[]): RankedItem[] {
+  return _rankBy(items, (it) => {
+    const scores = preAuditScoreMap(it.record);
+    return { final: finalScoreFrom(it.record.rubric, scores), scores };
+  });
 }
 
 /** Hit rate of the predicted top-K against the judge's marked winners (0–1). */
