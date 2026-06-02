@@ -37,6 +37,25 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* Typography roles. `--font-display` (Space Grotesk) and `--font-serif`
+   (Newsreader italic) are injected on <html> by next/font; these helpers add a
+   final system fallback and the right tracking/weight per role. */
+.font-display {
+  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  font-feature-settings: "ss01", "tnum";
+  letter-spacing: -0.02em;
+}
+.font-serif-italic {
+  font-family: var(--font-serif), Georgia, "Times New Roman", serif;
+  font-style: italic;
+}
+/* Big numerals (ranks, scores) read best in the display face, tabular. */
+.numeral {
+  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+}
+
 /* Animated mesh-gradient atmosphere — a fixed layer behind all content. */
 body::before {
   content: "";
@@ -54,6 +73,21 @@ body::before {
 
 a {
   color: inherit;
+}
+
+/* Full-bleed hero atmosphere — a stronger, localized mesh behind the headline. */
+.hero-mesh {
+  background:
+    radial-gradient(48rem 36rem at 14% 6%, oklch(0.72 0.17 290 / 0.28), transparent 60%),
+    radial-gradient(42rem 34rem at 92% 14%, oklch(0.82 0.13 205 / 0.2), transparent 58%),
+    radial-gradient(54rem 40rem at 60% 108%, oklch(0.78 0.16 330 / 0.18), transparent 60%);
+  background-size: 180% 180%;
+  animation: meshDrift 30s ease-in-out infinite alternate;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-mesh {
+    animation: none;
+  }
 }
 
 /* Visible, on-brand focus ring for keyboard users (a11y). */

@@ -1,9 +1,27 @@
 import type { Metadata } from "next";
+import { Newsreader, Space_Grotesk } from "next/font/google";
 
 import { ApiStatus } from "@/components/ApiStatus";
 import { SiteNav } from "@/components/SiteNav";
 
 import "./globals.css";
+
+// Display face for the headline + every big number (rank numerals, scores).
+const display = Space_Grotesk({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-display",
+  display: "swap",
+});
+
+// Italic serif for narrative asides ("audits the judge", pull-quotes).
+const serif = Newsreader({
+  subsets: ["latin"],
+  weight: ["400"],
+  style: ["italic"],
+  variable: "--font-serif",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Glasshat — evaluation that audits its own scores",
@@ -13,7 +31,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${display.variable} ${serif.variable}`}>
       <body className="flex min-h-screen flex-col">
         <SiteNav />
         <div className="flex-1">{children}</div>
