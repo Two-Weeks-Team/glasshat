@@ -34,6 +34,32 @@ def test_evaluation_input() -> None:
     assert inp.mode == RunMode.PARTICIPANT
 
 
+def test_evaluation_input_rejects_oversized_deck() -> None:
+    with pytest.raises(ValueError):
+        EvaluationInput(rubric_source={"preset_id": "rapid-agent"}, deck_text="x" * 20_001)
+
+
+def test_evaluation_input_rejects_non_github_repo_url() -> None:
+    for bad in (
+        "https://gitlab.com/x/y",
+        "http://github.com/x/y",  # not https
+        "https://evil.example.com/x/y",
+        "ftp://github.com/x/y",
+    ):
+        with pytest.raises(ValueError):
+            EvaluationInput(rubric_source={"preset_id": "rapid-agent"}, repo_url=bad)
+
+
+def test_evaluation_input_allows_empty_and_valid_repo_url() -> None:
+    assert (
+        EvaluationInput(rubric_source={"preset_id": "rapid-agent"}, repo_url=None).repo_url is None
+    )
+    ok = EvaluationInput(
+        rubric_source={"preset_id": "rapid-agent"}, repo_url="https://github.com/acme/widget"
+    )
+    assert ok.repo_url == "https://github.com/acme/widget"
+
+
 def test_plan_object() -> None:
     p = PlanObject(
         hats_enabled=[Hat.WHITE, Hat.BLACK],

@@ -135,4 +135,23 @@ echo ""
 echo "Deployed (mode=${MODE}):"
 echo "  API: ${API_URL}"
 echo "  Web: ${WEB_URL}"
-echo "Verify: curl -fsS ${API_URL}/health"
+
+# Post-deploy smoke: assert the API actually serves before declaring success.
+# Cold start can take a few seconds, so retry briefly. Non-zero exit on failure
+# so an operator notices a broken deploy immediately (rollback: see infra/README.md).
+echo "==> Verifying API health (${API_URL}/health)..."
+health_ok=""
+for attempt in 1 2 3 4 5 6; do
+  if curl -fsS --max-time 10 "${API_URL}/health" | grep -q '"status":"ok"'; then
+    health_ok="yes"
+    break
+  fi
+  echo "   health not ready yet (attempt ${attempt}/6) — retrying in 5s..."
+  sleep 5
+done
+if [ -z "$health_ok" ]; then
+  echo "ERROR: ${API_URL}/health did not return status=ok after deploy." >&2
+  echo "Rollback: gcloud run services update-traffic glasshat-api --project=${PROJECT} --region=${REGION} --to-revisions=PREVIOUS=100" >&2
+  exit 1
+fi
+echo "==> API health OK."

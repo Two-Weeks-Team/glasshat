@@ -114,3 +114,41 @@ def test_run_panel_covers_all_hat_criterion_pairs() -> None:
     )
     pairs = {(a.hat, a.criterion_id) for a in assessments}
     assert len(pairs) == 6 * 4
+
+
+class _CountingEmbedLlm(MockLlmClient):
+    """Records every text passed to embed() so we can assert label dedupe."""
+
+    def __init__(self, embedding_dim: int = 8) -> None:
+        super().__init__(embedding_dim=embedding_dim)
+        self.embed_batches: list[list[str]] = []
+
+    async def embed(self, texts: object) -> list[list[float]]:
+        self.embed_batches.append(list(texts))  # type: ignore[arg-type]
+        return await super().embed(texts)  # type: ignore[arg-type]
+
+
+def test_run_panel_embeds_each_criterion_label_once_across_all_hats() -> None:
+    """Embeddings depend only on the label, not the hat — the panel must embed
+    the 4 unique criterion labels once, not 4 × 6 = 24 times."""
+    r = load_preset("rapid-agent")  # 4 criteria
+    inp = EvaluationInput(rubric_source={"preset_id": "rapid-agent"}, deck_text="we built X")
+    p = plan(r, inp)  # 6 hats enabled
+    llm = _CountingEmbedLlm(embedding_dim=8)
+    asyncio.run(run_panel(p, r, inp, llm, _indexed(), NoOpTracer()))
+
+    # All criterion labels embedded in a single batch; total embedded texts == 4.
+    embedded = [t for batch in llm.embed_batches for t in batch]
+    labels = [c.label for c in r.criteria]
+    assert sorted(embedded) == sorted(labels)
+    assert len(embedded) == 4  # not 24
+
+
+def test_run_hat_still_embeds_on_demand_without_shared_vectors() -> None:
+    # Direct run_hat call (no label_vectors) embeds each criterion label itself.
+    r = load_preset("rapid-agent")
+    inp = EvaluationInput(rubric_source={"preset_id": "rapid-agent"}, deck_text="x")
+    llm = _CountingEmbedLlm(embedding_dim=8)
+    asyncio.run(run_hat(Hat.WHITE, r, inp, llm, _indexed(), NoOpTracer()))
+    embedded = [t for batch in llm.embed_batches for t in batch]
+    assert sorted(embedded) == sorted(c.label for c in r.criteria)

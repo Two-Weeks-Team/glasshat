@@ -59,15 +59,25 @@ async def run_hat(
     tracer: Tracer,
     *,
     top_k: int = 5,
+    label_vectors: dict[str, list[float]] | None = None,
 ) -> list[HatAssessment]:
-    """Assess every in-scope criterion from one hat's perspective."""
+    """Assess every in-scope criterion from one hat's perspective.
+
+    ``label_vectors`` (criterion label → query embedding) lets the panel embed
+    each unique criterion label once and share it across all hats; when omitted
+    (e.g. a direct single-hat call) each label is embedded on demand.
+    """
     out: list[HatAssessment] = []
     for criterion in rubric.criteria:
         with tracer.span(
             "hat_assess",
             **{"glasshat.hat": hat.value, "glasshat.criterion": criterion.id},
         ) as span:
-            query_vector = (await llm.embed([criterion.label]))[0]
+            query_vector = (
+                label_vectors[criterion.label]
+                if label_vectors is not None and criterion.label in label_vectors
+                else (await llm.embed([criterion.label]))[0]
+            )
             hits = retrieval.search(criterion.label, top_k=top_k, query_vector=query_vector)
             evidence_refs = [hit.doc.id for hit in hits]
             response = await llm.generate(
@@ -99,8 +109,20 @@ async def run_panel(
     retrieval: Retrieval,
     tracer: Tracer,
 ) -> list[HatAssessment]:
-    """Run all enabled hats over the rubric and flatten their assessments."""
+    """Run all enabled hats over the rubric and flatten their assessments.
+
+    The criterion-label query embeddings are computed once here and shared across
+    every hat — embeddings depend only on the label, not the hat, so this cuts the
+    embed calls from ``n_hats × n_criteria`` to ``n_unique_labels`` (e.g. 24 → 4
+    for the 4-criterion rapid-agent rubric across 6 hats).
+    """
+    labels = list(dict.fromkeys(c.label for c in rubric.criteria))
+    vectors = await llm.embed(labels) if labels else []
+    label_vectors = dict(zip(labels, vectors, strict=True))
     batches = await asyncio.gather(
-        *(run_hat(hat, rubric, inp, llm, retrieval, tracer) for hat in plan.hats_enabled)
+        *(
+            run_hat(hat, rubric, inp, llm, retrieval, tracer, label_vectors=label_vectors)
+            for hat in plan.hats_enabled
+        )
     )
     return [assessment for batch in batches for assessment in batch]

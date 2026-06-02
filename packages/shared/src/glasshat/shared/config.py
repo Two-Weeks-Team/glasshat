@@ -99,6 +99,12 @@ class Settings(BaseSettings):
     github_token: str = ""
     port: int = 8080
     next_public_default_locale: str = "en"
+    # Comma-separated CORS allowlist for the API. Defaults to "*" for local/dev;
+    # the live deploy sets this to the deployed web origin so the API isn't
+    # callable from arbitrary origins. Use "*" only when there is no browser auth.
+    cors_allow_origins: str = "*"
+    # Per-IP request budget for the expensive evaluate endpoints (sliding window).
+    rate_limit_per_minute: int = 30
 
 
 @lru_cache(maxsize=1)

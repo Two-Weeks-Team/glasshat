@@ -147,3 +147,81 @@ def test_vertex_client_is_cached_per_location() -> None:
 def test_vertex_generate_smoke() -> None:
     out = asyncio.run(VertexLlmClient(Settings()).generate("Reply with OK", tier="flash_lite"))
     assert out
+
+
+# --- Vertex resilience: _with_retry --------------------------------------------
+
+
+class _Transient(Exception):
+    def __init__(self, code: int) -> None:
+        super().__init__(f"transient {code}")
+        self.code = code
+
+
+def test_with_retry_returns_first_success() -> None:
+    from glasshat.shared.llm import _with_retry
+
+    calls = {"n": 0}
+
+    async def _op() -> str:
+        calls["n"] += 1
+        return "ok"
+
+    assert asyncio.run(_with_retry(_op)) == "ok"
+    assert calls["n"] == 1
+
+
+def test_with_retry_retries_transient_then_succeeds(monkeypatch: pytest.MonkeyPatch) -> None:
+    from glasshat.shared import llm as llm_mod
+
+    async def _no_sleep(_seconds: float) -> None:
+        return None
+
+    monkeypatch.setattr(llm_mod.asyncio, "sleep", _no_sleep)
+    attempts = {"n": 0}
+
+    async def _op() -> str:
+        attempts["n"] += 1
+        if attempts["n"] < 3:
+            raise _Transient(503)
+        return "recovered"
+
+    assert asyncio.run(llm_mod._with_retry(_op)) == "recovered"
+    assert attempts["n"] == 3
+
+
+def test_with_retry_does_not_retry_non_transient(monkeypatch: pytest.MonkeyPatch) -> None:
+    from glasshat.shared import llm as llm_mod
+
+    async def _no_sleep(_seconds: float) -> None:
+        return None
+
+    monkeypatch.setattr(llm_mod.asyncio, "sleep", _no_sleep)
+    attempts = {"n": 0}
+
+    async def _op() -> str:
+        attempts["n"] += 1
+        raise _Transient(400)  # client error → not retryable
+
+    with pytest.raises(_Transient):
+        asyncio.run(llm_mod._with_retry(_op))
+    assert attempts["n"] == 1  # tried exactly once
+
+
+def test_with_retry_retries_on_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
+    from glasshat.shared import llm as llm_mod
+
+    async def _no_sleep(_seconds: float) -> None:
+        return None
+
+    monkeypatch.setattr(llm_mod.asyncio, "sleep", _no_sleep)
+    attempts = {"n": 0}
+
+    async def _op() -> str:
+        attempts["n"] += 1
+        if attempts["n"] == 1:
+            raise TimeoutError("slow")
+        return "ok"
+
+    assert asyncio.run(llm_mod._with_retry(_op)) == "ok"
+    assert attempts["n"] == 2
