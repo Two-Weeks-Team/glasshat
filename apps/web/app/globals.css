@@ -98,11 +98,13 @@ a {
 }
 
 @keyframes meshDrift {
+  /* Low-amplitude drift: enough to feel alive, small enough that Lighthouse's
+     Speed Index (which penalises continuous large viewport motion) still settles. */
   0% {
     background-position: 0% 0%;
   }
   100% {
-    background-position: 100% 60%;
+    background-position: 32% 18%;
   }
 }
 
