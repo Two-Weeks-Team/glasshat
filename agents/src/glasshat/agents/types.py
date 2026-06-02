@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from glasshat.rubric.models import SynthesizedRubric
 from glasshat.shared.enums import Hat, RunMode
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class Chunk(BaseModel):
@@ -36,12 +36,26 @@ class RepoFacts(BaseModel):
 
 
 class EvaluationInput(BaseModel):
-    """The artifact + rubric source for one evaluation."""
+    """The artifact + rubric source for one evaluation.
+
+    Untrusted at the API boundary, so the free-text deck is length-bounded and
+    ``repo_url`` is constrained to ``https://github.com/...`` — the only host the
+    code grader ever contacts (defense-in-depth against cost abuse / SSRF).
+    """
 
     rubric_source: dict[str, str]  # one of preset_id | rules_url | rules_pdf_uri | custom_yaml
-    deck_text: str | None = None
-    repo_url: str | None = None
+    deck_text: str | None = Field(default=None, max_length=20_000)
+    repo_url: str | None = Field(default=None, max_length=300)
     mode: RunMode = RunMode.PARTICIPANT
+
+    @field_validator("repo_url")
+    @classmethod
+    def _repo_url_must_be_github_https(cls, value: str | None) -> str | None:
+        if value is None or value == "":
+            return value
+        if not value.startswith("https://github.com/"):
+            raise ValueError("repo_url must be an https://github.com/<owner>/<repo> URL")
+        return value
 
 
 class PlanObject(BaseModel):

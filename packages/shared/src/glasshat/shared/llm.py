@@ -8,7 +8,9 @@ Selection is by ``Settings.llm_backend``. AI policy: Gemini/Google only.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+import asyncio
+import random
+from collections.abc import Awaitable, Callable, Sequence
 from typing import Any
 
 import numpy as np
@@ -17,6 +19,40 @@ from glasshat.shared.ids import sha256_hex
 from glasshat.shared.protocols import LlmClient
 
 _TIER_DEFAULT = "flash"
+
+# Vertex resilience: bound each call and retry transient failures (rate limits /
+# 5xx / timeouts) with exponential backoff + jitter. Non-transient errors (4xx
+# auth/validation) are not retried.
+_RETRYABLE_STATUS = frozenset({429, 500, 502, 503, 504})
+_MAX_RETRIES = 3
+_BASE_DELAY_S = 0.5
+_CALL_TIMEOUT_S = 60.0
+
+
+def _retryable_status(exc: BaseException) -> bool:
+    """A transient HTTP-ish failure worth retrying (rate limit / 5xx)."""
+    for attr in ("code", "status_code", "status"):
+        value = getattr(exc, attr, None)
+        if isinstance(value, int) and value in _RETRYABLE_STATUS:
+            return True
+    return False
+
+
+def _is_retryable(exc: BaseException) -> bool:
+    return isinstance(exc, asyncio.TimeoutError | TimeoutError) or _retryable_status(exc)
+
+
+async def _with_retry[T](op: Callable[[], Awaitable[T]], *, timeout: float = _CALL_TIMEOUT_S) -> T:
+    """Run ``op`` with a per-attempt timeout and bounded retry on transient errors."""
+    for attempt in range(_MAX_RETRIES + 1):
+        try:
+            return await asyncio.wait_for(op(), timeout=timeout)
+        except Exception as exc:  # noqa: BLE001 — classify, then re-raise or retry
+            if attempt >= _MAX_RETRIES or not _is_retryable(exc):
+                raise
+            delay = _BASE_DELAY_S * (2**attempt) + random.uniform(0.0, _BASE_DELAY_S)
+            await asyncio.sleep(delay)
+    raise AssertionError("unreachable")  # pragma: no cover
 
 
 class MockLlmClient:
@@ -83,18 +119,26 @@ class VertexLlmClient:
     async def generate(self, prompt: str, *, tier: str = _TIER_DEFAULT, **kwargs: Any) -> str:
         model = self._models().get(tier, self._settings.gemini_flash)
         location = self._locations().get(tier, self._settings.gemini_flash_location)
-        resp = await self._client_for(location).aio.models.generate_content(
-            model=model, contents=prompt
-        )
-        return str(resp.text or "")
+
+        async def _op() -> str:
+            resp = await self._client_for(location).aio.models.generate_content(
+                model=model, contents=prompt
+            )
+            return str(resp.text or "")
+
+        return await _with_retry(_op)
 
     async def embed(self, texts: Sequence[str]) -> list[list[float]]:
         # text-embedding-005 is a regional model → use the configured region, not global.
         client = self._client_for(self._settings.google_cloud_region)
-        resp = await client.aio.models.embed_content(
-            model="text-embedding-005", contents=list(texts)
-        )
-        return [list(e.values) for e in resp.embeddings]
+
+        async def _op() -> list[list[float]]:
+            resp = await client.aio.models.embed_content(
+                model="text-embedding-005", contents=list(texts)
+            )
+            return [list(e.values) for e in resp.embeddings]
+
+        return await _with_retry(_op)
 
 
 def get_llm_client(settings: Settings | None = None) -> LlmClient:

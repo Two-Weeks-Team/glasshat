@@ -112,3 +112,74 @@ def test_override_appends_to_record(client: TestClient) -> None:
     assert o.status_code == 200
     stored = client.get(f"/api/runs/{run_id}").json()
     assert any(ov["criterion_id"] == "tech-implementation" for ov in stored["overrides"])
+
+
+# --- D: API hardening (rate limit + CORS allowlist + input validation) ------
+
+
+def _mock_deps(tmp_path: Path) -> Deps:
+    r = load_preset("rapid-agent")
+    table = {
+        (Hat.YELLOW, c.id, b): ConsultResult(1.74, 14, 6.0, 8.5)
+        for c in r.criteria
+        for b in ("low", "mid", "high")
+    }
+    return Deps(
+        llm=MockLlmClient(embedding_dim=8),
+        retrieval=HybridIndex(),
+        docstore=MemoryDocStore(),
+        blobstore=LocalFsBlobStore(str(tmp_path)),
+        tracer=NoOpTracer(),
+        consultant=TableConsultant(table),
+    )
+
+
+def test_evaluate_is_rate_limited_per_ip(tmp_path: Path) -> None:
+    from glasshat.shared.config import Settings
+
+    settings = Settings(_env_file=None, rate_limit_per_minute=2)  # type: ignore[call-arg]
+    c = TestClient(create_app(deps=_mock_deps(tmp_path), settings=settings))
+    body = {"rubric_source": {"preset_id": "rapid-agent"}, "deck_text": "x"}
+    assert c.post("/api/evaluate", json=body).status_code == 200
+    assert c.post("/api/evaluate", json=body).status_code == 200
+    blocked = c.post("/api/evaluate", json=body)
+    assert blocked.status_code == 429
+    assert "rate limit" in blocked.json()["detail"].lower()
+
+
+def test_rate_limit_disabled_when_zero(tmp_path: Path) -> None:
+    from glasshat.shared.config import Settings
+
+    settings = Settings(_env_file=None, rate_limit_per_minute=0)  # type: ignore[call-arg]
+    c = TestClient(create_app(deps=_mock_deps(tmp_path), settings=settings))
+    body = {"rubric_source": {"preset_id": "rapid-agent"}, "deck_text": "x"}
+    for _ in range(5):
+        assert c.post("/api/evaluate", json=body).status_code == 200
+
+
+def test_cors_allowlist_reflects_configured_origin(tmp_path: Path) -> None:
+    from glasshat.shared.config import Settings
+
+    settings = Settings(_env_file=None, cors_allow_origins="https://glasshat.example")  # type: ignore[call-arg]
+    c = TestClient(create_app(deps=_mock_deps(tmp_path), settings=settings))
+    allowed = c.options(
+        "/api/evaluate",
+        headers={
+            "Origin": "https://glasshat.example",
+            "Access-Control-Request-Method": "POST",
+        },
+    )
+    assert allowed.headers.get("access-control-allow-origin") == "https://glasshat.example"
+    denied = c.options(
+        "/api/evaluate",
+        headers={"Origin": "https://evil.example", "Access-Control-Request-Method": "POST"},
+    )
+    assert denied.headers.get("access-control-allow-origin") != "https://evil.example"
+
+
+def test_evaluate_rejects_non_github_repo_url(client: TestClient) -> None:
+    r = client.post(
+        "/api/evaluate",
+        json={"rubric_source": {"preset_id": "rapid-agent"}, "repo_url": "https://gitlab.com/a/b"},
+    )
+    assert r.status_code == 422  # pydantic validation rejects at the boundary
