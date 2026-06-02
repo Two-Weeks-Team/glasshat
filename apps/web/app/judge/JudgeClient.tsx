@@ -398,12 +398,17 @@ function RankedRow(props: RankedRowProps) {
       <tr
         className={
           "border-t border-[var(--color-border)]/40 align-top transition-colors hover:bg-[var(--color-surface-2)]/40 " +
-          (rank === 1
-            ? "border-l-2 border-l-[var(--color-warn)] bg-[color-mix(in_oklch,var(--color-warn)_7%,transparent)]"
-            : "")
+          (rank === 1 ? "bg-[color-mix(in_oklch,var(--color-warn)_7%,transparent)]" : "")
         }
       >
-        <td className="numeral px-4 py-3 text-2xl" style={{ color: medal }}>
+        {/* Accent border on the first cell (table-row borders render unevenly). */}
+        <td
+          className={
+            "numeral px-4 py-3 text-2xl " +
+            (rank === 1 ? "border-l-2 border-l-[var(--color-warn)]" : "")
+          }
+          style={{ color: medal }}
+        >
           {rank}
         </td>
         <td className="px-4 py-3">

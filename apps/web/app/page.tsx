@@ -10,7 +10,7 @@ export default function Home() {
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-20 px-6 py-16">
       {/* ── Hero (full-bleed) ── */}
-      <section className="relative left-1/2 right-1/2 -mx-[50vw] flex min-h-[88vh] w-screen items-center overflow-hidden">
+      <section className="relative left-1/2 right-1/2 -mx-[50vw] flex min-h-[88svh] w-screen items-center overflow-hidden">
         <div className="hero-mesh pointer-events-none absolute inset-0 -z-10" />
         <div className="mx-auto grid w-full max-w-5xl items-center gap-10 px-6 py-12 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="flex flex-col gap-6">
