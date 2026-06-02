@@ -19,6 +19,8 @@ MonitorBackend = Literal["phoenix-local", "phoenix-cloud", "arize"]
 DocStoreBackend = Literal["memory", "sqlite", "firestore"]
 BlobBackend = Literal["local-fs", "gcs"]
 AgentRuntime = Literal["adk-local", "adk-cloud-run"]
+ConsultantBackend = Literal["table", "phoenix-mcp"]
+DatasetWriterBackend = Literal["null", "phoenix-mcp"]
 
 
 class Settings(BaseSettings):
@@ -63,11 +65,18 @@ class Settings(BaseSettings):
     docstore_backend: DocStoreBackend = "memory"
     blob_backend: BlobBackend = "local-fs"
     agent_runtime: AgentRuntime = "adk-local"
+    # Learning loop (Improvement A): on deployed Cloud Run the audit reads
+    # accumulated calibration deltas from Phoenix via MCP and writes this run's
+    # corrections back to the same dataset. Default stays on the deterministic
+    # in-code table so tests / CI / mock demos remain credential-free.
+    consultant_backend: ConsultantBackend = "table"
+    dataset_writer_backend: DatasetWriterBackend = "null"
 
     # --- Phoenix / Arize ---
     phoenix_api_key: str = ""
     phoenix_collector_endpoint: str = ""
     phoenix_project_name: str = "glasshat"
+    phoenix_calibration_dataset: str = "glasshat-calibration"
     # Arize AX (monitor_backend="arize"): traces go to otlp.arize.com using
     # phoenix_api_key as the AX API key + this space id (both required by AX).
     arize_space_id: str = ""

@@ -2,10 +2,13 @@
 
 Wires the real orchestrator: OpenInference auto-instrumentation + the ADK
 instrumentor send traces to Phoenix; the audit step consults Phoenix over an
-MCP **stdio** session (``npx @arizeai/phoenix-mcp``, the spike-C wiring). Every
-symbol is importable without ``google-adk``/``phoenix`` installed — the heavy
-SDKs are imported lazily inside the functions, so this module is CI-safe while
-the actual calls are exercised by ``@integration`` tests / live deployment.
+MCP **stdio** session (``npx @arizeai/phoenix-mcp``, the spike-C wiring) and
+writes each correction back via the same MCP session (``add-dataset-examples``,
+spike-G), closing the "agent improves over time" loop the Arize track gives
+explicit bonus consideration to. Every symbol is importable without
+``google-adk``/``phoenix`` installed — the heavy SDKs are imported lazily inside
+the functions, so this module is CI-safe while the actual calls are exercised
+by ``@integration`` tests / live deployment.
 """
 
 from __future__ import annotations
@@ -13,7 +16,7 @@ from __future__ import annotations
 import statistics
 from typing import Any
 
-from glasshat.agents.audit import ConsultResult
+from glasshat.agents.audit import ConsultResult, DatasetExample
 from glasshat.agents.types import EvaluationInput, RunRecord
 from glasshat.shared.config import Settings, get_settings
 from glasshat.shared.enums import Hat
@@ -115,11 +118,68 @@ def _parse_deltas(mcp_result: Any) -> list[float]:  # pragma: no cover - shape d
     return deltas
 
 
+class PhoenixMcpDatasetWriter:
+    """Append audit corrections to a Phoenix Dataset via MCP ``add-dataset-examples``.
+
+    Implements :class:`~glasshat.agents.audit.DatasetWriter`. Each call opens a
+    fresh stdio session — the live deployment runs at a small scale where the
+    npx spin-up cost (~1.8s per spike-A) is acceptable as a fire-and-forget
+    write after the run completes. Failures are silently swallowed by the
+    engine's wrapper so a Phoenix outage cannot fail an evaluation.
+    """
+
+    def __init__(
+        self, base_url: str, api_key: str = "", dataset: str = "glasshat-calibration"
+    ) -> None:
+        self._base_url = base_url
+        self._api_key = api_key
+        self._dataset = dataset
+
+    async def write(  # pragma: no cover - requires phoenix-mcp over stdio
+        self, examples: list[DatasetExample]
+    ) -> int:
+        if not examples:
+            return 0
+        from mcp import ClientSession, StdioServerParameters
+        from mcp.client.stdio import stdio_client
+
+        args = ["-y", "@arizeai/phoenix-mcp@latest", "--baseUrl", self._base_url]
+        if self._api_key:
+            args += ["--apiKey", self._api_key]
+        params = StdioServerParameters(command="npx", args=args)
+        rows = [
+            {
+                "input": {
+                    "hat": ex.hat.value,
+                    "criterion": ex.criterion_id,
+                    "bucket": ex.bucket,
+                },
+                "output": {"delta": ex.delta},
+                "metadata": {"run_id": ex.run_id, "created_at": ex.created_at},
+            }
+            for ex in examples
+        ]
+        async with stdio_client(params) as (read, write), ClientSession(read, write) as session:
+            await session.initialize()
+            await session.call_tool(
+                "add-dataset-examples",
+                {"dataset": self._dataset, "examples": rows},
+            )
+        return len(rows)
+
+
 async def run_via_adk(  # pragma: no cover - requires the full live stack
     inp: EvaluationInput, settings: Settings | None = None
 ) -> RunRecord:
-    """Run an evaluation through the instrumented ADK runtime + live Phoenix MCP."""
-    from glasshat.pipeline.engine import Deps, run_evaluation
+    """Run an evaluation through the instrumented ADK runtime + live Phoenix MCP.
+
+    Wires both halves of the learning loop: ``PhoenixMcpConsultant`` reads the
+    accumulated calibration dataset (with a deterministic ``TableConsultant``
+    fallback for cold start), and ``PhoenixMcpDatasetWriter`` appends this
+    run's audit corrections back to that dataset.
+    """
+    from glasshat.agents.audit import FallbackConsultant
+    from glasshat.pipeline.engine import Deps, default_calibration_table, run_evaluation
     from glasshat.shared.blobstore import get_blobstore
     from glasshat.shared.docstore import get_docstore
     from glasshat.shared.llm import get_llm_client
@@ -128,14 +188,25 @@ async def run_via_adk(  # pragma: no cover - requires the full live stack
 
     settings = settings or get_settings()
     instrument_adk(settings.phoenix_project_name)
+    from glasshat.agents.audit import TableConsultant
+
+    live_consultant = PhoenixMcpConsultant(
+        base_url=settings.phoenix_collector_endpoint,
+        api_key=settings.phoenix_api_key,
+        dataset=settings.phoenix_calibration_dataset,
+    )
+    cold_start = TableConsultant(default_calibration_table())
     deps = Deps(
         llm=get_llm_client(settings),
         retrieval=HybridIndex(),
         docstore=get_docstore(settings),
         blobstore=get_blobstore(settings),
         tracer=PhoenixTracer(settings),
-        consultant=PhoenixMcpConsultant(
-            base_url=settings.phoenix_collector_endpoint, api_key=settings.phoenix_api_key
+        consultant=FallbackConsultant(primary=live_consultant, backup=cold_start),
+        dataset_writer=PhoenixMcpDatasetWriter(
+            base_url=settings.phoenix_collector_endpoint,
+            api_key=settings.phoenix_api_key,
+            dataset=settings.phoenix_calibration_dataset,
         ),
     )
     return await run_evaluation(inp, deps)
