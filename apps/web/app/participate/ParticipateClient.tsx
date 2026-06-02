@@ -353,6 +353,7 @@ function ResultsView({
                 max={r.scale}
                 weightPct={r.weightPct}
                 corrected={r.audit != null}
+                originScore={r.originScore}
               />
               <EvidenceList refs={r.evidenceRefs} />
               {r.audit && <AuditCallout correction={r.audit} />}

@@ -9,47 +9,55 @@ import { Reveal } from "@/components/Reveal";
 export default function Home() {
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-20 px-6 py-16">
-      {/* ── Hero ── */}
-      <section className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
-        <div className="flex flex-col gap-5">
-          <div className="flex flex-wrap gap-2">
-            <Badge tone="accent">Arize track</Badge>
-            <Badge tone="muted">Gemini · Vertex AI</Badge>
-            <Badge tone="muted">Google ADK</Badge>
-            <Badge tone="muted">Phoenix + MCP</Badge>
-          </div>
-          <h1 className="text-4xl font-semibold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
-            Glasshat doesn&apos;t just judge projects.{" "}
-            <span className="text-gradient">It audits the judge.</span>
-          </h1>
-          <p className="max-w-xl text-lg leading-relaxed text-[var(--color-muted)]">
-            An artifact-ingesting evaluation pipeline that synthesizes a rubric from the official
-            rules, grounds every sub-score in retrieved evidence, then catches its own
-            over-confidence and self-corrects — live. Not a chatbot.
-          </p>
-          <div className="flex flex-wrap gap-3 pt-1">
-            <Link
-              href="/participate"
-              className="hover-lift rounded-xl bg-[var(--color-accent)] px-6 py-2.5 font-medium text-white"
-            >
-              Score a submission →
-            </Link>
-            <Link
-              href="/judge"
-              className="hover-lift rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-6 py-2.5 font-medium"
-            >
-              Judge a cohort
-            </Link>
-          </div>
-        </div>
-        <Reveal className="relative">
-          <div className="elevate rounded-3xl p-5">
-            <HeroGraphic />
-            <p className="mt-2 text-center text-xs text-[var(--color-muted)]">
-              A low-evidence, over-confident score is pulled back to the calibrated value — in real time.
+      {/* ── Hero (full-bleed) ── */}
+      <section className="relative left-1/2 right-1/2 -mx-[50vw] flex min-h-[88svh] w-screen items-center overflow-hidden">
+        <div className="hero-mesh pointer-events-none absolute inset-0 -z-10" />
+        <div className="mx-auto grid w-full max-w-5xl items-center gap-10 px-6 py-12 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="flex flex-col gap-6">
+            <p className="font-mono text-xs uppercase tracking-[0.25em] text-[var(--color-accent-2)]">
+              The audit layer for AI evaluation
             </p>
+            <h1 className="font-display font-bold leading-[1.02] text-[clamp(3rem,8vw,7rem)]">
+              Glasshat doesn&apos;t just judge.{" "}
+              <span className="text-gradient font-serif-italic font-normal">
+                It audits the judge.
+              </span>
+            </h1>
+            <p className="max-w-xl text-lg leading-relaxed text-[var(--color-muted)]">
+              An artifact-ingesting evaluation pipeline that synthesizes a rubric from the official
+              rules, grounds every sub-score in retrieved evidence, then catches its own
+              over-confidence and self-corrects — live. Not a chatbot.
+            </p>
+            <div className="flex flex-wrap gap-3 pt-1">
+              <Link
+                href="/participate"
+                className="hover-lift rounded-xl bg-[var(--color-accent)] px-6 py-2.5 font-medium text-white"
+              >
+                Score a submission →
+              </Link>
+              <Link
+                href="/judge"
+                className="hover-lift rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-6 py-2.5 font-medium"
+              >
+                Judge a cohort
+              </Link>
+            </div>
+            <div className="flex flex-wrap gap-2 pt-2">
+              <Badge tone="accent">Arize track</Badge>
+              <Badge tone="muted">Gemini · Vertex AI</Badge>
+              <Badge tone="muted">Google ADK</Badge>
+              <Badge tone="muted">Phoenix + MCP</Badge>
+            </div>
           </div>
-        </Reveal>
+          <Reveal className="relative">
+            <div className="elevate rounded-3xl p-5">
+              <HeroGraphic />
+              <p className="mt-2 text-center text-xs text-[var(--color-muted)]">
+                A low-evidence, over-confident score is pulled back to the calibrated value — in real time.
+              </p>
+            </div>
+          </Reveal>
+        </div>
       </section>
 
       {/* ── How it works ── */}

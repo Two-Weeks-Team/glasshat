@@ -9,6 +9,7 @@
 
 import type { AuditCorrection, RunRecord } from "@/lib/api";
 import { projectCriterion, type Node3D } from "@/lib/projection";
+import { preAuditScoreMap } from "@/lib/ranking";
 import type { SseEvent } from "@/lib/sse";
 import { AUDIT_BEATS } from "@/lib/stages";
 
@@ -87,6 +88,8 @@ export interface ScoreRow {
   id: string;
   label: string;
   score: number;
+  /** Pre-audit native score (over-confident origin) — drives the ScoreBar ghost. */
+  originScore: number;
   scale: number;
   weightPct: number;
   evidenceRefs: string[];
@@ -96,12 +99,14 @@ export interface ScoreRow {
 /** Join the record's per-criterion scores with their rubric metadata (label, scale, weight). */
 export function scoreRows(rec: RunRecord): ScoreRow[] {
   const byId = new Map(rec.rubric.criteria.map((c) => [c.id, c]));
+  const preAudit = preAuditScoreMap(rec);
   return rec.scores.map((s) => {
     const c = byId.get(s.criterion_id);
     return {
       id: s.criterion_id,
       label: c?.label ?? s.criterion_id,
       score: s.score,
+      originScore: preAudit[s.criterion_id] ?? s.score,
       scale: c?.scale ?? 5,
       weightPct: Math.round((c?.weight ?? 0) * 100),
       evidenceRefs: s.evidence_refs,

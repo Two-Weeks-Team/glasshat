@@ -382,10 +382,35 @@ function RankedRow(props: RankedRowProps) {
   } = props;
   const corrections = record.audit_corrections.length;
 
+  // Medal accent for the podium; the audited #1 gets a left border + tint so the
+  // winner the audit produced reads instantly.
+  const medal =
+    rank === 1
+      ? "var(--color-warn)"
+      : rank === 2
+        ? "var(--color-muted)"
+        : rank === 3
+          ? "var(--color-accent-3)"
+          : "var(--color-muted)";
+
   return (
     <>
-      <tr className="border-t border-[var(--color-border)]/40 align-top transition-colors hover:bg-[var(--color-surface-2)]/40">
-        <td className="px-4 py-3 font-mono text-2xl tabular-nums text-[var(--color-muted)]">{rank}</td>
+      <tr
+        className={
+          "border-t border-[var(--color-border)]/40 align-top transition-colors hover:bg-[var(--color-surface-2)]/40 " +
+          (rank === 1 ? "bg-[color-mix(in_oklch,var(--color-warn)_7%,transparent)]" : "")
+        }
+      >
+        {/* Accent border on the first cell (table-row borders render unevenly). */}
+        <td
+          className={
+            "numeral px-4 py-3 text-2xl " +
+            (rank === 1 ? "border-l-2 border-l-[var(--color-warn)]" : "")
+          }
+          style={{ color: medal }}
+        >
+          {rank}
+        </td>
         <td className="px-4 py-3">
           <div className="font-medium">{label}</div>
           <div className="mt-1 flex flex-wrap gap-1">
@@ -400,8 +425,8 @@ function RankedRow(props: RankedRowProps) {
         <td className="px-4 py-3">
           <div
             className={
-              "font-mono font-semibold tabular-nums text-gradient " +
-              (rank === 1 ? "text-4xl" : rank === 2 ? "text-3xl" : "text-2xl opacity-80")
+              "numeral font-semibold text-gradient " +
+              (rank === 1 ? "text-5xl" : rank === 2 ? "text-3xl" : "text-2xl opacity-80")
             }
           >
             {effectiveFinal.toFixed(1)}
