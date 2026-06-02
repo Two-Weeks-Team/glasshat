@@ -21,6 +21,7 @@ BlobBackend = Literal["local-fs", "gcs"]
 AgentRuntime = Literal["adk-local", "adk-cloud-run"]
 ConsultantBackend = Literal["table", "phoenix-mcp"]
 DatasetWriterBackend = Literal["null", "phoenix-mcp"]
+RepoGraderBackend = Literal["null", "github-api"]
 
 
 class Settings(BaseSettings):
@@ -71,6 +72,12 @@ class Settings(BaseSettings):
     # in-code table so tests / CI / mock demos remain credential-free.
     consultant_backend: ConsultantBackend = "table"
     dataset_writer_backend: DatasetWriterBackend = "null"
+    # repo_url grading (Improvement (a)): on deployed Cloud Run the code grader
+    # fetches GitHub REST metadata (no clone) so repo evidence joins the deck in
+    # retrieval. Default "null" keeps local/CI/mock runs deck-only and hermetic.
+    repo_grader_backend: RepoGraderBackend = "null"
+    # (GitHub PAT for the grader lives in the "Misc" section below as github_token —
+    # lifts the 60 req/hr unauthenticated limit; public repos work without it.)
 
     # --- Phoenix / Arize ---
     phoenix_api_key: str = ""

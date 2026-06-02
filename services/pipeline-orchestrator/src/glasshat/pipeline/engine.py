@@ -10,10 +10,12 @@ live deployment.
 
 from __future__ import annotations
 
+import asyncio
+import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Protocol, runtime_checkable
 
 from glasshat.agents.audit import (
     Consultant,
@@ -29,7 +31,7 @@ from glasshat.agents.bmad_scorer import score
 from glasshat.agents.hats import run_panel
 from glasshat.agents.report import assemble
 from glasshat.agents.rubric_synthesizer import synthesize
-from glasshat.agents.types import EvaluationInput, RunRecord
+from glasshat.agents.types import Chunk, EvaluationInput, RunRecord
 from glasshat.ingest import embed_chunks, ingest_deck
 from glasshat.pipeline.events import PipelineEvent, Stage
 from glasshat.rubric.presets import list_presets, load_preset
@@ -45,6 +47,28 @@ from glasshat.shared.tracing import get_tracer
 
 EventSink = Callable[[PipelineEvent], None]
 
+logger = logging.getLogger(__name__)
+
+
+@runtime_checkable
+class RepoGrader(Protocol):
+    """Turn a ``repo_url`` into retrievable repo chunks (metadata-only).
+
+    The deployed implementation talks only to the fixed ``api.github.com`` host
+    (see :class:`glasshat.code_grader.GitHubApiRepoGrader`); the default
+    :class:`NullRepoGrader` returns nothing so credential-free / offline runs
+    are deck-only.
+    """
+
+    async def chunks_for(self, url: str) -> list[Chunk]: ...
+
+
+class NullRepoGrader:
+    """No-op grader (default): never touches the network, always deck-only."""
+
+    async def chunks_for(self, url: str) -> list[Chunk]:
+        return []
+
 
 @dataclass
 class Deps:
@@ -57,6 +81,7 @@ class Deps:
     tracer: Tracer
     consultant: Consultant
     dataset_writer: DatasetWriter = field(default_factory=NullDatasetWriter)
+    repo_grader: RepoGrader = field(default_factory=NullRepoGrader)
 
 
 # YELLOW (optimism) over-confidence prior, grounded in spike-D held-out anchors
@@ -103,6 +128,7 @@ def default_deps(settings: Settings | None = None) -> Deps:
         tracer=get_tracer(settings),
         consultant=_select_consultant(settings),
         dataset_writer=_select_dataset_writer(settings),
+        repo_grader=_select_repo_grader(settings),
     )
 
 
@@ -135,6 +161,20 @@ def _select_dataset_writer(settings: Settings) -> DatasetWriter:
     return NullDatasetWriter()
 
 
+def _select_repo_grader(settings: Settings) -> RepoGrader:
+    if settings.repo_grader_backend == "github-api":
+        from glasshat.code_grader import GitHubApiRepoGrader
+
+        return GitHubApiRepoGrader(token=settings.github_token)
+    return NullRepoGrader()
+
+
+# Bound the whole repo-grading pre-step (network + parse). The grader's own httpx
+# timeout guards each request; this guards the aggregate so a slow/hung repo can
+# never delay the evaluation past a few seconds — on breach we run deck-only.
+_REPO_GRADE_TIMEOUT_S = 20.0
+
+
 def _now() -> str:
     return datetime.now(UTC).isoformat()
 
@@ -152,11 +192,34 @@ async def run_evaluation(
     emit(Stage.QUEUED, run_id=run_id)
 
     emit(Stage.INGESTING)
+    # Deck and repo evidence are indexed together in a SINGLE index() call:
+    # HybridIndex.index() replaces its corpus each call, so two calls would drop
+    # the deck. Repo grading is bounded and best-effort — any failure (bad URL,
+    # network, timeout) degrades to a deck-only run rather than failing.
+    index_chunks: list[Chunk] = []
     if inp.deck_text:
-        chunks = await embed_chunks(await ingest_deck(text=inp.deck_text, llm=deps.llm), deps.llm)
+        index_chunks.extend(await ingest_deck(text=inp.deck_text, llm=deps.llm))
+    if inp.repo_url:
+        try:
+            repo_chunks = await asyncio.wait_for(
+                deps.repo_grader.chunks_for(inp.repo_url), timeout=_REPO_GRADE_TIMEOUT_S
+            )
+        except Exception:  # noqa: BLE001 — repo grading is best-effort; never fail the run
+            # Best-effort, but not silent: a timeout / network / GitHub error is
+            # logged (with the run_id for correlation) so a degraded deck-only
+            # run is observable rather than mysterious.
+            logger.warning(
+                "repo grading failed for run %s; falling back to deck-only", run_id, exc_info=True
+            )
+            repo_chunks = []
+        if repo_chunks:
+            index_chunks.extend(repo_chunks)
+            emit(Stage.INGESTING, repo_chunks=len(repo_chunks))
+    if index_chunks:
+        embedded = await embed_chunks(index_chunks, deps.llm)
         deps.retrieval.index(
             Document(id=c.id, text=c.text, vector=c.vector, payload={"source": c.source})
-            for c in chunks
+            for c in embedded
         )
 
     with deps.tracer.span("agent_synthesize", **{"glasshat.agent": "RubricSynthesizer"}):
