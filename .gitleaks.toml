@@ -1,0 +1,35 @@
+# gitleaks config for glasshat (used by the supply-chain CI job).
+#
+# We block on secrets in the *ships-to-production* application source
+# (apps/api, apps/web, packages/**, services/**, agents/**, infra/**) — a
+# committed secret there would reach the deployed image and is a real incident.
+#
+# The allowlist below excludes paths that NEVER enter the deployed image:
+#   - spikes/      : throwaway spike experiments (kept for provenance, not shipped)
+#   - data/        : the scraped Devpost calibration corpus (public project metadata)
+#   - claudedocs/  : generated analysis/handoff notes
+#   - mockups/     : static design mockups
+#   - .next/, .venv/, *.lock : build artifacts / generated lockfiles
+#
+# NOTE: gitleaks flags ~253 generic-api-key / aws / private-key patterns inside
+# spikes/ (scraped payloads + example tokens). Those are excluded here because
+# they cannot reach production, but they should be reviewed separately before the
+# repo is made fully public — see the supply-chain job comment in ci.yml.
+
+title = "glasshat gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Non-shipped paths (experiments, scraped corpus, build artifacts) — never in the deployed image."
+paths = [
+  '''^spikes/''',
+  '''^data/''',
+  '''^claudedocs/''',
+  '''^mockups/''',
+  '''(^|/)\.next/''',
+  '''(^|/)\.venv/''',
+  '''(^|/)[^/]+\.lock$''',
+  '''(^|/)pnpm-lock\.yaml$''',
+]

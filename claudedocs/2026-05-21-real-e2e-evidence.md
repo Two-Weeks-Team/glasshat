@@ -1,5 +1,11 @@
 # Real-input e2e evidence (goal item 4) — 2026-05-21
 
+> **SUPERSEDED (2026-06-02):** this is a historical 2.5-era snapshot. The live deploy now
+> runs **real Vertex `gemini-3.1-flash-lite`** (not mock), repo grading and the learning
+> loop are merged (PRs #42/#45/#46), and the "demo image uses mock/memory" note below
+> applies only to the credential-free fallback image — the deployed service uses the real
+> Vertex + Arize AX chain. See the current README for live URLs and model policy.
+
 > **Note (added 2026-05-22):** this run was captured on **gemini-2.5-flash**, before the
 > PR #27 migration. The live path is now **gemini-3.1-flash-lite** (Vertex `global`
 > endpoint). Treat the model name + score below as a historical 2.5-era snapshot; the
