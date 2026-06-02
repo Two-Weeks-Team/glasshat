@@ -17,6 +17,8 @@ from glasshat.agents.audit import (
 )
 from glasshat.agents.types import AuditCorrection, HatAssessment
 from glasshat.shared.enums import Hat
+from hypothesis import given
+from hypothesis import strategies as st
 
 
 def _yellow_low() -> HatAssessment:
@@ -199,6 +201,61 @@ def test_make_dataset_examples_defaults_unknown_bucket_to_mid() -> None:
 def test_null_dataset_writer_returns_zero() -> None:
     out = asyncio.run(NullDatasetWriter().write([]))
     assert out == 0
+
+
+# --- F: property-based + clip-boundary coverage for apply_correction ----------
+
+
+@given(
+    score=st.floats(min_value=0.0, max_value=10.0),
+    mean_delta=st.floats(min_value=-6.0, max_value=6.0),
+    p_a=st.floats(min_value=0.0, max_value=10.0),
+    p_b=st.floats(min_value=0.0, max_value=10.0),
+    n=st.integers(min_value=3, max_value=200),
+)
+def test_apply_correction_invariants(
+    score: float, mean_delta: float, p_a: float, p_b: float, n: int
+) -> None:
+    """For any in-range assessment, a returned correction stays inside the
+    calibration band AND within the ±2.0 absolute cap. The band is taken to
+    bracket the score — the regime the audit actually operates in (the spike-D
+    percentiles straddle the assessed value)."""
+    lo, hi = sorted((p_a, p_b))
+    p25 = min(lo, score)
+    p75 = max(hi, score)
+    assessment = HatAssessment(
+        hat=Hat.YELLOW, criterion_id="tech-implementation", score=score, evidence_depth=0.3
+    )
+    corr = apply_correction(assessment, ConsultResult(mean_delta=mean_delta, n=n, p25=p25, p75=p75))
+    if corr is None:
+        return
+    # corrected is rounded to 2 decimals, so allow a half-ULP rounding tolerance.
+    tol = 0.005
+    assert p25 - tol <= corr.corrected <= p75 + tol
+    assert abs(corr.corrected - score) <= 2.0 + tol
+
+
+def test_apply_correction_clip_to_p75_binds() -> None:
+    """A large under-confidence pushes the raw score above p75 → the clip (not the
+    ±2 cap) is the binding constraint. score=8, mean_delta=-3 → raw=8-0.8*(-3)=10.4,
+    clipped down to p75=9.0 (and 9.0 is within score±2=[6,10], so the cap doesn't
+    bind)."""
+    a = HatAssessment(hat=Hat.GREEN, criterion_id="quality-of-idea", score=8.0, evidence_depth=0.8)
+    corr = apply_correction(a, ConsultResult(mean_delta=-3.0, n=10, p25=0.0, p75=9.0))
+    assert corr is not None
+    assert corr.corrected == 9.0  # p75 clip bound it, not score+2=10.0
+
+
+def test_apply_correction_clip_to_p25_binds() -> None:
+    """A large over-confidence drops the raw below p25 → the p25 clip binds.
+    score=4, mean_delta=+3 → raw=4-0.8*3=1.6, clipped up to p25=2.5 (within
+    score±2=[2,6], so the cap doesn't bind)."""
+    a = HatAssessment(
+        hat=Hat.YELLOW, criterion_id="tech-implementation", score=4.0, evidence_depth=0.3
+    )
+    corr = apply_correction(a, ConsultResult(mean_delta=3.0, n=10, p25=2.5, p75=10.0))
+    assert corr is not None
+    assert corr.corrected == 2.5  # p25 clip bound it, not score-2=2.0
 
 
 # --- Improvement (c): weight-aware anchor retrieval -------------------------

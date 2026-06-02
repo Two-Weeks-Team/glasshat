@@ -9,6 +9,7 @@ evaluate, SSE stream, run fetch, and score override (gate 2).
 from __future__ import annotations
 
 import asyncio
+import logging
 import time
 from collections import deque
 from typing import Any
@@ -24,6 +25,8 @@ from glasshat.pipeline.events import PipelineEvent, sse_line
 from glasshat.rubric.presets import list_presets, load_preset
 from glasshat.shared.config import Settings, get_settings
 from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
 
 
 class _SlidingWindowRateLimiter:
@@ -130,10 +133,14 @@ def create_app(deps: Deps | None = None, settings: Settings | None = None) -> Fa
     @app.post("/api/evaluate/stream", dependencies=[Depends(_rate_limit)])
     async def evaluate_stream(inp: EvaluationInput) -> StreamingResponse:
         queue: asyncio.Queue[PipelineEvent | None] = asyncio.Queue()
+        failed = {"error": False}
 
         async def _run() -> None:
             try:
                 await run_evaluation(inp, _deps(), on_event=queue.put_nowait)
+            except Exception:  # noqa: BLE001 — surface a graceful SSE error, never crash the stream
+                logger.exception("evaluation stream failed")
+                failed["error"] = True
             finally:
                 queue.put_nowait(None)
 
@@ -145,6 +152,9 @@ def create_app(deps: Deps | None = None, settings: Settings | None = None) -> Fa
                     break
                 yield sse_line(event)
             await task
+            if failed["error"]:
+                # Generic message — never leak internal error text to the client.
+                yield 'event: error\ndata: {"message": "evaluation failed"}\n\n'
 
         return StreamingResponse(_gen(), media_type="text/event-stream")
 

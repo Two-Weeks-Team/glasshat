@@ -472,3 +472,30 @@ def test_default_calibration_anchors_are_per_preset_and_carry_real_prior() -> No
             if hat == Hat.YELLOW and bucket == "low"
         }
         assert low_deltas <= {1.45}
+
+
+# --- F: end-to-end reproducibility ------------------------------------------
+
+
+def test_evaluation_is_reproducible_run_id_aside(tmp_path: Path) -> None:
+    """Two runs of the SAME deterministic deps on the SAME input must yield the
+    SAME final_score, scores and corrections — only the run_id differs. Guards the
+    'self-correction is real math, not theatre' claim against accidental
+    nondeterminism (run with `uv run pytest -k reproducib`)."""
+    inp = EvaluationInput(
+        rubric_source={"preset_id": "rapid-agent"},
+        deck_text="we built a novel multi-agent system in python with tests and a clean design",
+        mode=RunMode.JUDGE,
+    )
+    rec_a = asyncio.run(run_evaluation(inp, _deps(tmp_path)))
+    rec_b = asyncio.run(run_evaluation(inp, _deps(tmp_path)))
+
+    assert rec_a.run_id != rec_b.run_id  # uuids differ
+    assert rec_a.final_score == rec_b.final_score
+    assert rec_a.pre_audit_final_score == rec_b.pre_audit_final_score
+    assert [(s.criterion_id, s.score) for s in rec_a.scores] == [
+        (s.criterion_id, s.score) for s in rec_b.scores
+    ]
+    assert [(c.hat, c.criterion_id, c.corrected) for c in rec_a.audit_corrections] == [
+        (c.hat, c.criterion_id, c.corrected) for c in rec_b.audit_corrections
+    ]
