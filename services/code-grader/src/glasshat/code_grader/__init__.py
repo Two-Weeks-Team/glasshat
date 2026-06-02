@@ -202,9 +202,13 @@ async def fetch_repo_facts(url: str, *, token: str = "", timeout: float = 15.0) 
                     readme_excerpt = ""
 
         has_ci = await _path_exists(client, owner, repo, ".github/workflows")
-        has_tests = any(
-            [await _path_exists(client, owner, repo, d) for d in ("tests", "test", "__tests__")]
-        )
+        # Short-circuit: stop probing once a test directory is found (saves API
+        # calls / rate budget rather than eagerly running all three).
+        has_tests = False
+        for test_dir in ("tests", "test", "__tests__"):
+            if await _path_exists(client, owner, repo, test_dir):
+                has_tests = True
+                break
 
     return RepoFacts(
         url=url,

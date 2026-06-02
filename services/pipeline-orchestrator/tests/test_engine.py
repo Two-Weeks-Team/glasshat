@@ -382,27 +382,30 @@ def test_repo_url_with_default_null_grader_stays_deck_only(tmp_path: Path) -> No
         assert not any(r.startswith("repo:") for r in s.evidence_refs)
 
 
-def test_repo_grader_failure_falls_back_to_deck_only(tmp_path: Path) -> None:
+def test_repo_grader_failure_falls_back_to_deck_only(tmp_path: Path, caplog: Any) -> None:
     class _BoomGrader:
         async def chunks_for(self, url: str) -> list[Any]:
             raise RuntimeError("github down")
 
     deps = _repo_sensitive_deps(tmp_path)
     deps.repo_grader = _BoomGrader()
-    rec = asyncio.run(
-        run_evaluation(
-            EvaluationInput(
-                rubric_source={"preset_id": "rapid-agent"},
-                deck_text="we built a multi-agent system",
-                repo_url="https://github.com/acme/widget",
-            ),
-            deps,
+    with caplog.at_level("WARNING"):
+        rec = asyncio.run(
+            run_evaluation(
+                EvaluationInput(
+                    rubric_source={"preset_id": "rapid-agent"},
+                    deck_text="we built a multi-agent system",
+                    repo_url="https://github.com/acme/widget",
+                ),
+                deps,
+            )
         )
-    )
     # The run completed despite the grader blowing up, and stayed deck-only.
     assert rec.final_score > 0
     for s in rec.scores:
         assert not any(r.startswith("repo:") for r in s.evidence_refs)
+    # Best-effort, but not silent: the degraded run is logged for observability.
+    assert any("repo grading failed" in m for m in caplog.messages)
 
 
 def test_default_deps_uses_null_repo_grader() -> None:

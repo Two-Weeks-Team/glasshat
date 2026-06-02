@@ -11,6 +11,7 @@ live deployment.
 from __future__ import annotations
 
 import asyncio
+import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -45,6 +46,8 @@ from glasshat.shared.retrieval import Document, HybridIndex
 from glasshat.shared.tracing import get_tracer
 
 EventSink = Callable[[PipelineEvent], None]
+
+logger = logging.getLogger(__name__)
 
 
 @runtime_checkable
@@ -202,6 +205,12 @@ async def run_evaluation(
                 deps.repo_grader.chunks_for(inp.repo_url), timeout=_REPO_GRADE_TIMEOUT_S
             )
         except Exception:  # noqa: BLE001 — repo grading is best-effort; never fail the run
+            # Best-effort, but not silent: a timeout / network / GitHub error is
+            # logged (with the run_id for correlation) so a degraded deck-only
+            # run is observable rather than mysterious.
+            logger.warning(
+                "repo grading failed for run %s; falling back to deck-only", run_id, exc_info=True
+            )
             repo_chunks = []
         if repo_chunks:
             index_chunks.extend(repo_chunks)
