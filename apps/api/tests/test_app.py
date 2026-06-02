@@ -183,3 +183,31 @@ def test_evaluate_rejects_non_github_repo_url(client: TestClient) -> None:
         json={"rubric_source": {"preset_id": "rapid-agent"}, "repo_url": "https://gitlab.com/a/b"},
     )
     assert r.status_code == 422  # pydantic validation rejects at the boundary
+
+
+class _RaisingLlm(MockLlmClient):
+    """Embeds normally (ingest succeeds) but raises during generation, so the
+    pipeline fails mid-run — used to prove the SSE stream terminates."""
+
+    async def generate(self, prompt: str, *, tier: str = "flash", **kw: Any) -> str:
+        raise RuntimeError("synthesizer boom")
+
+
+def test_stream_terminates_when_engine_raises(tmp_path: Path) -> None:
+    """An exception inside the pipeline must close the SSE stream (sentinel in the
+    `finally`), not hang — if TestClient returns, the generator terminated."""
+    deps = _mock_deps(tmp_path)
+    deps.llm = _RaisingLlm(embedding_dim=8)
+    c = TestClient(create_app(deps=deps))
+    r = c.post(
+        "/api/evaluate/stream",
+        json={"rubric_source": {"preset_id": "rapid-agent"}, "deck_text": "x y z"},
+    )
+    # The request returned (no hang) and the stream never reached completion,
+    # but closed gracefully with an `error` event (no 500, no internal leak).
+    assert r.status_code == 200
+    assert "event: complete" not in r.text
+    assert "event: error" in r.text
+    assert "synthesizer boom" not in r.text  # internal error text not leaked
+    # Early stages still streamed before the failure.
+    assert "event: queued" in r.text
