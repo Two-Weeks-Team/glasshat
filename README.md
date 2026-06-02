@@ -10,28 +10,13 @@ Glasshat ingests a pitch deck + a GitHub repo + **the evaluator's official rules
 - Web: **https://glasshat-web-o366v7tl2q-uc.a.run.app** (`/judge` · `/participate`)
 - API: **https://glasshat-api-o366v7tl2q-uc.a.run.app** (`/health` · `/api/evaluate`)
 
-### ✅ Rapid Agent · Arize track — compliance at a glance
-
-> Verify everything below in ≈60s. Full detail + run-it-yourself commands:
-> **[`docs/rapid-agent-compliance.md`](docs/rapid-agent-compliance.md)** ·
-> **[`docs/evidence-matrix.md`](docs/evidence-matrix.md)**.
-
-| Requirement | Implementation | Code path | Verify | Status |
-|---|---|---|---|---|
-| **Gemini / Vertex AI** | live `gemini-3.1-flash-lite` on the Vertex `global` endpoint (+ `gemini-3.1-pro-preview` for rubric synthesis) | `packages/shared/src/glasshat/shared/llm.py` (`VertexLlmClient`) | `POST <API>/api/evaluate` → real-Gemini `RunRecord` | ✅ Live |
-| **Agent runtime** ("Agent Builder") | the **Arize track** mandates a *code-owned* runtime and states **visual Agent Builder alone is insufficient** → **Google ADK + Cloud Run** | `services/pipeline-orchestrator/src/glasshat/pipeline/adk_runtime.py`; `infra/deploy.sh` | [compliance §2](docs/rapid-agent-compliance.md#2-agent-builder-ambiguity--resolved) | ✅ Resolved |
-| **Arize partner integration** | OpenInference/OTLP → **Arize AX** (`otlp.arize.com`); one span per agent + per hat | `packages/shared/src/glasshat/shared/tracing.py` (`ArizeTracer`); `…/pipeline/engine.py:115-149` | `uv run python scripts/real_arize_ax_e2e.py` | ✅ Live |
-| **Phoenix MCP server** | ADK `MCPToolset` over stdio → `npx @arizeai/phoenix-mcp@latest`; audit consultant calls the MCP `get-dataset-examples` tool | `…/pipeline/adk_runtime.py` (`build_phoenix_mcp_toolset`, `PhoenixMcpConsultant`) | `uv run python scripts/real_e2e.py` | ✅ Wired (e2e) — deployed audit uses the spike-D calibrated table; MCP is the live-trace variant ([§3](docs/rapid-agent-compliance.md#3-arize-partner-mcp-path-agent--mcp--traceeval--report)) |
-| **Cloud Run** | API + web, project `panelyst-hackathon`, us-central1, min-instances=0 | `infra/deploy.sh`, `infra/cloudbuild-*.yaml`, `infra/Dockerfile.*` | `curl -fsS <API>/health` → 200 | ✅ Live |
-| **CI / tests / Lighthouse / live API** | GH Actions: ruff + mypy + pytest (cov ≥ 90) · web lint/tsc/vitest/build · docker | `.github/workflows/ci.yml` | `uv run pytest` → 161 passed; web 40 passed; Lighthouse ≥ 90 all pages | ✅ Green |
-
-### Try the live demo (≈60 seconds, no install)
+### See it in ≈60 seconds (no install)
 
 1. Open **https://glasshat-web-o366v7tl2q-uc.a.run.app/participate**.
 2. Pick the **Rapid Agent** rubric preset, paste any pitch text, submit.
 3. **Approve the plan** at gate 1 (the inspectable plan card: 6 hats, criteria, weights).
 4. Watch the **live SSE monitor** stream the pipeline (`ingesting → planning → hats_running → auditing`), then the **audit self-correct** beat: an over-confident hat (e.g. YELLOW pulled back ≈`0.8 × mean_delta` at low evidence — `9.0 → 7.84`) is corrected and the **3D constellation reshapes** to the calibrated position.
-5. `/judge` shows the batch view: rank by rubric, ordered tie-break, gate-2 override, lock.
+5. `/judge` shows the batch view: rank by rubric, ordered tie-break, gate-2 override, lock — plus the **rank-flip board** ("the audit changes who wins").
 
 Or hit the API directly (real Gemini 3.1 RunRecord):
 ```bash
@@ -41,7 +26,24 @@ curl -s -X POST https://glasshat-api-o366v7tl2q-uc.a.run.app/api/evaluate \
 # → RunRecord: per-criterion scores + audit_corrections (the live self-correction)
 ```
 
-**Two viewports, one engine**: `/judge` (batch rank + lock official scores) and `/participate` (single submission + iterate on the weakest axis). Closing line: *"Same engine. Different viewer. Different fairness."*
+**Two viewports, one engine**: `/judge` (batch rank + lock official scores) and `/participate` (single submission + iterate on the weakest axis). *"Same engine. Different viewer. Different fairness."*
+
+---
+
+### ✅ Rapid Agent · Arize track — compliance at a glance
+
+> Already saw the demo above? Here's the proof behind it. Full detail +
+> run-it-yourself commands: **[`docs/rapid-agent-compliance.md`](docs/rapid-agent-compliance.md)** ·
+> **[`docs/evidence-matrix.md`](docs/evidence-matrix.md)**.
+
+| Requirement | Implementation | Code path | Verify | Status |
+|---|---|---|---|---|
+| **Gemini / Vertex AI** | live `gemini-3.1-flash-lite` on the Vertex `global` endpoint (+ `gemini-3.1-pro-preview` for rubric synthesis) | `packages/shared/src/glasshat/shared/llm.py` (`VertexLlmClient`) | `POST <API>/api/evaluate` → real-Gemini `RunRecord` | ✅ Live |
+| **Agent runtime** ("Agent Builder") | the **Arize track** mandates a *code-owned* runtime and states **visual Agent Builder alone is insufficient** → **Google ADK + Cloud Run** | `services/pipeline-orchestrator/src/glasshat/pipeline/adk_runtime.py`; `infra/deploy.sh` | [compliance §2](docs/rapid-agent-compliance.md#2-agent-builder-ambiguity--resolved) | ✅ Resolved |
+| **Arize partner integration** | OpenInference/OTLP → **Arize AX** (`otlp.arize.com`); one span per agent + per hat | `packages/shared/src/glasshat/shared/tracing.py` (`ArizeTracer`); `…/pipeline/engine.py:115-149` | `uv run python scripts/real_arize_ax_e2e.py` | ✅ Live |
+| **Phoenix MCP server** | ADK `MCPToolset` over stdio → `npx @arizeai/phoenix-mcp@latest`; audit consultant calls the MCP `get-dataset-examples` tool + writes corrections back (learning loop) | `…/pipeline/adk_runtime.py` (`build_phoenix_mcp_toolset`, `PhoenixMcpConsultant`, `PhoenixMcpDatasetWriter`) | `uv run python scripts/real_e2e.py` | ✅ Wired (e2e) — deployed image uses the spike-D calibrated table; the MCP live-trace consultant activates by config flag ([§3](docs/rapid-agent-compliance.md#3-arize-partner-mcp-path-agent--mcp--traceeval--report)) |
+| **Cloud Run** | API + web, project `panelyst-hackathon`, us-central1, min-instances=0 | `infra/deploy.sh`, `infra/cloudbuild-*.yaml`, `infra/Dockerfile.*` | `curl -fsS <API>/health` → 200 | ✅ Live |
+| **CI / tests / live API** | GH Actions: ruff + mypy + pytest (cov ≥ 90) · web lint/tsc/vitest/build · docker · supply-chain leak gate | `.github/workflows/ci.yml` | `uv run pytest` → 224 passed; web 71 passed | ✅ Green |
 
 ---
 
@@ -139,7 +141,7 @@ Engine, API, and web are built and **CI-green** (SDD + TDD; one PR per phase —
 - **Lighthouse ≥ 90** on all pages — fresh live (post-deploy): landing **92/95/96**, `/judge` **93/96/96**, `/participate` **95/96/96** (Performance / Accessibility / Best-Practices). Motion respects `prefers-reduced-motion`.
 - **Live Arize AX observability**: the deployed service registers to `otlp.arize.com` (project `glasshat`) and emits a span **per agent** (`RubricSynthesizer · BluePlanner · SixHatPanel · Audit · BMADScorer · ReportAssembler`) plus per-hat `hat_assess` spans on every evaluation — verified via live registration logs (no export errors) and a live real-Gemini eval on `gemini-3.1-flash-lite` (e.g. run `2b2e29c2`, final 56.93, 4 audit self-corrections). e2e: `scripts/real_arize_ax_e2e.py`.
 
-- **Mock stack** (no credentials): full `run_evaluation` end-to-end, self-correct, SSE, 197 tests (157 py + 40 web), Docker images build in CI.
+- **Mock stack** (no credentials): full `run_evaluation` end-to-end, self-correct, SSE, 295 tests (224 py + 71 web), Docker images build in CI.
 - **Real e2e** (`scripts/real_e2e.py`): real Vertex Gemini + Vertex embeddings + in-code hybrid retrieval + self-hosted Phoenix + real Phoenix MCP (stdio, `list-projects` via a Google ADK agent) → RubricSynthesizer→6-hat→audit **self-correct** → report. Evidence: `claudedocs/2026-05-21-real-e2e-evidence.md` _(headline numbers there were captured pre-#27 on gemini-2.5; the live path is now gemini-3.1-flash-lite)_.
 - **Live Cloud Run**: both viewports return HTTP 200; `/api/evaluate` returns a self-corrected `RunRecord` on real `gemini-3.1-flash-lite`.
 - **3D self-correction**: `/participate` runs the pipeline and reshapes the constellation from real output — `claudedocs/assets/glasshat-3d-self-correction.png`.
