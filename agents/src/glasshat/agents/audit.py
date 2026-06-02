@@ -76,6 +76,23 @@ class FallbackConsultant:
             return result
         return await self._backup.consult(hat, criterion_id, bucket)
 
+    def for_weights(self, weights_vector: Sequence[float]) -> FallbackConsultant:
+        """Propagate the rubric weighting to weight-aware children so layering
+        (e.g. ``Fallback(primary=PhoenixMcp, backup=AnchorConsultant(...))``)
+        still binds the nested anchor consultant. Non-weight-aware children are
+        passed through unchanged."""
+        primary = (
+            self._primary.for_weights(weights_vector)
+            if isinstance(self._primary, WeightAware)
+            else self._primary
+        )
+        backup = (
+            self._backup.for_weights(weights_vector)
+            if isinstance(self._backup, WeightAware)
+            else self._backup
+        )
+        return FallbackConsultant(primary=primary, backup=backup)
+
 
 @dataclass(frozen=True)
 class DatasetExample:
@@ -182,16 +199,21 @@ class CalibrationAnchor:
 
 
 def _aggregate_consult(results: list[ConsultResult]) -> ConsultResult:
-    """Combine several anchors' calibration for one cell (n-weighted mean delta)."""
-    total_n = sum(r.n for r in results)
-    if total_n == 0:
+    """Combine several anchors' calibration for one cell (n-weighted mean delta).
+
+    Zero-sample anchors are dropped first so their placeholder percentiles can't
+    skew the aggregated p25/p75 (and contribute no weight to the mean anyway).
+    """
+    sampled = [r for r in results if r.n > 0]
+    if not sampled:
         return results[0]
-    mean_delta = sum(r.mean_delta * r.n for r in results) / total_n
+    total_n = sum(r.n for r in sampled)
+    mean_delta = sum(r.mean_delta * r.n for r in sampled) / total_n
     return ConsultResult(
         mean_delta=mean_delta,
         n=total_n,
-        p25=min(r.p25 for r in results),
-        p75=max(r.p75 for r in results),
+        p25=min(r.p25 for r in sampled),
+        p75=max(r.p75 for r in sampled),
     )
 
 

@@ -257,6 +257,40 @@ def test_anchor_unbound_falls_back_to_table() -> None:
     assert res is not None and res.mean_delta == 0.8  # backup, anchors not consulted
 
 
+def test_fallback_propagates_for_weights_to_weight_aware_backup() -> None:
+    """Layering Fallback(primary=cold, backup=AnchorConsultant) must still bind
+    the anchor's weights — FallbackConsultant is itself WeightAware and delegates
+    for_weights to its weight-aware children."""
+    anchor_a = _anchor((0.7, 0.1, 0.1, 0.1), mean_delta=1.45)
+    anchor_b = _anchor((0.1, 0.7, 0.1, 0.1), mean_delta=0.31)
+    table = TableConsultant({})
+    anchor = AnchorConsultant([anchor_a, anchor_b], backup=table, top_k=1)
+    fb = FallbackConsultant(primary=_CountingConsultant(None), backup=anchor)
+    assert isinstance(fb, WeightAware)
+
+    bound = fb.for_weights([0.15, 0.65, 0.1, 0.1])  # nearest anchor B
+    res = asyncio.run(bound.consult(*_CELL))
+    assert res is not None and res.mean_delta == 0.31  # anchor was bound through the wrapper
+
+
+def test_aggregate_consult_drops_zero_sample_results() -> None:
+    anchor_real = _anchor((0.5, 0.5, 0.0, 0.0), mean_delta=1.45)  # n=9
+    anchor_zero = CalibrationAnchor(
+        weights_vector=(0.5, 0.5, 0.0, 0.0),
+        rubric_schema_hash="h",
+        deltas={_CELL: ConsultResult(mean_delta=0.0, n=0, p25=-99.0, p75=99.0)},
+    )
+    consultant = AnchorConsultant(
+        [anchor_real, anchor_zero], backup=TableConsultant({}), top_k=2
+    ).for_weights([0.5, 0.5, 0.0, 0.0])
+    res = asyncio.run(consultant.consult(*_CELL))
+    # The n=0 anchor's ±99 percentiles must not corrupt the aggregate.
+    assert res is not None
+    assert res.p25 == 0.0 and res.p75 == 10.0
+    assert res.mean_delta == 1.45
+    assert res.n == 9
+
+
 def test_anchor_uncovered_cell_falls_back_to_table() -> None:
     backup = TableConsultant(
         {(Hat.GREEN, "design", "high"): ConsultResult(mean_delta=0.5, n=8, p25=0.0, p75=10.0)}
