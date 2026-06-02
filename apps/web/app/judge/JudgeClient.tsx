@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { Badge } from "@/components/Badge";
 import { ProofStrip } from "@/components/ProofStrip";
+import { RankFlipBoard } from "@/components/RankFlipBoard";
 import { ScoreBar } from "@/components/ScoreBar";
 import { StatCard } from "@/components/StatCard";
 import {
@@ -269,6 +270,11 @@ export function JudgeClient() {
           re-evaluate against the API now.
         </p>
       )}
+
+      {/* Rank-flip board — the visual cliff of the "audit the judge" claim.
+          Shown as soon as the cohort has two or more scored items so judges
+          see the audit changing ranks before scrolling. */}
+      {items.length >= 2 && <RankFlipBoard items={items} className="mt-6" />}
 
       {/* Ranking / cohort table */}
       <section className="elevate mt-6 overflow-hidden rounded-2xl">
