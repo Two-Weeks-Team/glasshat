@@ -257,3 +257,156 @@ def test_sse_emits_dataset_lookup_and_write_events(tmp_path: Path) -> None:
 def test_default_deps_keeps_null_writer_for_credential_free_runs() -> None:
     deps = default_deps()
     assert isinstance(deps.dataset_writer, NullDatasetWriter)
+
+
+# --- Improvement (a): repo_url -> code grader -> retrieval -------------------
+
+
+class _RepoCorroboratingLlm(MockLlmClient):
+    """A hat that rewards corroborating repo evidence: it emits a higher SCORE
+    whenever a ``repo:*`` evidence ref appears in the prompt, so the presence of
+    ``repo_url`` measurably changes the score — exactly the deferred-(a) wiring
+    the Skeptic flagged (before this, ``repo_url`` was accepted but ignored and
+    evidence was ``deck-0`` only)."""
+
+    async def generate(self, prompt: str, *, tier: str = "flash", **kw: Any) -> str:
+        if "repo:" in prompt:
+            return "SCORE: 8.0\nRATIONALE: the repository corroborates the deck claim"
+        return "SCORE: 5.0\nRATIONALE: deck only, no repository evidence"
+
+
+def _repo_chunks() -> list[Any]:
+    from glasshat.agents.types import Chunk
+
+    return [
+        Chunk(
+            id="repo:readme",
+            text="Repository README excerpt: a multi-agent evaluator.",
+            source="repo",
+        ),
+        Chunk(
+            id="repo:languages",
+            text="Repository languages by byte share: Python (90000 bytes).",
+            source="repo",
+        ),
+        Chunk(
+            id="repo:facts",
+            text="Repository facts: tests present=True; CI configured=True.",
+            source="repo",
+        ),
+    ]
+
+
+class _FakeRepoGrader:
+    """Returns fixed repo chunks with no network — stands in for the live
+    GitHubApiRepoGrader so the wiring is exercised hermetically."""
+
+    def __init__(self, chunks: list[Any]) -> None:
+        self._chunks = chunks
+        self.calls = 0
+
+    async def chunks_for(self, url: str) -> list[Any]:
+        self.calls += 1
+        return list(self._chunks)
+
+
+def _repo_sensitive_deps(tmp_path: Path) -> Deps:
+    # Empty table → no audit corrections, so the persisted score reflects the
+    # raw hat verdict (isolating the repo-evidence effect from the audit).
+    return Deps(
+        llm=_RepoCorroboratingLlm(embedding_dim=8),
+        retrieval=HybridIndex(),
+        docstore=MemoryDocStore(),
+        blobstore=LocalFsBlobStore(str(tmp_path)),
+        tracer=NoOpTracer(),
+        consultant=TableConsultant({}),
+    )
+
+
+def _tech_score(rec: RunRecord) -> float:
+    return next(s.score for s in rec.scores if s.criterion_id == "tech-implementation")
+
+
+def _tech_refs(rec: RunRecord) -> list[str]:
+    return next(s.evidence_refs for s in rec.scores if s.criterion_id == "tech-implementation")
+
+
+def test_repo_url_changes_tech_score_and_surfaces_repo_provenance(tmp_path: Path) -> None:
+    deck = "we built a multi-agent system"
+    # (1) deck-only baseline
+    rec_a = asyncio.run(
+        run_evaluation(
+            EvaluationInput(rubric_source={"preset_id": "rapid-agent"}, deck_text=deck),
+            _repo_sensitive_deps(tmp_path),
+        )
+    )
+    # (2) SAME deck + a repo_url whose grader injects repo chunks
+    deps_b = _repo_sensitive_deps(tmp_path)
+    grader = _FakeRepoGrader(_repo_chunks())
+    deps_b.repo_grader = grader
+    rec_b = asyncio.run(
+        run_evaluation(
+            EvaluationInput(
+                rubric_source={"preset_id": "rapid-agent"},
+                deck_text=deck,
+                repo_url="https://github.com/acme/widget",
+            ),
+            deps_b,
+        )
+    )
+
+    assert grader.calls == 1
+    # The tech-criterion score is strictly different *because* repo evidence
+    # reached the hat — the whole point of wiring repo_url.
+    assert _tech_score(rec_a) != _tech_score(rec_b)
+    # Provenance surfaced: the audited tech criterion now cites repo evidence;
+    # the deck-only baseline cites none.
+    assert any(r.startswith("repo:") for r in _tech_refs(rec_b))
+    assert not any(r.startswith("repo:") for r in _tech_refs(rec_a))
+
+
+def test_repo_url_with_default_null_grader_stays_deck_only(tmp_path: Path) -> None:
+    # repo_url present but the default NullRepoGrader yields nothing → no repo
+    # evidence, no error, fully deck-only.
+    rec = asyncio.run(
+        run_evaluation(
+            EvaluationInput(
+                rubric_source={"preset_id": "rapid-agent"},
+                deck_text="we built x",
+                repo_url="https://github.com/acme/widget",
+            ),
+            _repo_sensitive_deps(tmp_path),
+        )
+    )
+    for s in rec.scores:
+        assert not any(r.startswith("repo:") for r in s.evidence_refs)
+
+
+def test_repo_grader_failure_falls_back_to_deck_only(tmp_path: Path) -> None:
+    class _BoomGrader:
+        async def chunks_for(self, url: str) -> list[Any]:
+            raise RuntimeError("github down")
+
+    deps = _repo_sensitive_deps(tmp_path)
+    deps.repo_grader = _BoomGrader()
+    rec = asyncio.run(
+        run_evaluation(
+            EvaluationInput(
+                rubric_source={"preset_id": "rapid-agent"},
+                deck_text="we built a multi-agent system",
+                repo_url="https://github.com/acme/widget",
+            ),
+            deps,
+        )
+    )
+    # The run completed despite the grader blowing up, and stayed deck-only.
+    assert rec.final_score > 0
+    for s in rec.scores:
+        assert not any(r.startswith("repo:") for r in s.evidence_refs)
+
+
+def test_default_deps_uses_null_repo_grader() -> None:
+    from glasshat.pipeline.engine import NullRepoGrader
+
+    deps = default_deps()
+    assert isinstance(deps.repo_grader, NullRepoGrader)
