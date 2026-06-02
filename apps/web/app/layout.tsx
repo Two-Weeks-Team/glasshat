@@ -7,20 +7,25 @@ import { SiteNav } from "@/components/SiteNav";
 import "./globals.css";
 
 // Display face for the headline + every big number (rank numerals, scores).
+// Two weights (600/700) cover the H1 and numerals — fewer files = lighter
+// critical path. Preloaded since it paints the headline/LCP on the landing hero.
 const display = Space_Grotesk({
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
+  weight: ["600", "700"],
   variable: "--font-display",
   display: "swap",
 });
 
-// Italic serif for narrative asides ("audits the judge", pull-quotes).
+// Italic serif for narrative asides (the landing hero accent only). Not preloaded
+// — it isn't on /judge or /participate, so preloading it there just contended
+// with their critical resources and pushed LCP out.
 const serif = Newsreader({
   subsets: ["latin"],
   weight: ["400"],
   style: ["italic"],
   variable: "--font-serif",
   display: "swap",
+  preload: false,
 });
 
 export const metadata: Metadata = {
