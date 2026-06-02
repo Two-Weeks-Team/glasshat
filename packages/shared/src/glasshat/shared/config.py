@@ -19,7 +19,7 @@ MonitorBackend = Literal["phoenix-local", "phoenix-cloud", "arize"]
 DocStoreBackend = Literal["memory", "sqlite", "firestore"]
 BlobBackend = Literal["local-fs", "gcs"]
 AgentRuntime = Literal["adk-local", "adk-cloud-run"]
-ConsultantBackend = Literal["table", "phoenix-mcp"]
+ConsultantBackend = Literal["table", "phoenix-mcp", "anchor"]
 DatasetWriterBackend = Literal["null", "phoenix-mcp"]
 RepoGraderBackend = Literal["null", "github-api"]
 

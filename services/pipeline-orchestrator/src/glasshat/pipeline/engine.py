@@ -18,11 +18,14 @@ from datetime import UTC, datetime
 from typing import Any, Protocol, runtime_checkable
 
 from glasshat.agents.audit import (
+    AnchorConsultant,
+    CalibrationAnchor,
     Consultant,
     ConsultResult,
     DatasetWriter,
     NullDatasetWriter,
     TableConsultant,
+    WeightAware,
     make_dataset_examples,
     run_audit,
 )
@@ -109,6 +112,32 @@ def default_calibration_table() -> dict[tuple[Hat, str, str], ConsultResult]:
     return table
 
 
+def default_calibration_anchors() -> list[CalibrationAnchor]:
+    """Honest weight-aware seed: one anchor per preset, each carrying the *real*
+    spike-D prior for its own criteria (no fabricated cross-schema differences).
+
+    The anchors differ by ``weights_vector`` (so :class:`AnchorConsultant` can
+    pick the nearest schema), but all carry the same measured prior today — the
+    live Phoenix dataset accumulates genuinely per-schema deltas over time. Until
+    then this behaves like the table prior, just selected by rubric weighting.
+    """
+    anchors: list[CalibrationAnchor] = []
+    for preset_id in list_presets():
+        preset = load_preset(preset_id)
+        deltas: dict[tuple[Hat, str, str], ConsultResult] = {}
+        for criterion in preset.criteria:
+            for bucket, (mean_delta, n) in _YELLOW_DELTA_BY_BUCKET.items():
+                deltas[(Hat.YELLOW, criterion.id, bucket)] = ConsultResult(mean_delta, n, 0.0, 10.0)
+        anchors.append(
+            CalibrationAnchor(
+                weights_vector=tuple(preset.weights_vector),
+                rubric_schema_hash=preset.rubric_schema_hash,
+                deltas=deltas,
+            )
+        )
+    return anchors
+
+
 def default_deps(settings: Settings | None = None) -> Deps:
     """Build the config-selected dependencies (mock/memory/local-fs/noop by default).
 
@@ -146,6 +175,11 @@ def _select_consultant(settings: Settings) -> Consultant:
             ),
             backup=table,
         )
+    if settings.consultant_backend == "anchor":
+        # Weight-aware anchor retrieval (spec §8) with the table prior as the
+        # cold-start / uncovered-cell fallback. The engine binds the rubric's
+        # weights_vector at the audit step (see WeightAware).
+        return AnchorConsultant(default_calibration_anchors(), backup=table)
     return table
 
 
@@ -237,8 +271,15 @@ async def run_evaluation(
 
     emit(Stage.AUDITING)
     emit(Stage.AUDIT_STARTED)
+    # Bind the rubric's weighting for weight-aware consultants (AnchorConsultant)
+    # so the audit consults the past evals whose rubric weighting is nearest this
+    # run's. Non-weight-aware consultants (table, Phoenix-MCP) are used unchanged.
+    consultant = deps.consultant
+    if isinstance(consultant, WeightAware):
+        consultant = consultant.for_weights(rubric.weights_vector)
+        emit(Stage.ANCHOR_RETRIEVAL, weights_vector=list(rubric.weights_vector))
     with deps.tracer.span("agent_audit", **{"glasshat.agent": "Audit"}):
-        corrections = await run_audit(assessments, deps.consultant)
+        corrections = await run_audit(assessments, consultant)
     # Calibration sample size that actually informed this run — the "how many
     # past evals did we learn from?" telemetry the demo renders as a count-up.
     dataset_examples_used = max((c.n for c in corrections), default=0)
