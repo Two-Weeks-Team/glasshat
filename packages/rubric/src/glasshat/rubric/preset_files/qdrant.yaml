@@ -1,5 +1,8 @@
 # Qdrant VSD 2026 — 3 axes, equal weight, simple average.
-# Retained as a preset for the dual-rubric variance FEATURE (not a pursued track).
+# This is an EXTERNAL rubric that Glasshat *judges against* (a sample of "official
+# rules" to synthesize from) — NOT a runtime dependency and NOT a pursued track.
+# Glasshat uses no Qdrant software; this preset only exercises the dual-rubric
+# variance feature (the same submission scored under two rule sets).
 preset_id: qdrant
 verified_at: 2026-05-14
 source_url: https://try.qdrant.tech/hackathon-vsd

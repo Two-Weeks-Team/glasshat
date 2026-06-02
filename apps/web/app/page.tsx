@@ -106,8 +106,8 @@ export default function Home() {
             <article className="elevate hover-lift h-full rounded-3xl p-6">
               <h3 className="font-medium">Every score is grounded</h3>
               <p className="mt-2 text-sm leading-relaxed text-[var(--color-muted)]">
-                Six perspectives each retrieve evidence and cite it — every step is a Phoenix span
-                you can inspect.
+                Six perspectives each retrieve evidence and cite it — every step is a trace span
+                (Arize AX in the live deploy, Phoenix locally) you can inspect.
               </p>
             </article>
           </Reveal>
@@ -115,8 +115,8 @@ export default function Home() {
             <article className="elevate hover-lift h-full rounded-3xl p-6">
               <h3 className="font-medium">Built for the Arize track</h3>
               <p className="mt-2 text-sm leading-relaxed text-[var(--color-muted)]">
-                Gemini (Vertex AI) + Google ADK, with Arize Phoenix observability and the Phoenix MCP
-                server consulted at runtime.
+                Gemini (Vertex AI) + Google ADK, with Arize AX observability and the Phoenix MCP
+                server wired for the live-trace calibration consultant.
               </p>
             </article>
           </Reveal>

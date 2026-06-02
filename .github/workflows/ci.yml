@@ -76,3 +76,47 @@ jobs:
         run: docker build -f infra/Dockerfile.api -t glasshat-api:ci .
       - name: Build web image
         run: docker build -f infra/Dockerfile.web -t glasshat-web:ci apps/web
+
+  supply-chain:
+    name: supply-chain (deploy-closure leak + secrets)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install Python 3.12
+        run: uv python install 3.12
+
+      # The deployed API image is built with `--extra vertex --extra arize`
+      # (infra/deploy.sh). Assert that closure ships NO general-purpose LLM SDKs —
+      # the `phoenix` extra's transitive arize-phoenix would pull openai/anthropic,
+      # which the Gemini/Google-only deploy must never bundle.
+      - name: Deploy-closure dependency leak gate
+        run: |
+          set -euo pipefail
+          leaked=$(uv export --frozen --no-dev --extra vertex --extra arize \
+            | grep -iE '^(openai|anthropic|pydantic-ai)([=<>~ ]|$)' || true)
+          if [ -n "$leaked" ]; then
+            echo "::error::Forbidden LLM SDK in the deploy closure (Gemini/Google-only policy):"
+            echo "$leaked"
+            exit 1
+          fi
+          echo "OK — deploy closure (vertex+arize) ships no openai/anthropic/pydantic-ai."
+
+      - name: Secret scan (gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Dependency audit (advisory)
+        continue-on-error: true
+        run: |
+          uvx pip-audit --version || true
+          uv export --frozen --no-dev --extra vertex --extra arize --format requirements-txt -o /tmp/reqs.txt
+          uvx pip-audit -r /tmp/reqs.txt || echo "pip-audit advisory findings (non-blocking)"
