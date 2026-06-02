@@ -6,15 +6,22 @@ from types import SimpleNamespace
 from typing import Any
 
 from glasshat.agents.audit import (
+    AnchorConsultant,
     ConsultResult,
     DatasetExample,
     NullDatasetWriter,
     TableConsultant,
 )
 from glasshat.agents.types import EvaluationInput, RunRecord
-from glasshat.pipeline.engine import Deps, default_deps, run_evaluation
+from glasshat.pipeline.engine import (
+    Deps,
+    default_calibration_anchors,
+    default_calibration_table,
+    default_deps,
+    run_evaluation,
+)
 from glasshat.pipeline.events import PipelineEvent, Stage
-from glasshat.rubric.presets import load_preset
+from glasshat.rubric.presets import list_presets, load_preset
 from glasshat.shared.blobstore import LocalFsBlobStore
 from glasshat.shared.docstore import MemoryDocStore
 from glasshat.shared.enums import Hat, RunMode
@@ -413,3 +420,55 @@ def test_default_deps_uses_null_repo_grader() -> None:
 
     deps = default_deps()
     assert isinstance(deps.repo_grader, NullRepoGrader)
+
+
+# --- Improvement (c): weight-aware anchor consultant wiring ------------------
+
+
+def test_anchor_backend_binds_rubric_weights_and_emits_anchor_retrieval(
+    tmp_path: Path,
+) -> None:
+    deps = Deps(
+        llm=_OverconfidentYellowLlm(embedding_dim=8),
+        retrieval=HybridIndex(),
+        docstore=MemoryDocStore(),
+        blobstore=LocalFsBlobStore(str(tmp_path)),
+        tracer=NoOpTracer(),
+        # Same wiring _select_consultant builds for CONSULTANT_BACKEND=anchor.
+        consultant=AnchorConsultant(
+            default_calibration_anchors(), backup=TableConsultant(default_calibration_table())
+        ),
+    )
+    inp = EvaluationInput(
+        rubric_source={"preset_id": "rapid-agent"},
+        deck_text="we built a novel multi-agent system in python with tests",
+        mode=RunMode.JUDGE,
+    )
+    events: list[PipelineEvent] = []
+    rec = asyncio.run(run_evaluation(inp, deps, on_event=events.append))
+
+    # The audit consulted via the weight-aware path → ANCHOR_RETRIEVAL fired with
+    # the bound rubric weighting (honest: only emitted when actually weight-aware).
+    anchor_events = [
+        e for e in events if e.stage == Stage.ANCHOR_RETRIEVAL and "weights_vector" in e.payload
+    ]
+    assert anchor_events, "expected an ANCHOR_RETRIEVAL event carrying weights_vector"
+    assert anchor_events[0].payload["weights_vector"] == [0.25, 0.25, 0.25, 0.25]
+    # The rapid-agent anchor covers YELLOW cells with the spike-D prior, so the
+    # over-confident YELLOW still gets pulled down (same as the table path).
+    assert any(c.hat == Hat.YELLOW and c.original > c.corrected for c in rec.audit_corrections)
+
+
+def test_default_calibration_anchors_are_per_preset_and_carry_real_prior() -> None:
+    anchors = default_calibration_anchors()
+    # One anchor per preset, each keyed by that preset's own weighting.
+    assert len(anchors) == len(list_presets())
+    # Honest seed: every YELLOW low-evidence delta is the measured spike-D prior
+    # (1.45) — no fabricated cross-schema differentiation.
+    for anchor in anchors:
+        low_deltas = {
+            res.mean_delta
+            for (hat, _crit, bucket), res in anchor.deltas.items()
+            if hat == Hat.YELLOW and bucket == "low"
+        }
+        assert low_deltas <= {1.45}

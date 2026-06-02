@@ -1,12 +1,15 @@
 import asyncio
 
 from glasshat.agents.audit import (
+    AnchorConsultant,
+    CalibrationAnchor,
     Consultant,
     ConsultResult,
     DatasetExample,
     FallbackConsultant,
     NullDatasetWriter,
     TableConsultant,
+    WeightAware,
     apply_correction,
     bucket_of,
     make_dataset_examples,
@@ -196,3 +199,105 @@ def test_make_dataset_examples_defaults_unknown_bucket_to_mid() -> None:
 def test_null_dataset_writer_returns_zero() -> None:
     out = asyncio.run(NullDatasetWriter().write([]))
     assert out == 0
+
+
+# --- Improvement (c): weight-aware anchor retrieval -------------------------
+
+_CELL = (Hat.YELLOW, "tech-implementation", "low")
+
+
+def _anchor(weights: tuple[float, ...], mean_delta: float) -> CalibrationAnchor:
+    return CalibrationAnchor(
+        weights_vector=weights,
+        rubric_schema_hash="h",
+        deltas={_CELL: ConsultResult(mean_delta=mean_delta, n=9, p25=0.0, p75=10.0)},
+    )
+
+
+def test_anchor_consultant_satisfies_protocols() -> None:
+    ac = AnchorConsultant([], backup=TableConsultant({}))
+    assert isinstance(ac, Consultant)
+    assert isinstance(ac, WeightAware)
+
+
+def test_anchor_selection_changes_consult_result_with_weights() -> None:
+    """The mechanism: binding a different rubric weighting selects a different
+    nearest anchor, so the returned calibration changes. (Fixture anchors carry
+    distinct deltas to exercise selection — the shipped seed does not fabricate
+    cross-schema differences.)"""
+    # Anchor A is weighted toward the first criterion, B toward the second; they
+    # carry deliberately different deltas so the selected one is observable.
+    anchor_a = _anchor((0.7, 0.1, 0.1, 0.1), mean_delta=1.45)
+    anchor_b = _anchor((0.1, 0.7, 0.1, 0.1), mean_delta=0.31)
+    consultant = AnchorConsultant([anchor_a, anchor_b], backup=TableConsultant({}), top_k=1)
+
+    near_a = consultant.for_weights([0.65, 0.15, 0.1, 0.1])
+    near_b = consultant.for_weights([0.15, 0.65, 0.1, 0.1])
+    res_a = asyncio.run(near_a.consult(*_CELL))
+    res_b = asyncio.run(near_b.consult(*_CELL))
+
+    assert res_a is not None and res_b is not None
+    assert res_a.mean_delta == 1.45  # picked anchor A
+    assert res_b.mean_delta == 0.31  # picked anchor B
+    assert res_a.mean_delta != res_b.mean_delta  # weights changed the result
+
+
+def test_anchor_empty_corpus_falls_back_to_table() -> None:
+    backup = TableConsultant({_CELL: ConsultResult(mean_delta=0.8, n=10, p25=0.0, p75=10.0)})
+    consultant = AnchorConsultant([], backup=backup).for_weights([0.25, 0.25, 0.25, 0.25])
+    res = asyncio.run(consultant.consult(*_CELL))
+    assert res is not None and res.mean_delta == 0.8  # came from the table backup
+
+
+def test_anchor_unbound_falls_back_to_table() -> None:
+    # Never bound with for_weights → cannot rank anchors → uses the backup.
+    backup = TableConsultant({_CELL: ConsultResult(mean_delta=0.8, n=10, p25=0.0, p75=10.0)})
+    consultant = AnchorConsultant([_anchor((0.7, 0.1, 0.1, 0.1), 1.45)], backup=backup)
+    res = asyncio.run(consultant.consult(*_CELL))
+    assert res is not None and res.mean_delta == 0.8  # backup, anchors not consulted
+
+
+def test_fallback_propagates_for_weights_to_weight_aware_backup() -> None:
+    """Layering Fallback(primary=cold, backup=AnchorConsultant) must still bind
+    the anchor's weights — FallbackConsultant is itself WeightAware and delegates
+    for_weights to its weight-aware children."""
+    anchor_a = _anchor((0.7, 0.1, 0.1, 0.1), mean_delta=1.45)
+    anchor_b = _anchor((0.1, 0.7, 0.1, 0.1), mean_delta=0.31)
+    table = TableConsultant({})
+    anchor = AnchorConsultant([anchor_a, anchor_b], backup=table, top_k=1)
+    fb = FallbackConsultant(primary=_CountingConsultant(None), backup=anchor)
+    assert isinstance(fb, WeightAware)
+
+    bound = fb.for_weights([0.15, 0.65, 0.1, 0.1])  # nearest anchor B
+    res = asyncio.run(bound.consult(*_CELL))
+    assert res is not None and res.mean_delta == 0.31  # anchor was bound through the wrapper
+
+
+def test_aggregate_consult_drops_zero_sample_results() -> None:
+    anchor_real = _anchor((0.5, 0.5, 0.0, 0.0), mean_delta=1.45)  # n=9
+    anchor_zero = CalibrationAnchor(
+        weights_vector=(0.5, 0.5, 0.0, 0.0),
+        rubric_schema_hash="h",
+        deltas={_CELL: ConsultResult(mean_delta=0.0, n=0, p25=-99.0, p75=99.0)},
+    )
+    consultant = AnchorConsultant(
+        [anchor_real, anchor_zero], backup=TableConsultant({}), top_k=2
+    ).for_weights([0.5, 0.5, 0.0, 0.0])
+    res = asyncio.run(consultant.consult(*_CELL))
+    # The n=0 anchor's ±99 percentiles must not corrupt the aggregate.
+    assert res is not None
+    assert res.p25 == 0.0 and res.p75 == 10.0
+    assert res.mean_delta == 1.45
+    assert res.n == 9
+
+
+def test_anchor_uncovered_cell_falls_back_to_table() -> None:
+    backup = TableConsultant(
+        {(Hat.GREEN, "design", "high"): ConsultResult(mean_delta=0.5, n=8, p25=0.0, p75=10.0)}
+    )
+    consultant = AnchorConsultant([_anchor((0.7, 0.1, 0.1, 0.1), 1.45)], backup=backup).for_weights(
+        [0.7, 0.1, 0.1, 0.1]
+    )
+    # Anchor only covers _CELL; a different cell defers to the table.
+    res = asyncio.run(consultant.consult(Hat.GREEN, "design", "high"))
+    assert res is not None and res.mean_delta == 0.5

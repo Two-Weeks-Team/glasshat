@@ -14,12 +14,13 @@ consult — so the agent measurably improves over time. Sources:
 
 from __future__ import annotations
 
-from collections.abc import Iterable
-from dataclasses import dataclass
+from collections.abc import Iterable, Sequence
+from dataclasses import dataclass, field
 from typing import Protocol, runtime_checkable
 
 from glasshat.agents.types import AuditCorrection, HatAssessment
 from glasshat.shared.enums import Hat
+from glasshat.shared.retrieval import cosine_similarity
 
 _GAIN = 0.8
 _THRESHOLD = 0.5
@@ -74,6 +75,23 @@ class FallbackConsultant:
         if result is not None and result.n >= _MIN_N:
             return result
         return await self._backup.consult(hat, criterion_id, bucket)
+
+    def for_weights(self, weights_vector: Sequence[float]) -> FallbackConsultant:
+        """Propagate the rubric weighting to weight-aware children so layering
+        (e.g. ``Fallback(primary=PhoenixMcp, backup=AnchorConsultant(...))``)
+        still binds the nested anchor consultant. Non-weight-aware children are
+        passed through unchanged."""
+        primary = (
+            self._primary.for_weights(weights_vector)
+            if isinstance(self._primary, WeightAware)
+            else self._primary
+        )
+        backup = (
+            self._backup.for_weights(weights_vector)
+            if isinstance(self._backup, WeightAware)
+            else self._backup
+        )
+        return FallbackConsultant(primary=primary, backup=backup)
 
 
 @dataclass(frozen=True)
@@ -147,6 +165,102 @@ def _bucket_for_correction(c: AuditCorrection) -> str:
     end = rest.find(",")
     bucket = (rest if end == -1 else rest[:end]).strip()
     return bucket if bucket in {"low", "mid", "high"} else "mid"
+
+
+@runtime_checkable
+class WeightAware(Protocol):
+    """A consultant that can be bound to the current rubric's ``weights_vector``.
+
+    The engine calls :meth:`for_weights` once the rubric is synthesized so a
+    weight-aware consultant (e.g. :class:`AnchorConsultant`) can pick the past
+    evaluations whose rubric weighting is nearest the run's rubric. Non-weight
+    aware consultants (table, Phoenix-MCP) simply don't implement this and are
+    used as-is.
+    """
+
+    def for_weights(self, weights_vector: Sequence[float]) -> Consultant: ...
+
+
+@dataclass(frozen=True)
+class CalibrationAnchor:
+    """One past-evaluation anchor: a rubric weighting + its per-cell calibration.
+
+    ``deltas`` maps ``(hat, criterion_id, bucket)`` to the calibration measured
+    for that rubric schema. The default seed carries the *real* spike-D prior per
+    preset (no fabricated cross-schema differentiation); the live deployment lets
+    Phoenix accumulate genuinely per-schema deltas over time, at which point the
+    weight-aware selection starts returning materially different calibration for
+    differently-weighted rubrics.
+    """
+
+    weights_vector: tuple[float, ...]
+    rubric_schema_hash: str
+    deltas: dict[tuple[Hat, str, str], ConsultResult] = field(default_factory=dict)
+
+
+def _aggregate_consult(results: list[ConsultResult]) -> ConsultResult:
+    """Combine several anchors' calibration for one cell (n-weighted mean delta).
+
+    Zero-sample anchors are dropped first so their placeholder percentiles can't
+    skew the aggregated p25/p75 (and contribute no weight to the mean anyway).
+    """
+    sampled = [r for r in results if r.n > 0]
+    if not sampled:
+        return results[0]
+    total_n = sum(r.n for r in sampled)
+    mean_delta = sum(r.mean_delta * r.n for r in sampled) / total_n
+    return ConsultResult(
+        mean_delta=mean_delta,
+        n=total_n,
+        p25=min(r.p25 for r in sampled),
+        p75=max(r.p75 for r in sampled),
+    )
+
+
+class AnchorConsultant:
+    """Weight-aware consultant (spec §8 ``weight_aware_anchor``).
+
+    Selects the ``top_k`` past-eval anchors whose ``weights_vector`` is nearest
+    (cosine) the current rubric's, and returns their aggregated per-cell
+    calibration. Cells no anchor covers — and an empty corpus, or an unbound
+    consultant — defer to ``backup`` (a :class:`TableConsultant`), so the audit
+    never goes silent. Bind the rubric weighting with :meth:`for_weights`.
+    """
+
+    def __init__(
+        self,
+        anchors: Iterable[CalibrationAnchor],
+        backup: Consultant,
+        *,
+        weights_vector: Sequence[float] | None = None,
+        top_k: int = 3,
+    ) -> None:
+        self._anchors = list(anchors)
+        self._backup = backup
+        self._weights = tuple(weights_vector) if weights_vector is not None else None
+        self._top_k = top_k
+
+    def for_weights(self, weights_vector: Sequence[float]) -> AnchorConsultant:
+        return AnchorConsultant(
+            self._anchors, self._backup, weights_vector=weights_vector, top_k=self._top_k
+        )
+
+    def _nearest(self) -> list[CalibrationAnchor]:
+        assert self._weights is not None
+        ranked = sorted(
+            (a for a in self._anchors if len(a.weights_vector) == len(self._weights)),
+            key=lambda a: cosine_similarity(self._weights, a.weights_vector),  # type: ignore[arg-type]
+            reverse=True,
+        )
+        return ranked[: self._top_k]
+
+    async def consult(self, hat: Hat, criterion_id: str, bucket: str) -> ConsultResult | None:
+        if self._weights is not None and self._anchors:
+            cell = (hat, criterion_id, bucket)
+            hits = [a.deltas[cell] for a in self._nearest() if cell in a.deltas]
+            if hits:
+                return _aggregate_consult(hits)
+        return await self._backup.consult(hat, criterion_id, bucket)
 
 
 def bucket_of(evidence_depth: float) -> str:
