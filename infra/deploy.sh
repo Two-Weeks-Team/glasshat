@@ -35,6 +35,14 @@ MIN_INSTANCES="${MIN_INSTANCES:-1}"
 # cold-instance boundary. Default stays memory to avoid overclaiming persistence.
 DOCSTORE_BACKEND="${DOCSTORE_BACKEND:-memory}"
 
+# Live learning-loop + API-hardening flips (real mode). The container ships Node
+# so the audit can reach Phoenix over MCP; set PHOENIX_COLLECTOR_ENDPOINT to your
+# Phoenix base URL to genuinely activate the live-trace consultant + dataset
+# write-back. Left empty, the audit gracefully falls back to the spike-D table
+# (honest — no phantom Phoenix calls). CORS is locked to the web origin.
+PHOENIX_COLLECTOR_ENDPOINT="${PHOENIX_COLLECTOR_ENDPOINT:-}"
+WEB_ORIGIN="${WEB_ORIGIN:-https://glasshat-web-o366v7tl2q-uc.a.run.app}"
+
 MODE="real"
 CONFIRMED=""
 NO_PHOENIX=""
@@ -94,8 +102,14 @@ elif [[ "$MODE" == "real" ]]; then
     exit 3
   fi
   UV_EXTRAS="--extra vertex --extra arize"
-  API_ENV="LLM_BACKEND=vertex,MONITOR_BACKEND=arize,DOCSTORE_BACKEND=${DOCSTORE_BACKEND},GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_REGION=${REGION},GOOGLE_GENAI_USE_VERTEXAI=true,${GEMINI_ENV},ARIZE_SPACE_ID=${ARIZE_SPACE_ID},PHOENIX_PROJECT_NAME=glasshat"
+  # Learning-loop + repo-grader + CORS flips. CONSULTANT/DATASET_WRITER=phoenix-mcp
+  # genuinely consult/write the Phoenix calibration dataset when
+  # PHOENIX_COLLECTOR_ENDPOINT is set (Node is in the image); empty endpoint →
+  # graceful spike-D table fallback. REPO_GRADER=github-api folds repo evidence in.
+  LEARNING_ENV="CONSULTANT_BACKEND=phoenix-mcp,DATASET_WRITER_BACKEND=phoenix-mcp,REPO_GRADER_BACKEND=github-api,PHOENIX_CALIBRATION_DATASET=glasshat-calibration,PHOENIX_COLLECTOR_ENDPOINT=${PHOENIX_COLLECTOR_ENDPOINT},CORS_ALLOW_ORIGINS=${WEB_ORIGIN}"
+  API_ENV="LLM_BACKEND=vertex,MONITOR_BACKEND=arize,DOCSTORE_BACKEND=${DOCSTORE_BACKEND},GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_REGION=${REGION},GOOGLE_GENAI_USE_VERTEXAI=true,${GEMINI_ENV},ARIZE_SPACE_ID=${ARIZE_SPACE_ID},PHOENIX_PROJECT_NAME=glasshat,${LEARNING_ENV}"
   API_SECRETS=(--set-secrets "PHOENIX_API_KEY=phoenix-api-key:latest")
+  echo "==> Learning loop: CONSULTANT/DATASET_WRITER=phoenix-mcp (endpoint='${PHOENIX_COLLECTOR_ENDPOINT:-<unset → table fallback>}'), REPO_GRADER=github-api, CORS→${WEB_ORIGIN}"
 else
   echo "==> Mode: MOCK (deterministic, no credentials)"
   UV_EXTRAS=""

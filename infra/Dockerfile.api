@@ -16,6 +16,15 @@ FROM python:3.12-slim AS runtime
 WORKDIR /app
 RUN useradd --create-home --uid 10001 app
 COPY --from=builder /app /app
+# Node (copied from the official image — same Debian bookworm base, so the shared
+# libs match) so the live audit can reach Phoenix via `npx @arizeai/phoenix-mcp`
+# (CONSULTANT_BACKEND / DATASET_WRITER_BACKEND = phoenix-mcp). Without a Phoenix
+# endpoint configured, the audit gracefully falls back to the spike-D table.
+COPY --from=node:20-bookworm-slim /usr/local/bin/node /usr/local/bin/node
+COPY --from=node:20-bookworm-slim /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/npm
+RUN ln -sf /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+    && ln -sf /usr/local/lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx \
+    && node --version && npx --version
 ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONPATH="/app/packages/shared/src:/app/packages/rubric/src:/app/agents/src:/app/services/ingest/src:/app/services/code-grader/src:/app/services/pipeline-orchestrator/src:/app/apps/api/src" \
     PYTHONUNBUFFERED=1
