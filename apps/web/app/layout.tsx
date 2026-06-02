@@ -13,7 +13,10 @@ const display = Space_Grotesk({
   subsets: ["latin"],
   weight: ["600", "700"],
   variable: "--font-display",
-  display: "swap",
+  // `optional`, not `swap`: the big display H1 is the LCP element, and a swap
+  // re-paints it ~2s in (webfont arrival) → LCP ≈ 3.5s. `optional` keeps the
+  // metric-adjusted fallback when the webfont isn't instant, so LCP ≈ FCP.
+  display: "optional",
 });
 
 // Italic serif for narrative asides (the landing hero accent only). Not preloaded
