@@ -144,12 +144,17 @@ export function constellationNodes(rec: RunRecord): ConstellationNode[] {
     });
     let fromX = node.x;
     if (r.audit) {
-      // Use the SAME pre-audit aggregate the 2D ScoreBar ghost uses
+      // Origin from the SAME pre-audit aggregate the 2D ScoreBar ghost uses
       // (`originScore` = preAuditScoreMap, which sums every hat's correction),
       // not this row's single `s.audit` delta — otherwise the 3D origin and the
-      // 2D ghost disagree when more than one hat corrected the criterion. x maps
-      // linearly via projectCriterion (clamp01(frac)*2-1), so reuse that formula.
-      fromX = clamp01(r.originScore / r.scale) * 2 - 1;
+      // 2D ghost disagree when more than one hat corrected the criterion. Reuse
+      // projectCriterion (don't duplicate its x formula) so both x's stay in sync.
+      fromX = projectCriterion({
+        id: r.id,
+        scoreFrac: clamp01(r.originScore / r.scale),
+        weight: clamp01(r.weightPct / 100),
+        evidenceDepth: r.audit ? 0.3 : 0.7,
+      }).x;
     }
     return { ...node, label: r.label, corrected: r.audit != null, fromX };
   });
