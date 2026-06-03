@@ -31,7 +31,7 @@ export default function Home() {
             <div className="flex flex-wrap gap-3 pt-1">
               <Link
                 href="/participate"
-                className="hover-lift rounded-xl bg-[var(--color-accent)] px-6 py-2.5 font-medium text-white"
+                className="hover-lift rounded-xl bg-[var(--color-accent-strong)] px-6 py-2.5 font-medium text-white"
               >
                 Score a submission →
               </Link>

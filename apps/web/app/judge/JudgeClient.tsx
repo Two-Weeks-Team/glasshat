@@ -191,7 +191,7 @@ export function JudgeClient() {
           <button
             onClick={runCohort}
             disabled={running || rows.length === 0}
-            className="rounded-xl bg-[var(--color-accent)] px-5 py-2 font-medium text-white transition disabled:opacity-40"
+            className="rounded-xl bg-[var(--color-accent-strong)] px-5 py-2 font-medium text-white transition disabled:opacity-40"
           >
             {running
               ? `Evaluating ${rows.length}…`
@@ -551,7 +551,7 @@ function OverrideForm({
       </label>
       <button
         onClick={() => onSubmit(cid, score, reason)}
-        className="rounded-lg bg-[var(--color-accent)] px-4 py-1.5 font-medium text-white"
+        className="rounded-lg bg-[var(--color-accent-strong)] px-4 py-1.5 font-medium text-white"
       >
         Apply override
       </button>

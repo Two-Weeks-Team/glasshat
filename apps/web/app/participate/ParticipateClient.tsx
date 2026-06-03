@@ -192,7 +192,7 @@ export function ParticipateClient() {
           <button
             onClick={preview}
             disabled={busy || deckText.trim().length === 0}
-            className="rounded-xl bg-[var(--color-accent)] px-5 py-2 font-medium text-white transition disabled:opacity-40"
+            className="rounded-xl bg-[var(--color-accent-strong)] px-5 py-2 font-medium text-white transition disabled:opacity-40"
           >
             {phase === "planning" ? "Synthesizing rubric…" : "Preview plan"}
           </button>
@@ -220,7 +220,7 @@ export function ParticipateClient() {
             {phase === "plan" && (
               <button
                 onClick={execute}
-                className="rounded-xl bg-[var(--color-accent)] px-4 py-1.5 text-sm font-medium text-white"
+                className="rounded-xl bg-[var(--color-accent-strong)] px-4 py-1.5 text-sm font-medium text-white"
               >
                 Approve &amp; run →
               </button>
