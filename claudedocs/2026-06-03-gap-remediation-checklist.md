@@ -42,15 +42,15 @@ Source: 5 parallel read-only expert agents (honesty/Skeptic, security, backend, 
 - [x] **M2** — `engine.py:290`: gate the per-correction `emit(Stage.ANCHOR_RETRIEVAL, ...)` behind `isinstance(deps.consultant, WeightAware)` so the demo animation doesn't claim anchor retrieval that didn't happen on table/phoenix-mcp backends.
 - [x] **M3** — `agents/src/glasshat/agents/types.py:52-57`: replace the `startswith("https://github.com/")` repo_url validator with the actual `_GITHUB_URL_RE` (shared) so the Pydantic layer matches the downstream SSRF gate.
 - [x] **M4** — `infra/deploy.sh:126`: add `--concurrency 1` (or document) so the per-instance in-memory rate limiter can't be bypassed via horizontal scale.
-- [ ] **M5** — docs number consistency: `docs/rapid-agent-compliance.md:26` stale "161 passed / 40 web" → real counts; unify the coverage figure (97%, not 96.7%) across `devpost-text.md:50,57`, `docs/evidence-matrix.md:17`, README.
+- [x] **M5** — docs number consistency: `docs/rapid-agent-compliance.md:26` stale "161 passed / 40 web" → real counts; unify the coverage figure (97%, not 96.7%) across `devpost-text.md:50,57`, `docs/evidence-matrix.md:17`, README.
 
 ## 🟢 LOW
 
 - [x] **L1** — `infra/deploy.sh` `--no-phoenix` branch (~:91): set `CORS_ALLOW_ORIGINS=${WEB_ORIGIN}` (currently omitted → CORS `*` on that path). Consider changing `config.py` default from `"*"` to `""`.
-- [ ] **L2** — `docs/architecture.md:37,143`: add "(shipped: GitHub REST metadata-only, no clone)" to the superseded-delta note (still shows `git clone`).
-- [ ] **L3** — `apps/web/lib/participate-state.ts:148-151`: drive 3D `fromX` from the same `preAuditScoreMap` aggregate used by the 2D ScoreBar ghost (multi-hat criteria currently disagree).
-- [ ] **L4** — `README.md:70,76`: add "(live deploy uses in-memory; Firestore/SQLite opt-in)" so "persists" isn't read as durable.
-- [ ] **L5** — `apps/web/app/participate/ParticipateClient.tsx:305`: default `show3d=false` for real runs too (or IntersectionObserver-defer) so the ~900KB three/drei chunk isn't eagerly loaded for real participants.
+- [x] **L2** — `docs/architecture.md:37,143`: add "(shipped: GitHub REST metadata-only, no clone)" to the superseded-delta note (still shows `git clone`).
+- [x] **L3** — `apps/web/lib/participate-state.ts:148-151`: drive 3D `fromX` from the same `preAuditScoreMap` aggregate used by the 2D ScoreBar ghost (multi-hat criteria currently disagree).
+- [x] **L4** — `README.md:70,76`: add "(live deploy uses in-memory; Firestore/SQLite opt-in)" so "persists" isn't read as durable.
+- [x] **L5** — `apps/web/app/participate/ParticipateClient.tsx:305`: default `show3d=false` for real runs too (or IntersectionObserver-defer) so the ~900KB three/drei chunk isn't eagerly loaded for real participants.
 
 ## 🔒 Out of scope (user-gated / teammate)
 

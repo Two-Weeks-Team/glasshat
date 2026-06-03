@@ -73,7 +73,7 @@ deck.pdf + repo URL + rubric source
 - **Rubric-aware, not one-size-fits-all.** Each criterion maps onto a shared **BMAD vocabulary** so scores are comparable across rubrics. The official Rapid Agent rule is **4 criteria × equal 25%** (Technological Implementation, Design, Potential Impact, Quality of the Idea) with **tie-break by listed order**.
 - **Dual-rubric variance (feature).** The same submission scored under two synthesized rubrics yields legitimately different finals — *correct rubric-aware variance, not bias*.
 - **Self-correction is real math** (validated in `spikes/`), not theatre: an over-confident, low-evidence assessment is pulled back toward calibrated past evaluations.
-- **No vector database.** Retrieval is **in-code** (Vertex embeddings + cosine + `rank-bm25` + RRF) over an **in-memory** index, rebuilt per run; the resulting `RunRecord` — not the index — persists to Firestore / SQLite / memory. No Qdrant.
+- **No vector database.** Retrieval is **in-code** (Vertex embeddings + cosine + `rank-bm25` + RRF) over an **in-memory** index, rebuilt per run; the resulting `RunRecord` — not the index — persists to the docstore (the **live deploy uses in-memory**, so run history is not durable across cold restarts; Firestore / SQLite are opt-in). No Qdrant.
 
 ## Architecture (monorepo)
 
@@ -141,7 +141,7 @@ Engine, API, and web are built and **CI-green** (SDD + TDD; one PR per phase —
 - **Lighthouse ≥ 90** on all pages — fresh live (post-deploy): landing **92/95/96**, `/judge` **93/96/96**, `/participate` **95/96/96** (Performance / Accessibility / Best-Practices). Motion respects `prefers-reduced-motion`.
 - **Live Arize AX observability**: the deployed service registers to `otlp.arize.com` (project `glasshat`) and emits a span **per agent** (`RubricSynthesizer · BluePlanner · SixHatPanel · Audit · BMADScorer · ReportAssembler`) plus per-hat `hat_assess` spans on every evaluation — verified via live registration logs (no export errors) and a live real-Gemini eval on `gemini-3.1-flash-lite` (e.g. run `2b2e29c2`, final 56.93, 4 audit self-corrections). e2e: `scripts/real_arize_ax_e2e.py`.
 
-- **Mock stack** (no credentials): full `run_evaluation` end-to-end, self-correct, SSE, 295 tests (224 py + 71 web), Docker images build in CI.
+- **Mock stack** (no credentials): full `run_evaluation` end-to-end, self-correct, SSE, 316 tests (243 py + 73 web), Docker images build in CI.
 - **Real e2e** (`scripts/real_e2e.py`): real Vertex Gemini + Vertex embeddings + in-code hybrid retrieval + self-hosted Phoenix + real Phoenix MCP (stdio, `list-projects` via a Google ADK agent) → RubricSynthesizer→6-hat→audit **self-correct** → report. Evidence: `claudedocs/2026-05-21-real-e2e-evidence.md` _(headline numbers there were captured pre-#27 on gemini-2.5; the live path is now gemini-3.1-flash-lite)_.
 - **Live Cloud Run**: both viewports return HTTP 200; `/api/evaluate` returns a self-corrected `RunRecord` on real `gemini-3.1-flash-lite`.
 - **3D self-correction**: `/participate` runs the pipeline and reshapes the constellation from real output — `claudedocs/assets/glasshat-3d-self-correction.png`.
