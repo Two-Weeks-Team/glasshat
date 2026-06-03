@@ -42,10 +42,10 @@
 - **On screen:** the audit step fires — an over-confident YELLOW score visibly
   recedes (ScoreBar ghost-origin), the 3D constellation reshapes, the final score
   drops from the raw consensus to the calibrated number.
-- **VO:** "Here's the moment. The optimism hat over-scored. Against **503 held-out
-  calibration anchors** from **4,493 real Gemini-3 hackathon submissions**, the
-  audit catches its own over-confidence and pulls the score back — live, with the
-  math shown, not hidden."
+- **VO:** "Here's the moment. The optimism hat over-scored. Against a **calibration
+  prior recovered from held-out spike-D anchors** — strongest exactly where the
+  evidence is thin — the audit catches its own over-confidence and pulls the score
+  back — live, with the math shown, not hidden."
 - **Caption chip:** `clip(score − 0.8·mean_delta, p25, p75) · ±2.0 cap`
 
 ### 1:25–1:55 — Why it matters: the audit changes who wins
@@ -60,12 +60,12 @@
   show the `dataset_lookup` / `phoenix_consultation` / `anchor_retrieval` events
   in the SSE stream.
 - **VO (HONEST — read verbatim):** "Every step is a trace span in **Arize AX**.
-  The calibration consultant talks to a **Phoenix dataset over MCP**, and writes
-  each correction back — so the agent's calibration **improves over time**. The
-  Phoenix-MCP learning loop is deployed and wired; in the demo image it runs on
-  the deterministic spike-D prior, and the live MCP consultant activates by config
-  flag — we show you both honestly."
-- **Caption chip:** `Arize AX · Phoenix MCP (deployed + wired)`
+  The Phoenix-MCP calibration consultant — which reads a Phoenix dataset over MCP
+  and writes each correction back, so the calibration *can* improve over time — is
+  implemented and wired, but the credential-free demo image you're watching runs
+  the deterministic spike-D prior. The live MCP path activates by config flag when
+  a Phoenix endpoint is set. We show you exactly which one is running, not more."
+- **Caption chip:** `Arize AX · Phoenix MCP (wired; demo runs spike-D prior)`
 
 ### 2:25–2:45 — Close (live + open)
 - **On screen:** the live URL typed into a browser, `/health` returning
@@ -80,7 +80,7 @@
 |---|---|
 | 2 | `Gemini 3.1 Flash-Lite · Vertex AI · Google ADK` |
 | 3 | `clip(score − 0.8·mean_delta, p25, p75) · ±2.0 cap` |
-| 5 | `Arize AX · Phoenix MCP (deployed + wired)` |
+| 5 | `Arize AX · Phoenix MCP (wired; demo runs spike-D prior)` |
 | 5 | (small) `Qdrant rubric shown is judged content, not a dependency` |
 | 6 | `live · reproducible · Apache-2.0` |
 

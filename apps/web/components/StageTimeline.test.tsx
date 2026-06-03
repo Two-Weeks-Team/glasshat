@@ -29,7 +29,7 @@ describe("StageTimeline", () => {
       />,
     );
     const log = screen.getByTestId("beat-log");
-    expect(log).toHaveTextContent("Consulting Phoenix (MCP) for drift statistics");
+    expect(log).toHaveTextContent("Consulting the calibration prior for drift statistics");
     expect(log).toHaveTextContent("Score self-corrected");
     expect(log).toHaveTextContent("9.0→7.2");
   });

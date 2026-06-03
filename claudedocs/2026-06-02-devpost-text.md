@@ -25,8 +25,9 @@ own official rules** — and:
 1. **Synthesizes a rubric** that mirrors those rules (no one-size-fits-all scoring).
 2. Runs a **six-hat panel** (White/Red/Yellow/Black/Green/Blue), each perspective
    retrieving evidence and scoring every criterion.
-3. **Audits itself.** Against **503 held-out calibration anchors** drawn from
-   **4,493 real Gemini-3 hackathon submissions (13 official winners)**, it detects
+3. **Audits itself.** Using a calibration prior recovered from **held-out spike-D
+   anchors** — an evidence-bucketed YELLOW over-confidence delta (strongest where
+   evidence is thin), the measured prior the runtime actually applies — it detects
    per-cell over-confidence and applies a transparent correction —
    `clip(score − 0.8·mean_delta, p25, p75)` with a ±2.0 cap — live on screen, with
    the 3D evaluation graph reshaping as it happens.
@@ -40,9 +41,11 @@ monitor — **not a chatbot**.
 - **Gemini 3.1 Flash-Lite on Vertex AI** (global endpoint) for synthesis, the
   six-hat panel, and scoring; **`text-embedding-005`** for evidence retrieval.
 - **Google ADK** orchestration; every agent and every hat is its own span.
-- **Arize AX** observability over OpenInference/OTLP, plus the **Phoenix MCP
-  server** for the live-trace calibration consultant and a Phoenix-Dataset
-  write-back loop so the audit **improves over time**.
+- **Arize AX** observability over OpenInference/OTLP. A **Phoenix-MCP calibration
+  consultant + Phoenix-Dataset write-back loop** is implemented and E2E-verified
+  offline; the credential-free live image runs the deterministic spike-D prior, and
+  the MCP path activates by config flag when a Phoenix endpoint is set — so the
+  audit *can* improve over time without overclaiming the live URL.
 - **In-code hybrid retrieval** (Vertex embeddings + cosine + BM25 + RRF) — **no
   vector database**. A GitHub-REST **metadata-only** code grader (no clone) folds
   repo evidence into retrieval.

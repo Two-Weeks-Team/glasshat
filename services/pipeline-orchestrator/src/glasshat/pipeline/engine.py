@@ -275,7 +275,8 @@ async def run_evaluation(
     # so the audit consults the past evals whose rubric weighting is nearest this
     # run's. Non-weight-aware consultants (table, Phoenix-MCP) are used unchanged.
     consultant = deps.consultant
-    if isinstance(consultant, WeightAware):
+    weight_aware = isinstance(consultant, WeightAware)
+    if isinstance(consultant, WeightAware):  # narrows for .for_weights below
         consultant = consultant.for_weights(rubric.weights_vector)
         emit(Stage.ANCHOR_RETRIEVAL, weights_vector=list(rubric.weights_vector))
     with deps.tracer.span("agent_audit", **{"glasshat.agent": "Audit"}):
@@ -287,7 +288,11 @@ async def run_evaluation(
     for c in corrections:
         emit(Stage.INCONSISTENCY_FLAGGED, hat=c.hat.value, criterion=c.criterion_id)
         emit(Stage.PHOENIX_CONSULTATION, mean_delta=c.mean_delta, n=c.n)
-        emit(Stage.ANCHOR_RETRIEVAL, n=c.n)
+        # Only a weight-aware consultant (AnchorConsultant) genuinely retrieves a
+        # per-anchor calibration; the table / Phoenix-MCP backends apply a flat
+        # prior, so claiming anchor retrieval there would be theatre. Gate it.
+        if weight_aware:
+            emit(Stage.ANCHOR_RETRIEVAL, n=c.n)
         emit(
             Stage.SCORE_CORRECTED,
             **{
