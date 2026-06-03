@@ -185,6 +185,9 @@ export default function SpotlightFinale() {
       aria-label="A theatrical stage where a follow-spot catches an AI evaluation and the over-confident score is corrected to its calibrated value"
       className={`${styles.stage}${lit ? ` ${styles.lit}` : ""}`}
     >
+      {/* connective top-edge atmosphere: the finale emerges from the section above */}
+      <div className={styles.topfade} aria-hidden="true" />
+
       {/* decorative volumetric light */}
       <div className={styles.cone} aria-hidden="true" />
       <div className={styles.catch} aria-hidden="true" />

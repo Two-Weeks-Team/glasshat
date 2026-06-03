@@ -13,9 +13,28 @@
   overflow: hidden;
   isolation: isolate;
   background:
-    radial-gradient(120% 90% at 78% 8%, oklch(0.22 0.06 290 / 0.55), transparent 60%),
-    radial-gradient(140% 100% at 12% 100%, oklch(0.2 0.05 330 / 0.4), transparent 55%),
-    radial-gradient(100% 120% at 50% -10%, oklch(0.18 0.04 205 / 0.35), transparent 50%);
+    radial-gradient(120% 90% at 78% 8%, oklch(0.24 0.07 290 / 0.68), transparent 62%),
+    radial-gradient(140% 100% at 12% 100%, oklch(0.22 0.06 330 / 0.5), transparent 58%),
+    radial-gradient(100% 120% at 50% -10%, oklch(0.2 0.05 205 / 0.45), transparent 52%);
+}
+
+/* ── connective atmosphere: soft fades at the section's top & bottom edges so
+   the full-bleed hero melts into its neighbours instead of a hard dark seam. ── */
+.edgeTop,
+.edgeBottom {
+  position: absolute;
+  inset-inline: 0;
+  z-index: 2;
+  height: clamp(64px, 12vh, 160px);
+  pointer-events: none;
+}
+.edgeTop {
+  top: 0;
+  background: linear-gradient(to bottom, var(--color-bg) 0%, transparent 100%);
+}
+.edgeBottom {
+  bottom: 0;
+  background: linear-gradient(to top, var(--color-bg) 0%, transparent 100%);
 }
 
 /* deep-field vignette that frames the constellation */

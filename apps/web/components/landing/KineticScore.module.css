@@ -26,9 +26,27 @@
   display: grid;
   place-items: center;
   min-height: 100svh;
+  width: 100%;
   overflow: hidden;
   padding: clamp(2rem, 6vw, 4rem) clamp(1.1rem, 4vw, 3rem);
   text-align: center;
+}
+
+/* ── connective gradient atmosphere: soft fade to --color-bg at the bottom
+   edge so this opening beat bleeds into the hero below with no hard seam. ── */
+.section::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 3;
+  height: clamp(8rem, 22vh, 18rem);
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    color-mix(in oklch, var(--color-bg) 55%, transparent) 58%,
+    var(--color-bg) 100%
+  );
 }
 
 /* ── decorative grain / vignette ── */
@@ -128,11 +146,11 @@
 }
 
 .kicker {
-  font-size: clamp(0.72rem, 1.2vw, 0.95rem);
+  font-size: clamp(0.82rem, 1.5vw, 1.15rem);
   letter-spacing: 0.34em;
   text-transform: uppercase;
   color: var(--color-muted);
-  margin: 0 0 clamp(0.4rem, 1.4vw, 1.1rem);
+  margin: 0 0 clamp(0.5rem, 1.6vw, 1.3rem);
 }
 .kicker b {
   color: var(--color-ink);
@@ -147,24 +165,24 @@
   align-items: baseline;
   line-height: 0.78;
   font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
-  font-weight: 700;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
-  font-size: clamp(7.5rem, 38vw, 30rem);
-  letter-spacing: -0.04em;
+  font-size: clamp(9rem, 42vw, 34rem);
+  letter-spacing: -0.045em;
   /* Static-resolved default = calibrated violet. The component switches to the
      raw amber start only when it is about to animate. */
   color: var(--color-accent);
   --glowc: var(--color-accent);
-  text-shadow: 0 0 0.2em color-mix(in oklch, var(--color-accent) 34%, transparent);
+  text-shadow: 0 0 0.24em color-mix(in oklch, var(--color-accent) 40%, transparent);
   filter: drop-shadow(
-    0 0.02em 0.12em color-mix(in oklch, var(--glowc) 38%, transparent)
+    0 0.025em 0.14em color-mix(in oklch, var(--glowc) 44%, transparent)
   );
   transition: color 1100ms cubic-bezier(0.5, 0, 0.2, 1);
 }
 .score.raw {
   color: var(--color-warn);
   --glowc: var(--color-warn);
-  text-shadow: 0 0 0.18em color-mix(in oklch, var(--color-warn) 30%, transparent);
+  text-shadow: 0 0 0.22em color-mix(in oklch, var(--color-warn) 36%, transparent);
 }
 
 /* odometer columns */
@@ -233,8 +251,8 @@
 
 /* ±2.0 cap delta bar */
 .deltabar {
-  margin: clamp(1rem, 3vw, 2.2rem) auto 0;
-  width: min(560px, 84vw);
+  margin: clamp(1.1rem, 3.2vw, 2.4rem) auto 0;
+  width: min(680px, 88vw);
   /* Static-resolved default = shown/filled. The component hides it (.pending)
      only to replay the streamed fill when motion is allowed. */
   opacity: 1;
@@ -245,15 +263,15 @@
 }
 .track {
   position: relative;
-  height: 3px;
-  border-radius: 3px;
-  background: color-mix(in oklch, var(--color-muted) 26%, transparent);
+  height: 4px;
+  border-radius: 4px;
+  background: color-mix(in oklch, var(--color-muted) 28%, transparent);
 }
 .cap {
   position: absolute;
-  top: -5px;
+  top: -6px;
   width: 2px;
-  height: 13px;
+  height: 16px;
   background: var(--color-muted);
   border-radius: 2px;
 }
@@ -267,11 +285,11 @@
   position: absolute;
   top: 0;
   left: 50%;
-  height: 3px;
+  height: 4px;
   /* |9.0 − 7.6| = 1.4 over the ±2.0 cap → 35% of the half-track. */
   width: 35%;
   background: linear-gradient(90deg, var(--color-warn), var(--color-accent));
-  border-radius: 3px;
+  border-radius: 4px;
 }
 .deltabar.pending .fill {
   width: 0;
@@ -299,9 +317,9 @@
 
 /* verdict caption */
 .verdict {
-  margin-top: clamp(0.9rem, 2.4vw, 1.7rem);
+  margin-top: clamp(1rem, 2.6vw, 1.9rem);
   min-height: 1.4em;
-  font-size: clamp(0.95rem, 2vw, 1.45rem);
+  font-size: clamp(1.05rem, 2.3vw, 1.65rem);
   color: var(--color-muted);
   letter-spacing: 0.01em;
 }

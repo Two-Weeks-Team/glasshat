@@ -178,7 +178,8 @@ export default function ConstellationHero() {
     }
 
     function seedStars() {
-      const n = Math.round(Math.min(180, Math.max(90, (W * H) / 11000)));
+      // Denser, more luminous field for the full-bleed backdrop.
+      const n = Math.round(Math.min(340, Math.max(180, (W * H) / 6200)));
       stars = [];
       for (let i = 0; i < n; i++) {
         stars.push({
@@ -222,8 +223,8 @@ export default function ConstellationHero() {
         const sy = s.y * H;
         const twAmt = 0.55 + 0.45 * Math.sin(s.tw);
         const appear = easeOut(clamp01(p1 * 1.3 - s.z * 0.2));
-        const rad = (0.5 + s.z * 1.4) * (0.6 + 0.4 * twAmt);
-        const alpha = (0.18 + 0.55 * s.z * twAmt) * appear;
+        const rad = (0.6 + s.z * 1.9) * (0.6 + 0.4 * twAmt);
+        const alpha = (0.22 + 0.66 * s.z * twAmt) * appear;
         ctx.beginPath();
         ctx.arc(sx, sy, rad, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(${C.star},${alpha.toFixed(3)})`;
@@ -244,20 +245,20 @@ export default function ConstellationHero() {
         const ey = lerp(pa.y, pb.y, easeOut(local));
         const ev = Math.min(a.ev, b.ev);
         const touchesYellow = a.special || b.special;
-        const baseA = 0.1 + 0.3 * ev;
+        const baseA = 0.2 + 0.42 * ev;
         const strain = touchesYellow ? lerp(0.55, 0.0, p3) : 0;
         ctx.beginPath();
         ctx.moveTo(pa.x, pa.y);
         ctx.lineTo(ex, ey);
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 1.5;
         if (strain > 0) {
-          ctx.strokeStyle = `rgba(238,196,104,${(baseA + 0.25 * strain).toFixed(3)})`;
-          ctx.shadowColor = "rgba(238,196,104,0.5)";
-          ctx.shadowBlur = 8 * strain;
+          ctx.strokeStyle = `rgba(238,196,104,${(baseA + 0.3 * strain).toFixed(3)})`;
+          ctx.shadowColor = "rgba(238,196,104,0.6)";
+          ctx.shadowBlur = 12 * strain;
         } else {
-          ctx.strokeStyle = `rgba(166,150,250,${baseA.toFixed(3)})`;
-          ctx.shadowColor = "rgba(150,150,255,0.35)";
-          ctx.shadowBlur = touchesYellow ? 4 : 2.5;
+          ctx.strokeStyle = `rgba(176,160,252,${baseA.toFixed(3)})`;
+          ctx.shadowColor = "rgba(160,160,255,0.5)";
+          ctx.shadowBlur = touchesYellow ? 7 : 5;
         }
         ctx.stroke();
         ctx.shadowBlur = 0;
@@ -281,21 +282,23 @@ export default function ConstellationHero() {
       const nodeAppear = easeOut(clamp01((p2 - 0.05) * 1.4));
       for (const n of NODES) {
         const pos = nodePos(n, p3, W, H);
-        let r = 3.4 + 3.0 * n.w;
+        let r = 4.6 + 4.0 * n.w;
         let col = n.col;
-        let glowR = r * 3.4;
-        let glowA = 0.28;
+        let glowR = r * 4.0;
+        let glowA = 0.34;
 
         if (n.special && n.colCal) {
           const e3 = easeInOut(p3);
           col = blend(n.col, n.colCal, e3);
-          r = lerp(r * 1.6, r * 1.0, e3);
-          glowR = lerp(r * 5.5, r * 3.2, e3);
-          glowA = lerp(0.55, 0.3, e3);
+          r = lerp(r * 1.7, r * 1.15, e3);
+          // Soft volumetric glow stays strong on the calibrated violet home.
+          glowR = lerp(r * 6.0, r * 4.6, e3);
+          glowA = lerp(0.6, 0.42, e3);
         }
 
         const g = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, glowR);
         g.addColorStop(0, withAlpha(col, glowA * nodeAppear));
+        g.addColorStop(n.special ? 0.45 : 0.6, withAlpha(col, glowA * 0.35 * nodeAppear));
         g.addColorStop(1, withAlpha(col, 0));
         ctx.beginPath();
         ctx.arc(pos.x, pos.y, glowR, 0, Math.PI * 2);
@@ -327,10 +330,10 @@ export default function ConstellationHero() {
       for (const s of stars) {
         const sx = s.x * W;
         const sy = s.y * H;
-        const rad = 0.5 + s.z * 1.4;
+        const rad = 0.6 + s.z * 1.9;
         ctx.beginPath();
         ctx.arc(sx, sy, rad, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${C.star},${(0.18 + 0.45 * s.z).toFixed(3)})`;
+        ctx.fillStyle = `rgba(${C.star},${(0.22 + 0.55 * s.z).toFixed(3)})`;
         ctx.fill();
       }
       for (let e = 0; e < EDGES.length; e++) {
@@ -342,17 +345,18 @@ export default function ConstellationHero() {
         ctx.beginPath();
         ctx.moveTo(pa.x, pa.y);
         ctx.lineTo(pb.x, pb.y);
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = `rgba(166,150,250,${(0.1 + 0.3 * ev).toFixed(3)})`;
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = `rgba(176,160,252,${(0.2 + 0.42 * ev).toFixed(3)})`;
         ctx.stroke();
       }
       for (const n of NODES) {
         const pos = nodePos(n, 1, W, H);
-        const r = 3.4 + 3.0 * n.w;
+        const r = (4.6 + 4.0 * n.w) * (n.special ? 1.15 : 1);
         const col = n.special && n.colCal ? n.colCal : n.col;
-        const glowR = r * 3.2;
+        const glowR = r * (n.special ? 4.6 : 4.0);
         const g = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, glowR);
-        g.addColorStop(0, withAlpha(col, 0.3));
+        g.addColorStop(0, withAlpha(col, n.special ? 0.42 : 0.34));
+        g.addColorStop(n.special ? 0.45 : 0.6, withAlpha(col, (n.special ? 0.42 : 0.34) * 0.35));
         g.addColorStop(1, withAlpha(col, 0));
         ctx.beginPath();
         ctx.arc(pos.x, pos.y, glowR, 0, Math.PI * 2);
@@ -448,15 +452,19 @@ export default function ConstellationHero() {
     <section
       ref={sectionRef}
       aria-label="Glasshat evaluation constellation: scored hat-criterion stars draw their own lines and resolve into a star map, then the over-confident Yellow node is pulled back from its amber over-scored position to the violet calibrated position."
-      className="relative isolate min-h-[88svh] w-screen overflow-hidden"
+      className="relative isolate min-h-[100svh] w-screen overflow-hidden"
     >
       {/* Decorative starfield + constellation (opaque to assistive tech). */}
       <div aria-hidden="true" className={styles.stage}>
         <canvas ref={canvasRef} className={styles.sky} />
       </div>
 
+      {/* Soft connective fades so the cinematic hero bleeds into its neighbours. */}
+      <div aria-hidden="true" className={styles.edgeTop} />
+      <div aria-hidden="true" className={styles.edgeBottom} />
+
       {/* Overlay content — H1 + CTAs paint immediately (LCP); never gated. */}
-      <div className="relative z-[3] mx-auto grid min-h-[88svh] max-w-[78rem] grid-rows-[auto_1fr_auto] gap-[clamp(1rem,3vh,2.25rem)] px-[clamp(1.25rem,4vw,2.75rem)] py-[clamp(1.25rem,4vw,2.75rem)]">
+      <div className="relative z-[3] mx-auto grid min-h-[100svh] max-w-[80rem] grid-rows-[auto_1fr_auto] gap-[clamp(1rem,3vh,2.25rem)] px-[clamp(1.25rem,4vw,3rem)] py-[clamp(1.5rem,4.5vw,3.25rem)]">
         {/* Eyebrow */}
         <div className="flex items-center gap-2 text-[0.78rem] uppercase tracking-[0.16em] text-[var(--color-accent-2)]">
           <span aria-hidden="true" className="h-px w-7 bg-gradient-to-r from-[var(--color-accent-2)] to-transparent" />
@@ -465,27 +473,29 @@ export default function ConstellationHero() {
 
         {/* Hero block — sits low-left so the constellation breathes. */}
         <div className="flex flex-col justify-end self-end pb-[2vh]">
-          <h1 className="font-display max-w-[18ch] text-[clamp(2.3rem,6vw,4.6rem)] font-bold leading-[1.04] tracking-[-0.02em]">
+          <h1 className="font-display max-w-[17ch] text-[clamp(2.8rem,7.5vw,6.5rem)] font-bold leading-[1.02] tracking-[-0.03em]">
             Glasshat doesn&apos;t just judge.{" "}
-            <em className="font-serif-italic text-gradient font-medium">It audits the judge.</em>
+            <em className="font-serif-italic text-gradient text-[1.04em] font-medium">
+              It audits the judge.
+            </em>
           </h1>
-          <p className="mt-5 max-w-[46ch] text-[clamp(1rem,1.7vw,1.18rem)] leading-[1.6] text-[var(--color-muted)]">
+          <p className="mt-6 max-w-[48ch] text-[clamp(1.05rem,1.9vw,1.32rem)] leading-[1.6] text-[var(--color-muted)]">
             Rubric-aware evaluation that mirrors the official rules, grounds every
             sub-score in retrieved evidence, then catches its own over-confidence
             and self-corrects &mdash; live. Not a chatbot.
           </p>
 
           {/* Primary CTAs */}
-          <div className="mt-7 flex flex-wrap items-center gap-3">
+          <div className="mt-8 flex flex-wrap items-center gap-3">
             <Link
               href="/participate"
-              className="hover-lift inline-flex items-center justify-center rounded-full bg-[var(--color-accent-strong)] px-6 py-3 text-[0.98rem] font-medium text-white shadow-[0_10px_30px_-12px_oklch(0.55_0.17_290/0.7)]"
+              className="hover-lift inline-flex items-center justify-center rounded-full bg-[var(--color-accent-strong)] px-7 py-3.5 text-[1.05rem] font-medium text-white shadow-[0_12px_36px_-12px_oklch(0.55_0.17_290/0.7)]"
             >
               Score a submission &rarr;
             </Link>
             <Link
               href="/judge"
-              className="hover-lift inline-flex items-center justify-center rounded-full border border-[var(--color-border)] px-6 py-3 text-[0.98rem] font-medium text-[var(--color-ink)] hover:border-[var(--color-accent)]"
+              className="hover-lift inline-flex items-center justify-center rounded-full border border-[var(--color-border)] px-7 py-3.5 text-[1.05rem] font-medium text-[var(--color-ink)] hover:border-[var(--color-accent)]"
             >
               Judge a cohort
             </Link>

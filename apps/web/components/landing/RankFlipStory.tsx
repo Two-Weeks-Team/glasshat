@@ -244,12 +244,16 @@ export default function RankFlipStory() {
     <section
       ref={regionRef}
       aria-label="The audit changes who wins: a cohort leaderboard re-ranks from raw consensus to evidence-calibrated scores. Illustrative."
-      className="relative overflow-hidden py-[clamp(3rem,9vh,6rem)]"
+      className="relative flex min-h-[100svh] w-full flex-col justify-center overflow-hidden py-[clamp(4rem,12vh,8rem)]"
     >
       {/* decorative lenticular ridges sweeping the section */}
       <div className={styles.ridges} aria-hidden="true" />
+      {/* connective gradient atmosphere: fade to --color-bg at top & bottom so the
+          beat flows into its neighbours */}
+      <div className={styles.edgeFadeTop} aria-hidden="true" />
+      <div className={styles.edgeFadeBottom} aria-hidden="true" />
 
-      <div className="relative mx-auto w-full max-w-[1180px] px-[clamp(1rem,4vw,2.5rem)]">
+      <div className="relative mx-auto w-full max-w-[1320px] px-[clamp(1rem,4vw,3rem)]">
         <span className="inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)]/60 px-3 py-1.5 text-[clamp(0.68rem,1.4vw,0.78rem)] uppercase tracking-[0.22em] text-[var(--color-muted)] backdrop-blur-sm">
           <span
             className="h-2 w-2 rounded-full bg-[var(--color-warn)] animate-pulse-ring"
@@ -259,12 +263,12 @@ export default function RankFlipStory() {
         </span>
 
         {/* Heading paints immediately (no entrance animation gating text). */}
-        <h2 className="font-display mt-4 max-w-[18ch] text-[clamp(2rem,6vw,4rem)] font-semibold leading-[1.04] tracking-tight">
+        <h2 className="font-display mt-5 max-w-[20ch] text-[clamp(2.4rem,6vw,5rem)] font-bold leading-[1.02] tracking-[-0.03em]">
           Same cohort.{" "}
-          <em className="font-serif-italic font-medium text-gradient">Two truths.</em>{" "}
+          <em className="font-serif-italic text-[1.08em] font-medium text-gradient">Two truths.</em>{" "}
           The audit decides who wins.
         </h2>
-        <p className="mt-3 max-w-[54ch] text-[clamp(0.98rem,2.1vw,1.18rem)] leading-relaxed text-[var(--color-muted)]">
+        <p className="mt-5 max-w-[56ch] text-[clamp(1.05rem,2.1vw,1.32rem)] leading-relaxed text-[var(--color-muted)]">
           A raw AI panel hands the loudest, least-evidenced project the crown. Watch the board{" "}
           <b className="font-semibold text-[var(--color-ink)]">tilt</b> &mdash; and once
           calibration lands on retrieved evidence, a{" "}
@@ -298,10 +302,10 @@ export default function RankFlipStory() {
 
           <div
             ref={boardRef}
-            className={`${styles.board} p-[clamp(0.75rem,2.2vw,1.25rem)]`}
+            className={`${styles.board} p-[clamp(1rem,2.6vw,1.75rem)]`}
           >
-            <div className="mb-2.5 flex items-baseline justify-between gap-4 border-b border-[var(--color-border)] px-1.5 pb-4 pt-1">
-              <div className="text-[clamp(1rem,2.4vw,1.25rem)] font-semibold tracking-tight">
+            <div className="mb-3 flex items-baseline justify-between gap-4 border-b border-[var(--color-border)] px-1.5 pb-5 pt-1.5">
+              <div className="text-[clamp(1.15rem,2.4vw,1.5rem)] font-bold tracking-tight">
                 Cohort ranking &middot;{" "}
                 <span className={styles.ttlState}>
                   {audited ? "with Glasshat audit" : "raw consensus"}
@@ -314,7 +318,7 @@ export default function RankFlipStory() {
               </div>
             </div>
 
-            <ol className="flex list-none flex-col gap-2">
+            <ol className="flex list-none flex-col gap-2.5">
               {COHORT.map((p, i) => {
                 const rank = audited ? p.audRank : p.rawRank;
                 const score = audited ? p.audScore : p.rawScore;
@@ -326,15 +330,15 @@ export default function RankFlipStory() {
                       rowRefs.current[i] = el;
                     }}
                     data-label={p.name}
-                    className={`grid grid-cols-[2.4rem_1fr_auto] items-center gap-x-[clamp(0.6rem,1.6vw,1rem)] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-2)]/70 px-[clamp(0.6rem,1.6vw,1rem)] py-2.5 ${styles.row} ${isLeader ? styles.leader : ""}`}
+                    className={`grid grid-cols-[3rem_1fr_auto] items-center gap-x-[clamp(0.75rem,1.8vw,1.4rem)] rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-2)]/70 px-[clamp(0.85rem,2vw,1.5rem)] py-[clamp(0.7rem,1.6vw,1.1rem)] ${styles.row} ${isLeader ? styles.leader : ""}`}
                   >
                     <span
-                      className={`text-center text-[clamp(1.3rem,3.2vw,1.7rem)] font-medium ${styles.rank}`}
+                      className={`text-center text-[clamp(1.7rem,3.8vw,2.4rem)] font-medium ${styles.rank}`}
                     >
                       {rank}
                     </span>
                     <div className="min-w-0">
-                      <div className="truncate text-[clamp(0.92rem,2.1vw,1.04rem)] font-semibold tracking-tight">
+                      <div className="truncate text-[clamp(1rem,2.1vw,1.2rem)] font-semibold tracking-tight">
                         {p.name}
                       </div>
                       <div className="mt-1.5 flex flex-wrap gap-1.5">
@@ -351,9 +355,9 @@ export default function RankFlipStory() {
                         ))}
                       </div>
                     </div>
-                    <div className="min-w-[5.6rem] justify-self-end text-right">
+                    <div className="min-w-[6.4rem] justify-self-end text-right">
                       <span
-                        className={`text-[clamp(1.05rem,2.8vw,1.4rem)] font-bold ${styles.scoreVal}`}
+                        className={`text-[clamp(1.5rem,3.4vw,2rem)] font-bold ${styles.scoreVal}`}
                       >
                         {score}
                       </span>

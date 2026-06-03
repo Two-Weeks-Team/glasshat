@@ -38,10 +38,41 @@
   }
 }
 
-/* ── 3D stage for the board ── */
+/* ── connective gradient atmosphere: fade to --color-bg at the section edges so
+   this full-bleed beat blends seamlessly into its neighbours. Decorative only. ── */
+.edgeFadeTop,
+.edgeFadeBottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: clamp(5rem, 12vh, 9rem);
+  pointer-events: none;
+  z-index: 1;
+}
+.edgeFadeTop {
+  top: 0;
+  background: linear-gradient(
+    to bottom,
+    var(--color-bg) 0%,
+    color-mix(in oklch, var(--color-bg) 55%, transparent) 45%,
+    transparent 100%
+  );
+}
+.edgeFadeBottom {
+  bottom: 0;
+  background: linear-gradient(
+    to top,
+    var(--color-bg) 0%,
+    color-mix(in oklch, var(--color-bg) 55%, transparent) 45%,
+    transparent 100%
+  );
+}
+
+/* ── 3D stage for the board: deeper perspective → more dramatic lenticular flip ── */
 .boardRegion {
   position: relative;
-  perspective: 1600px;
+  z-index: 2;
+  perspective: 1300px;
 }
 
 /* ── the lenticular board surface ── */
@@ -55,8 +86,9 @@
     color-mix(in oklch, var(--color-bg) 92%, transparent)
   );
   box-shadow:
-    0 40px 90px -40px oklch(0.05 0.05 290 / 0.9),
-    inset 0 1px 0 oklch(0.4 0.03 290 / 0.25);
+    0 60px 130px -46px oklch(0.04 0.05 290 / 0.95),
+    0 18px 44px -28px oklch(0.05 0.06 290 / 0.7),
+    inset 0 1px 0 oklch(0.45 0.04 290 / 0.3);
   transform-style: preserve-3d;
   /* JS drives rotateX/rotateY each frame; this transition only smooths the
      idle/initial state. */
@@ -113,24 +145,24 @@
 .leader {
   background: linear-gradient(
     90deg,
-    oklch(from var(--accent) l c h / 0.16),
-    color-mix(in oklch, var(--color-surface-2) 70%, transparent) 42%
+    oklch(from var(--accent) l c h / 0.24),
+    color-mix(in oklch, var(--color-surface-2) 70%, transparent) 46%
   );
-  border-color: oklch(from var(--accent) l c h / 0.55);
+  border-color: oklch(from var(--accent) l c h / 0.7);
   box-shadow:
-    0 0 0 1px oklch(from var(--accent) l c h / 0.3),
-    0 14px 40px -22px oklch(from var(--accent) l c h / 0.7);
+    0 0 0 1px oklch(from var(--accent) l c h / 0.4),
+    0 22px 60px -24px oklch(from var(--accent) l c h / 0.85);
 }
 .leader::before {
   content: "";
   position: absolute;
   left: 0;
-  top: 10%;
-  bottom: 10%;
-  width: 3px;
-  border-radius: 3px;
+  top: 8%;
+  bottom: 8%;
+  width: 5px;
+  border-radius: 4px;
   background: var(--accent);
-  box-shadow: 0 0 16px var(--accent);
+  box-shadow: 0 0 22px var(--accent);
 }
 
 .rank {
@@ -143,7 +175,7 @@
 }
 .leader .rank {
   color: var(--accent);
-  transform: scale(1.12);
+  transform: scale(1.2);
 }
 
 .scoreVal {

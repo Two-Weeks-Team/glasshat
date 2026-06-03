@@ -304,3 +304,22 @@ a {
     fill: var(--color-accent);
   }
 }
+
+/* ── Cinematic scene-by-scene scroll (landing only) ──
+   `.cine-snap` is toggled on <html> by components/landing/CinematicScroll while
+   the landing is mounted (and never for prefers-reduced-motion). Proximity snap
+   gently settles each full-height beat without ever trapping the scroll. */
+.cine-snap {
+  scroll-snap-type: y proximity;
+  scroll-behavior: smooth;
+}
+.cine-snap [data-cine-scene] {
+  scroll-snap-align: start;
+  scroll-snap-stop: normal;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cine-snap {
+    scroll-snap-type: none;
+    scroll-behavior: auto;
+  }
+}

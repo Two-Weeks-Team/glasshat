@@ -13,26 +13,48 @@
 
 .stage {
   position: relative;
-  width: 100%;
+  width: 100vw;
+  /* full-bleed: escape any centered max-width parent */
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
   min-height: 100svh;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   isolation: isolate;
-  /* near-black chiaroscuro stage, faint top haze */
+  /* near-black chiaroscuro stage, deeper haze + more atmospheric depth */
   background:
-    radial-gradient(120% 80% at 50% -10%, oklch(0.2 0.03 265 / 0.55), transparent 60%),
-    radial-gradient(140% 120% at 50% 120%, var(--color-bg) 0%, oklch(0.1 0.018 265) 70%);
+    radial-gradient(130% 90% at 50% -12%, oklch(0.24 0.035 265 / 0.62), transparent 62%),
+    radial-gradient(90% 70% at 50% 44%, oklch(0.16 0.026 265 / 0.45), transparent 70%),
+    radial-gradient(150% 130% at 50% 122%, var(--color-bg) 0%, oklch(0.08 0.016 265) 72%);
+}
+
+/* connective gradient atmosphere at the TOP edge — the finale emerges from the
+   section above by fading down from --color-bg. Decorative, transform/opacity-safe. */
+.topfade {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: clamp(120px, 18vh, 240px);
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    var(--color-bg) 0%,
+    color-mix(in oklch, var(--color-bg) 70%, transparent) 38%,
+    transparent 100%
+  );
 }
 
 /* ── volumetric light cone descending from above-center ── */
 .cone {
   position: absolute;
-  top: -14%;
+  top: -16%;
   left: 50%;
-  width: min(78vw, 760px);
-  height: 122%;
+  width: min(94vw, 980px);
+  height: 128%;
   transform: translateX(-50%) rotate(-26deg);
   transform-origin: 50% 0;
   pointer-events: none;
@@ -40,11 +62,11 @@
   background: conic-gradient(
     from 180deg at 50% 0%,
     transparent 0deg,
-    transparent 158deg,
-    oklch(0.95 0.04 90 / 0.1) 168deg,
-    oklch(0.97 0.03 90 / 0.2) 180deg,
-    oklch(0.95 0.04 90 / 0.1) 192deg,
-    transparent 202deg,
+    transparent 153deg,
+    oklch(0.95 0.04 90 / 0.12) 164deg,
+    oklch(0.98 0.035 90 / 0.28) 180deg,
+    oklch(0.95 0.04 90 / 0.12) 196deg,
+    transparent 207deg,
     transparent 360deg
   );
   -webkit-mask-image: linear-gradient(
@@ -68,7 +90,7 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  width: min(70vw, 640px);
+  width: min(84vw, 820px);
   aspect-ratio: 1.5 / 1;
   transform: translate(-50%, -46%);
   z-index: 1;
@@ -76,9 +98,9 @@
   border-radius: 50%;
   background: radial-gradient(
     ellipse at center,
-    oklch(0.96 0.03 90 / 0.16) 0%,
-    oklch(0.9 0.04 90 / 0.07) 38%,
-    transparent 70%
+    oklch(0.97 0.03 90 / 0.22) 0%,
+    oklch(0.93 0.04 90 / 0.1) 40%,
+    transparent 72%
   );
   opacity: 0;
 }
@@ -86,19 +108,19 @@
 /* soft violet floor reflection beneath the panel */
 .floor {
   position: absolute;
-  bottom: 8%;
+  bottom: 7%;
   left: 50%;
-  width: min(62vw, 560px);
-  height: 26%;
+  width: min(76vw, 720px);
+  height: 30%;
   transform: translateX(-50%) scaleY(-1);
   z-index: 1;
   pointer-events: none;
   background: radial-gradient(
     ellipse at center top,
-    color-mix(in oklch, var(--color-accent) 14%, transparent),
-    transparent 65%
+    color-mix(in oklch, var(--color-accent) 18%, transparent),
+    transparent 66%
   );
-  filter: blur(14px);
+  filter: blur(16px);
   opacity: 0;
 }
 
@@ -106,11 +128,11 @@
 .wrap {
   position: relative;
   z-index: 3;
-  width: min(94vw, 1100px);
-  padding: clamp(2rem, 5vh, 4rem) 1rem;
+  width: min(94vw, 1240px);
+  padding: clamp(2.5rem, 6vh, 5rem) clamp(1rem, 4vw, 2rem);
   display: grid;
   grid-template-columns: 1.05fr 0.95fr;
-  gap: clamp(1.5rem, 4vw, 3.5rem);
+  gap: clamp(1.5rem, 4.5vw, 4rem);
   align-items: center;
 }
 @media (max-width: 880px) {
@@ -121,7 +143,7 @@
 }
 
 .lede {
-  max-width: 46ch;
+  max-width: 50ch;
 }
 .eyebrow {
   display: inline-flex;
@@ -145,17 +167,19 @@
   box-shadow: 0 0 10px var(--color-accent);
 }
 .headline {
-  margin: 1.1rem 0 0;
+  margin: 1.2rem 0 0;
   font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
-  font-weight: 600;
-  font-size: clamp(2.1rem, 5.4vw, 3.6rem);
-  line-height: 1.04;
-  letter-spacing: -0.02em;
+  font-weight: 700;
+  font-size: clamp(2.4rem, 6vw, 5rem);
+  line-height: 1.0;
+  letter-spacing: -0.032em;
 }
 .headline em {
   font-family: var(--font-serif), Georgia, "Times New Roman", serif;
   font-style: italic;
   font-weight: 500;
+  font-size: 1.06em;
+  letter-spacing: -0.01em;
   color: var(--color-accent);
 }
 .sub {
@@ -167,18 +191,18 @@
 }
 
 .links {
-  margin-top: 1.7rem;
+  margin-top: 1.9rem;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.65rem;
-  font-size: 0.92rem;
+  gap: 0.72rem;
+  font-size: 1rem;
 }
 .btn {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.62rem 1rem;
-  border-radius: 10px;
+  padding: 0.74rem 1.2rem;
+  border-radius: 11px;
   border: 1px solid color-mix(in oklch, var(--color-border) 70%, transparent);
   color: var(--color-ink);
   background: color-mix(in oklch, var(--color-surface) 60%, transparent);
@@ -223,18 +247,19 @@
 .panel {
   position: relative;
   justify-self: center;
-  width: min(86vw, 400px);
-  padding: clamp(1.4rem, 3vw, 2rem);
-  border-radius: 18px;
+  width: min(92vw, 460px);
+  padding: clamp(1.7rem, 3.4vw, 2.5rem);
+  border-radius: 22px;
   background: linear-gradient(
     180deg,
-    color-mix(in oklch, var(--color-surface) 92%, transparent),
+    color-mix(in oklch, var(--color-surface) 94%, transparent),
     color-mix(in oklch, var(--color-bg) 92%, transparent)
   );
-  border: 1px solid color-mix(in oklch, var(--color-accent) 18%, transparent);
+  border: 1px solid color-mix(in oklch, var(--color-accent) 24%, transparent);
   box-shadow:
-    0 30px 80px -30px oklch(0.05 0.02 265 / 0.9),
-    inset 0 1px 0 oklch(0.97 0.01 265 / 0.05);
+    0 40px 110px -34px oklch(0.05 0.02 265 / 0.95),
+    0 0 60px -20px color-mix(in oklch, var(--color-accent) 30%, transparent),
+    inset 0 1px 0 oklch(0.97 0.01 265 / 0.06);
   /* begins in near-black, lifted into light by liftIn */
   opacity: 0;
   transform: translateY(14px) scale(0.985);
@@ -306,8 +331,8 @@
   border-radius: 0 5px 5px 0;
 }
 .capped .bracket {
-  opacity: 0.9;
-  box-shadow: 0 0 16px color-mix(in oklch, var(--color-accent) 60%, transparent);
+  opacity: 0.92;
+  box-shadow: 0 0 22px color-mix(in oklch, var(--color-accent) 68%, transparent);
 }
 .caplabel {
   position: absolute;
@@ -329,19 +354,21 @@
 .score {
   font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
   font-weight: 700;
-  font-size: clamp(4rem, 13vw, 6.2rem);
+  font-size: clamp(4.8rem, 15vw, 7.4rem);
   line-height: 1;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.045em;
   font-variant-numeric: tabular-nums;
   color: var(--color-warn);
-  text-shadow: 0 0 36px color-mix(in oklch, var(--color-warn) 45%, transparent);
+  text-shadow: 0 0 44px color-mix(in oklch, var(--color-warn) 50%, transparent);
   transition:
     color 1s ease,
     text-shadow 1s ease;
 }
 .calibrated .score {
   color: var(--color-accent);
-  text-shadow: 0 0 40px color-mix(in oklch, var(--color-accent) 55%, transparent);
+  text-shadow:
+    0 0 52px color-mix(in oklch, var(--color-accent) 62%, transparent),
+    0 0 18px color-mix(in oklch, var(--color-accent) 40%, transparent);
 }
 .scoreout {
   font-size: 0.42em;
