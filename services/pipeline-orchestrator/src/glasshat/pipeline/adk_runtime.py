@@ -13,6 +13,7 @@ by ``@integration`` tests / live deployment.
 
 from __future__ import annotations
 
+import asyncio
 import statistics
 from typing import Any
 
@@ -20,6 +21,33 @@ from glasshat.agents.audit import ConsultResult, DatasetExample
 from glasshat.agents.types import EvaluationInput, RunRecord
 from glasshat.shared.config import Settings, get_settings
 from glasshat.shared.enums import Hat
+
+# Pin the MCP server (never `@latest`) so a runtime `npx` fetch can't pull an
+# unreviewed release into the deployed image — supply-chain hardening.
+_PHOENIX_MCP_PACKAGE = "@arizeai/phoenix-mcp@4.0.13"
+# A hung `npx`/stdio session must not hang the whole evaluation; cap every MCP
+# round-trip. FallbackConsultant catches exceptions (incl. TimeoutError).
+_MCP_CALL_TIMEOUT = 30.0
+
+
+def _mcp_server_params(base_url: str, api_key: str) -> Any:  # pragma: no cover - needs mcp SDK
+    """Stdio params for ``npx @arizeai/phoenix-mcp`` — pinned, key via env not argv.
+
+    The API key is passed through the subprocess environment (``PHOENIX_API_KEY``,
+    which phoenix-mcp reads), never as ``--apiKey <secret>`` in argv: argv is
+    world-readable via ``/proc/<pid>/cmdline``, so an argv secret leaks to any
+    local process. ``os.environ`` is inherited so ``npx`` keeps its ``PATH``.
+    """
+    import os
+
+    from mcp import StdioServerParameters
+
+    env = {**os.environ, "PHOENIX_API_KEY": api_key} if api_key else None
+    return StdioServerParameters(
+        command="npx",
+        args=["-y", _PHOENIX_MCP_PACKAGE, "--baseUrl", base_url],
+        env=env,
+    )
 
 
 def instrument_adk(project_name: str = "glasshat") -> None:  # pragma: no cover - requires SDKs
@@ -34,15 +62,11 @@ def instrument_adk(project_name: str = "glasshat") -> None:  # pragma: no cover 
 def build_phoenix_mcp_toolset(base_url: str, api_key: str = "") -> Any:  # pragma: no cover
     """Build the ADK Phoenix MCP toolset over stdio (spike-C validated pattern)."""
     from google.adk.tools.mcp_tool import MCPToolset, StdioConnectionParams
-    from mcp import StdioServerParameters
 
-    args = ["-y", "@arizeai/phoenix-mcp@latest", "--baseUrl", base_url]
-    if api_key:
-        args += ["--apiKey", api_key]
     return MCPToolset(
         connection_params=StdioConnectionParams(
-            server_params=StdioServerParameters(command="npx", args=args),
-            timeout=30.0,
+            server_params=_mcp_server_params(base_url, api_key),
+            timeout=_MCP_CALL_TIMEOUT,
         )
     )
 
@@ -72,22 +96,26 @@ class PhoenixMcpConsultant:
     async def consult(  # pragma: no cover - requires phoenix-mcp over stdio
         self, hat: Hat, criterion_id: str, bucket: str
     ) -> ConsultResult | None:
-        from mcp import ClientSession, StdioServerParameters
+        from mcp import ClientSession
         from mcp.client.stdio import stdio_client
 
-        args = ["-y", "@arizeai/phoenix-mcp@latest", "--baseUrl", self._base_url]
-        if self._api_key:
-            args += ["--apiKey", self._api_key]
-        params = StdioServerParameters(command="npx", args=args)
-        async with stdio_client(params) as (read, write), ClientSession(read, write) as session:
-            await session.initialize()
-            result = await session.call_tool(
-                "get-dataset-examples",
-                {
-                    "dataset": self._dataset,
-                    "filter": f"hat={hat.value} AND criterion={criterion_id} AND bucket={bucket}",
-                },
-            )
+        params = _mcp_server_params(self._base_url, self._api_key)
+
+        async def _call() -> Any:
+            async with stdio_client(params) as (read, write), ClientSession(read, write) as session:
+                await session.initialize()
+                return await session.call_tool(
+                    "get-dataset-examples",
+                    {
+                        "dataset": self._dataset,
+                        "filter": (
+                            f"hat={hat.value} AND criterion={criterion_id} AND bucket={bucket}"
+                        ),
+                    },
+                )
+
+        # Bound the round-trip: a hung npx/stdio session must not hang the run.
+        result = await asyncio.wait_for(_call(), timeout=_MCP_CALL_TIMEOUT)
         deltas = _parse_deltas(result)
         if len(deltas) < 3:
             return None
@@ -140,13 +168,10 @@ class PhoenixMcpDatasetWriter:
     ) -> int:
         if not examples:
             return 0
-        from mcp import ClientSession, StdioServerParameters
+        from mcp import ClientSession
         from mcp.client.stdio import stdio_client
 
-        args = ["-y", "@arizeai/phoenix-mcp@latest", "--baseUrl", self._base_url]
-        if self._api_key:
-            args += ["--apiKey", self._api_key]
-        params = StdioServerParameters(command="npx", args=args)
+        params = _mcp_server_params(self._base_url, self._api_key)
         rows = [
             {
                 "input": {
@@ -159,12 +184,17 @@ class PhoenixMcpDatasetWriter:
             }
             for ex in examples
         ]
-        async with stdio_client(params) as (read, write), ClientSession(read, write) as session:
-            await session.initialize()
-            await session.call_tool(
-                "add-dataset-examples",
-                {"dataset": self._dataset, "examples": rows},
-            )
+
+        async def _call() -> None:
+            async with stdio_client(params) as (read, write), ClientSession(read, write) as session:
+                await session.initialize()
+                await session.call_tool(
+                    "add-dataset-examples",
+                    {"dataset": self._dataset, "examples": rows},
+                )
+
+        # Bound the round-trip: a hung npx/stdio session must not hang the run.
+        await asyncio.wait_for(_call(), timeout=_MCP_CALL_TIMEOUT)
         return len(rows)
 
 

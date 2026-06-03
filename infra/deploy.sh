@@ -28,6 +28,13 @@ ARIZE_SPACE_ID="${ARIZE_SPACE_ID:-}"
 #   MIN_INSTANCES=0 bash infra/deploy.sh --confirm
 # Cost: one always-on instance per service while set to 1.
 MIN_INSTANCES="${MIN_INSTANCES:-1}"
+# The API rate limiter (apps/api _SlidingWindowRateLimiter) is in-memory PER
+# INSTANCE, so the effective global limit is RATE_LIMIT_PER_MINUTE × running
+# instances. Bound horizontal scale so the limiter stays meaningful: set
+# MAX_INSTANCES=1 for a hard single-bucket limit (at the cost of scale), or raise
+# it knowing the per-IP limit multiplies by the instance count. Default 4 is
+# ample for demo/judging load while keeping the limiter and cost bounded.
+MAX_INSTANCES="${MAX_INSTANCES:-4}"
 # The docstore default (memory) is process-local: /api/runs lookups are not
 # durable across cold restarts. For durable run history set the backend to
 # firestore AND grant the Cloud Run runtime SA roles/datastore.user with a
@@ -88,7 +95,9 @@ GEMINI_ENV="GLASSHAT_GEMINI_PRO=gemini-3.1-pro-preview,GLASSHAT_GEMINI_FLASH=gem
 if [[ "$MODE" == "real" && "$NO_PHOENIX" == "yes" ]]; then
   echo "==> Mode: REAL Vertex Gemini, tracing OFF (NoOp — phoenix extra omitted)"
   UV_EXTRAS="--extra vertex"
-  API_ENV="LLM_BACKEND=vertex,MONITOR_BACKEND=phoenix-cloud,DOCSTORE_BACKEND=${DOCSTORE_BACKEND},GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_REGION=${REGION},GOOGLE_GENAI_USE_VERTEXAI=true,${GEMINI_ENV}"
+  # CORS locked to the web origin even on the tracing-off path (otherwise the
+  # config default would fall back to `*`).
+  API_ENV="LLM_BACKEND=vertex,MONITOR_BACKEND=phoenix-cloud,DOCSTORE_BACKEND=${DOCSTORE_BACKEND},GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_REGION=${REGION},GOOGLE_GENAI_USE_VERTEXAI=true,${GEMINI_ENV},CORS_ALLOW_ORIGINS=${WEB_ORIGIN}"
   API_SECRETS=()
 elif [[ "$MODE" == "real" ]]; then
   echo "==> Mode: REAL (Vertex Gemini + Arize AX tracing)"
@@ -124,7 +133,8 @@ gcloud builds submit --project="$PROJECT" \
 
 echo "==> Deploying API to Cloud Run (min-instances=${MIN_INSTANCES})..."
 gcloud run deploy glasshat-api --project="$PROJECT" --region="$REGION" \
-  --image="$API_IMAGE" --min-instances="$MIN_INSTANCES" --allow-unauthenticated \
+  --image="$API_IMAGE" --min-instances="$MIN_INSTANCES" --max-instances="$MAX_INSTANCES" \
+  --allow-unauthenticated \
   --set-env-vars="$API_ENV" ${API_SECRETS[@]+"${API_SECRETS[@]}"}
 
 API_URL=$(gcloud run services describe glasshat-api \
@@ -139,7 +149,8 @@ gcloud builds submit --project="$PROJECT" \
 
 echo "==> Deploying web to Cloud Run..."
 gcloud run deploy glasshat-web --project="$PROJECT" --region="$REGION" \
-  --image="$WEB_IMAGE" --min-instances="$MIN_INSTANCES" --allow-unauthenticated \
+  --image="$WEB_IMAGE" --min-instances="$MIN_INSTANCES" --max-instances="$MAX_INSTANCES" \
+  --allow-unauthenticated \
   --set-env-vars="NEXT_PUBLIC_API_BASE=${API_URL}"
 
 WEB_URL=$(gcloud run services describe glasshat-web \

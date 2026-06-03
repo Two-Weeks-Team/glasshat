@@ -30,5 +30,9 @@ ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONUNBUFFERED=1
 USER app
 EXPOSE 8080
-# Cloud Run injects $PORT (defaults to 8080 locally).
-CMD ["sh", "-c", "uvicorn glasshat.api:create_app --factory --host 0.0.0.0 --port ${PORT:-8080}"]
+# Cloud Run injects $PORT (defaults to 8080 locally). `--proxy-headers` +
+# `--forwarded-allow-ips '*'` make uvicorn honour the X-Forwarded-For that the
+# Cloud Run front-end sets, so the per-IP rate limiter keys on the real client IP
+# instead of the single load-balancer IP (which would collapse every caller into
+# one shared bucket → cost-DoS). The only hop in front of us is Google's LB.
+CMD ["sh", "-c", "uvicorn glasshat.api:create_app --factory --host 0.0.0.0 --port ${PORT:-8080} --proxy-headers --forwarded-allow-ips '*'"]

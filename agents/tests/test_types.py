@@ -45,6 +45,13 @@ def test_evaluation_input_rejects_non_github_repo_url() -> None:
         "http://github.com/x/y",  # not https
         "https://evil.example.com/x/y",
         "ftp://github.com/x/y",
+        # The Pydantic boundary uses the SAME canonical parser as the SSRF gate
+        # (M3), so these — which a loose `startswith("https://github.com/")`
+        # check would have waved through — are now rejected at input:
+        "https://github.com/onlyowner",  # no repo segment
+        "https://github.com/x/y/extra/path",  # extra path segments
+        "https://github.com/x/y?a=b",  # trailing query
+        "https://github.com/x/y#frag",  # trailing fragment
     ):
         with pytest.raises(ValueError):
             EvaluationInput(rubric_source={"preset_id": "rapid-agent"}, repo_url=bad)

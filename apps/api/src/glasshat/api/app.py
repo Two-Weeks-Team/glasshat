@@ -121,7 +121,7 @@ def create_app(deps: Deps | None = None, settings: Settings | None = None) -> Fa
             )
         return out
 
-    @app.post("/api/plan")
+    @app.post("/api/plan", dependencies=[Depends(_rate_limit)])
     async def plan_preview(inp: EvaluationInput) -> PlanObject:
         rubric = await synthesize(inp, _deps().llm)
         return plan(rubric, inp)
@@ -165,7 +165,7 @@ def create_app(deps: Deps | None = None, settings: Settings | None = None) -> Fa
             raise HTTPException(status_code=404, detail="run not found")
         return dict(record)
 
-    @app.post("/api/runs/{run_id}/override")
+    @app.post("/api/runs/{run_id}/override", dependencies=[Depends(_rate_limit)])
     def override(run_id: str, body: OverrideRequest) -> dict[str, Any]:
         record = _deps().docstore.get("runs", run_id)
         if record is None:

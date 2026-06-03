@@ -157,6 +157,32 @@ def test_rate_limit_disabled_when_zero(tmp_path: Path) -> None:
         assert c.post("/api/evaluate", json=body).status_code == 200
 
 
+def test_plan_endpoint_is_rate_limited(tmp_path: Path) -> None:
+    """S2: the unguarded Vertex-backed /api/plan must share the rate limiter."""
+    from glasshat.shared.config import Settings
+
+    settings = Settings(_env_file=None, rate_limit_per_minute=1)  # type: ignore[call-arg]
+    c = TestClient(create_app(deps=_mock_deps(tmp_path), settings=settings))
+    body = {"rubric_source": {"preset_id": "rapid-agent"}, "deck_text": "x"}
+    assert c.post("/api/plan", json=body).status_code == 200
+    assert c.post("/api/plan", json=body).status_code == 429
+
+
+def test_override_endpoint_is_rate_limited(tmp_path: Path) -> None:
+    """M1: score override (run_id-only auth) must not be unbounded."""
+    from glasshat.shared.config import Settings
+
+    settings = Settings(_env_file=None, rate_limit_per_minute=2)  # type: ignore[call-arg]
+    c = TestClient(create_app(deps=_mock_deps(tmp_path), settings=settings))
+    run_id = c.post(  # budget 1/2 — creates a run to override
+        "/api/evaluate",
+        json={"rubric_source": {"preset_id": "rapid-agent"}, "deck_text": "x", "mode": "judge"},
+    ).json()["run_id"]
+    ov = {"criterion_id": "tech-implementation", "score": 4.0, "reason": "r"}
+    assert c.post(f"/api/runs/{run_id}/override", json=ov).status_code == 200  # 2/2
+    assert c.post(f"/api/runs/{run_id}/override", json=ov).status_code == 429  # blocked
+
+
 def test_cors_allowlist_reflects_configured_origin(tmp_path: Path) -> None:
     from glasshat.shared.config import Settings
 

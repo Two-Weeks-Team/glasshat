@@ -14,14 +14,14 @@ Source: 5 parallel read-only expert agents (honesty/Skeptic, security, backend, 
 
 ## 🟠 HIGH — security
 
-- [ ] **S1** — `infra/Dockerfile.api:34`: add `--proxy-headers --forwarded-allow-ips 0.0.0.0/0` to the uvicorn CMD so the rate limiter keys on the real client IP (X-Forwarded-For), not the Cloud Run LB IP. Without it per-IP rate limiting is a single shared bucket → cost-DoS unblocked.
-- [ ] **S2** — `apps/api/src/glasshat/api/app.py:124`: add `dependencies=[Depends(_rate_limit)]` to `@app.post("/api/plan")` (unguarded Vertex pro-tier LLM call).
-- [ ] **S3** — `services/pipeline-orchestrator/src/glasshat/pipeline/adk_runtime.py:39,78,146`: pin `@arizeai/phoenix-mcp` to a fixed version (not `@latest`) and/or pre-install in the Docker builder; remove the runtime-`npx`-downloads-latest supply-chain risk.
-- [ ] **S4** — `adk_runtime.py:41,80,148`: pass the Phoenix API key via `StdioServerParameters(env={"PHOENIX_API_KEY": api_key, ...})`, not `--apiKey <value>` in argv (avoids `/proc/<pid>/cmdline` secret leak).
+- [x] **S1** — `infra/Dockerfile.api:34`: add `--proxy-headers --forwarded-allow-ips 0.0.0.0/0` to the uvicorn CMD so the rate limiter keys on the real client IP (X-Forwarded-For), not the Cloud Run LB IP. Without it per-IP rate limiting is a single shared bucket → cost-DoS unblocked.
+- [x] **S2** — `apps/api/src/glasshat/api/app.py:124`: add `dependencies=[Depends(_rate_limit)]` to `@app.post("/api/plan")` (unguarded Vertex pro-tier LLM call).
+- [x] **S3** — `services/pipeline-orchestrator/src/glasshat/pipeline/adk_runtime.py:39,78,146`: pin `@arizeai/phoenix-mcp` to a fixed version (not `@latest`) and/or pre-install in the Docker builder; remove the runtime-`npx`-downloads-latest supply-chain risk.
+- [x] **S4** — `adk_runtime.py:41,80,148`: pass the Phoenix API key via `StdioServerParameters(env={"PHOENIX_API_KEY": api_key, ...})`, not `--apiKey <value>` in argv (avoids `/proc/<pid>/cmdline` secret leak).
 
 ## 🟠 HIGH — backend reliability
 
-- [ ] **R1** — `adk_runtime.py:82,162`: wrap the raw `stdio_client(...)` consult/write blocks in `asyncio.wait_for(..., timeout=30.0)` — a hung `npx` currently hangs the whole evaluation (FallbackConsultant catches exceptions, not hangs).
+- [x] **R1** — `adk_runtime.py:82,162`: wrap the raw `stdio_client(...)` consult/write blocks in `asyncio.wait_for(..., timeout=30.0)` — a hung `npx` currently hangs the whole evaluation (FallbackConsultant catches exceptions, not hangs).
 
 ## 🟠 HIGH — frontend / a11y (this is why live a11y is 95-97, not 100)
 
@@ -38,15 +38,15 @@ Source: 5 parallel read-only expert agents (honesty/Skeptic, security, backend, 
 
 ## 🟡 MEDIUM
 
-- [ ] **M1** — `app.py:168` `/api/runs/{id}/override`: add `Depends(_rate_limit)` (and ideally an origin/secret check) — currently unauthenticated score tampering with only run_id.
+- [x] **M1** — `app.py:168` `/api/runs/{id}/override`: add `Depends(_rate_limit)` (and ideally an origin/secret check) — currently unauthenticated score tampering with only run_id.
 - [x] **M2** — `engine.py:290`: gate the per-correction `emit(Stage.ANCHOR_RETRIEVAL, ...)` behind `isinstance(deps.consultant, WeightAware)` so the demo animation doesn't claim anchor retrieval that didn't happen on table/phoenix-mcp backends.
-- [ ] **M3** — `agents/src/glasshat/agents/types.py:52-57`: replace the `startswith("https://github.com/")` repo_url validator with the actual `_GITHUB_URL_RE` (shared) so the Pydantic layer matches the downstream SSRF gate.
-- [ ] **M4** — `infra/deploy.sh:126`: add `--concurrency 1` (or document) so the per-instance in-memory rate limiter can't be bypassed via horizontal scale.
+- [x] **M3** — `agents/src/glasshat/agents/types.py:52-57`: replace the `startswith("https://github.com/")` repo_url validator with the actual `_GITHUB_URL_RE` (shared) so the Pydantic layer matches the downstream SSRF gate.
+- [x] **M4** — `infra/deploy.sh:126`: add `--concurrency 1` (or document) so the per-instance in-memory rate limiter can't be bypassed via horizontal scale.
 - [ ] **M5** — docs number consistency: `docs/rapid-agent-compliance.md:26` stale "161 passed / 40 web" → real counts; unify the coverage figure (97%, not 96.7%) across `devpost-text.md:50,57`, `docs/evidence-matrix.md:17`, README.
 
 ## 🟢 LOW
 
-- [ ] **L1** — `infra/deploy.sh` `--no-phoenix` branch (~:91): set `CORS_ALLOW_ORIGINS=${WEB_ORIGIN}` (currently omitted → CORS `*` on that path). Consider changing `config.py` default from `"*"` to `""`.
+- [x] **L1** — `infra/deploy.sh` `--no-phoenix` branch (~:91): set `CORS_ALLOW_ORIGINS=${WEB_ORIGIN}` (currently omitted → CORS `*` on that path). Consider changing `config.py` default from `"*"` to `""`.
 - [ ] **L2** — `docs/architecture.md:37,143`: add "(shipped: GitHub REST metadata-only, no clone)" to the superseded-delta note (still shows `git clone`).
 - [ ] **L3** — `apps/web/lib/participate-state.ts:148-151`: drive 3D `fromX` from the same `preAuditScoreMap` aggregate used by the 2D ScoreBar ghost (multi-hat criteria currently disagree).
 - [ ] **L4** — `README.md:70,76`: add "(live deploy uses in-memory; Firestore/SQLite opt-in)" so "persists" isn't read as durable.

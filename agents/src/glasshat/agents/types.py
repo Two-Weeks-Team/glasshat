@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from glasshat.rubric.models import SynthesizedRubric
 from glasshat.shared.enums import Hat, RunMode
+from glasshat.shared.github_url import parse_github_url
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -53,7 +54,10 @@ class EvaluationInput(BaseModel):
     def _repo_url_must_be_github_https(cls, value: str | None) -> str | None:
         if value is None or value == "":
             return value
-        if not value.startswith("https://github.com/"):
+        # Use the *same* canonical parser as the downstream SSRF gate so the
+        # Pydantic boundary cannot accept a URL the code grader later rejects
+        # (a loose `startswith` would wave through trailing junk / extra paths).
+        if parse_github_url(value) is None:
             raise ValueError("repo_url must be an https://github.com/<owner>/<repo> URL")
         return value
 
