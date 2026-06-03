@@ -30,9 +30,10 @@ ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONUNBUFFERED=1
 USER app
 EXPOSE 8080
-# Cloud Run injects $PORT (defaults to 8080 locally). `--proxy-headers` +
-# `--forwarded-allow-ips '*'` make uvicorn honour the X-Forwarded-For that the
-# Cloud Run front-end sets, so the per-IP rate limiter keys on the real client IP
-# instead of the single load-balancer IP (which would collapse every caller into
-# one shared bucket → cost-DoS). The only hop in front of us is Google's LB.
-CMD ["sh", "-c", "uvicorn glasshat.api:create_app --factory --host 0.0.0.0 --port ${PORT:-8080} --proxy-headers --forwarded-allow-ips '*'"]
+# Cloud Run injects $PORT (defaults to 8080 locally). We deliberately do NOT pass
+# uvicorn `--proxy-headers --forwarded-allow-ips '*'`: that trusts the *leftmost*
+# X-Forwarded-For entry, which the client controls, so an attacker could rotate a
+# fake IP and bypass the per-IP rate limiter. Instead the app reads X-Forwarded-For
+# itself and keys on the second-to-last entry — the real client IP appended by the
+# Cloud Run front end (see app.py `_client_ip`). The raw header is always present.
+CMD ["sh", "-c", "uvicorn glasshat.api:create_app --factory --host 0.0.0.0 --port ${PORT:-8080}"]
