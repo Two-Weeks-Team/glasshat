@@ -31,10 +31,10 @@ Source: 5 parallel read-only expert agents (honesty/Skeptic, security, backend, 
 
 ## 🟠 HIGH — quality / false-confidence
 
-- [ ] **Q1** — `services/pipeline-orchestrator/tests/test_adk_runtime.py`: add unit tests that drive `_parse_deltas` with a realistic phoenix-mcp `CallToolResult` fixture, and `PhoenixMcpConsultant.consult`/`PhoenixMcpDatasetWriter.write` with a fake `ClientSession` (monkeypatch `stdio_client`/`ClientSession`) asserting the exact tool name + arguments. (Live MCP bodies currently have ZERO executable-body coverage.)
-- [ ] **Q2** — `agents/tests/test_audit.py`: add a test asserting that with the **shipped** `default_calibration_anchors()`, two different `for_weights(...)` bindings return the **same** `ConsultResult` (documents the honest degenerate seed; current "changes who wins" test uses fabricated distinct-delta fixtures only).
-- [ ] **Q3** — `services/pipeline-orchestrator/tests/test_engine.py`: parametrized test over `Settings(consultant_backend=.../dataset_writer_backend=.../repo_grader_backend=...)` asserting `_select_*` wires the correct adapter type (the prod env-flag wiring is currently uncovered).
-- [ ] **Q4** — `agents/tests/test_audit.py:209`: add a second `@given` hypothesis property with independent `p25,p75` (NOT bracketing `score`) asserting `p25-tol ≤ corrected ≤ p75+tol AND |corrected-score| ≤ 2+tol` — covers the one-sided-band / cap-binds-clip adversarial regime currently untested.
+- [x] **Q1** — `services/pipeline-orchestrator/tests/test_adk_runtime.py`: add unit tests that drive `_parse_deltas` with a realistic phoenix-mcp `CallToolResult` fixture, and `PhoenixMcpConsultant.consult`/`PhoenixMcpDatasetWriter.write` with a fake `ClientSession` (monkeypatch `stdio_client`/`ClientSession`) asserting the exact tool name + arguments. (Live MCP bodies currently have ZERO executable-body coverage.)
+- [x] **Q2** — `agents/tests/test_audit.py`: add a test asserting that with the **shipped** `default_calibration_anchors()`, two different `for_weights(...)` bindings return the **same** `ConsultResult` (documents the honest degenerate seed; current "changes who wins" test uses fabricated distinct-delta fixtures only).
+- [x] **Q3** — `services/pipeline-orchestrator/tests/test_engine.py`: parametrized test over `Settings(consultant_backend=.../dataset_writer_backend=.../repo_grader_backend=...)` asserting `_select_*` wires the correct adapter type (the prod env-flag wiring is currently uncovered).
+- [x] **Q4** — `agents/tests/test_audit.py:209`: add a second `@given` hypothesis property with independent `p25,p75` (NOT bracketing `score`) asserting `p25-tol ≤ corrected ≤ p75+tol AND |corrected-score| ≤ 2+tol` — covers the one-sided-band / cap-binds-clip adversarial regime currently untested.
 
 ## 🟡 MEDIUM
 

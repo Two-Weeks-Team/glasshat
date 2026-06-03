@@ -5,16 +5,24 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
+import pytest
 from glasshat.agents.audit import (
     AnchorConsultant,
     ConsultResult,
     DatasetExample,
+    FallbackConsultant,
     NullDatasetWriter,
     TableConsultant,
 )
 from glasshat.agents.types import EvaluationInput, RunRecord
+from glasshat.code_grader import GitHubApiRepoGrader
+from glasshat.pipeline.adk_runtime import PhoenixMcpConsultant, PhoenixMcpDatasetWriter
 from glasshat.pipeline.engine import (
     Deps,
+    NullRepoGrader,
+    _select_consultant,
+    _select_dataset_writer,
+    _select_repo_grader,
     default_calibration_anchors,
     default_calibration_table,
     default_deps,
@@ -23,6 +31,7 @@ from glasshat.pipeline.engine import (
 from glasshat.pipeline.events import PipelineEvent, Stage
 from glasshat.rubric.presets import list_presets, load_preset
 from glasshat.shared.blobstore import LocalFsBlobStore
+from glasshat.shared.config import Settings
 from glasshat.shared.docstore import MemoryDocStore
 from glasshat.shared.enums import Hat, RunMode
 from glasshat.shared.llm import MockLlmClient
@@ -499,3 +508,74 @@ def test_evaluation_is_reproducible_run_id_aside(tmp_path: Path) -> None:
     assert [(c.hat, c.criterion_id, c.corrected) for c in rec_a.audit_corrections] == [
         (c.hat, c.criterion_id, c.corrected) for c in rec_b.audit_corrections
     ]
+
+
+# --- Q2: the shipped anchor seed is honestly degenerate ----------------------
+
+
+def test_shipped_anchor_seed_returns_same_result_across_weightings() -> None:
+    """default_calibration_anchors() ships the SAME measured spike-D prior on every
+    anchor (no fabricated cross-schema deltas). Binding two genuinely different
+    rubric weightings therefore returns an IDENTICAL ConsultResult for a shared
+    cell — the honest degeneracy, documented so a future live corpus is what makes
+    them diverge (not a hand-faked seed)."""
+    consultant = AnchorConsultant(default_calibration_anchors(), backup=TableConsultant({}))
+    # 'tech-implementation' (YELLOW, low) is carried by both 4-dim presets
+    # (gemini3 + rapid-agent) with the same prior, so either selection agrees.
+    cell = (Hat.YELLOW, "tech-implementation", "low")
+    w1 = tuple(load_preset("rapid-agent").weights_vector)
+    w2 = tuple(load_preset("gemini3").weights_vector)
+    assert w1 != w2  # the two bindings really differ
+    r1 = asyncio.run(consultant.for_weights(w1).consult(*cell))
+    r2 = asyncio.run(consultant.for_weights(w2).consult(*cell))
+    assert r1 is not None and r2 is not None
+    assert (r1.mean_delta, r1.n, r1.p25, r1.p75) == (r2.mean_delta, r2.n, r2.p25, r2.p75)
+
+
+# --- Q3: the prod env-flag wiring (_select_*) builds the right adapter --------
+
+
+def _settings(**kw: Any) -> Settings:
+    return Settings(_env_file=None, **kw)  # type: ignore[call-arg]
+
+
+@pytest.mark.parametrize(
+    ("backend", "endpoint", "expected"),
+    [
+        ("table", "", TableConsultant),
+        ("anchor", "", AnchorConsultant),
+        ("phoenix-mcp", "http://phoenix:6006", FallbackConsultant),
+        ("phoenix-mcp", "", TableConsultant),  # no endpoint → graceful table fallback
+    ],
+)
+def test_select_consultant_wires_backend(backend: str, endpoint: str, expected: type) -> None:
+    c = _select_consultant(
+        _settings(consultant_backend=backend, phoenix_collector_endpoint=endpoint)
+    )
+    assert isinstance(c, expected)
+    if expected is FallbackConsultant:
+        assert isinstance(c._primary, PhoenixMcpConsultant)  # type: ignore[attr-defined]
+
+
+@pytest.mark.parametrize(
+    ("backend", "endpoint", "expected"),
+    [
+        ("null", "", NullDatasetWriter),
+        ("phoenix-mcp", "http://phoenix:6006", PhoenixMcpDatasetWriter),
+        ("phoenix-mcp", "", NullDatasetWriter),  # no endpoint → null
+    ],
+)
+def test_select_dataset_writer_wires_backend(backend: str, endpoint: str, expected: type) -> None:
+    w = _select_dataset_writer(
+        _settings(dataset_writer_backend=backend, phoenix_collector_endpoint=endpoint)
+    )
+    assert isinstance(w, expected)
+
+
+@pytest.mark.parametrize(
+    ("backend", "expected"),
+    [("null", NullRepoGrader), ("github-api", GitHubApiRepoGrader)],
+)
+def test_select_repo_grader_wires_backend(backend: str, expected: type) -> None:
+    g = _select_repo_grader(_settings(repo_grader_backend=backend))
+    assert isinstance(g, expected)

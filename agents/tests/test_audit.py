@@ -236,6 +236,35 @@ def test_apply_correction_invariants(
     assert abs(corr.corrected - score) <= 2.0 + tol
 
 
+@given(
+    score=st.floats(min_value=0.0, max_value=10.0),
+    mean_delta=st.floats(min_value=-6.0, max_value=6.0),
+    p_a=st.floats(min_value=0.0, max_value=10.0),
+    p_b=st.floats(min_value=0.0, max_value=10.0),
+    n=st.integers(min_value=3, max_value=200),
+)
+def test_apply_correction_cap_binds_when_band_is_one_sided(
+    score: float, mean_delta: float, p_a: float, p_b: float, n: int
+) -> None:
+    """Independent percentiles that need NOT bracket the score — the adversarial
+    regime the bracketing invariant test never reaches, where the ±2.0 cap (not
+    the clip) is the binding constraint. Two guarantees hold for ANY ordered band:
+    the absolute cap, and clip-then-cap-toward-score (the result sits between the
+    band and the score, never past the band on the side away from the score)."""
+    p25, p75 = sorted((p_a, p_b))  # ordered, but free to sit entirely above/below score
+    assessment = HatAssessment(
+        hat=Hat.YELLOW, criterion_id="tech-implementation", score=score, evidence_depth=0.3
+    )
+    corr = apply_correction(assessment, ConsultResult(mean_delta=mean_delta, n=n, p25=p25, p75=p75))
+    if corr is None:
+        return
+    tol = 0.005
+    # 1) The absolute ±2.0 cap always holds.
+    assert score - 2.0 - tol <= corr.corrected <= score + 2.0 + tol
+    # 2) clip ∈ [p25, p75], then clamp toward score → corrected ∈ [min(p25,score), max(p75,score)].
+    assert min(p25, score) - tol <= corr.corrected <= max(p75, score) + tol
+
+
 def test_apply_correction_clip_to_p75_binds() -> None:
     """A large under-confidence pushes the raw score above p75 → the clip (not the
     ±2 cap) is the binding constraint. score=8, mean_delta=-3 → raw=8-0.8*(-3)=10.4,
