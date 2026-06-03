@@ -30,7 +30,7 @@ _PHOENIX_MCP_PACKAGE = "@arizeai/phoenix-mcp@4.0.13"
 _MCP_CALL_TIMEOUT = 30.0
 
 
-def _mcp_server_params(base_url: str, api_key: str) -> Any:  # pragma: no cover - needs mcp SDK
+def _mcp_server_params(base_url: str, api_key: str) -> Any:
     """Stdio params for ``npx @arizeai/phoenix-mcp`` — pinned, key via env not argv.
 
     The API key is passed through the subprocess environment (``PHOENIX_API_KEY``,
@@ -98,7 +98,7 @@ class PhoenixMcpConsultant:
         # first consult loads + groups it; reused for every subsequent cell.
         self._grouped: dict[tuple[str, str, str], list[float]] | None = None
 
-    async def _load(self) -> dict[tuple[str, str, str], list[float]]:  # pragma: no cover
+    async def _load(self) -> dict[tuple[str, str, str], list[float]]:
         if self._grouped is not None:
             return self._grouped
         from mcp import ClientSession
@@ -119,9 +119,7 @@ class PhoenixMcpConsultant:
         self._grouped = grouped
         return grouped
 
-    async def consult(  # pragma: no cover - requires phoenix-mcp over stdio
-        self, hat: Hat, criterion_id: str, bucket: str
-    ) -> ConsultResult | None:
+    async def consult(self, hat: Hat, criterion_id: str, bucket: str) -> ConsultResult | None:
         grouped = await self._load()
         deltas = grouped.get((hat.value, criterion_id, bucket), [])
         if len(deltas) < 3:
@@ -134,7 +132,7 @@ class PhoenixMcpConsultant:
         )
 
 
-def _parse_examples(  # pragma: no cover - shape depends on phoenix
+def _parse_examples(
     mcp_result: Any,
 ) -> list[tuple[tuple[str, str, str], float]]:
     """Yield ``((hat, criterion, bucket), delta)`` for each example in an MCP result.
@@ -166,7 +164,7 @@ def _parse_examples(  # pragma: no cover - shape depends on phoenix
     return out
 
 
-def _parse_deltas(mcp_result: Any) -> list[float]:  # pragma: no cover - shape depends on phoenix
+def _parse_deltas(mcp_result: Any) -> list[float]:
     """Flat list of deltas (ungrouped) — retained for callers that only need values."""
     return [delta for _, delta in _parse_examples(mcp_result)]
 
@@ -188,9 +186,7 @@ class PhoenixMcpDatasetWriter:
         self._api_key = api_key
         self._dataset = dataset
 
-    async def write(  # pragma: no cover - requires phoenix-mcp over stdio
-        self, examples: list[DatasetExample]
-    ) -> int:
+    async def write(self, examples: list[DatasetExample]) -> int:
         if not examples:
             return 0
         from mcp import ClientSession
