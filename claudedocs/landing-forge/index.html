@@ -1,0 +1,77 @@
+<!doctype html>
+<!-- Glasshat WOW landing gallery — generated from wow-scene-mockups. Open in a browser. -->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Glasshat — WOW landing scenes</title>
+<style>
+  :root { color-scheme: dark; --bg:#07070a; --card:#141418; --bd:rgba(255,255,255,.13);
+          --fg:rgba(255,255,255,.96); --fg2:rgba(255,255,255,.58); --ac:#7c5cff; --mag:#c77dff; --gold:#ffd60a; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif; }
+  header { padding:34px 24px 4px; max-width:1600px; margin:0 auto; }
+  h1 { margin:0 0 8px; font-size:25px; letter-spacing:-.01em; }
+  .sub { margin:0; color:var(--fg2); font-size:14px; max-width:980px; }
+  .note { color:#8a8a8e; font-size:12.5px; margin-top:10px; }
+  .fam { max-width:1600px; margin:0 auto; padding:26px 24px 4px; }
+  .fam h2 { font-size:15px; letter-spacing:.04em; text-transform:uppercase; color:var(--mag);
+            border-top:1px solid var(--bd); padding-top:18px; margin:0; }
+  .fam h2 small { color:var(--fg2); text-transform:none; letter-spacing:0; font-weight:400; margin-left:8px; }
+  .grid { display:grid; gap:20px; padding:14px 24px 8px; max-width:1600px; margin:0 auto;
+          grid-template-columns:repeat(auto-fill,minmax(400px,1fr)); }
+  .card { background:var(--card); border:1px solid var(--bd); border-radius:15px; overflow:hidden; display:flex; flex-direction:column; position:relative; }
+  .card.fav { border-color:rgba(255,214,10,.55); box-shadow:0 0 0 1px rgba(255,214,10,.28); }
+  .tagid { position:absolute; top:10px; left:10px; z-index:2; font:700 12px/1 ui-monospace,monospace; background:rgba(0,0,0,.7); color:#fff; padding:5px 8px; border-radius:7px; border:1px solid var(--bd); }
+  .star { position:absolute; top:10px; right:10px; z-index:2; font-size:13px; background:rgba(255,214,10,.16); color:var(--gold); border:1px solid rgba(255,214,10,.5); padding:4px 9px; border-radius:999px; font-weight:600; }
+  .meta { padding:13px 15px 11px 50px; } .meta h3 { margin:0; font-size:15px; } .meta p { margin:5px 0 0; color:var(--fg2); font-size:12.5px; }
+  .frame { border-top:1px solid var(--bd); border-bottom:1px solid var(--bd); height:440px; background:#000; overflow:hidden; }
+  .frame iframe { width:1320px; height:1100px; border:0; transform:scale(.40); transform-origin:0 0; pointer-events:none; }
+  .bar { display:flex; gap:10px; align-items:center; padding:11px 15px; }
+  .open { font-size:13px; font-weight:600; color:#fff; background:var(--ac); border:0; padding:7px 14px; border-radius:8px; text-decoration:none; }
+  .open:hover { background:#9277ff; } .file { margin-left:auto; font:11px ui-monospace,monospace; color:var(--fg2); }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title"></h1>
+  <p class="sub" id="subtitle"></p>
+  <p class="note">라이브 모션은 <b>Open full ↗</b>에서 보세요(iframe은 축소·비인터랙티브). reduced-motion 사용자는 각 장면이 보정 완료된 정적 상태로 표시됩니다. 모두 self-contained · 정직성 검증(503/4,493 미사용) · validator PASS.</p>
+</header>
+<div id="root"></div>
+<script>
+document.getElementById("title").textContent = "Glasshat — WOW 랜딩 장면 4선";
+document.getElementById("subtitle").textContent =
+  "AI 심판이 스스로의 과신을 잡아 점수를 보정값으로 끌어내리는 그 순간이 — 묻지 않아도 — 눈앞에 펼쳐진다. 'it audits the judge — 자기 자신까지.'";
+const F = [
+  ["D · 모뉴멘탈 타입","점수 숫자가 곧 그림", [
+    ["D7", 1, "Kinetic type — 9.0이 조립됐다 보정값 7.6으로 오도미터 드롭 (math shown)", "추천 픽: 핵심 'the math shown'을 가장 직접 연출. Next.js 히어로 이식 + Lighthouse 100 유지 가장 용이.", "p-d7-kinetic-type.html"],
+  ]],
+  ["C · 빛 & 투사","어두운 무대의 단일 스폿", [
+    ["C7", 0, "Spotlight — 팔로우-스폿이 과대평가 패널을 잡고 점수가 ±2.0 cap 안에서 후퇴", "'glasshat=유리를 통한 빛' 테마. 감정적·시네마틱. 강력한 2순위.", "p-c7-spotlight.html"],
+  ]],
+  ["F · 코스믹 & 천체","별이 스스로 선을 긋는다", [
+    ["F1", 0, "Constellation — 6-hat 평가 별자리 형성 후 과신 YELLOW 노드가 보정 위치로 당겨짐", "온-브랜드(제품에 이미 3D constellation). 단, 제품 그래프와 중복 인상 위험.", "p-f1-constellation.html"],
+  ]],
+  ["E · 깊이 & 차원","틸트로 깊이-반전하는 듀얼 보드", [
+    ["E3", 0, "Lenticular rank-flip — 'without audit ↔ with Glasshat audit' 랭킹이 깊이-반전 (누가 이기는지 바뀐다)", "비즈니스 서사('audit가 승자를 바꾼다')는 최강. 히어로보단 스크롤 섹션으로 더 적합.", "p-e3-lenticular-rankflip.html"],
+  ]],
+];
+const root = document.getElementById("root");
+for (const [fname,fdesc,items] of F) {
+  const fam = document.createElement("div"); fam.className = "fam";
+  fam.innerHTML = `<h2>${fname}<small>${fdesc}</small></h2>`; root.appendChild(fam);
+  const grid = document.createElement("div"); grid.className = "grid";
+  for (const [id,fav,title,desc,file] of items) {
+    const c = document.createElement("div"); c.className = "card " + (fav?"fav":"");
+    c.innerHTML = `<div class="tagid">${id}</div>${fav?'<div class="star">⭐ 추천</div>':''}
+      <div class="meta"><h3>${title}</h3><p>${desc}</p></div>
+      <div class="frame"><iframe loading="lazy" src="${file}" title="${title}"></iframe></div>
+      <div class="bar"><a class="open" href="${file}" target="_blank" rel="noopener">Open full ↗</a><span class="file">${file}</span></div>`;
+    grid.appendChild(c);
+  }
+  root.appendChild(grid);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,269 @@
+/* RankFlipStory — the "E narrative" beat: a lenticular dual-state rank board that
+   auto-tilts and depth-FLIPS a cohort from amber "raw consensus" to violet "with
+   Glasshat audit". Layout lives in Tailwind on the TSX; this module owns only the
+   scene: the 3D lenticular surface, the per-state accent theming, the depth-flip
+   row transitions, and the reduced-motion resolution.
+
+   Palette/font tokens are NOT redefined here — they come from globals.css
+   (@theme): --color-accent (violet = audited), --color-accent-strong (solid
+   fill), --color-warn (amber = raw), --color-good (green = deep-evidence chips),
+   --color-accent-2 (cyan), --color-bg/-surface/-surface-2/-ink/-muted/-border,
+   and --font-display / --font-serif. Everything animated is transform/opacity
+   only so it stays composite-only (Lighthouse-friendly). */
+
+/* ── decorative lenticular ridges over the whole section ── */
+.ridges {
+  position: absolute;
+  inset: -10% -5%;
+  background: repeating-linear-gradient(
+    105deg,
+    oklch(0.18 0.03 280 / 0) 0px,
+    oklch(0.18 0.03 280 / 0) 5px,
+    oklch(0.62 0.12 290 / 0.05) 6px,
+    oklch(0.62 0.12 205 / 0.05) 7px,
+    oklch(0.18 0.03 280 / 0) 8px
+  );
+  mix-blend-mode: screen;
+  opacity: 0.7;
+  pointer-events: none;
+  /* Low-amplitude drift; paused offscreen by .paused. */
+  animation: ridgeDrift 14s ease-in-out infinite alternate;
+}
+@keyframes ridgeDrift {
+  from {
+    transform: translateX(-1.2%) skewX(-1deg);
+  }
+  to {
+    transform: translateX(1.2%) skewX(1deg);
+  }
+}
+
+/* ── 3D stage for the board ── */
+.boardRegion {
+  position: relative;
+  perspective: 1600px;
+}
+
+/* ── the lenticular board surface ── */
+.board {
+  position: relative;
+  border-radius: 18px;
+  border: 1px solid var(--color-border);
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklch, var(--color-surface) 92%, transparent),
+    color-mix(in oklch, var(--color-bg) 92%, transparent)
+  );
+  box-shadow:
+    0 40px 90px -40px oklch(0.05 0.05 290 / 0.9),
+    inset 0 1px 0 oklch(0.4 0.03 290 / 0.25);
+  transform-style: preserve-3d;
+  /* JS drives rotateX/rotateY each frame; this transition only smooths the
+     idle/initial state. */
+  transition: transform 0.25s ease-out;
+  will-change: transform;
+}
+/* interlaced "lenticular" sheen on the surface */
+.board::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    100deg,
+    oklch(1 0 0 / 0) 0px,
+    oklch(1 0 0 / 0) 6px,
+    oklch(1 0 0 / 0.035) 7px,
+    oklch(1 0 0 / 0) 9px
+  );
+  mix-blend-mode: screen;
+  opacity: 0.6;
+}
+
+.ttlState {
+  font-family: var(--font-serif), Georgia, "Times New Roman", serif;
+  font-style: italic;
+  /* raw = amber, audited = violet; toggled via .audited on the region. */
+  color: var(--color-warn);
+  transition: color 0.5s ease;
+}
+.audited .ttlState {
+  color: var(--color-accent);
+}
+
+/* ── rank rows ── */
+.row {
+  /* per-row accent: amber while raw, violet once audited. The audited (resolved)
+     state is the a11y source of truth, so its colours must keep ≥4.5:1. */
+  --accent: var(--color-warn);
+  position: relative;
+  transition:
+    transform 0.7s cubic-bezier(0.5, 0.05, 0.2, 1),
+    background 0.6s ease,
+    border-color 0.6s ease,
+    box-shadow 0.6s ease;
+  will-change: transform;
+}
+.audited .row {
+  --accent: var(--color-accent);
+}
+
+/* leader gets a glowing left rail in the active accent */
+.leader {
+  background: linear-gradient(
+    90deg,
+    oklch(from var(--accent) l c h / 0.16),
+    color-mix(in oklch, var(--color-surface-2) 70%, transparent) 42%
+  );
+  border-color: oklch(from var(--accent) l c h / 0.55);
+  box-shadow:
+    0 0 0 1px oklch(from var(--accent) l c h / 0.3),
+    0 14px 40px -22px oklch(from var(--accent) l c h / 0.7);
+}
+.leader::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10%;
+  bottom: 10%;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--accent);
+  box-shadow: 0 0 16px var(--accent);
+}
+
+.rank {
+  font-family: var(--font-serif), Georgia, "Times New Roman", serif;
+  font-style: italic;
+  color: var(--color-muted);
+  transition:
+    color 0.6s ease,
+    transform 0.6s ease;
+}
+.leader .rank {
+  color: var(--accent);
+  transform: scale(1.12);
+}
+
+.scoreVal {
+  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  /* The score reads in the row accent; on the audited leader this is violet
+     ≥4.5:1 on the surface. Non-leader rows keep the higher-contrast ink. */
+  color: var(--color-ink);
+  transition: color 0.6s ease;
+}
+.leader .scoreVal {
+  color: var(--accent);
+}
+
+/* the delta tag only appears once the flip resolves */
+.delta {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-muted);
+  opacity: 0;
+  transition: opacity 0.6s ease 0.2s;
+}
+.audited .delta {
+  opacity: 1;
+}
+
+/* evidence-chip dot colours */
+.chipDotStrong {
+  background: var(--color-good);
+}
+.chipDotThin {
+  background: var(--color-warn);
+}
+.chipDotMid {
+  background: var(--color-accent-2);
+}
+
+/* calibration verdict banner — fades up once audited */
+.verdict {
+  border: 1px solid oklch(from var(--color-accent) l c h / 0.4);
+  background: oklch(from var(--color-accent) l c h / 0.1);
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 0.7s ease,
+    transform 0.7s ease;
+}
+.audited .verdict {
+  opacity: 1;
+  transform: none;
+}
+.verdictMark {
+  background: var(--color-accent-strong);
+  box-shadow: 0 0 18px oklch(from var(--color-accent-strong) l c h / 0.7);
+}
+.verdictName {
+  color: oklch(0.86 0.12 290);
+}
+.verdictMath {
+  font-family: var(--font-serif), Georgia, "Times New Roman", serif;
+  font-style: italic;
+  color: var(--color-muted);
+}
+
+/* live "auditing" LED */
+.led {
+  background: var(--color-good);
+  animation: ledBlink 1.8s steps(1) infinite;
+}
+@keyframes ledBlink {
+  0%,
+  60% {
+    opacity: 1;
+  }
+  61%,
+  100% {
+    opacity: 0.25;
+  }
+}
+
+/* swatches in the legend */
+.swatchRaw {
+  background: var(--color-warn);
+  box-shadow: 0 0 12px oklch(from var(--color-warn) l c h / 0.5);
+}
+.swatchAud {
+  background: var(--color-accent);
+  box-shadow: 0 0 12px oklch(from var(--color-accent) l c h / 0.5);
+}
+
+/* When the section is offscreen, stop the continuous oscillation entirely so it
+   never costs the main thread / Speed Index. JS adds .paused; the CSS animations
+   above are also paused defensively. */
+.paused .ridges,
+.paused .led {
+  animation-play-state: paused;
+}
+
+/* ── REDUCED MOTION: resolve to the AUDITED state, fully static ── */
+@media (prefers-reduced-motion: reduce) {
+  .ridges,
+  .led {
+    animation: none;
+  }
+  .board {
+    transition: none !important;
+    transform: none !important;
+  }
+  .row {
+    transition: none !important;
+  }
+  .rank,
+  .scoreVal,
+  .ttlState {
+    transition: none !important;
+  }
+  .delta,
+  .verdict {
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

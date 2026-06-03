@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Glasshat — the judge audits itself</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<style>
+  /* Web display + serif-italic faces loaded directly as woff2 (self-contained: no css/js link).
+     Graceful fallback to system fonts if offline. */
+  @font-face {
+    font-family: "Space Grotesk";
+    font-style: normal;
+    font-weight: 400 700;
+    font-display: swap;
+    src: url("https://fonts.gstatic.com/s/spacegrotesk/v16/V8mDoQDjQSkFtoMM3T6r8E7mPbF4Cw.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Newsreader";
+    font-style: italic;
+    font-weight: 400 500;
+    font-display: swap;
+    src: url("https://fonts.gstatic.com/s/newsreader/v26/cY9XfjOCX1hbuyalUrK439vogqC9yFZCYg7oRZaLFYYzbARA_n8.woff2") format("woff2");
+  }
+  :root {
+    --bg: oklch(0.15 0.021 265);
+    --bg-2: oklch(0.12 0.02 265);
+    --surface: oklch(0.205 0.024 265);
+    --ink: oklch(0.97 0.01 265);
+    --muted: oklch(0.72 0.02 265);
+    --violet: oklch(0.72 0.17 290);
+    --violet-deep: oklch(0.55 0.17 290);
+    --cyan: oklch(0.82 0.13 205);
+    --magenta: oklch(0.78 0.16 330);
+    --green: oklch(0.78 0.15 150);
+    --amber: oklch(0.82 0.15 85);
+    --hair: color-mix(in oklch, var(--muted) 26%, transparent);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    background:
+      radial-gradient(120% 90% at 50% -10%, oklch(0.2 0.05 290 / 0.55), transparent 60%),
+      radial-gradient(100% 80% at 90% 110%, oklch(0.2 0.05 205 / 0.35), transparent 55%),
+      var(--bg);
+    color: var(--ink);
+    font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+    min-height: 100svh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── decorative grain / vignette layer ── */
+  .field {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      repeating-linear-gradient(115deg, oklch(1 0 0 / 0.012) 0 2px, transparent 2px 5px);
+    mix-blend-mode: screen;
+    opacity: 0.6;
+  }
+  .field::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    box-shadow: inset 0 0 22vmax 6vmax var(--bg-2);
+  }
+
+  /* ── streaming micro-type behind the number ── */
+  .microtype {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    overflow: hidden;
+    font-family: "Space Grotesk", monospace;
+    font-size: clamp(8px, 1.05vw, 13px);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: color-mix(in oklch, var(--cyan) 60%, transparent);
+    opacity: 0;
+  }
+  .microtype .stream {
+    position: absolute;
+    white-space: nowrap;
+    will-change: transform;
+  }
+  .microtype .s1 { top: 26%; left: 0; animation: drift-l 26s linear infinite; }
+  .microtype .s2 { top: 70%; left: 0; color: color-mix(in oklch, var(--violet) 62%, transparent); animation: drift-r 31s linear infinite; }
+  .microtype .s3 { top: 48%; left: 0; color: color-mix(in oklch, var(--magenta) 48%, transparent); font-size: 0.82em; animation: drift-l 38s linear infinite; }
+
+  @keyframes drift-l { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  @keyframes drift-r { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+
+  /* ── layout shell ── */
+  main {
+    position: relative;
+    z-index: 2;
+    min-height: 100svh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+  }
+
+  header.top {
+    display: flex;
+    align-items: baseline;
+    gap: 0.7rem;
+    padding: clamp(1rem, 2.4vw, 1.8rem) clamp(1.1rem, 4vw, 3rem);
+  }
+  .wordmark {
+    font-weight: 700;
+    font-size: clamp(1rem, 1.5vw, 1.2rem);
+    letter-spacing: 0.02em;
+  }
+  .wordmark .dot { color: var(--violet); }
+  .tagline {
+    font-size: clamp(0.72rem, 1vw, 0.85rem);
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+  .tagline em {
+    font-family: "Newsreader", Georgia, serif;
+    font-style: italic;
+    color: var(--cyan);
+    font-size: 1.06em;
+  }
+
+  /* ── the stage: type IS the picture ── */
+  .stage {
+    position: relative;
+    align-self: center;
+    display: grid;
+    place-items: center;
+    padding: clamp(0.5rem, 2vw, 2rem) clamp(1rem, 4vw, 3rem);
+    text-align: center;
+  }
+
+  .kicker {
+    font-size: clamp(0.72rem, 1.2vw, 0.95rem);
+    letter-spacing: 0.34em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: clamp(0.4rem, 1.4vw, 1.1rem);
+  }
+  .kicker b {
+    color: var(--ink);
+    font-weight: 500;
+    letter-spacing: 0.2em;
+  }
+
+  /* the colossal numeral */
+  .score {
+    position: relative;
+    display: inline-flex;
+    align-items: baseline;
+    line-height: 0.78;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    font-size: clamp(7.5rem, 38vw, 30rem);
+    letter-spacing: -0.04em;
+    color: var(--amber);
+    transition: color 1100ms cubic-bezier(.5,0,.2,1);
+    text-shadow: 0 0 0.18em color-mix(in oklch, var(--amber) 30%, transparent);
+    --glowc: var(--amber);
+    filter: drop-shadow(0 0.02em 0.12em color-mix(in oklch, var(--glowc) 38%, transparent));
+  }
+  .score.calibrated {
+    color: var(--violet);
+    --glowc: var(--violet);
+    text-shadow: 0 0 0.2em color-mix(in oklch, var(--violet) 34%, transparent);
+  }
+
+  /* odometer columns */
+  .digit {
+    position: relative;
+    display: inline-block;
+    height: 1em;
+    overflow: hidden;
+    vertical-align: baseline;
+  }
+  .digit .reel {
+    display: flex;
+    flex-direction: column;
+    will-change: transform;
+    transition: transform 1300ms cubic-bezier(.76,0,.18,1);
+  }
+  .digit .reel span {
+    height: 1em;
+    display: grid;
+    place-items: center;
+    line-height: 1;
+  }
+  .dot-sep { padding: 0 0.02em; opacity: 0.85; }
+
+  /* letterform shards that assemble into the integer digit on arrival */
+  .shardwrap {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .shard {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 700;
+    color: color-mix(in oklch, var(--amber) 80%, var(--ink));
+    opacity: 0;
+    transform: translate(-50%, -50%) translate(var(--sx), var(--sy)) rotate(var(--sr)) scale(0.6);
+    will-change: transform, opacity;
+  }
+  .assembling .shard {
+    animation: shard-in 900ms cubic-bezier(.3,.7,.2,1) forwards;
+    animation-delay: var(--sd);
+  }
+  @keyframes shard-in {
+    0%   { opacity: 0; transform: translate(-50%,-50%) translate(var(--sx), var(--sy)) rotate(var(--sr)) scale(0.6); }
+    60%  { opacity: 0.9; }
+    100% { opacity: 0; transform: translate(-50%,-50%) translate(0,0) rotate(0) scale(1); }
+  }
+
+  /* delta bar showing the ±2.0 cap bound */
+  .deltabar {
+    margin: clamp(1rem, 3vw, 2.2rem) auto 0;
+    width: min(560px, 84vw);
+    opacity: 0;
+    transition: opacity 700ms ease;
+  }
+  .deltabar.show { opacity: 1; }
+  .deltabar .track {
+    position: relative;
+    height: 3px;
+    border-radius: 3px;
+    background: var(--hair);
+  }
+  .deltabar .cap {
+    position: absolute;
+    top: -5px;
+    width: 2px;
+    height: 13px;
+    background: var(--muted);
+    border-radius: 2px;
+  }
+  .deltabar .cap.l { left: 0; }
+  .deltabar .cap.r { right: 0; }
+  .deltabar .fill {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    height: 3px;
+    width: 0;
+    background: linear-gradient(90deg, var(--amber), var(--violet));
+    border-radius: 3px;
+    transition: width 1200ms cubic-bezier(.76,0,.18,1) 200ms;
+  }
+  .deltabar.show .fill { width: var(--dw, 35%); }
+  .deltabar .labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+    font-size: clamp(0.62rem, 0.95vw, 0.78rem);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .deltabar .labels .mid {
+    font-family: "Newsreader", Georgia, serif;
+    font-style: italic;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--cyan);
+  }
+
+  /* caption under the number */
+  .verdict {
+    margin-top: clamp(0.9rem, 2.4vw, 1.7rem);
+    min-height: 1.4em;
+    font-size: clamp(0.95rem, 2vw, 1.45rem);
+    color: var(--muted);
+    letter-spacing: 0.01em;
+  }
+  .verdict .tag {
+    font-size: 0.66em;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    padding: 0.18em 0.6em;
+    border: 1px solid var(--hair);
+    border-radius: 999px;
+    vertical-align: 0.16em;
+    margin-right: 0.5em;
+    color: var(--ink);
+    transition: color 600ms ease, border-color 600ms ease;
+  }
+  .verdict.calibrated .tag { color: var(--violet); border-color: color-mix(in oklch, var(--violet) 55%, transparent); }
+  .verdict strong { color: var(--ink); font-weight: 500; }
+  .verdict .formula {
+    font-family: "Newsreader", Georgia, serif;
+    font-style: italic;
+    color: var(--cyan);
+  }
+
+  .illus {
+    margin-top: 0.8rem;
+    font-size: clamp(0.66rem, 1vw, 0.78rem);
+    color: color-mix(in oklch, var(--muted) 88%, transparent);
+    letter-spacing: 0.04em;
+  }
+
+  /* ── footer / honest links ── */
+  footer {
+    z-index: 2;
+    padding: clamp(1.1rem, 3vw, 2rem) clamp(1.1rem, 4vw, 3rem) clamp(1.4rem, 3vw, 2.4rem);
+    border-top: 1px solid var(--hair);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem 1.5rem;
+    align-items: center;
+    justify-content: space-between;
+    font-size: clamp(0.74rem, 1.1vw, 0.9rem);
+  }
+  .links { display: flex; flex-wrap: wrap; gap: 0.5rem 1.2rem; align-items: center; }
+  footer a {
+    color: var(--ink);
+    text-decoration: none;
+    border-bottom: 1px solid color-mix(in oklch, var(--violet) 60%, transparent);
+    padding-bottom: 1px;
+    transition: color 180ms ease, border-color 180ms ease;
+  }
+  footer a:hover, footer a:focus-visible {
+    color: var(--cyan);
+    border-color: var(--cyan);
+    outline: none;
+  }
+  footer a:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; border-radius: 2px; }
+  .meta { color: var(--muted); display: flex; gap: 0.5rem 1rem; flex-wrap: wrap; align-items: center; }
+  .meta .lic { color: var(--ink); }
+  .health {
+    display: inline-flex; align-items: center; gap: 0.4em;
+    color: var(--muted);
+  }
+  .health .ok { color: var(--green); }
+  .health .pulse {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 0 0 color-mix(in oklch, var(--green) 60%, transparent);
+    animation: pulse 2.4s ease-out infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 color-mix(in oklch, var(--green) 55%, transparent); }
+    70% { box-shadow: 0 0 0 9px transparent; }
+    100% { box-shadow: 0 0 0 0 transparent; }
+  }
+
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+
+  /* ── reduced motion: resolved, static, calibrated ── */
+  @media (prefers-reduced-motion: reduce) {
+    .score, .digit .reel, .deltabar .fill, .verdict .tag, .field, .pulse { transition: none !important; animation: none !important; }
+    .microtype { opacity: 0.5 !important; }
+    .microtype .stream { animation: none !important; }
+    .assembling .shard, .shard { animation: none !important; opacity: 0 !important; }
+    .deltabar { opacity: 1 !important; }
+    .deltabar .fill { width: var(--dw, 35%) !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+  <div class="field" aria-hidden="true"></div>
+
+  <div class="microtype" id="microtype" aria-hidden="true">
+    <div class="stream s1"></div>
+    <div class="stream s2"></div>
+    <div class="stream s3"></div>
+  </div>
+
+  <main>
+    <header class="top">
+      <span class="wordmark">Glasshat<span class="dot">.</span></span>
+      <span class="tagline">it audits the judge — <em>including itself</em></span>
+    </header>
+
+    <section class="stage"
+             aria-label="Live self-correction: an over-confident score of 9.0 is recalibrated to 7.6">
+      <p class="kicker">the judge scores <b>9.0</b> · then catches its own over-confidence</p>
+
+      <!-- The colossal numeral. Odometer reels per digit. -->
+      <div class="score" id="score" role="img"
+           aria-label="Calibrated score 7.6">
+        <span class="digit" data-final="7" data-start="9">
+          <span class="reel"><span>9</span><span>8</span><span>7</span></span>
+        </span>
+        <span class="dot-sep">.</span>
+        <span class="digit" data-final="6" data-start="0">
+          <span class="reel"><span>0</span><span>9</span><span>8</span><span>7</span><span>6</span></span>
+        </span>
+        <span class="shardwrap" id="shards" aria-hidden="true"></span>
+      </div>
+
+      <!-- ±2.0 cap delta bar -->
+      <div class="deltabar" id="deltabar" aria-hidden="true">
+        <div class="track">
+          <span class="cap l"></span>
+          <span class="cap r"></span>
+          <span class="fill"></span>
+        </div>
+        <div class="labels">
+          <span>−2.0 cap</span>
+          <span class="mid">pulled −1.4 toward the evidence</span>
+          <span>+2.0 cap</span>
+        </div>
+      </div>
+
+      <p class="verdict" id="verdict" aria-live="polite">
+        <span class="tag" id="verdict-tag">raw</span>
+        <span id="verdict-text"><strong>9.0</strong> — over-confident, low-evidence (the optimism hat)</span>
+      </p>
+
+      <p class="illus">
+        Illustrative correction · <span class="formula" style="font-family:'Newsreader',serif;font-style:italic;color:var(--cyan)">clip(score − 0.8·mean_delta, p25, p75)</span>,
+        ±2.0 cap · prior recovered from held-out spike-D anchors.
+      </p>
+    </section>
+
+    <footer>
+      <div class="links">
+        <a href="https://glasshat-web-o366v7tl2q-uc.a.run.app/judge">/judge · rank-flip</a>
+        <a href="https://glasshat-web-o366v7tl2q-uc.a.run.app/participate">/participate · live self-correct</a>
+        <span class="health">
+          <span class="pulse" aria-hidden="true"></span>
+          API <a href="https://glasshat-api-o366v7tl2q-uc.a.run.app/health">/health</a>
+          <span class="ok">{"status":"ok"}</span>
+        </span>
+      </div>
+      <div class="meta">
+        <span>Gemini 3.1 Flash-Lite on Vertex AI · six-hat panel · evidence-grounded</span>
+        <span class="lic">Apache-2.0</span>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+  (function () {
+    "use strict";
+
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    var scoreEl   = document.getElementById("score");
+    var shardsEl  = document.getElementById("shards");
+    var deltaEl   = document.getElementById("deltabar");
+    var verdictEl = document.getElementById("verdict");
+    var vTag      = document.getElementById("verdict-tag");
+    var vText     = document.getElementById("verdict-text");
+    var microEl   = document.getElementById("microtype");
+    var digits    = Array.prototype.slice.call(document.querySelectorAll("#score .digit"));
+
+    // delta width: |9.0 - 7.6| = 1.4 over the ±2.0 cap → fraction of half-track
+    deltaEl.style.setProperty("--dw", ((1.4 / 2.0) * 50).toFixed(2) + "%");
+
+    // ── micro-type streams (the math, set fine, behind the number) ──
+    var formulaBits = [
+      "clip( score − 0.8 · mean_delta , p25 , p75 )",
+      "±2.0 cap",
+      "spike-D anchors · evidence-bucketed",
+      "YELLOW hat → optimism flagged",
+      "Δ = 9.0 − 7.6 = 1.4",
+      "p25 ≤ calibrated ≤ p75",
+      "audit the judge — including itself"
+    ];
+    function buildStream(bits, reps) {
+      var unit = bits.join("   ·   ") + "   ·   ";
+      var out = "";
+      for (var i = 0; i < reps; i++) out += unit;
+      return out + out; // duplicate for seamless scroll loop
+    }
+    document.querySelector(".s1").textContent = buildStream(formulaBits, 3);
+    document.querySelector(".s2").textContent = buildStream(formulaBits.slice().reverse(), 3);
+    document.querySelector(".s3").textContent = buildStream(["evidence > assumption", "confident · fast · unaccountable → audited"], 6);
+
+    // ── set the reels to their START position (top), pre-arrival ──
+    function setReel(digit, value, animate) {
+      var reel = digit.querySelector(".reel");
+      var spans = reel.querySelectorAll("span");
+      var idx = 0;
+      for (var i = 0; i < spans.length; i++) {
+        if (spans[i].textContent.trim() === String(value)) { idx = i; break; }
+      }
+      if (!animate) {
+        var prev = reel.style.transition;
+        reel.style.transition = "none";
+        reel.style.transform = "translateY(-" + idx + "em)";
+        // force reflow so the next transition (if re-enabled) applies cleanly
+        void reel.offsetHeight;
+        reel.style.transition = prev || "";
+      } else {
+        reel.style.transform = "translateY(-" + idx + "em)";
+      }
+    }
+
+    // ── shard letterforms that fly in and assemble into the raw "9.0" digit ──
+    var shardGlyphs = ["9", "/", "0", ".", "9", "\\", "0", "9", "|", "0"];
+    function spawnShards() {
+      var frag = document.createDocumentFragment();
+      for (var i = 0; i < 22; i++) {
+        var s = document.createElement("span");
+        s.className = "shard";
+        var ang = (i / 22) * Math.PI * 2 + Math.random();
+        var dist = 38 + Math.random() * 46; // in vw-ish via em sizing below
+        s.style.setProperty("--sx", (Math.cos(ang) * dist).toFixed(1) + "vmin");
+        s.style.setProperty("--sy", (Math.sin(ang) * dist * 0.7).toFixed(1) + "vmin");
+        s.style.setProperty("--sr", ((Math.random() * 80) - 40).toFixed(0) + "deg");
+        s.style.setProperty("--sd", (Math.random() * 280).toFixed(0) + "ms");
+        s.style.fontSize = (1.6 + Math.random() * 3.4).toFixed(1) + "vmin";
+        s.textContent = shardGlyphs[i % shardGlyphs.length];
+        frag.appendChild(s);
+      }
+      shardsEl.innerHTML = "";
+      shardsEl.appendChild(frag);
+    }
+
+    // ── REDUCED MOTION: render resolved & static at the calibrated value ──
+    if (reduce) {
+      setReel(digits[0], 7, false);
+      setReel(digits[1], 6, false);
+      scoreEl.classList.add("calibrated");
+      deltaEl.classList.add("show");
+      verdictEl.classList.add("calibrated");
+      vTag.textContent = "calibrated";
+      vText.innerHTML = "<strong>7.6</strong> — pulled to where the retrieved evidence holds";
+      microEl.style.opacity = "0.5";
+      return;
+    }
+
+    // ── set raw start positions (9.0) without animating ──
+    setReel(digits[0], 9, false);
+    setReel(digits[1], 0, false);
+
+    var hasRun = false;
+    function runScene() {
+      if (hasRun) return;
+      hasRun = true;
+
+      // 0) micro-type fades in
+      microEl.animate(
+        [{ opacity: 0 }, { opacity: 0.85 }],
+        { duration: 1200, fill: "forwards", easing: "ease-out" }
+      );
+
+      // 1) shards fly in and assemble into the raw 9.0
+      //    (.assembling on .score drives the shard keyframes; shards live inside .score)
+      spawnShards();
+      scoreEl.classList.add("assembling");
+
+      // 2) HOLD on the over-confident 9.0
+      vTag.textContent = "raw";
+      vText.innerHTML = "<strong>9.0</strong> — over-confident, low-evidence (the optimism hat)";
+
+      // 3) the AUDIT FIRES — odometer rolls down 9.0 → 7.6, color amber→violet
+      setTimeout(function () {
+        scoreEl.classList.remove("assembling");
+        shardsEl.innerHTML = "";
+
+        // mechanical roll-down
+        setReel(digits[0], 7, true);
+        setReel(digits[1], 6, true);
+
+        // delta bar streams in
+        deltaEl.classList.add("show");
+
+        // color/weight shift to calibrated violet (mid-roll for the "pull")
+        setTimeout(function () {
+          scoreEl.classList.add("calibrated");
+        }, 350);
+
+        // 4) settle: verdict + aria-live announce the corrected value
+        setTimeout(function () {
+          verdictEl.classList.add("calibrated");
+          vTag.textContent = "calibrated";
+          vText.innerHTML = "<strong>7.6</strong> — pulled to where the retrieved evidence holds";
+          scoreEl.setAttribute("aria-label", "Calibrated score 7.6, corrected from 9.0");
+        }, 1300);
+      }, 2400);
+    }
+
+    // ── arises autonomously: IntersectionObserver, fallback timer ──
+    var fired = false;
+    if ("IntersectionObserver" in window) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting && !fired) {
+            fired = true;
+            io.disconnect();
+            setTimeout(runScene, 500);
+          }
+        });
+      }, { threshold: 0.55 });
+      io.observe(scoreEl);
+    }
+    // safety timer in case observer never fires (e.g. already fully in view edge cases)
+    setTimeout(function () { if (!fired) { fired = true; runScene(); } }, 1400);
+  })();
+  </script>
+</body>
+</html>
