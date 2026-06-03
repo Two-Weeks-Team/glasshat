@@ -25,9 +25,9 @@ Source: 5 parallel read-only expert agents (honesty/Skeptic, security, backend, 
 
 ## 🟠 HIGH — frontend / a11y (this is why live a11y is 95-97, not 100)
 
-- [ ] **A1** — `apps/web/app/page.tsx:34`, `participate/ParticipateClient.tsx:195,223`, `judge/JudgeClient.tsx:194,554`: primary CTA `text-white` on `var(--color-accent)` = **2.64:1** (fails WCAG AA 4.5:1). Darken the button accent (≈`oklch(0.58 0.17 290)`) or use a dark ink token. This is the actual axe `color-contrast` blocker.
-- [ ] **A2** — `apps/web/app/page.tsx:13` full-bleed hero `w-screen` (`100vw`) overflows by the scrollbar gutter on Windows/Linux. Add `html { overflow-x: hidden; }` (or `overflow-x: clip` on body) in `globals.css`.
-- [ ] **A3** — `apps/web/components/ConstellationGraph.tsx:72-116`: add `role="img"` + generated `aria-label` summarizing each criterion's score/correction; gate `OrbitControls autoRotate` behind a `prefers-reduced-motion` check. (Canvas is currently opaque to AT and ignores reduced-motion.)
+- [x] **A1** — `apps/web/app/page.tsx:34`, `participate/ParticipateClient.tsx:195,223`, `judge/JudgeClient.tsx:194,554`: primary CTA `text-white` on `var(--color-accent)` = **2.64:1** (fails WCAG AA 4.5:1). Darken the button accent (≈`oklch(0.58 0.17 290)`) or use a dark ink token. This is the actual axe `color-contrast` blocker.
+- [x] **A2** — `apps/web/app/page.tsx:13` full-bleed hero `w-screen` (`100vw`) overflows by the scrollbar gutter on Windows/Linux. Add `html { overflow-x: hidden; }` (or `overflow-x: clip` on body) in `globals.css`.
+- [x] **A3** — `apps/web/components/ConstellationGraph.tsx:72-116`: add `role="img"` + generated `aria-label` summarizing each criterion's score/correction; gate `OrbitControls autoRotate` behind a `prefers-reduced-motion` check. (Canvas is currently opaque to AT and ignores reduced-motion.)
 
 ## 🟠 HIGH — quality / false-confidence
 

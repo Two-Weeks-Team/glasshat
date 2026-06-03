@@ -2,10 +2,25 @@
 
 import { OrbitControls } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Mesh } from "three";
 
 import type { ConstellationNode } from "@/lib/participate-state";
+
+/** Track `prefers-reduced-motion` so the auto-rotating camera can be stilled for
+ *  users who opt out of motion (WCAG 2.3.3). Defaults to false during SSR/first
+ *  paint, then syncs to the media query. */
+function usePrefersReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduced(mq.matches);
+    const onChange = () => setReduced(mq.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+  return reduced;
+}
 
 const ACCENT = "#9b87ff";
 const CORRECTED = "#f0b429";
@@ -71,10 +86,22 @@ export interface ConstellationGraphProps {
  */
 export default function ConstellationGraph({ nodes }: ConstellationGraphProps) {
   const corrected = nodes.filter((n) => n.corrected).length;
+  const reducedMotion = usePrefersReducedMotion();
+  // The <canvas> is opaque to assistive tech, so describe the whole graph as an
+  // image. role="img" makes it a leaf in the a11y tree (the decorative overlay
+  // legend below isn't announced separately); the label conveys the same data.
+  const ariaLabel =
+    `3D evaluation constellation: ${nodes.length} ${nodes.length === 1 ? "criterion" : "criteria"} ` +
+    "plotted by score (x), weight (y), and evidence depth (z). " +
+    (corrected > 0
+      ? `${corrected} self-corrected from an over-confident position to a calibrated one.`
+      : "No criteria required self-correction.");
   return (
     <div
       style={{ height: 380 }}
       data-testid="constellation"
+      role="img"
+      aria-label={ariaLabel}
       className="relative overflow-hidden rounded-2xl border border-[var(--color-border)]/60 bg-[var(--color-surface)]"
     >
       <Canvas camera={{ position: [2.4, 2.0, 2.6], fov: 50 }}>
@@ -84,7 +111,7 @@ export default function ConstellationGraph({ nodes }: ConstellationGraphProps) {
         <OrbitControls
           enablePan={false}
           enableZoom
-          autoRotate
+          autoRotate={!reducedMotion}
           autoRotateSpeed={0.9}
           minDistance={2.2}
           maxDistance={6}
