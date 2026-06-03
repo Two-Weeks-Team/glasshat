@@ -29,6 +29,25 @@ from pydantic import BaseModel
 logger = logging.getLogger(__name__)
 
 
+def _client_ip(request: Request) -> str:
+    """The real client IP for rate-limit keying, resistant to X-Forwarded-For spoofing.
+
+    Cloud Run's front end appends the true client IP to ``X-Forwarded-For`` and
+    then its own proxy IP, so the trustworthy client is the **second-to-last**
+    entry; everything to the left is attacker-supplied and must be ignored
+    (otherwise a caller rotates a fake leftmost IP and bypasses the limiter).
+    This reads the raw header directly — no uvicorn ``--proxy-headers`` whose
+    default trusts the *leftmost*, spoofable entry. Falls back to the direct peer
+    when the header is absent/short (local/dev).
+    """
+    parts = [p.strip() for p in request.headers.get("x-forwarded-for", "").split(",") if p.strip()]
+    if len(parts) >= 2:
+        return parts[-2]
+    if parts:
+        return parts[-1]
+    return request.client.host if request.client else "unknown"
+
+
 class _SlidingWindowRateLimiter:
     """Per-key sliding-window limiter (in-memory, per process/instance).
 
@@ -92,9 +111,12 @@ def create_app(deps: Deps | None = None, settings: Settings | None = None) -> Fa
 
     limiter = _SlidingWindowRateLimiter(settings.rate_limit_per_minute)
 
-    def _rate_limit(request: Request) -> None:
-        client = request.client.host if request.client else "unknown"
-        if not limiter.allow(client, time.monotonic()):
+    async def _rate_limit(request: Request) -> None:
+        # async so it runs on the event loop, not FastAPI's thread pool: the
+        # limiter's deque ops are not thread-safe, and a sync dependency would let
+        # two same-key requests race (IndexError → 500). No I/O here, so the
+        # single-threaded loop makes it atomic without a lock.
+        if not limiter.allow(_client_ip(request), time.monotonic()):
             raise HTTPException(status_code=429, detail="rate limit exceeded; retry shortly")
 
     def _deps() -> Deps:
@@ -121,7 +143,7 @@ def create_app(deps: Deps | None = None, settings: Settings | None = None) -> Fa
             )
         return out
 
-    @app.post("/api/plan")
+    @app.post("/api/plan", dependencies=[Depends(_rate_limit)])
     async def plan_preview(inp: EvaluationInput) -> PlanObject:
         rubric = await synthesize(inp, _deps().llm)
         return plan(rubric, inp)
@@ -165,7 +187,7 @@ def create_app(deps: Deps | None = None, settings: Settings | None = None) -> Fa
             raise HTTPException(status_code=404, detail="run not found")
         return dict(record)
 
-    @app.post("/api/runs/{run_id}/override")
+    @app.post("/api/runs/{run_id}/override", dependencies=[Depends(_rate_limit)])
     def override(run_id: str, body: OverrideRequest) -> dict[str, Any]:
         record = _deps().docstore.get("runs", run_id)
         if record is None:

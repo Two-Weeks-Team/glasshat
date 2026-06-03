@@ -18,11 +18,11 @@ code.
 from __future__ import annotations
 
 import base64
-import re
 import tempfile
 from pathlib import Path
 
 from glasshat.agents.types import Chunk, RepoFacts
+from glasshat.shared.github_url import parse_github_url
 
 SOURCE_EXTS = frozenset(
     {
@@ -127,30 +127,11 @@ async def clone_and_grade(url: str) -> RepoFacts:  # pragma: no cover - requires
 
 # --- GitHub REST metadata-only path (the deployed grader) -------------------
 
-# Only the public github.com web URL shape is accepted. We extract (owner, repo)
-# and then talk *exclusively* to the fixed api.github.com host — the user URL is
-# never used as a request target, so it cannot point the client elsewhere.
-_GITHUB_URL_RE = re.compile(
-    r"^https://github\.com/(?P<owner>[A-Za-z0-9_.-]+)/(?P<repo>[A-Za-z0-9_.-]+?)(?:\.git)?/?$"
-)
+# The canonical github.com URL shape + (owner, repo) parser is the single SSRF
+# gate, shared with the API input boundary — see glasshat.shared.github_url
+# (re-exported `parse_github_url` above). We extract (owner, repo) and then talk
+# *exclusively* to the fixed api.github.com host; the user URL is never a target.
 _GITHUB_API = "https://api.github.com"
-
-
-def parse_github_url(url: str) -> tuple[str, str] | None:
-    """Return ``(owner, repo)`` for a ``https://github.com/<owner>/<repo>`` URL.
-
-    Returns ``None`` for anything else (other hosts, ssh URLs, gists, paths with
-    extra segments). This is the SSRF gate: a URL that does not parse here never
-    triggers a network call.
-    """
-    match = _GITHUB_URL_RE.match(url.strip())
-    if match is None:
-        return None
-    owner, repo = match.group("owner"), match.group("repo")
-    # Reject path-traversal-ish or reserved segments defensively.
-    if owner in {".", ".."} or repo in {".", ".."}:
-        return None
-    return owner, repo
 
 
 async def fetch_repo_facts(url: str, *, token: str = "", timeout: float = 15.0) -> RepoFacts:
