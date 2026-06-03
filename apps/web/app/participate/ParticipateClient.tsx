@@ -299,10 +299,11 @@ function ResultsView({
         to: topCorrection.corrected,
       }
     : null;
-  // The 3D graph pulls in three.js; for the first-paint SAMPLE preview defer it
-  // behind a click so the initial load stays light (Lighthouse perf ≥90). A real
-  // run (not perf-measured) renders it immediately.
-  const [show3d, setShow3d] = useState(!sample);
+  // The 3D graph pulls in ~900KB of three/drei; defer it behind a click for
+  // EVERY visitor (sample preview AND real participants) so the chunk never
+  // loads eagerly. The "▶ Load the 3D graph" affordance below reveals it on
+  // demand — the 2D ScoreBar + rank-flip already convey the result.
+  const [show3d, setShow3d] = useState(false);
   return (
     <section className="mt-6 flex flex-col gap-6">
       {sample && (

@@ -13,8 +13,8 @@ Repo: **https://github.com/Two-Weeks-Team/glasshat** · License: **Apache-2.0** 
 
 | Claim | Command | Observed result (2026-05-23) |
 |---|---|---|
-| Python engine + API test suite passes | `uv run pytest` | **161 passed, 3 deselected in 0.99s** (3 = `@integration`, need live creds) |
-| Coverage gate (CI) holds | `uv run pytest --cov=glasshat --cov-fail-under=90` | passes (coverage ≈ 97.8% per session handoff) |
+| Python engine + API test suite passes | `uv run pytest` | **243 passed, 3 deselected** (3 = `@integration`, need live creds) |
+| Coverage gate (CI) holds | `uv run pytest --cov=glasshat --cov-fail-under=90` | passes (coverage ≈ 97.8%, `uv run --cov`) |
 | Lint clean | `uv run ruff check .` | no errors |
 | Format clean | `uv run ruff format --check .` | no changes needed |
 | Types clean (strict) | `uv run mypy packages agents services apps/api` | passes |

@@ -8,6 +8,7 @@
 > | This doc says | Shipped reality |
 > |---|---|
 > | Qdrant (vector DB) | **No Qdrant** — in-code hybrid retrieval (Vertex embeddings + cosine + `rank-bm25` + RRF) |
+> | `git clone` (shallow) repo grading (see §diagrams below) | **GitHub REST metadata-only — no clone** (SSRF-safe, host-locked to `api.github.com`; `services/code-grader`) |
 > | LangGraph / Google Agent Builder | **Google ADK** (`adk-local` / `adk-cloud-run`) |
 > | Firebase Authentication | **No auth** (open demo endpoints) |
 > | "17 BMAD items" | Per-rubric criteria; the Rapid Agent preset is **4 criteria × 25%** |

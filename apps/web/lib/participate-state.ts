@@ -13,8 +13,6 @@ import { preAuditScoreMap } from "@/lib/ranking";
 import type { SseEvent } from "@/lib/sse";
 import { AUDIT_BEATS } from "@/lib/stages";
 
-const HAT_SCALE = 10; // hat assessments are 0–10 (see agents/types.py HatAssessment)
-
 export interface BeatEntry {
   stage: string;
   detail?: string;
@@ -146,9 +144,17 @@ export function constellationNodes(rec: RunRecord): ConstellationNode[] {
     });
     let fromX = node.x;
     if (r.audit) {
-      // Convert the hat-scale over-confidence (original − corrected) into native scale.
-      const overFrac = ((r.audit.original - r.audit.corrected) / HAT_SCALE) * 1;
-      fromX = clamp01(scoreFrac + overFrac) * 2 - 1;
+      // Origin from the SAME pre-audit aggregate the 2D ScoreBar ghost uses
+      // (`originScore` = preAuditScoreMap, which sums every hat's correction),
+      // not this row's single `s.audit` delta — otherwise the 3D origin and the
+      // 2D ghost disagree when more than one hat corrected the criterion. Reuse
+      // projectCriterion (don't duplicate its x formula) so both x's stay in sync.
+      fromX = projectCriterion({
+        id: r.id,
+        scoreFrac: clamp01(r.originScore / r.scale),
+        weight: clamp01(r.weightPct / 100),
+        evidenceDepth: r.audit ? 0.3 : 0.7,
+      }).x;
     }
     return { ...node, label: r.label, corrected: r.audit != null, fromX };
   });

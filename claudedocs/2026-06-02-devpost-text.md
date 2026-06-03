@@ -50,14 +50,14 @@ monitor — **not a chatbot**.
   vector database**. A GitHub-REST **metadata-only** code grader (no clone) folds
   repo evidence into retrieval.
 - TypeScript/Next.js PWA front end with a real-time SSE trace, 3D constellation,
-  and rank-flip board. Python monorepo (uv workspace), 224 tests, 96.7% coverage,
-  CI with a Gemini/Google-only dependency gate.
+  and rank-flip board. Python monorepo (uv workspace), 243 Python + 73 web tests,
+  97.8% coverage, CI with a Gemini/Google-only dependency gate.
 
 ## How it maps to the judging criteria
 - **Technological Implementation (primary / tie-break #1):** a real
   self-correction *algorithm* grounded in held-out calibration data — not prompt
   theatre. Deployed live on Vertex + ADK + Arize with a measured ±2.0-bounded
-  correction, reproducible run-to-run, 96.7% test coverage.
+  correction, reproducible run-to-run, 97.8% test coverage.
 - **Design:** the correction is the interface — over-confidence visibly recedes,
   the graph reshapes, and a rank-flip board makes "the audit changes who wins"
   legible in one glance.

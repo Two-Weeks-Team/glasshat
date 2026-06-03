@@ -13,6 +13,8 @@ import type { ConstellationNode } from "@/lib/participate-state";
 function usePrefersReducedMotion(): boolean {
   const [reduced, setReduced] = useState(false);
   useEffect(() => {
+    // Guard: matchMedia is undefined in some test environments / older browsers.
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     setReduced(mq.matches);
     const onChange = () => setReduced(mq.matches);

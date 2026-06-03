@@ -56,7 +56,20 @@ const record: RunRecord = {
   final_score: 54,
   mode: "participant",
   created_at: "2026-05-22T00:00:00Z",
-  audit_corrections: [],
+  // A real RunRecord lists each correction in BOTH `audit_corrections` (drives
+  // the 2D ScoreBar ghost via preAuditScoreMap) and the matching score's `audit`
+  // (the 3D origin now reads the same aggregate — see L3 in participate-state).
+  audit_corrections: [
+    {
+      hat: "yellow",
+      criterion_id: "design",
+      original: 9,
+      corrected: 5,
+      mean_delta: 1.7,
+      n: 14,
+      reason: "optimism",
+    },
+  ],
   scores: [
     { criterion_id: "tech", score: 4, evidence_refs: ["deck#1"], audit: null },
     {
