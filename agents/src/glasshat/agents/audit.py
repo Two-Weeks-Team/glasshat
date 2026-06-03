@@ -263,6 +263,24 @@ class AnchorConsultant:
         return await self._backup.consult(hat, criterion_id, bucket)
 
 
+def is_genuinely_weight_aware(consultant: object) -> bool:
+    """True only when the consultant chain actually retrieves per-anchor calibration.
+
+    :class:`FallbackConsultant` satisfies the :class:`WeightAware` protocol (it
+    propagates ``for_weights`` to its children) even when *both* children are
+    flat-prior consultants — so a bare ``isinstance(c, WeightAware)`` over-reports
+    and would let the live deploy emit ``ANCHOR_RETRIEVAL`` for an audit that did
+    no anchor retrieval. Recurse the fallback chain so the audit only claims
+    anchor retrieval when a genuinely weight-aware consultant
+    (:class:`AnchorConsultant`) is in play.
+    """
+    if isinstance(consultant, FallbackConsultant):
+        return is_genuinely_weight_aware(consultant._primary) or is_genuinely_weight_aware(
+            consultant._backup
+        )
+    return isinstance(consultant, WeightAware)
+
+
 def bucket_of(evidence_depth: float) -> str:
     """Bucket evidence depth into low/mid/high (spike-D thresholds)."""
     if evidence_depth < 0.4:

@@ -26,6 +26,7 @@ from glasshat.agents.audit import (
     NullDatasetWriter,
     TableConsultant,
     WeightAware,
+    is_genuinely_weight_aware,
     make_dataset_examples,
     run_audit,
 )
@@ -275,7 +276,11 @@ async def run_evaluation(
     # so the audit consults the past evals whose rubric weighting is nearest this
     # run's. Non-weight-aware consultants (table, Phoenix-MCP) are used unchanged.
     consultant = deps.consultant
-    if isinstance(consultant, WeightAware):
+    # A FallbackConsultant is WeightAware by protocol even when both children are
+    # flat-prior — so gate the anchor-retrieval claims on *genuine* weight-awareness
+    # (a real AnchorConsultant in the chain), not the bare protocol check.
+    weight_aware = is_genuinely_weight_aware(consultant)
+    if weight_aware and isinstance(consultant, WeightAware):  # narrows for .for_weights below
         consultant = consultant.for_weights(rubric.weights_vector)
         emit(Stage.ANCHOR_RETRIEVAL, weights_vector=list(rubric.weights_vector))
     with deps.tracer.span("agent_audit", **{"glasshat.agent": "Audit"}):
@@ -287,7 +292,11 @@ async def run_evaluation(
     for c in corrections:
         emit(Stage.INCONSISTENCY_FLAGGED, hat=c.hat.value, criterion=c.criterion_id)
         emit(Stage.PHOENIX_CONSULTATION, mean_delta=c.mean_delta, n=c.n)
-        emit(Stage.ANCHOR_RETRIEVAL, n=c.n)
+        # Only a weight-aware consultant (AnchorConsultant) genuinely retrieves a
+        # per-anchor calibration; the table / Phoenix-MCP backends apply a flat
+        # prior, so claiming anchor retrieval there would be theatre. Gate it.
+        if weight_aware:
+            emit(Stage.ANCHOR_RETRIEVAL, n=c.n)
         emit(
             Stage.SCORE_CORRECTED,
             **{

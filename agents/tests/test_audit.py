@@ -12,6 +12,7 @@ from glasshat.agents.audit import (
     WeightAware,
     apply_correction,
     bucket_of,
+    is_genuinely_weight_aware,
     make_dataset_examples,
     run_audit,
 )
@@ -275,6 +276,22 @@ def test_anchor_consultant_satisfies_protocols() -> None:
     ac = AnchorConsultant([], backup=TableConsultant({}))
     assert isinstance(ac, Consultant)
     assert isinstance(ac, WeightAware)
+
+
+def test_is_genuinely_weight_aware_sees_through_fallback() -> None:
+    """The honesty gate (M2): a FallbackConsultant is WeightAware by protocol even
+    when both children are flat-prior, so the live deploy (Phoenix-MCP + table)
+    must NOT count as weight-aware — otherwise it emits anchor-retrieval theatre."""
+    table = TableConsultant({})
+    anchor = AnchorConsultant([], backup=table)
+    # A bare protocol check over-reports on the fallback wrapper...
+    assert isinstance(FallbackConsultant(primary=table, backup=table), WeightAware)
+    # ...but the genuine check sees through it.
+    assert is_genuinely_weight_aware(anchor) is True
+    assert is_genuinely_weight_aware(table) is False
+    assert is_genuinely_weight_aware(FallbackConsultant(primary=table, backup=table)) is False
+    assert is_genuinely_weight_aware(FallbackConsultant(primary=table, backup=anchor)) is True
+    assert is_genuinely_weight_aware(FallbackConsultant(primary=anchor, backup=table)) is True
 
 
 def test_anchor_selection_changes_consult_result_with_weights() -> None:

@@ -42,7 +42,7 @@ export const TIMELINE_STAGES: StageMeta[] = [
 export const WOW_BEATS: Record<string, string> = {
   audit_started: "Audit started",
   inconsistency_flagged: "Inconsistency flagged",
-  phoenix_consultation: "Consulting Phoenix (MCP) for drift statistics",
+  phoenix_consultation: "Consulting the calibration prior for drift statistics",
   anchor_retrieval: "Retrieving calibrated anchors",
   score_corrected: "Score self-corrected",
   graph_reshape: "Reshaping the evaluation graph",
