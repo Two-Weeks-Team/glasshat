@@ -18,10 +18,18 @@ phoenix = [
     "arize-phoenix-otel>=0.6",
     "openinference-instrumentation-google-adk>=0.1",
 ]
-# Arize AX (commercial, app.arize.com) tracing via OTLP to otlp.arize.com.
+# The deployed Arize-track runtime: AX tracing (OTLP -> otlp.arize.com) PLUS the
+# Phoenix-MCP client used by the audit's learning loop (CONSULTANT_BACKEND /
+# DATASET_WRITER_BACKEND = phoenix-mcp). `mcp` MUST ship in this closure or the
+# live PhoenixMcpConsultant/Writer raise ModuleNotFoundError at import and the
+# loop silently degrades to the deterministic prior (the JS `@arizeai/phoenix-mcp`
+# server is fetched at runtime via npx; this Python `mcp` SDK speaks to it over
+# stdio). `mcp`'s closure is openai/anthropic-free, so the deploy-closure leak
+# gate (.github/workflows/ci.yml) stays green.
 arize = [
     "arize-otel>=0.12",
     "openinference-instrumentation-google-adk>=0.1",
+    "mcp>=1.27",
 ]
 firestore = ["google-cloud-firestore>=2.16"]
 gcs = ["google-cloud-storage>=2.16"]

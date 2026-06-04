@@ -6,9 +6,10 @@ WORKDIR /app
 COPY . .
 # UV_EXTRAS is empty by default (mock/memory build — fast, no credentials, used by
 # CI). The real deploy passes "--extra vertex --extra arize" (see infra/deploy.sh)
-# to bake in Vertex Gemini + Arize AX OTLP — deliberately NOT the `phoenix` extra,
-# whose transitive arize-phoenix pulls openai/anthropic the deployed image must not
-# ship (enforced by the supply-chain job in .github/workflows/ci.yml).
+# to bake in Vertex Gemini + Arize AX OTLP + the Phoenix-MCP client (`mcp`, used by
+# the audit learning loop) — deliberately NOT the `phoenix` extra, whose transitive
+# arize-phoenix pulls openai/anthropic the deployed image must not ship (enforced by
+# the supply-chain job in .github/workflows/ci.yml; `mcp`'s own closure is clean).
 ARG UV_EXTRAS=""
 RUN uv sync --frozen --no-dev ${UV_EXTRAS}
 

@@ -986,6 +986,7 @@ dependencies = [
 [package.optional-dependencies]
 arize = [
     { name = "arize-otel" },
+    { name = "mcp" },
     { name = "openinference-instrumentation-google-adk" },
 ]
 firestore = [
@@ -1013,6 +1014,7 @@ requires-dist = [
     { name = "google-cloud-firestore", marker = "extra == 'firestore'", specifier = ">=2.16" },
     { name = "google-cloud-storage", marker = "extra == 'gcs'", specifier = ">=2.16" },
     { name = "google-genai", marker = "extra == 'vertex'", specifier = ">=0.3" },
+    { name = "mcp", marker = "extra == 'arize'", specifier = ">=1.27" },
     { name = "numpy", specifier = ">=2.0" },
     { name = "openinference-instrumentation-google-adk", marker = "extra == 'arize'", specifier = ">=0.1" },
     { name = "openinference-instrumentation-google-adk", marker = "extra == 'phoenix'", specifier = ">=0.1" },

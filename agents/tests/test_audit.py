@@ -1,5 +1,7 @@
 import asyncio
+import logging
 
+import pytest
 from glasshat.agents.audit import (
     AnchorConsultant,
     CalibrationAnchor,
@@ -150,6 +152,43 @@ def test_fallback_consultant_swallows_primary_exception() -> None:
     fb = FallbackConsultant(primary=_Boom(), backup=_CountingConsultant(backup_result))
     out = asyncio.run(fb.consult(Hat.YELLOW, "tech-implementation", "low"))
     assert out is backup_result
+
+
+def test_fallback_consultant_warns_once_on_primary_failure(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """A persistent primary failure (e.g. mcp absent / Phoenix unreachable) is
+    logged exactly once per instance — so a silently inert learning loop is
+    auditable in the deploy logs without per-cell (24+) spam, while behavior
+    (backup served) is unchanged."""
+
+    class _Boom:
+        async def consult(self, *_args: object) -> ConsultResult | None:
+            raise RuntimeError("phoenix outage")
+
+    backup = _CountingConsultant(ConsultResult(1.45, 9, 0.0, 10.0))
+    fb = FallbackConsultant(primary=_Boom(), backup=backup)
+    with caplog.at_level(logging.WARNING, logger="glasshat.agents.audit"):
+        asyncio.run(fb.consult(Hat.YELLOW, "tech-implementation", "low"))
+        asyncio.run(fb.consult(Hat.YELLOW, "tech-implementation", "mid"))
+    warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
+    assert len(warnings) == 1
+    assert "deterministic calibration prior" in warnings[0].getMessage()
+    assert backup.calls == 2  # behavior preserved: backup serves both cells
+
+
+def test_fallback_consultant_announces_live_primary_once(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """A genuinely live primary (warm Phoenix result) is announced once at INFO,
+    giving a positive 'live calibration in use' signal to verify against."""
+    warm = ConsultResult(mean_delta=1.2, n=12, p25=6.0, p75=8.5)
+    fb = FallbackConsultant(primary=_CountingConsultant(warm), backup=TableConsultant({}))
+    with caplog.at_level(logging.INFO, logger="glasshat.agents.audit"):
+        asyncio.run(fb.consult(Hat.YELLOW, "tech-implementation", "low"))
+        asyncio.run(fb.consult(Hat.YELLOW, "tech-implementation", "mid"))
+    announcements = [r for r in caplog.records if "primary consultant active" in r.getMessage()]
+    assert len(announcements) == 1
 
 
 def test_make_dataset_examples_signs_deltas_and_recovers_bucket() -> None:
