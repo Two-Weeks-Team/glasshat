@@ -1,180 +1,149 @@
-import Link from "next/link";
-
-import { Badge } from "@/components/Badge";
-import { HeroGraphic } from "@/components/HeroGraphic";
 import { HomeStats } from "@/components/HomeStats";
-import { PipelineDiagram } from "@/components/PipelineDiagram";
+import CinematicScroll from "@/components/landing/CinematicScroll";
+import ConstellationHero from "@/components/landing/ConstellationHero";
+import KineticScore from "@/components/landing/KineticScore";
+import RankFlipStory from "@/components/landing/RankFlipStory";
+import SpotlightFinale from "@/components/landing/SpotlightFinale";
 import { Reveal } from "@/components/Reveal";
+
+// The six de Bono agent/hat spans the engine actually emits (engine.py: each
+// agent + each hat opens its own glasshat.agent span). Honest names, not props.
+const TRACE_SPANS: { name: string; tone: string; w: string }[] = [
+  { name: "RubricSynthesizer", tone: "var(--color-accent-2)", w: "62%" },
+  { name: "BluePlanner", tone: "var(--color-accent-2)", w: "44%" },
+  { name: "SixHatPanel · White·Red·Yellow·Black·Green·Blue", tone: "var(--color-accent)", w: "100%" },
+  { name: "Audit · self-correct (YELLOW pulled back)", tone: "var(--color-warn)", w: "70%" },
+  { name: "BMADScorer", tone: "var(--color-good)", w: "38%" },
+  { name: "ReportAssembler", tone: "var(--color-accent-3)", w: "30%" },
+];
+
+/** ARIZE emphasis (full-bleed) — the Arize track is the whole point: the audit is
+ *  *auditable* because every agent, every hat, and the self-correction is a trace
+ *  span in Arize AX. Honest: AX tracing is live; the Phoenix-MCP calibration loop
+ *  is wired (the credential-free demo runs the deterministic spike-D prior). */
+function ArizeBand() {
+  return (
+    <section
+      aria-label="Observability on Arize AX — every judgment is a trace span"
+      className="relative flex min-h-[100svh] w-full items-center justify-center overflow-hidden px-6 py-24"
+    >
+      {/* connective atmosphere so the beat bleeds between neighbours */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10"
+        style={{
+          background:
+            "radial-gradient(60rem 40rem at 78% 30%, color-mix(in oklch, var(--color-accent-2) 16%, transparent), transparent 60%), linear-gradient(var(--color-bg), transparent 14%, transparent 86%, var(--color-bg))",
+        }}
+      />
+      <Reveal className="mx-auto w-full max-w-6xl">
+        <p className="font-mono text-sm uppercase tracking-[0.32em] text-[var(--color-accent-2)]">
+          Built for the Arize track
+        </p>
+        <div className="mt-5 grid items-center gap-12 lg:grid-cols-[1fr_1.05fr]">
+          <div className="flex flex-col gap-6">
+            <h2 className="font-display text-[clamp(2.4rem,6vw,5rem)] font-bold leading-[1.02] tracking-[-0.03em]">
+              The audit is{" "}
+              <span className="text-gradient font-serif-italic font-medium">auditable</span>
+              <br />— on Arize&nbsp;AX.
+            </h2>
+            <p className="max-w-xl text-[clamp(1.02rem,1.7vw,1.28rem)] leading-relaxed text-[var(--color-muted)]">
+              Glasshat doesn&apos;t hide the judgment — it traces it. Every agent, every one of the
+              six hats, and the self-correction itself opens its own{" "}
+              <strong className="font-medium text-[var(--color-ink)]">trace span in Arize&nbsp;AX</strong>.
+              You don&apos;t just get a score; you get the recorded trace of how it was judged — and
+              audited.
+            </p>
+            <p className="max-w-xl text-[0.98rem] leading-relaxed text-[var(--color-muted)]">
+              The calibration consultant reads a{" "}
+              <strong className="font-medium text-[var(--color-ink)]">Phoenix dataset over MCP</strong>{" "}
+              and writes each correction back — the learning loop is{" "}
+              <span className="text-[var(--color-accent-2)]">wired</span>; the credential-free demo
+              runs the deterministic spike-D prior, so the page never claims a live call it isn&apos;t
+              making.
+            </p>
+            <div className="flex flex-wrap gap-2.5 pt-1">
+              {["Arize AX · OpenInference/OTLP", "Phoenix · MCP (wired)", "every hat = a span"].map(
+                (b) => (
+                  <span
+                    key={b}
+                    className="rounded-full border border-[var(--color-accent-2)]/45 bg-[color-mix(in_oklch,var(--color-accent-2)_10%,transparent)] px-3.5 py-1.5 text-sm text-[var(--color-accent-2)]"
+                  >
+                    {b}
+                  </span>
+                ),
+              )}
+            </div>
+          </div>
+
+          {/* A faithful (illustrative) Arize-AX trace waterfall — the centerpiece. */}
+          <div className="elevate rounded-3xl p-7 shadow-[0_30px_80px_-40px_oklch(0.72_0.17_290/0.5)]" aria-hidden="true">
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-xs uppercase tracking-[0.2em] text-[var(--color-muted)]">
+                glasshat · trace
+              </span>
+              <span className="font-mono text-xs font-semibold text-[var(--color-accent-2)]">
+                Arize AX
+              </span>
+            </div>
+            <ul className="mt-6 flex flex-col gap-4">
+              {TRACE_SPANS.map((s) => (
+                <li key={s.name} className="flex flex-col gap-1.5">
+                  <span className="font-mono text-[0.78rem] text-[var(--color-muted)]">{s.name}</span>
+                  <span className="h-3 rounded-full bg-[var(--color-surface-2)]">
+                    <span
+                      className="block h-3 rounded-full"
+                      style={{
+                        width: s.w,
+                        background: `linear-gradient(90deg, ${s.tone}, color-mix(in oklch, ${s.tone} 45%, transparent))`,
+                      }}
+                    />
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-6 font-mono text-[0.72rem] leading-relaxed text-[var(--color-muted)]">
+              Illustrative span waterfall · real span names from the live ADK runtime.
+            </p>
+          </div>
+        </div>
+      </Reveal>
+    </section>
+  );
+}
 
 export default function Home() {
   return (
-    <main className="mx-auto flex max-w-5xl flex-col gap-20 px-6 py-16">
-      {/* ── Hero (full-bleed) ── */}
-      <section className="relative left-1/2 right-1/2 -mx-[50vw] flex min-h-[88svh] w-screen items-center overflow-hidden">
-        <div className="hero-mesh pointer-events-none absolute inset-0 -z-10" />
-        <div className="mx-auto grid w-full max-w-5xl items-center gap-10 px-6 py-12 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="flex flex-col gap-6">
-            <p className="font-mono text-xs uppercase tracking-[0.25em] text-[var(--color-accent-2)]">
-              The audit layer for AI evaluation
-            </p>
-            <h1 className="font-display font-bold leading-[1.02] text-[clamp(3rem,8vw,7rem)]">
-              Glasshat doesn&apos;t just judge.{" "}
-              <span className="text-gradient font-serif-italic font-normal">
-                It audits the judge.
-              </span>
-            </h1>
-            <p className="max-w-xl text-lg leading-relaxed text-[var(--color-muted)]">
-              An artifact-ingesting evaluation pipeline that synthesizes a rubric from the official
-              rules, grounds every sub-score in retrieved evidence, then catches its own
-              over-confidence and self-corrects — live. Not a chatbot.
-            </p>
-            <div className="flex flex-wrap gap-3 pt-1">
-              <Link
-                href="/participate"
-                className="hover-lift rounded-xl bg-[var(--color-accent-strong)] px-6 py-2.5 font-medium text-white"
-              >
-                Score a submission →
-              </Link>
-              <Link
-                href="/judge"
-                className="hover-lift rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-6 py-2.5 font-medium"
-              >
-                Judge a cohort
-              </Link>
-            </div>
-            <div className="flex flex-wrap gap-2 pt-2">
-              <Badge tone="accent">Arize track</Badge>
-              <Badge tone="muted">Gemini · Vertex AI</Badge>
-              <Badge tone="muted">Google ADK</Badge>
-              <Badge tone="muted">Phoenix + MCP</Badge>
-            </div>
+    <main className="flex flex-col">
+      <CinematicScroll />
+      {/* D · 시선 — the judge scores 9.0, then catches its own over-confidence */}
+      <div data-cine-scene>
+        <KineticScore />
+      </div>
+      {/* F · 히어로 — the evaluation constellation + the H1 and primary CTAs */}
+      <div data-cine-scene>
+        <ConstellationHero />
+      </div>
+      {/* E · 서사 — the audit changes who wins (rank-flip) */}
+      <div data-cine-scene>
+        <RankFlipStory />
+      </div>
+      {/* ARIZE · the track's whole point — the audit is auditable on Arize AX */}
+      <div data-cine-scene>
+        <ArizeBand />
+      </div>
+      {/* C · 마무리 와우 — the spotlight finale + closing CTA + honest live status */}
+      <div data-cine-scene>
+        <SpotlightFinale />
+      </div>
+      {/* Quiet factual closer — live preset counts (real data) */}
+      <section className="mx-auto w-full max-w-5xl px-6 pb-20 pt-8">
+        <Reveal>
+          <div className="elevate rounded-3xl p-6">
+            <HomeStats />
           </div>
-          <Reveal className="relative">
-            <div className="elevate rounded-3xl p-5">
-              <HeroGraphic />
-              <p className="mt-2 text-center text-xs text-[var(--color-muted)]">
-                A low-evidence, over-confident score is pulled back to the calibrated value — in real time.
-              </p>
-            </div>
-          </Reveal>
-        </div>
+        </Reveal>
       </section>
-
-      {/* ── How it works ── */}
-      <Reveal>
-        <section className="flex flex-col gap-4">
-          <h2 className="text-sm font-medium uppercase tracking-wide text-[var(--color-muted)]">
-            How it works
-          </h2>
-          <PipelineDiagram />
-        </section>
-      </Reveal>
-
-      {/* ── Bento features ── */}
-      <section className="flex flex-col gap-4">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-[var(--color-muted)]">
-          Why it&apos;s different
-        </h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <Reveal className="sm:col-span-2">
-            <article className="elevate hover-lift flex h-full flex-col justify-between rounded-3xl p-6">
-              <div>
-                <Badge tone="warn">the flagship</Badge>
-                <h3 className="mt-3 text-2xl font-semibold">It audits its own scores</h3>
-                <p className="mt-2 max-w-xl text-sm leading-relaxed text-[var(--color-muted)]">
-                  An over-confident, low-evidence assessment is pulled back toward calibrated past
-                  evaluations — validated math, not theatre — with the 3D evaluation graph reshaping
-                  as it happens.
-                </p>
-              </div>
-              <code className="mt-4 inline-block w-fit rounded-lg bg-[var(--color-surface-2)] px-3 py-1.5 font-mono text-xs text-[var(--color-muted)]">
-                clip(score − 0.8·mean_delta, p25, p75)
-              </code>
-            </article>
-          </Reveal>
-          <Reveal delayMs={80}>
-            <article className="hover-lift h-full rounded-3xl border border-[var(--color-accent)]/40 bg-[color-mix(in_oklch,var(--color-accent)_7%,var(--color-surface))] p-6">
-              <h3 className="font-medium">No vector database</h3>
-              <p className="mt-2 text-sm leading-relaxed text-[var(--color-muted)]">
-                Retrieval is in-code — Vertex embeddings + cosine + BM25 + RRF over an in-memory
-                index. No Qdrant.
-              </p>
-            </article>
-          </Reveal>
-          <Reveal delayMs={40}>
-            <article className="elevate hover-lift h-full rounded-3xl p-6">
-              <h3 className="font-medium">Rubric-aware, not one-size-fits-all</h3>
-              <p className="mt-2 text-sm leading-relaxed text-[var(--color-muted)]">
-                Each criterion maps onto a shared BMAD vocabulary, so scores stay comparable across
-                rubrics — and the official 4×25% + ordered tie-break is honored exactly.
-              </p>
-            </article>
-          </Reveal>
-          <Reveal delayMs={80}>
-            <article className="elevate hover-lift h-full rounded-3xl p-6">
-              <h3 className="font-medium">Every score is grounded</h3>
-              <p className="mt-2 text-sm leading-relaxed text-[var(--color-muted)]">
-                Six perspectives each retrieve evidence and cite it — every step is a trace span
-                (Arize AX in the live deploy, Phoenix locally) you can inspect.
-              </p>
-            </article>
-          </Reveal>
-          <Reveal delayMs={120}>
-            <article className="elevate hover-lift h-full rounded-3xl p-6">
-              <h3 className="font-medium">Built for the Arize track</h3>
-              <p className="mt-2 text-sm leading-relaxed text-[var(--color-muted)]">
-                Gemini (Vertex AI) + Google ADK, with Arize AX observability and the Phoenix MCP
-                server wired for the live-trace calibration consultant.
-              </p>
-            </article>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ── Two viewports ── */}
-      <Reveal>
-        <section className="flex flex-col gap-4">
-          <h2 className="text-sm font-medium uppercase tracking-wide text-[var(--color-muted)]">
-            One engine, two viewports
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Link
-              href="/judge"
-              className="elevate hover-lift rounded-3xl p-6 transition"
-            >
-              <h3 className="text-xl font-medium">I&apos;m a Judge</h3>
-              <p className="mt-2 text-sm text-[var(--color-muted)]">
-                Batch-rank a cohort with the ordered tie-break, override a score at the human gate,
-                and lock the official result.
-              </p>
-              <span className="mt-3 inline-block text-sm text-[var(--color-accent)]">Open /judge →</span>
-            </Link>
-            <Link
-              href="/participate"
-              className="elevate hover-lift rounded-3xl p-6 transition"
-            >
-              <h3 className="text-xl font-medium">I&apos;m a Participant</h3>
-              <p className="mt-2 text-sm text-[var(--color-muted)]">
-                Score your submission, watch the audit self-correct its over-confident axis live, and
-                iterate on your weakest criterion.
-              </p>
-              <span className="mt-3 inline-block text-sm text-[var(--color-accent)]">
-                Open /participate →
-              </span>
-            </Link>
-          </div>
-          <p className="text-sm text-[var(--color-muted)]">
-            Same engine. Different viewer. Different fairness.
-          </p>
-        </section>
-      </Reveal>
-
-      {/* ── Live presets ── */}
-      <Reveal>
-        <section className="elevate rounded-3xl p-6">
-          <HomeStats />
-        </section>
-      </Reveal>
     </main>
   );
 }

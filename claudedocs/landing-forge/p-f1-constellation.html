@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Glasshat — the evaluation constellation resolves</title>
+<style>
+  /* Self-contained: no external font. Display = grotesk-like system stack;
+     accent = system italic serif (matches the brief's preference without a CDN). */
+  :root{
+    --bg: oklch(0.15 0.021 265);
+    --bg-deep: oklch(0.11 0.02 265);
+    --surface: oklch(0.205 0.024 265);
+    --ink: oklch(0.97 0.01 265);
+    --muted: oklch(0.78 0.02 265);
+    --accent: oklch(0.72 0.17 290);      /* violet (calibrated)  */
+    --accent-solid: oklch(0.55 0.17 290);/* violet for fills under white */
+    --accent-2: oklch(0.82 0.13 205);    /* cyan  */
+    --accent-3: oklch(0.78 0.16 330);    /* magenta */
+    --good: oklch(0.78 0.15 150);        /* green */
+    --warn: oklch(0.82 0.15 85);         /* amber (over-confident) */
+    --line: oklch(0.40 0.04 265);
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ height:100%; }
+  body{
+    background: var(--bg-deep);
+    color: var(--ink);
+    font-family:"Space Grotesk","Avenir Next","Futura",ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  a{ color: inherit; }
+
+  /* ---------- Stage ---------- */
+  .stage{
+    position:relative;
+    min-height:100svh;
+    width:100%;
+    overflow:hidden;
+    isolation:isolate;
+    background:
+      radial-gradient(120% 90% at 78% 8%, oklch(0.22 0.06 290 / .55), transparent 60%),
+      radial-gradient(140% 100% at 12% 100%, oklch(0.20 0.05 330 / .40), transparent 55%),
+      radial-gradient(100% 120% at 50% -10%, oklch(0.18 0.04 205 / .35), transparent 50%),
+      var(--bg);
+  }
+  /* deep field vignette */
+  .stage::after{
+    content:"";
+    position:absolute; inset:0; z-index:3; pointer-events:none;
+    background: radial-gradient(120% 120% at 50% 42%, transparent 52%, oklch(0.08 0.02 265 / .85) 100%);
+  }
+
+  canvas#sky{
+    position:absolute; inset:0; z-index:1;
+    width:100%; height:100%; display:block;
+  }
+
+  /* ---------- Overlay content ---------- */
+  .wrap{
+    position:relative; z-index:4;
+    min-height:100svh;
+    display:grid;
+    grid-template-rows:auto 1fr auto;
+    padding: clamp(20px, 4vw, 44px);
+    gap: clamp(16px, 3vh, 36px);
+  }
+
+  header.top{
+    display:flex; align-items:center; justify-content:space-between;
+    flex-wrap:wrap; gap:14px;
+  }
+  .brand{ display:flex; align-items:center; gap:12px; }
+  .glyph{
+    width:30px; height:30px; flex:0 0 auto;
+    border-radius:8px;
+    background:
+      radial-gradient(circle at 30% 30%, var(--accent-2), transparent 55%),
+      radial-gradient(circle at 75% 70%, var(--accent-3), transparent 55%),
+      var(--accent-solid);
+    box-shadow: 0 0 22px oklch(0.55 0.17 290 / .55), inset 0 0 8px oklch(0.97 0.01 265 / .35);
+  }
+  .brand b{ font-weight:700; letter-spacing:.02em; font-size:1.02rem; }
+  .brand span{ color:var(--muted); font-size:.82rem; letter-spacing:.06em; text-transform:uppercase; }
+  .lic{
+    font-size:.78rem; color:var(--muted);
+    border:1px solid var(--line); border-radius:999px;
+    padding:5px 12px; letter-spacing:.04em;
+  }
+
+  /* center hero text — sits to the side so the constellation breathes */
+  .hero{
+    align-self:center;
+    max-width: 40ch;
+  }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size:.78rem; letter-spacing:.16em; text-transform:uppercase;
+    color: var(--accent-2);
+    margin-bottom:18px;
+  }
+  .eyebrow::before{
+    content:""; width:26px; height:1px;
+    background:linear-gradient(90deg, var(--accent-2), transparent);
+  }
+  h1{
+    font-weight:700;
+    font-size: clamp(2.1rem, 5.2vw, 3.9rem);
+    line-height:1.04;
+    letter-spacing:-0.02em;
+    margin-bottom:18px;
+  }
+  h1 em{
+    font-family:"Newsreader","Iowan Old Style", Georgia, "Times New Roman", serif;
+    font-style:italic; font-weight:500;
+    color: var(--accent);
+  }
+  .lede{
+    color: var(--muted);
+    font-size: clamp(1rem, 1.7vw, 1.18rem);
+    line-height:1.6;
+    max-width:38ch;
+  }
+  .lede strong{ color:var(--ink); font-weight:500; }
+
+  /* surfaced correction read-out (the aria-live target) */
+  .readout{
+    margin-top:22px;
+    border:1px solid var(--line);
+    border-radius:14px;
+    background: oklch(0.18 0.02 265 / .72);
+    backdrop-filter: blur(6px);
+    padding:16px 18px;
+    max-width: 34ch;
+    transition: border-color .6s ease, box-shadow .6s ease;
+  }
+  .readout.is-warn{ border-color: oklch(0.82 0.15 85 / .55); box-shadow:0 0 26px oklch(0.82 0.15 85 / .18); }
+  .readout.is-cal{  border-color: oklch(0.72 0.17 290 / .6); box-shadow:0 0 30px oklch(0.72 0.17 290 / .22); }
+  .readout .lab{
+    display:flex; align-items:center; justify-content:space-between;
+    font-size:.74rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted);
+    margin-bottom:8px;
+  }
+  .readout .lab .dot{ width:9px; height:9px; border-radius:50%; background:var(--warn); transition:background .6s ease; }
+  .readout.is-cal .lab .dot{ background:var(--accent); }
+  .readout .nums{ display:flex; align-items:baseline; gap:12px; font-variant-numeric:tabular-nums; }
+  .readout .from{
+    font-size:1.5rem; font-weight:500; color:var(--warn);
+    text-decoration:line-through; text-decoration-color: oklch(0.82 0.15 85 / .6);
+    opacity:.85; transition:opacity .5s ease;
+  }
+  .readout .arrow{ color:var(--muted); font-size:1.1rem; }
+  .readout .to{
+    font-size:2.1rem; font-weight:700; color:var(--accent); letter-spacing:-.02em;
+    text-shadow:0 0 22px oklch(0.72 0.17 290 / .35);
+  }
+  .readout .formula{
+    margin-top:12px;
+    font-family:"Newsreader","Iowan Old Style", Georgia, "Times New Roman", serif; font-style:italic;
+    font-size:.86rem; color:var(--muted); line-height:1.5;
+  }
+  .readout .formula code{ font-family:"Space Grotesk", monospace; font-style:normal; color: var(--accent-2); }
+  .illus{ display:block; margin-top:8px; font-size:.72rem; color:var(--muted); opacity:.85; letter-spacing:.03em; }
+
+  /* ---------- footer / honest links ---------- */
+  footer.bottom{
+    display:flex; align-items:center; justify-content:space-between;
+    flex-wrap:wrap; gap:14px 24px;
+    font-size:.86rem; color:var(--muted);
+    border-top:1px solid var(--line);
+    padding-top:18px;
+  }
+  footer.bottom nav{ display:flex; gap:10px 18px; flex-wrap:wrap; align-items:center; }
+  footer.bottom a{
+    text-decoration:none; color:var(--ink); opacity:.92;
+    border-bottom:1px solid transparent; padding-bottom:1px;
+    transition:border-color .2s ease, color .2s ease;
+  }
+  footer.bottom a:hover, footer.bottom a:focus-visible{
+    border-color: var(--accent); color: var(--ink); outline:none;
+  }
+  footer.bottom a:focus-visible{ outline:2px solid var(--accent-2); outline-offset:3px; border-radius:3px; }
+  .health{
+    display:inline-flex; align-items:center; gap:7px;
+    font-variant-numeric:tabular-nums;
+  }
+  .health b{ color:var(--good); font-weight:500; }
+  .pulse{ width:8px; height:8px; border-radius:50%; background:var(--good); box-shadow:0 0 0 0 oklch(0.78 0.15 150 / .6); animation: pulse 2.4s ease-out infinite; }
+  @keyframes pulse{ 0%{ box-shadow:0 0 0 0 oklch(0.78 0.15 150 / .55);} 70%{ box-shadow:0 0 0 9px oklch(0.78 0.15 150 / 0);} 100%{ box-shadow:0 0 0 0 oklch(0.78 0.15 150 / 0);} }
+
+  /* legend chips */
+  .legend{
+    display:flex; gap:8px 14px; flex-wrap:wrap; align-items:center;
+    font-size:.74rem; color:var(--muted); letter-spacing:.02em;
+  }
+  .legend .chip{ display:inline-flex; align-items:center; gap:6px; }
+  .legend .sw{ width:9px; height:9px; border-radius:50%; }
+
+  /* layout: text overlaps lower-left, constellation owns the field */
+  @media (min-width: 880px){
+    .hero{ justify-self:start; align-self:end; padding-bottom: 2vh; }
+  }
+  @media (max-width: 879px){
+    .hero{ justify-self:center; text-align:left; }
+    .stage::after{ background: radial-gradient(140% 120% at 50% 30%, transparent 46%, oklch(0.08 0.02 265 / .9) 100%); }
+  }
+
+  .sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+
+  /* reduced motion: kill the soft pulses too */
+  @media (prefers-reduced-motion: reduce){
+    .pulse{ animation:none; }
+  }
+</style>
+</head>
+<body>
+  <main class="stage" aria-label="Glasshat evaluation constellation: scored criteria draw their own lines and resolve into a star map, then the over-confident Yellow-hat node is pulled back from its amber over-scored position to the violet calibrated position.">
+    <canvas id="sky" aria-hidden="true"></canvas>
+
+    <div class="wrap">
+      <header class="top">
+        <div class="brand">
+          <span class="glyph" aria-hidden="true"></span>
+          <div>
+            <b>Glasshat</b><br />
+            <span>it audits the judge — including itself</span>
+          </div>
+        </div>
+        <span class="lic">Apache-2.0 · open source</span>
+      </header>
+
+      <section class="hero">
+        <span class="eyebrow">Evaluation constellation</span>
+        <h1>The judge catches its own <em>over-confidence</em>, live.</h1>
+        <p class="lede">
+          Each star is a scored criterion — placed by <strong>score · weight · evidence depth</strong>.
+          The six-hat panel draws its own lines. Then the thinly-evidenced
+          <strong>Yellow “optimism”</strong> node, glowing too far out, is pulled back to where the
+          evidence actually supports.
+        </p>
+
+        <div class="readout" id="readout" aria-live="polite">
+          <div class="lab">
+            <span id="ro-state">Yellow hat · over-confident</span>
+            <span class="dot" aria-hidden="true"></span>
+          </div>
+          <div class="nums" aria-hidden="true">
+            <span class="from" id="ro-from">9.0</span>
+            <span class="arrow">→</span>
+            <span class="to" id="ro-to">9.0</span>
+          </div>
+          <p class="formula">
+            <code>clip(score − 0.8·mean_delta, p25, p75)</code> · ±2.0 cap,
+            from a prior recovered from held-out spike-D anchors.
+          </p>
+          <span class="illus">Illustrative scores — recovery shown for the scene.</span>
+        </div>
+      </section>
+
+      <footer class="bottom">
+        <div class="legend" aria-label="Constellation legend">
+          <span class="chip"><span class="sw" style="background:var(--ink)"></span>White</span>
+          <span class="chip"><span class="sw" style="background:var(--accent-3)"></span>Red</span>
+          <span class="chip"><span class="sw" style="background:var(--warn)"></span>Yellow → <span class="sw" style="background:var(--accent)"></span>calibrated</span>
+          <span class="chip"><span class="sw" style="background:var(--muted)"></span>Black</span>
+          <span class="chip"><span class="sw" style="background:var(--good)"></span>Green</span>
+          <span class="chip"><span class="sw" style="background:var(--accent-2)"></span>Blue</span>
+        </div>
+        <nav aria-label="Glasshat links">
+          <a href="https://glasshat-web-o366v7tl2q-uc.a.run.app/judge">/judge — batch rank &amp; rank-flip</a>
+          <a href="https://glasshat-web-o366v7tl2q-uc.a.run.app/participate">/participate — live self-correct</a>
+          <span class="health">
+            <span class="pulse" aria-hidden="true"></span>
+            <a href="https://glasshat-api-o366v7tl2q-uc.a.run.app/health">API health</a>
+            <b>{"status":"ok"}</b>
+          </span>
+        </nav>
+      </footer>
+    </div>
+  </main>
+
+<script>
+(function(){
+  "use strict";
+  var canvas = document.getElementById("sky");
+  var ctx = canvas.getContext("2d");
+  var stage = document.querySelector(".stage");
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // ---- color tokens (resolved once for canvas, since OKLCH on canvas needs literal strings) ----
+  var C = {
+    ink:   "rgb(244,244,250)",
+    muted: "rgb(176,180,200)",
+    line:  "rgba(150,158,200,0.20)",
+    lineHot:"rgba(170,150,255,0.55)",
+    violet:"rgb(168,128,246)",
+    cyan:  "rgb(120,210,232)",
+    magenta:"rgb(236,150,214)",
+    green: "rgb(120,214,160)",
+    amber: "rgb(244,196,96)",
+    white: "rgb(238,240,250)"
+  };
+
+  // ---- constellation definition: 6 hat criteria placed by (score, weight, evidence) ----
+  // x,y are FRACTIONS of the field (0..1). r scales with weight; evidence drives line strength.
+  // The Yellow node has TWO positions: over-confident origin (warm/far) and calibrated home.
+  var NODES = [
+    { id:"white",  name:"White · facts",     x:0.30, y:0.24, w:1.10, ev:0.92, col:C.white,   score:8.2 },
+    { id:"red",    name:"Red · intuition",   x:0.62, y:0.18, w:0.95, ev:0.70, col:C.magenta, score:7.4 },
+    { id:"black",  name:"Black · caution",   x:0.74, y:0.46, w:1.15, ev:0.85, col:C.muted,   score:8.6 },
+    { id:"green",  name:"Green · creativity", x:0.48, y:0.62, w:1.00, ev:0.80, col:C.green,  score:7.9 },
+    { id:"blue",   name:"Blue · process",    x:0.24, y:0.54, w:1.05, ev:0.88, col:C.cyan,    score:8.1 },
+    // Yellow: over-confident origin sits far out (top-right, isolated); calibrated home pulls inward.
+    { id:"yellow", name:"Yellow · optimism", x:0.66, y:0.74, w:0.92, ev:0.34,
+      ox:0.885, oy:0.135, col:C.amber, colCal:C.violet, score:9.0, scoreCal:7.6, special:true }
+  ];
+
+  // edges of the constellation (which lines the stars draw to each other)
+  var EDGES = [
+    ["white","red"],["white","blue"],["red","black"],["black","green"],
+    ["blue","green"],["green","yellow"],["black","yellow"],["white","green"]
+  ];
+
+  var DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  var W = 0, H = 0;
+  function resize(){
+    W = stage.clientWidth; H = stage.clientHeight;
+    canvas.width = Math.floor(W * DPR);
+    canvas.height = Math.floor(H * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+  resize();
+  window.addEventListener("resize", resize);
+
+  // ---- drifting background star field ----
+  var STAR_N = Math.round(Math.min(220, Math.max(110, (W*H)/9000)));
+  var stars = [];
+  function seedStars(){
+    stars = [];
+    var n = Math.round(Math.min(240, Math.max(110, (W*H)/9000)));
+    for (var i=0;i<n;i++){
+      stars.push({
+        x: Math.random(), y: Math.random(),
+        z: 0.3 + Math.random()*0.7,            // depth → size + drift
+        tw: Math.random()*Math.PI*2,           // twinkle phase
+        tws: 0.4 + Math.random()*1.1           // twinkle speed
+      });
+    }
+  }
+  seedStars();
+  window.addEventListener("resize", seedStars);
+
+  // ---- helpers ----
+  function lerp(a,b,t){ return a + (b-a)*t; }
+  function easeInOut(t){ return t<0.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2; }
+  function easeOut(t){ return 1-Math.pow(1-t,3); }
+  function clamp01(t){ return t<0?0:t>1?1:t; }
+
+  function nodeById(id){ for (var i=0;i<NODES.length;i++) if (NODES[i].id===id) return NODES[i]; return null; }
+
+  // current pixel position of a node given the global phase
+  function nodePos(n, pullT){
+    var fx = n.x, fy = n.y;
+    if (n.special){
+      // yellow travels from over-confident origin → calibrated home as pullT goes 0→1
+      var e = easeInOut(pullT);
+      fx = lerp(n.ox, n.x, e);
+      fy = lerp(n.oy, n.y, e);
+    }
+    return { x: fx*W, y: fy*H };
+  }
+
+  // ---- animation phases (autonomous) ----
+  // p1: stars settle/appear (0..1)   p2: lines draw (0..1)   p3: yellow pull-back (0..1)
+  var t0 = null;
+  var T_SETTLE = 1400;   // star field calms
+  var T_DRAW   = 1700;   // lines draw themselves
+  var T_HOLD   = 700;    // hold the over-confident constellation
+  var T_PULL   = 2200;   // yellow recedes to calibrated
+  var started = false;
+  var finished = false;
+
+  // readout DOM
+  var roEl   = document.getElementById("readout");
+  var roState= document.getElementById("ro-state");
+  var roFrom = document.getElementById("ro-from");
+  var roTo   = document.getElementById("ro-to");
+  var yNode  = nodeById("yellow");
+  var announcedCal = false;
+
+  function setReadout(pullT){
+    // "to" number recedes from score → scoreCal during the pull
+    var cur = lerp(yNode.score, yNode.scoreCal, easeInOut(pullT));
+    roTo.textContent = cur.toFixed(1);
+    roFrom.textContent = yNode.score.toFixed(1);
+    if (pullT <= 0.02){
+      roEl.classList.add("is-warn"); roEl.classList.remove("is-cal");
+      roState.textContent = "Yellow hat · over-confident";
+    } else if (pullT >= 0.985){
+      roEl.classList.remove("is-warn"); roEl.classList.add("is-cal");
+      if (!announcedCal){
+        roState.textContent = "Yellow hat · calibrated";
+        // re-assert aria-live so the final corrected score is surfaced to AT
+        roEl.setAttribute("aria-live","polite");
+        announcedCal = true;
+      }
+    } else {
+      roEl.classList.add("is-warn"); roEl.classList.remove("is-cal");
+      roState.textContent = "Yellow hat · pulling back…";
+    }
+  }
+
+  // draw the whole frame
+  function draw(now){
+    if (t0 === null) t0 = now;
+    var t = now - t0;
+    ctx.clearRect(0,0,W,H);
+
+    // phase fractions
+    var p1 = clamp01(t / T_SETTLE);
+    var p2 = clamp01((t - T_SETTLE) / T_DRAW);
+    var pullStart = T_SETTLE + T_DRAW + T_HOLD;
+    var p3 = clamp01((t - pullStart) / T_PULL);
+
+    // ---- background stars ----
+    for (var i=0;i<stars.length;i++){
+      var s = stars[i];
+      // gentle drift
+      s.x += Math.sin(now*0.00002 + s.tw) * 0.00006 * s.z;
+      s.y += 0.00003 * s.z;
+      if (s.y > 1.02) s.y = -0.02;
+      s.tw += 0.016 * s.tws;
+      var sx = s.x*W, sy = s.y*H;
+      var twAmt = reduce ? 0.7 : (0.55 + 0.45*Math.sin(s.tw));
+      var appear = easeOut(clamp01(p1*1.3 - s.z*0.2));
+      var rad = (0.5 + s.z*1.4) * (0.6 + 0.4*twAmt);
+      var alpha = (0.18 + 0.55*s.z*twAmt) * appear;
+      ctx.beginPath();
+      ctx.arc(sx, sy, rad, 0, Math.PI*2);
+      ctx.fillStyle = "rgba(225,228,248," + alpha.toFixed(3) + ")";
+      ctx.fill();
+    }
+
+    // ---- constellation edges (draw themselves; stroke grows with p2) ----
+    // edges progressively appear; each edge mapped to a slice of p2
+    var nE = EDGES.length;
+    for (var e=0;e<nE;e++){
+      var seg = e / nE;
+      var local = clamp01((p2 - seg) / (1/nE * 1.6));      // this edge's own draw progress
+      if (local <= 0) continue;
+      var a = nodeById(EDGES[e][0]);
+      var b = nodeById(EDGES[e][1]);
+      var pa = nodePos(a, p3), pb = nodePos(b, p3);
+      // line ends partway while drawing
+      var ex = lerp(pa.x, pb.x, easeOut(local));
+      var ey = lerp(pa.y, pb.y, easeOut(local));
+      // evidence depth → opacity; thin-evidence edges (touching yellow) are fainter
+      var ev = Math.min(a.ev, b.ev);
+      var touchesYellow = (a.special || b.special);
+      var baseA = (0.10 + 0.30*ev);
+      // while yellow is over-confident the connecting line strains brighter/amber; calms on pull
+      var strain = touchesYellow ? lerp(0.55, 0.0, p3) : 0;
+      ctx.beginPath();
+      ctx.moveTo(pa.x, pa.y);
+      ctx.lineTo(ex, ey);
+      ctx.lineWidth = 1;
+      if (strain > 0){
+        ctx.strokeStyle = "rgba(244,196,96," + (baseA + 0.25*strain).toFixed(3) + ")";
+        ctx.shadowColor = "rgba(244,196,96,0.5)";
+        ctx.shadowBlur = 8*strain;
+      } else {
+        ctx.strokeStyle = "rgba(168,150,250," + baseA.toFixed(3) + ")";
+        ctx.shadowColor = "rgba(150,150,255,0.35)";
+        ctx.shadowBlur = touchesYellow ? 4 : 2.5;
+      }
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+
+    // ---- a faint "ghost" trail showing where yellow used to be (over-confident origin) ----
+    if (p3 > 0.02 && p3 < 0.999){
+      var origin = { x: yNode.ox*W, y: yNode.oy*H };
+      var home = nodePos(yNode, p3);
+      ctx.beginPath();
+      ctx.moveTo(origin.x, origin.y);
+      ctx.lineTo(home.x, home.y);
+      ctx.setLineDash([2,6]);
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = "rgba(244,196,96," + (0.30*(1-p3)).toFixed(3) + ")";
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // ---- nodes ----
+    var nodeAppear = easeOut(clamp01((p2 - 0.05) * 1.4));
+    for (var k=0;k<NODES.length;k++){
+      var n = NODES[k];
+      var pos = nodePos(n, p3);
+      var r = (3.4 + 3.0*n.w);
+      var col = n.col;
+      var glowR = r*3.4;
+      var glowA = 0.28;
+
+      if (n.special){
+        // amber → violet color shift as it's pulled back; brighter/larger when over-confident
+        var e3 = easeInOut(p3);
+        col = blend(n.col, n.colCal, e3);
+        // over-confident = oversized, hot halo; calms to calibrated
+        r = lerp(r*1.6, r*1.0, e3);
+        glowR = lerp(r*5.5, r*3.2, e3);
+        glowA = lerp(0.55, 0.30, e3);
+      }
+
+      // halo
+      var g = ctx.createRadialGradient(pos.x,pos.y,0,pos.x,pos.y,glowR);
+      g.addColorStop(0, withAlpha(col, glowA*nodeAppear));
+      g.addColorStop(1, withAlpha(col, 0));
+      ctx.beginPath();
+      ctx.arc(pos.x,pos.y, glowR, 0, Math.PI*2);
+      ctx.fillStyle = g; ctx.fill();
+
+      // core
+      ctx.beginPath();
+      ctx.arc(pos.x,pos.y, r*nodeAppear, 0, Math.PI*2);
+      ctx.fillStyle = withAlpha(col, 0.96*nodeAppear);
+      ctx.fill();
+      // crisp center
+      ctx.beginPath();
+      ctx.arc(pos.x,pos.y, Math.max(1, r*0.4)*nodeAppear, 0, Math.PI*2);
+      ctx.fillStyle = "rgba(255,255,255," + (0.85*nodeAppear).toFixed(3) + ")";
+      ctx.fill();
+    }
+
+    // ---- sync readout to pull progress ----
+    setReadout(p3);
+
+    if (p3 >= 1) finished = true;
+    if (!finished) raf = requestAnimationFrame(draw);
+  }
+
+  // ---- color utilities (rgb string blend) ----
+  function parseRGB(str){
+    var m = str.match(/(\d+\.?\d*)/g);
+    return [parseFloat(m[0]), parseFloat(m[1]), parseFloat(m[2])];
+  }
+  function blend(a,b,t){
+    var ca=parseRGB(a), cb=parseRGB(b);
+    return "rgb(" + Math.round(lerp(ca[0],cb[0],t)) + "," +
+                    Math.round(lerp(ca[1],cb[1],t)) + "," +
+                    Math.round(lerp(ca[2],cb[2],t)) + ")";
+  }
+  function withAlpha(rgb, a){
+    var c = parseRGB(rgb);
+    return "rgba(" + c[0] + "," + c[1] + "," + c[2] + "," + clamp01(a).toFixed(3) + ")";
+  }
+
+  var raf = null;
+
+  // ---- reduced motion: render the fully-resolved, already-corrected scene ONCE, static ----
+  function drawStatic(){
+    t0 = -1e9;             // force all phases complete
+    // manually composite final frame: p1=p2=p3=1
+    ctx.clearRect(0,0,W,H);
+    // static stars (no twinkle churn)
+    for (var i=0;i<stars.length;i++){
+      var s = stars[i];
+      var sx=s.x*W, sy=s.y*H;
+      var rad=(0.5+s.z*1.4);
+      ctx.beginPath(); ctx.arc(sx,sy,rad,0,Math.PI*2);
+      ctx.fillStyle = "rgba(225,228,248," + (0.18+0.45*s.z).toFixed(3) + ")"; ctx.fill();
+    }
+    // edges fully drawn, calm violet
+    for (var e=0;e<EDGES.length;e++){
+      var a=nodeById(EDGES[e][0]), b=nodeById(EDGES[e][1]);
+      var pa=nodePos(a,1), pb=nodePos(b,1);
+      var ev=Math.min(a.ev,b.ev);
+      ctx.beginPath(); ctx.moveTo(pa.x,pa.y); ctx.lineTo(pb.x,pb.y);
+      ctx.lineWidth=1; ctx.strokeStyle="rgba(168,150,250," + (0.10+0.30*ev).toFixed(3) + ")"; ctx.stroke();
+    }
+    // nodes at calibrated rest (yellow already violet, at home)
+    for (var k=0;k<NODES.length;k++){
+      var n=NODES[k]; var pos=nodePos(n,1);
+      var r=(3.4+3.0*n.w); var col = n.special ? n.colCal : n.col;
+      var glowR=r*3.2;
+      var g=ctx.createRadialGradient(pos.x,pos.y,0,pos.x,pos.y,glowR);
+      g.addColorStop(0, withAlpha(col,0.30)); g.addColorStop(1, withAlpha(col,0));
+      ctx.beginPath(); ctx.arc(pos.x,pos.y,glowR,0,Math.PI*2); ctx.fillStyle=g; ctx.fill();
+      ctx.beginPath(); ctx.arc(pos.x,pos.y,r,0,Math.PI*2); ctx.fillStyle=withAlpha(col,0.96); ctx.fill();
+      ctx.beginPath(); ctx.arc(pos.x,pos.y,Math.max(1,r*0.4),0,Math.PI*2); ctx.fillStyle="rgba(255,255,255,0.85)"; ctx.fill();
+    }
+    // readout at final calibrated value
+    roFrom.textContent = yNode.score.toFixed(1);
+    roTo.textContent   = yNode.scoreCal.toFixed(1);
+    roEl.classList.add("is-cal");
+    roState.textContent = "Yellow hat · calibrated";
+  }
+
+  function start(){
+    if (started) return; started = true;
+    if (reduce){ drawStatic(); return; }
+    t0 = null;
+    raf = requestAnimationFrame(draw);
+  }
+
+  // ---- autonomous arrival: IntersectionObserver + safety timer (never hover/click) ----
+  if (reduce){
+    // resolve immediately when laid out
+    requestAnimationFrame(function(){ resize(); seedStars(); start(); });
+  } else if ("IntersectionObserver" in window){
+    var io = new IntersectionObserver(function(entries){
+      for (var i=0;i<entries.length;i++){
+        if (entries[i].isIntersecting){ start(); io.disconnect(); break; }
+      }
+    }, { threshold: 0.35 });
+    io.observe(stage);
+    // safety timer in case it's already in view / observer never fires
+    setTimeout(start, 900);
+  } else {
+    setTimeout(start, 700);
+  }
+
+  // keep static frame correct on resize after completion
+  window.addEventListener("resize", function(){
+    if (reduce && started){ drawStatic(); }
+    else if (finished){ // recompose final live frame statically on resize
+      reduce ? drawStatic() : (function(){ finished=false; t0=null; raf=requestAnimationFrame(function loop(now){
+        if (t0===null) t0=now - (T_SETTLE+T_DRAW+T_HOLD+T_PULL); draw(now);
+      }); })();
+    }
+  });
+})();
+</script>
+</body>
+</html>

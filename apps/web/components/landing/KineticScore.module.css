@@ -1,0 +1,376 @@
+/* KineticScore — the "D 시선" attention hook.
+   A colossal over-confident score (9.0, amber) assembles from flying shards,
+   holds, then odometer-rolls down to the calibrated 7.6 (violet), with a ±2.0
+   cap delta bar and a verdict caption. The clip(...) math streams as fine
+   micro-type behind the number.
+
+   Tokens are reused from app/globals.css (@theme): the mockup's bespoke palette
+   maps to the design system —
+     --violet      → var(--color-accent)         (0.72 0.17 290)
+     --violet-deep → var(--color-accent-strong)  (0.55 0.17 290)
+     --cyan        → var(--color-accent-2)
+     --magenta     → var(--color-accent-3)
+     --amber       → var(--color-warn)
+     --green       → var(--color-good)
+   Fonts come from next/font on <html>: var(--font-display) / var(--font-serif).
+
+   Perf: every animated property here is transform/opacity (composite-only) —
+   no width/height/layout animation drives the scene. The bar `fill` width
+   transition runs once on a small element. Continuous motion (micro-type drift)
+   is low-amplitude and only runs while the section is in view (the component
+   toggles `.running`), so Speed Index stays settled. */
+
+.section {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  min-height: 100svh;
+  width: 100%;
+  overflow: hidden;
+  padding: clamp(2rem, 6vw, 4rem) clamp(1.1rem, 4vw, 3rem);
+  text-align: center;
+}
+
+/* ── connective gradient atmosphere: soft fade to --color-bg at the bottom
+   edge so this opening beat bleeds into the hero below with no hard seam. ── */
+.section::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 3;
+  height: clamp(8rem, 22vh, 18rem);
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    color-mix(in oklch, var(--color-bg) 55%, transparent) 58%,
+    var(--color-bg) 100%
+  );
+}
+
+/* ── decorative grain / vignette ── */
+.field {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    115deg,
+    oklch(1 0 0 / 0.012) 0 2px,
+    transparent 2px 5px
+  );
+  mix-blend-mode: screen;
+  opacity: 0.6;
+}
+.field::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  /* no --bg-2 token in the system; this is the deep ink-2 from the mockup. */
+  box-shadow: inset 0 0 22vmax 6vmax oklch(0.12 0.02 265);
+}
+
+/* ── streaming micro-type behind the number ── */
+.microtype {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+  font-family: var(--font-display), ui-monospace, monospace;
+  font-size: clamp(8px, 1.05vw, 13px);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: color-mix(in oklch, var(--color-accent-2) 60%, transparent);
+  /* Static-resolved default: faint, no drift. The component fades/animates it
+     up to 0.85 only when the scene runs. */
+  opacity: 0.4;
+}
+.stream {
+  position: absolute;
+  white-space: nowrap;
+  will-change: transform;
+}
+.s1 {
+  top: 26%;
+  left: 0;
+}
+.s2 {
+  top: 70%;
+  left: 0;
+  color: color-mix(in oklch, var(--color-accent) 62%, transparent);
+}
+.s3 {
+  top: 48%;
+  left: 0;
+  color: color-mix(in oklch, var(--color-accent-3) 48%, transparent);
+  font-size: 0.82em;
+}
+
+/* Drift only while the section is in view (low amplitude: -50% of the
+   duplicated, seamless string). */
+.running .s1 {
+  animation: driftL 26s linear infinite;
+}
+.running .s2 {
+  animation: driftR 31s linear infinite;
+}
+.running .s3 {
+  animation: driftL 38s linear infinite;
+}
+@keyframes driftL {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+@keyframes driftR {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* ── stage: the type IS the picture ── */
+.stage {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  max-width: min(72rem, 100%);
+}
+
+.kicker {
+  font-size: clamp(0.82rem, 1.5vw, 1.15rem);
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  margin: 0 0 clamp(0.5rem, 1.6vw, 1.3rem);
+}
+.kicker b {
+  color: var(--color-ink);
+  font-weight: 500;
+  letter-spacing: 0.2em;
+}
+
+/* the colossal numeral */
+.score {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  line-height: 0.78;
+  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(9rem, 42vw, 34rem);
+  letter-spacing: -0.045em;
+  /* Static-resolved default = calibrated violet. The component switches to the
+     raw amber start only when it is about to animate. */
+  color: var(--color-accent);
+  --glowc: var(--color-accent);
+  text-shadow: 0 0 0.24em color-mix(in oklch, var(--color-accent) 40%, transparent);
+  filter: drop-shadow(
+    0 0.025em 0.14em color-mix(in oklch, var(--glowc) 44%, transparent)
+  );
+  transition: color 1100ms cubic-bezier(0.5, 0, 0.2, 1);
+}
+.score.raw {
+  color: var(--color-warn);
+  --glowc: var(--color-warn);
+  text-shadow: 0 0 0.22em color-mix(in oklch, var(--color-warn) 36%, transparent);
+}
+
+/* odometer columns */
+.digit {
+  position: relative;
+  display: inline-block;
+  height: 1em;
+  overflow: hidden;
+  vertical-align: baseline;
+}
+.reel {
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
+}
+.reel.animate {
+  transition: transform 1300ms cubic-bezier(0.76, 0, 0.18, 1);
+}
+.reel span {
+  height: 1em;
+  display: grid;
+  place-items: center;
+  line-height: 1;
+}
+.dotSep {
+  padding: 0 0.02em;
+  opacity: 0.85;
+}
+
+/* letterform shards that fly in and assemble on arrival */
+.shardwrap {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.shard {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  color: color-mix(in oklch, var(--color-warn) 80%, var(--color-ink));
+  opacity: 0;
+  transform: translate(-50%, -50%)
+    translate(var(--sx), var(--sy)) rotate(var(--sr)) scale(0.6);
+  will-change: transform, opacity;
+}
+.assembling .shard {
+  animation: shardIn 900ms cubic-bezier(0.3, 0.7, 0.2, 1) forwards;
+  animation-delay: var(--sd);
+}
+@keyframes shardIn {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%)
+      translate(var(--sx), var(--sy)) rotate(var(--sr)) scale(0.6);
+  }
+  60% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translate(0, 0) rotate(0) scale(1);
+  }
+}
+
+/* ±2.0 cap delta bar */
+.deltabar {
+  margin: clamp(1.1rem, 3.2vw, 2.4rem) auto 0;
+  width: min(680px, 88vw);
+  /* Static-resolved default = shown/filled. The component hides it (.pending)
+     only to replay the streamed fill when motion is allowed. */
+  opacity: 1;
+  transition: opacity 700ms ease;
+}
+.deltabar.pending {
+  opacity: 0;
+}
+.track {
+  position: relative;
+  height: 4px;
+  border-radius: 4px;
+  background: color-mix(in oklch, var(--color-muted) 28%, transparent);
+}
+.cap {
+  position: absolute;
+  top: -6px;
+  width: 2px;
+  height: 16px;
+  background: var(--color-muted);
+  border-radius: 2px;
+}
+.capL {
+  left: 0;
+}
+.capR {
+  right: 0;
+}
+.fill {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  height: 4px;
+  /* |9.0 − 7.6| = 1.4 over the ±2.0 cap → 35% of the half-track. */
+  width: 35%;
+  background: linear-gradient(90deg, var(--color-warn), var(--color-accent));
+  border-radius: 4px;
+}
+.deltabar.pending .fill {
+  width: 0;
+}
+/* When replaying, the fill grows back to 35% as the bar fades in. */
+.deltabar:not(.pending) .fill {
+  transition: width 1200ms cubic-bezier(0.76, 0, 0.18, 1) 200ms;
+}
+.labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+  font-size: clamp(0.62rem, 0.95vw, 0.78rem);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+.labels .mid {
+  font-family: var(--font-serif), Georgia, serif;
+  font-style: italic;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--color-accent-2);
+}
+
+/* verdict caption */
+.verdict {
+  margin-top: clamp(1rem, 2.6vw, 1.9rem);
+  min-height: 1.4em;
+  font-size: clamp(1.05rem, 2.3vw, 1.65rem);
+  color: var(--color-muted);
+  letter-spacing: 0.01em;
+}
+.tag {
+  font-size: 0.66em;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  padding: 0.18em 0.6em;
+  border: 1px solid color-mix(in oklch, var(--color-muted) 26%, transparent);
+  border-radius: 999px;
+  vertical-align: 0.16em;
+  margin-right: 0.5em;
+  color: var(--color-ink);
+  transition:
+    color 600ms ease,
+    border-color 600ms ease;
+}
+.verdict.calibrated .tag {
+  color: var(--color-accent);
+  border-color: color-mix(in oklch, var(--color-accent) 55%, transparent);
+}
+.verdict strong {
+  color: var(--color-ink);
+  font-weight: 500;
+}
+
+.illus {
+  margin-top: 0.8rem;
+  font-size: clamp(0.66rem, 1vw, 0.78rem);
+  color: var(--color-muted);
+  letter-spacing: 0.04em;
+}
+.formula {
+  font-family: var(--font-serif), Georgia, serif;
+  font-style: italic;
+  color: var(--color-accent-2);
+}
+
+/* ── reduced motion: the resolved, static, calibrated state (the JS never
+   flips into the raw/animating classes, so the default styling above already
+   IS the rest state; this only freezes the streaming drift for safety). ── */
+@media (prefers-reduced-motion: reduce) {
+  .running .s1,
+  .running .s2,
+  .running .s3 {
+    animation: none;
+  }
+  .reel.animate {
+    transition: none;
+  }
+  .deltabar:not(.pending) .fill {
+    transition: none;
+  }
+}

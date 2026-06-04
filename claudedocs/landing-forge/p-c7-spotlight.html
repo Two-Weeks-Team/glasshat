@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Glasshat — the judge catches its own over-confidence</title>
+<style>
+  :root{
+    --bg:oklch(0.15 0.021 265);
+    --bg-deep:oklch(0.10 0.018 265);
+    --surface:oklch(0.205 0.024 265);
+    --ink:oklch(0.97 0.01 265);
+    --muted:oklch(0.72 0.02 265);
+    --muted-2:oklch(0.80 0.018 265);
+    --accent:oklch(0.72 0.17 290);     /* violet — calibrated */
+    --accent-solid:oklch(0.55 0.17 290);
+    --accent-2:oklch(0.82 0.13 205);   /* cyan */
+    --accent-3:oklch(0.78 0.16 330);   /* magenta */
+    --good:oklch(0.78 0.15 150);
+    --warn:oklch(0.82 0.15 85);        /* amber — over-confident */
+    --warn-solid:oklch(0.62 0.15 85);
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--bg-deep);
+    color:var(--ink);
+    font-family:"Space Grotesk","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  a{color:var(--accent-2);text-decoration:none}
+  a:hover,a:focus-visible{text-decoration:underline;text-underline-offset:3px}
+  a:focus-visible{outline:2px solid var(--accent-2);outline-offset:3px;border-radius:3px}
+
+  /* ===================== STAGE ===================== */
+  .stage{
+    position:relative;
+    width:100%;
+    min-height:100svh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    /* near-black chiaroscuro stage, faint top haze */
+    background:
+      radial-gradient(120% 80% at 50% -10%, oklch(0.20 0.03 265 / 0.55), transparent 60%),
+      radial-gradient(140% 120% at 50% 120%, var(--bg) 0%, var(--bg-deep) 70%);
+    isolation:isolate;
+  }
+
+  /* volumetric light cone descending from above-center */
+  .cone{
+    position:absolute;
+    top:-14%;
+    left:50%;
+    width:min(78vw,760px);
+    height:122%;
+    transform:translateX(-50%);
+    pointer-events:none;
+    z-index:1;
+    /* a hard-edged trapezoid feel via clip + soft gradient body */
+    background:
+      conic-gradient(from 180deg at 50% 0%,
+        transparent 0deg,
+        transparent 158deg,
+        oklch(0.95 0.04 90 / 0.10) 168deg,
+        oklch(0.97 0.03 90 / 0.20) 180deg,
+        oklch(0.95 0.04 90 / 0.10) 192deg,
+        transparent 202deg,
+        transparent 360deg);
+    -webkit-mask-image:linear-gradient(to bottom, oklch(0 0 0 / 0.95) 0%, oklch(0 0 0 / 0.55) 55%, transparent 95%);
+            mask-image:linear-gradient(to bottom, oklch(0 0 0 / 0.95) 0%, oklch(0 0 0 / 0.55) 55%, transparent 95%);
+    filter:blur(2px);
+    opacity:0;
+    transform-origin:50% 0;
+    /* starts swept to the side, swings in */
+    rotate:-26deg;
+  }
+
+  /* the bright disc the spot throws on the floor / catch on the subject */
+  .catch{
+    position:absolute;
+    top:50%;left:50%;
+    width:min(70vw,640px);
+    aspect-ratio:1.5/1;
+    transform:translate(-50%,-46%);
+    z-index:1;
+    pointer-events:none;
+    border-radius:50%;
+    background:radial-gradient(ellipse at center,
+      oklch(0.96 0.03 90 / 0.16) 0%,
+      oklch(0.90 0.04 90 / 0.07) 38%,
+      transparent 70%);
+    opacity:0;
+    transition:background .9s ease;
+  }
+  /* soft floor reflection beneath the panel */
+  .floor{
+    position:absolute;
+    bottom:8%;left:50%;
+    width:min(62vw,560px);
+    height:26%;
+    transform:translateX(-50%) scaleY(-1);
+    z-index:1;
+    pointer-events:none;
+    background:radial-gradient(ellipse at center top,
+      oklch(0.72 0.17 290 / 0.10), transparent 65%);
+    filter:blur(14px);
+    opacity:0;
+  }
+
+  /* ===================== CONTENT ===================== */
+  .wrap{
+    position:relative;
+    z-index:3;
+    width:min(94vw,1100px);
+    padding:clamp(2rem,5vh,4rem) 1rem;
+    display:grid;
+    grid-template-columns:1.05fr 0.95fr;
+    gap:clamp(1.5rem,4vw,3.5rem);
+    align-items:center;
+  }
+  @media(max-width:880px){
+    .wrap{grid-template-columns:1fr;gap:2rem}
+  }
+
+  .lede{max-width:46ch}
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:.55rem;
+    font-size:.74rem;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--muted-2);
+    border:1px solid oklch(0.72 0.02 265 / 0.30);
+    padding:.4rem .7rem;border-radius:100px;
+    background:oklch(0.205 0.024 265 / 0.5);
+    backdrop-filter:blur(4px);
+  }
+  .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent)}
+  h1{
+    margin:1.1rem 0 0;
+    font-weight:600;
+    font-size:clamp(2.1rem,5.4vw,3.6rem);
+    line-height:1.04;
+    letter-spacing:-0.02em;
+  }
+  h1 .serif{
+    font-family:"Newsreader","Iowan Old Style",Georgia,"Times New Roman",serif;
+    font-style:italic;font-weight:500;
+    color:var(--accent);
+  }
+  .sub{
+    margin-top:1.15rem;
+    color:var(--muted-2);
+    font-size:clamp(1rem,1.5vw,1.12rem);
+    line-height:1.55;
+    max-width:42ch;
+  }
+  .links{
+    margin-top:1.7rem;
+    display:flex;flex-wrap:wrap;gap:.65rem;
+    font-size:.92rem;
+  }
+  .btn{
+    display:inline-flex;align-items:center;gap:.5rem;
+    padding:.62rem 1rem;border-radius:10px;
+    border:1px solid oklch(0.72 0.02 265 / 0.28);
+    color:var(--ink);background:oklch(0.205 0.024 265 / 0.6);
+    transition:border-color .2s,background .2s;
+  }
+  .btn:hover,.btn:focus-visible{text-decoration:none;border-color:var(--accent);background:oklch(0.205 0.024 265 / 0.9)}
+  .btn.primary{background:var(--accent-solid);border-color:transparent;color:oklch(0.99 0.01 290)}
+  .btn.primary:hover,.btn.primary:focus-visible{background:oklch(0.62 0.17 290)}
+  .meta{margin-top:1.1rem;font-size:.78rem;color:var(--muted);line-height:1.6}
+  .meta code{font-family:"Space Grotesk",monospace;color:var(--muted-2)}
+
+  /* ===================== SCORE PANEL (the caught subject) ===================== */
+  .panel{
+    position:relative;
+    justify-self:center;
+    width:min(86vw,400px);
+    padding:clamp(1.4rem,3vw,2rem);
+    border-radius:18px;
+    background:linear-gradient(180deg, oklch(0.205 0.024 265 / 0.92), oklch(0.17 0.022 265 / 0.92));
+    border:1px solid oklch(0.72 0.17 290 / 0.18);
+    box-shadow:
+      0 30px 80px -30px oklch(0.05 0.02 265 / 0.9),
+      inset 0 1px 0 oklch(0.97 0.01 265 / 0.05);
+    /* the panel begins in near-black and is lifted into light */
+    opacity:0;
+    transform:translateY(14px) scale(0.985);
+    filter:brightness(0.35) saturate(0.6);
+  }
+  .panel-head{
+    display:flex;align-items:baseline;justify-content:space-between;gap:1rem;
+    border-bottom:1px solid oklch(0.72 0.02 265 / 0.14);
+    padding-bottom:.85rem;margin-bottom:1.1rem;
+  }
+  .panel-title{font-size:.82rem;letter-spacing:.04em;color:var(--muted-2)}
+  .panel-tag{
+    font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--warn);border:1px solid oklch(0.82 0.15 85 / 0.4);
+    padding:.22rem .5rem;border-radius:100px;
+    transition:color .7s,border-color .7s;
+  }
+  .panel.calibrated .panel-tag{color:var(--accent);border-color:oklch(0.72 0.17 290 / 0.5)}
+
+  /* the number + ±2.0 luminous bracket */
+  .scorewrap{
+    position:relative;
+    display:flex;align-items:center;justify-content:center;
+    padding:1.2rem 0 1.4rem;
+  }
+  .bracket{
+    position:absolute;top:50%;
+    width:18px;height:64%;
+    transform:translateY(-50%);
+    opacity:0;
+    transition:opacity .6s ease;
+    pointer-events:none;
+  }
+  .bracket.l{left:14%;border-left:2px solid var(--accent);border-top:2px solid var(--accent);border-bottom:2px solid var(--accent);border-radius:5px 0 0 5px}
+  .bracket.r{right:14%;border-right:2px solid var(--accent);border-top:2px solid var(--accent);border-bottom:2px solid var(--accent);border-radius:0 5px 5px 0}
+  .panel.capped .bracket{opacity:.9;box-shadow:0 0 16px oklch(0.72 0.17 290 / 0.6)}
+  .caplabel{
+    position:absolute;bottom:.1rem;left:50%;transform:translateX(-50%);
+    font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--accent);opacity:0;transition:opacity .6s ease .15s;
+    white-space:nowrap;
+  }
+  .panel.capped .caplabel{opacity:.85}
+
+  .score{
+    font-family:"Space Grotesk",sans-serif;
+    font-weight:700;
+    font-size:clamp(4rem,13vw,6.2rem);
+    line-height:1;
+    letter-spacing:-0.04em;
+    font-variant-numeric:tabular-nums;
+    color:var(--warn);
+    text-shadow:0 0 36px oklch(0.82 0.15 85 / 0.45);
+    transition:color 1s ease, text-shadow 1s ease;
+  }
+  .panel.calibrated .score{
+    color:var(--accent);
+    text-shadow:0 0 40px oklch(0.72 0.17 290 / 0.55);
+  }
+  .scoreout{font-size:.42em;color:var(--muted);font-weight:500;letter-spacing:0}
+
+  .illus{
+    text-align:center;font-size:.72rem;color:var(--muted);
+    letter-spacing:.04em;margin-top:-.2rem;
+  }
+  .delta{
+    margin:1.15rem 0 0;
+    display:flex;align-items:center;justify-content:center;gap:.5rem;
+    font-size:.86rem;color:var(--muted-2);
+    min-height:1.4rem;
+  }
+  .delta b{color:var(--accent);font-weight:600}
+  .delta .math{
+    font-family:"Space Grotesk",monospace;font-size:.8rem;color:var(--muted);
+  }
+  .delta.show{}
+
+  /* progress / status line under the panel */
+  .status{
+    margin-top:1.15rem;padding-top:1rem;
+    border-top:1px solid oklch(0.72 0.02 265 / 0.14);
+    font-size:.78rem;color:var(--muted);line-height:1.5;
+  }
+  .status .now{color:var(--accent-2)}
+
+  /* ===================== SIX-HAT SILHOUETTES (stage edge) ===================== */
+  .hats{
+    position:absolute;
+    left:0;right:0;bottom:3%;
+    z-index:2;
+    display:flex;justify-content:center;gap:clamp(.6rem,2.4vw,1.6rem);
+    opacity:0;
+    pointer-events:none;
+  }
+  .hat{
+    width:clamp(20px,3.4vw,30px);
+    height:clamp(20px,3.4vw,30px);
+    border-radius:50% 50% 45% 45%;
+    background:oklch(0.30 0.02 265 / 0.55);
+    border:1px solid oklch(0.72 0.02 265 / 0.18);
+    position:relative;
+    transition:background .9s ease, box-shadow .9s ease, opacity .9s ease;
+  }
+  .hat::before{ /* brim */
+    content:"";position:absolute;left:-22%;right:-22%;bottom:-3px;height:5px;
+    border-radius:50%;background:oklch(0.30 0.02 265 / 0.55);
+  }
+  .hat.yellow{background:oklch(0.82 0.15 85 / 0.85);box-shadow:0 0 18px oklch(0.82 0.15 85 / 0.6)}
+  .hat.yellow::before{background:oklch(0.82 0.15 85 / 0.85)}
+  /* once corrected, the optimism hat dims toward calibrated violet */
+  .hats.corrected .hat.yellow{
+    background:oklch(0.55 0.10 100 / 0.55);
+    box-shadow:0 0 10px oklch(0.72 0.17 290 / 0.4);
+  }
+  .hats.corrected .hat.yellow::before{background:oklch(0.55 0.10 100 / 0.55)}
+
+  /* ===================== ANIMATION (play state toggled by JS) ===================== */
+  .stage.lit .cone{animation:sweepIn 2.1s cubic-bezier(.16,.84,.3,1) forwards}
+  .stage.lit .catch{animation:catchOn 1.4s ease 1.0s forwards}
+  .stage.lit .floor{animation:floorOn 1.2s ease 1.4s forwards}
+  .stage.lit .panel{animation:liftIn 1.3s cubic-bezier(.2,.7,.2,1) 0.9s forwards}
+  .stage.lit .hats{animation:hatsOn 1.1s ease 1.5s forwards}
+
+  @keyframes sweepIn{
+    0%  {opacity:0; rotate:-26deg; filter:blur(7px)}
+    30% {opacity:.5}
+    70% {opacity:1; rotate:3deg; filter:blur(2px)}
+    100%{opacity:1; rotate:0deg; filter:blur(2px)}
+  }
+  @keyframes catchOn{from{opacity:0}to{opacity:1}}
+  @keyframes floorOn{from{opacity:0}to{opacity:.9}}
+  @keyframes liftIn{
+    from{opacity:0;transform:translateY(14px) scale(.985);filter:brightness(.35) saturate(.6)}
+    to  {opacity:1;transform:translateY(0) scale(1);filter:brightness(1) saturate(1)}
+  }
+  @keyframes hatsOn{from{opacity:0}to{opacity:.85}}
+
+  /* skip-link */
+  .skip{position:absolute;left:-999px;top:auto}
+  .skip:focus{left:1rem;top:1rem;z-index:50;background:var(--surface);color:var(--ink);padding:.6rem .9rem;border-radius:8px;border:1px solid var(--accent)}
+
+  /* ===================== REDUCED MOTION — resolved & static ===================== */
+  @media (prefers-reduced-motion: reduce){
+    .cone{opacity:1;rotate:0deg;filter:blur(2px)}
+    .catch{opacity:1}
+    .floor{opacity:.9}
+    .panel{opacity:1;transform:none;filter:none}
+    .hats{opacity:.85}
+    .stage.lit .cone,.stage.lit .catch,.stage.lit .floor,
+    .stage.lit .panel,.stage.lit .hats{animation:none}
+    *{transition:none !important}
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#read-on">Skip to content</a>
+
+<main>
+  <section class="stage" id="stage" aria-label="A theatrical stage where a follow-spot catches an AI evaluation and the over-confident score is corrected to its calibrated value.">
+    <!-- decorative light -->
+    <div class="cone" aria-hidden="true"></div>
+    <div class="catch" aria-hidden="true"></div>
+    <div class="floor" aria-hidden="true"></div>
+
+    <div class="wrap">
+      <div class="lede">
+        <span class="eyebrow"><span class="dot" aria-hidden="true"></span>Glasshat · it audits the judge</span>
+        <h1>The judge catches <span class="serif">its own</span> over-confidence — live.</h1>
+        <p class="sub">A rubric-aware AI evaluator scores with a six-hat panel, grounds every sub-score in retrieved evidence, then pulls its own optimism back to where the evidence actually supports. Watch the spotlight find one verdict and correct it.</p>
+
+        <div class="links">
+          <a class="btn primary" href="https://glasshat-web-o366v7tl2q-uc.a.run.app/participate">Watch a single audit · /participate</a>
+          <a class="btn" href="https://glasshat-web-o366v7tl2q-uc.a.run.app/judge">See rank-flip · /judge</a>
+        </div>
+        <p class="meta" id="read-on">
+          Live API health: <a href="https://glasshat-api-o366v7tl2q-uc.a.run.app/health"><code>/health → {"status":"ok"}</code></a><br/>
+          Gemini 3.1 Flash-Lite on Vertex AI · Google ADK orchestration · Arize AX + Phoenix-MCP calibration loop (wired). Open source, <strong>Apache-2.0</strong>.
+        </p>
+      </div>
+
+      <!-- the caught subject: one submission being judged -->
+      <div class="panel" id="panel" role="group" aria-label="Live evaluation panel for one submission">
+        <div class="panel-head">
+          <span class="panel-title">Submission · YELLOW hat (optimism)</span>
+          <span class="panel-tag" id="tag">over-confident</span>
+        </div>
+
+        <div class="scorewrap">
+          <span class="bracket l" aria-hidden="true"></span>
+          <span class="score" aria-hidden="true"><span id="num">9.0</span><span class="scoreout"> /10</span></span>
+          <span class="bracket r" aria-hidden="true"></span>
+          <span class="caplabel" aria-hidden="true">±2.0 correction cap</span>
+        </div>
+        <p class="illus">illustrative score · the math runs on real evidence</p>
+
+        <!-- the surfaced corrected value, announced politely to AT -->
+        <p class="delta" id="delta" aria-live="polite">
+          <span class="sr-status" id="srstatus">Spotlight finding the submission…</span>
+        </p>
+
+        <div class="status">
+          <span class="now" id="phase">scanning</span> — <span id="phasecopy">following the beam onto the verdict</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- faint six-hat panel at the stage edge -->
+    <div class="hats" id="hats" aria-hidden="true">
+      <span class="hat white" title="White"></span>
+      <span class="hat red" title="Red"></span>
+      <span class="hat yellow" title="Yellow · optimism"></span>
+      <span class="hat black" title="Black"></span>
+      <span class="hat green" title="Green"></span>
+      <span class="hat blue" title="Blue"></span>
+    </div>
+  </section>
+</main>
+
+<script>
+(function(){
+  "use strict";
+  var stage   = document.getElementById('stage');
+  var panel   = document.getElementById('panel');
+  var num     = document.getElementById('num');
+  var tag     = document.getElementById('tag');
+  var delta   = document.getElementById('delta');
+  var srstat  = document.getElementById('srstatus');
+  var phase   = document.getElementById('phase');
+  var pcopy   = document.getElementById('phasecopy');
+  var hats    = document.getElementById('hats');
+
+  // honest illustrative numbers: over-confident 9.0 -> calibrated 7.6
+  var OVER = 9.0, CAL = 7.6;
+
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  // reduced motion: render the resolved scene, corrected violet value already at rest
+  function resolveStatic(){
+    stage.classList.add('lit');           // CSS forces static-lit under the media query
+    num.textContent = CAL.toFixed(1);
+    panel.classList.add('calibrated','capped');
+    tag.textContent = 'calibrated';
+    hats.classList.add('corrected');
+    phase.textContent = 'calibrated';
+    pcopy.textContent = 'optimism pulled back into the ±2.0 cap';
+    delta.innerHTML = '';
+    var done = document.createElement('span');
+    done.id = 'srstatus';
+    done.textContent = 'Calibrated to 7.6 of 10 (illustrative). Over-confident 9.0 pulled back via clip(score − 0.8·mean_delta) within the ±2.0 cap.';
+    delta.appendChild(done);
+  }
+
+  // count a number from a->b over ms with eased steps
+  function animateNum(from,to,ms,onDone){
+    var start=null;
+    function frame(t){
+      if(start===null) start=t;
+      var p=Math.min((t-start)/ms,1);
+      var e=1-Math.pow(1-p,3); // ease-out cubic
+      num.textContent=(from+(to-from)*e).toFixed(1);
+      if(p<1){ requestAnimationFrame(frame); } else { num.textContent=to.toFixed(1); if(onDone) onDone(); }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  // the autonomous performance: spotlight sweeps in, then the score recedes
+  function perform(){
+    if(stage.dataset.played) return;
+    stage.dataset.played = '1';
+
+    if(reduce.matches){ resolveStatic(); return; }
+
+    stage.classList.add('lit');   // triggers sweep / catch / lift via CSS
+    num.textContent = OVER.toFixed(1);
+
+    // phase 1: scanning -> caught (after the sweep lands)
+    setTimeout(function(){
+      phase.textContent = 'caught';
+      pcopy.textContent = 'YELLOW hat lit amber — optimism, thin evidence';
+    }, 2200);
+
+    // phase 2: the cap bracket draws in, then the score recedes
+    setTimeout(function(){
+      panel.classList.add('capped');
+      phase.textContent = 'auditing';
+      pcopy.textContent = 'recovering the spike-D calibration prior';
+      srstat.textContent = 'Auditing the judge — recovering a calibration prior from held-out spike-D anchors.';
+    }, 3000);
+
+    setTimeout(function(){
+      panel.classList.add('calibrated');
+      tag.textContent = 'calibrated';
+      hats.classList.add('corrected');   // the optimism hat dims
+      animateNum(OVER, CAL, 1600, function(){
+        phase.textContent = 'calibrated';
+        pcopy.textContent = 'amber → violet · evidence-supported';
+        // announce final corrected value
+        delta.innerHTML = '';
+        var b = document.createElement('span');
+        b.id = 'srstatus';
+        b.innerHTML = 'Pulled back to <b>7.6</b> of 10 · <span class="math">clip(9.0 − 0.8·mean_delta) within ±2.0</span>';
+        delta.appendChild(b);
+      });
+    }, 3700);
+  }
+
+  // arises on its own: timer fallback + IntersectionObserver (never hover/click)
+  if('IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if(en.isIntersecting && en.intersectionRatio>0.5){ perform(); io.disconnect(); }
+      });
+    }, {threshold:[0,0.5,1]});
+    io.observe(stage);
+  }
+  // safety: if observer never fires (or in reduced motion), still arrive
+  setTimeout(perform, reduce.matches ? 0 : 700);
+})();
+</script>
+</body>
+</html>

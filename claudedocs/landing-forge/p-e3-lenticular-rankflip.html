@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Glasshat — the audit decides who wins</title>
+<style>
+  :root{
+    --bg:oklch(0.15 0.021 265);
+    --surface:oklch(0.205 0.024 265);
+    --surface-2:oklch(0.245 0.026 265);
+    --ink:oklch(0.97 0.01 265);
+    --muted:oklch(0.72 0.02 265);
+    --violet:oklch(0.72 0.17 290);
+    --violet-solid:oklch(0.55 0.17 290);
+    --cyan:oklch(0.82 0.13 205);
+    --magenta:oklch(0.78 0.16 330);
+    --good:oklch(0.78 0.15 150);
+    --amber:oklch(0.82 0.15 85);
+    --amber-deep:oklch(0.58 0.14 75);
+    --hairline:oklch(0.32 0.02 265);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:
+      radial-gradient(120% 90% at 50% -10%, oklch(0.22 0.05 290 / 0.55), transparent 60%),
+      radial-gradient(90% 70% at 88% 8%, oklch(0.24 0.05 205 / 0.30), transparent 55%),
+      var(--bg);
+    color:var(--ink);
+    font-family:"Space Grotesk",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+    min-height:100%;
+  }
+  a{color:inherit}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 clamp(16px,4vw,40px)}
+
+  /* ---------- HERO STAGE ---------- */
+  .stage{
+    position:relative;
+    min-height:100svh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding:clamp(28px,6vh,72px) 0 clamp(40px,8vh,90px);
+    overflow:hidden;
+  }
+  /* decorative lenticular ridges sweeping the whole stage */
+  .ridges{
+    position:absolute;inset:-10% -5%;
+    background:repeating-linear-gradient(
+      105deg,
+      oklch(0.18 0.03 280 / 0.0) 0px,
+      oklch(0.18 0.03 280 / 0.0) 5px,
+      oklch(0.62 0.12 290 / 0.05) 6px,
+      oklch(0.62 0.12 205 / 0.05) 7px,
+      oklch(0.18 0.03 280 / 0.0) 8px
+    );
+    mix-blend-mode:screen;
+    opacity:.7;
+    pointer-events:none;
+    animation:ridgeDrift 14s ease-in-out infinite alternate;
+  }
+  @keyframes ridgeDrift{
+    from{transform:translateX(-1.5%) skewX(-1deg)}
+    to{transform:translateX(1.5%) skewX(1deg)}
+  }
+
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:.55rem;
+    font-size:clamp(.68rem,1.4vw,.78rem);
+    letter-spacing:.22em;text-transform:uppercase;
+    color:var(--muted);
+    border:1px solid var(--hairline);
+    background:oklch(0.2 0.02 265 / 0.6);
+    padding:.42rem .8rem;border-radius:999px;
+    backdrop-filter:blur(6px);
+  }
+  .eyebrow .dot{width:.5rem;height:.5rem;border-radius:50%;
+    background:var(--amber);box-shadow:0 0 0 0 oklch(0.82 0.15 85 / 0.7);
+    animation:pulseDot 2.6s ease-out infinite}
+  @keyframes pulseDot{
+    0%{box-shadow:0 0 0 0 oklch(0.82 0.15 85 / 0.6)}
+    70%{box-shadow:0 0 0 10px oklch(0.82 0.15 85 / 0)}
+    100%{box-shadow:0 0 0 0 oklch(0.82 0.15 85 / 0)}
+  }
+
+  h1{
+    margin:.9rem 0 .4rem;
+    font-weight:600;
+    font-size:clamp(2.1rem,6.4vw,4.4rem);
+    line-height:1.02;
+    letter-spacing:-.02em;
+    max-width:16ch;
+  }
+  h1 .serif{
+    font-family:"Newsreader",Georgia,serif;
+    font-style:italic;font-weight:500;
+    background:linear-gradient(100deg,var(--amber),var(--violet));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .lede{
+    color:var(--muted);
+    font-size:clamp(.98rem,2.1vw,1.18rem);
+    line-height:1.55;max-width:54ch;margin-top:.6rem;
+  }
+  .lede b{color:var(--ink);font-weight:600}
+
+  /* ---------- THE BOARD (lenticular dual-state) ---------- */
+  .board-region{margin-top:clamp(26px,4.5vh,52px);position:relative;perspective:1600px}
+
+  .legend{
+    display:flex;align-items:center;gap:clamp(10px,2.5vw,26px);
+    flex-wrap:wrap;margin-bottom:1rem;
+  }
+  .legend .side{display:flex;align-items:center;gap:.5rem;font-size:.82rem;color:var(--muted)}
+  .legend .swatch{width:.85rem;height:.85rem;border-radius:3px;flex:none}
+  .legend .swatch.raw{background:var(--amber);box-shadow:0 0 12px oklch(0.82 0.15 85 / .5)}
+  .legend .swatch.aud{background:var(--violet);box-shadow:0 0 12px oklch(0.72 0.17 290 / .5)}
+  .legend .arrow{color:var(--muted);font-weight:600}
+  .legend .live{
+    margin-left:auto;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--muted);display:flex;align-items:center;gap:.45rem;
+  }
+  .legend .live .led{width:.5rem;height:.5rem;border-radius:50%;background:var(--good);
+    animation:blink 1.8s steps(1) infinite}
+  @keyframes blink{0%,60%{opacity:1}61%,100%{opacity:.25}}
+
+  .board{
+    position:relative;
+    border-radius:18px;
+    border:1px solid var(--hairline);
+    background:linear-gradient(180deg, oklch(0.22 0.025 265 / 0.92), oklch(0.18 0.022 265 / 0.92));
+    box-shadow:0 40px 90px -40px oklch(0.05 0.05 290 / 0.9), inset 0 1px 0 oklch(0.4 0.03 290 / 0.25);
+    padding:clamp(12px,2.2vw,20px);
+    transform-style:preserve-3d;
+    transition:transform .25s ease-out;
+    will-change:transform;
+  }
+  /* the interlaced "lenticular" sheen overlaid on the board surface */
+  .board::after{
+    content:"";position:absolute;inset:0;border-radius:18px;pointer-events:none;
+    background:repeating-linear-gradient(
+      100deg,
+      oklch(1 0 0 / 0) 0px, oklch(1 0 0 / 0) 6px,
+      oklch(1 0 0 / 0.035) 7px, oklch(1 0 0 / 0) 9px
+    );
+    mix-blend-mode:screen;
+    opacity:.6;
+  }
+
+  .board-head{
+    display:flex;align-items:baseline;justify-content:space-between;
+    padding:.2rem .4rem 1rem;border-bottom:1px solid var(--hairline);margin-bottom:.6rem;
+    gap:1rem;
+  }
+  .board-title{font-weight:600;font-size:clamp(1rem,2.4vw,1.25rem);letter-spacing:-.01em}
+  .board-title .ttl-state{
+    font-family:"Newsreader",Georgia,serif;font-style:italic;
+    transition:color .5s ease;
+  }
+  .board-sub{font-size:.74rem;color:var(--muted);letter-spacing:.04em}
+
+  ol.rows{list-style:none;display:flex;flex-direction:column;gap:.5rem}
+  li.row{
+    --accent:var(--amber);
+    position:relative;
+    display:grid;
+    grid-template-columns:2.4rem 1fr auto;
+    align-items:center;
+    gap:clamp(.6rem,1.6vw,1rem);
+    padding:.7rem clamp(.6rem,1.6vw,1rem);
+    border-radius:12px;
+    background:oklch(0.235 0.025 265 / 0.7);
+    border:1px solid var(--hairline);
+    transition:transform .7s cubic-bezier(.5,.05,.2,1), background .6s ease, border-color .6s ease, box-shadow .6s ease;
+    will-change:transform;
+  }
+  /* leader gets a glowing left rail in the active accent */
+  li.row.leader{
+    background:linear-gradient(90deg, oklch(from var(--accent) l c h / 0.16), oklch(0.235 0.025 265 / 0.7) 42%);
+    border-color:oklch(from var(--accent) l c h / 0.55);
+    box-shadow:0 0 0 1px oklch(from var(--accent) l c h / 0.3), 0 14px 40px -22px oklch(from var(--accent) l c h / 0.7);
+  }
+  li.row.leader::before{
+    content:"";position:absolute;left:0;top:10%;bottom:10%;width:3px;border-radius:3px;
+    background:var(--accent);box-shadow:0 0 16px var(--accent);
+  }
+
+  .rank{
+    font-family:"Newsreader",Georgia,serif;font-style:italic;
+    font-size:clamp(1.3rem,3.2vw,1.7rem);
+    color:var(--muted);text-align:center;font-weight:500;
+    transition:color .6s ease,transform .6s ease;
+  }
+  li.row.leader .rank{color:var(--accent);transform:scale(1.12)}
+
+  .proj{min-width:0}
+  .proj .name{font-weight:600;font-size:clamp(.92rem,2.1vw,1.04rem);letter-spacing:-.01em;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chips{display:flex;gap:.4rem;margin-top:.34rem;flex-wrap:wrap}
+  .chip{
+    font-size:.66rem;letter-spacing:.02em;
+    padding:.2rem .5rem;border-radius:999px;
+    border:1px solid var(--hairline);
+    color:var(--muted);
+    background:oklch(0.2 0.02 265 / 0.6);
+    display:inline-flex;align-items:center;gap:.3rem;
+    white-space:nowrap;
+  }
+  .chip .ic{width:.46rem;height:.46rem;border-radius:50%;flex:none}
+  .chip.ev-strong .ic{background:var(--good)}
+  .chip.ev-thin .ic{background:var(--amber)}
+  .chip.ev-mid .ic{background:var(--cyan)}
+
+  .score{
+    justify-self:end;text-align:right;min-width:5.6rem;
+  }
+  .score .val{
+    font-family:"Space Grotesk";font-weight:700;
+    font-size:clamp(1.05rem,2.8vw,1.4rem);
+    font-variant-numeric:tabular-nums;
+    color:var(--accent);
+    transition:color .6s ease;
+    letter-spacing:-.01em;
+  }
+  .score .lbl{display:block;font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-top:.1rem}
+
+  /* the audited-state delta tag (shown after flip) */
+  .delta{
+    font-size:.64rem;font-variant-numeric:tabular-nums;
+    color:var(--muted);display:block;margin-top:.12rem;
+    opacity:0;transition:opacity .6s ease .2s;
+  }
+  .audited .delta{opacity:1}
+
+  /* a calibration banner that fades up once the flip resolves */
+  .verdict{
+    margin-top:1rem;padding:.8rem 1rem;border-radius:12px;
+    border:1px solid oklch(from var(--violet) l c h / 0.4);
+    background:oklch(from var(--violet) l c h / 0.1);
+    display:flex;align-items:center;gap:.7rem;
+    font-size:.86rem;color:var(--ink);line-height:1.45;
+    opacity:0;transform:translateY(8px);
+    transition:opacity .7s ease,transform .7s ease;
+  }
+  .audited .verdict{opacity:1;transform:none}
+  .verdict .mark{
+    flex:none;width:1.7rem;height:1.7rem;border-radius:8px;
+    display:grid;place-items:center;color:var(--ink);font-weight:700;
+    background:var(--violet-solid);box-shadow:0 0 18px oklch(0.55 0.17 290 / .7);
+  }
+  .verdict b{color:oklch(0.86 0.12 290)}
+  .verdict .math{
+    font-family:"Newsreader",Georgia,serif;font-style:italic;color:var(--muted);
+  }
+
+  .illustrative{
+    margin-top:.85rem;font-size:.68rem;color:var(--muted);
+    display:flex;gap:.45rem;align-items:flex-start;line-height:1.4;
+  }
+  .illustrative svg{flex:none;margin-top:.1rem}
+
+  /* ---------- CTA / FOOTER ---------- */
+  .cta{
+    margin-top:clamp(30px,5vh,56px);
+    display:flex;gap:.7rem;flex-wrap:wrap;align-items:center;
+  }
+  .btn{
+    text-decoration:none;font-weight:600;font-size:.92rem;
+    padding:.78rem 1.25rem;border-radius:11px;
+    display:inline-flex;align-items:center;gap:.5rem;
+    transition:transform .15s ease, box-shadow .2s ease, background .2s ease;
+  }
+  .btn.primary{background:var(--violet-solid);color:var(--ink);
+    box-shadow:0 14px 34px -16px oklch(0.55 0.17 290 / .9)}
+  .btn.primary:hover{transform:translateY(-2px)}
+  .btn.ghost{border:1px solid var(--hairline);color:var(--ink);background:oklch(0.22 0.02 265 / 0.6)}
+  .btn.ghost:hover{border-color:var(--violet);transform:translateY(-2px)}
+  .btn .ar{transition:transform .15s ease}
+  .btn:hover .ar{transform:translateX(3px)}
+
+  .meta{
+    margin-top:1.2rem;font-size:.76rem;color:var(--muted);
+    display:flex;gap:1rem;flex-wrap:wrap;align-items:center;
+  }
+  .meta a{color:var(--cyan);text-decoration:none;border-bottom:1px solid oklch(0.82 0.13 205 / .3)}
+  .meta a:hover{border-bottom-color:var(--cyan)}
+  .meta .sep{opacity:.4}
+  .meta code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.72rem;
+    color:var(--good);background:oklch(0.2 0.02 265 / .6);padding:.12rem .4rem;border-radius:5px}
+
+  /* focus visibility for keyboard users */
+  a:focus-visible,.board:focus-visible{outline:2px solid var(--cyan);outline-offset:3px;border-radius:8px}
+
+  /* visually-hidden helper for the aria-live announcer */
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+    clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+  /* ---------- REDUCED MOTION: resolve to AUDITED, static ---------- */
+  @media (prefers-reduced-motion:reduce){
+    .ridges,.eyebrow .dot,.legend .live .led{animation:none}
+    .board{transition:none !important;transform:none !important}
+    li.row{transition:none !important}
+    .delta,.verdict{transition:none !important;opacity:1 !important;transform:none !important}
+  }
+</style>
+</head>
+<body>
+  <main class="stage" id="stage">
+    <div class="ridges" aria-hidden="true"></div>
+
+    <div class="wrap">
+      <span class="eyebrow"><span class="dot" aria-hidden="true"></span>Glasshat · it audits the judge</span>
+
+      <h1>Same cohort. <span class="serif">Two truths.</span> The audit decides who wins.</h1>
+      <p class="lede">
+        A raw AI panel hands the loudest, least-evidenced project the crown. Watch the board
+        <b>tilt</b> — and once calibration lands on retrieved evidence, a
+        <b>better-evidenced project rises to&nbsp;#1</b>. No one touches it; the audit happens on its own.
+      </p>
+
+      <!-- ====================== THE LENTICULAR BOARD ====================== -->
+      <section class="board-region">
+        <div class="legend" aria-hidden="true">
+          <div class="side"><span class="swatch raw"></span>Raw consensus</div>
+          <span class="arrow">→</span>
+          <div class="side"><span class="swatch aud"></span>With Glasshat audit</div>
+          <div class="live"><span class="led"></span>auditing live</div>
+        </div>
+
+        <div class="board" id="board" tabindex="0"
+             aria-label="Cohort leaderboard. The audit re-ranks projects from raw over-confident consensus to evidence-calibrated scores. Illustrative.">
+          <div class="board-head">
+            <div class="board-title">Cohort ranking ·
+              <span class="ttl-state" id="ttlState">raw consensus</span>
+            </div>
+            <div class="board-sub" id="boardSub">over-confident · evidence not yet applied</div>
+          </div>
+
+          <ol class="rows" id="rows">
+            <!-- li order is the AUDITED order; .raw-rank drives the start position -->
+            <li class="row" data-raw="3" data-aud="1">
+              <span class="rank" data-rank>3</span>
+              <div class="proj">
+                <div class="name">Halcyon · grid-balancing model</div>
+                <div class="chips">
+                  <span class="chip ev-strong"><span class="ic"></span>deep evidence</span>
+                  <span class="chip ev-strong"><span class="ic"></span>repo + deck grounded</span>
+                </div>
+              </div>
+              <div class="score">
+                <span class="val" data-raw-score="7.9" data-aud-score="8.6">7.9</span>
+                <span class="lbl">score / 10</span>
+                <span class="delta">calibrated ↑ from 7.9</span>
+              </div>
+            </li>
+
+            <li class="row" data-raw="1" data-aud="2">
+              <span class="rank" data-rank>1</span>
+              <div class="proj">
+                <div class="name">Nimbus · pitch-perfect demo</div>
+                <div class="chips">
+                  <span class="chip ev-thin"><span class="ic"></span>thin evidence</span>
+                  <span class="chip ev-thin"><span class="ic"></span>over-confident yellow hat</span>
+                </div>
+              </div>
+              <div class="score">
+                <span class="val" data-raw-score="9.4" data-aud-score="8.1">9.4</span>
+                <span class="lbl">score / 10</span>
+                <span class="delta">pulled back −1.3 · within ±2.0 cap</span>
+              </div>
+            </li>
+
+            <li class="row" data-raw="2" data-aud="3">
+              <span class="rank" data-rank>2</span>
+              <div class="proj">
+                <div class="name">Tessera · multi-agent router</div>
+                <div class="chips">
+                  <span class="chip ev-mid"><span class="ic"></span>mixed evidence</span>
+                  <span class="chip ev-mid"><span class="ic"></span>partial grounding</span>
+                </div>
+              </div>
+              <div class="score">
+                <span class="val" data-raw-score="8.6" data-aud-score="7.8">8.6</span>
+                <span class="lbl">score / 10</span>
+                <span class="delta">calibrated −0.8</span>
+              </div>
+            </li>
+
+            <li class="row" data-raw="4" data-aud="4">
+              <span class="rank" data-rank>4</span>
+              <div class="proj">
+                <div class="name">Quillwright · doc-search tool</div>
+                <div class="chips">
+                  <span class="chip ev-mid"><span class="ic"></span>mid evidence</span>
+                  <span class="chip ev-thin"><span class="ic"></span>sparse retrieval</span>
+                </div>
+              </div>
+              <div class="score">
+                <span class="val" data-raw-score="7.1" data-aud-score="6.9">7.1</span>
+                <span class="lbl">score / 10</span>
+                <span class="delta">calibrated −0.2</span>
+              </div>
+            </li>
+          </ol>
+
+          <div class="verdict" id="verdict">
+            <span class="mark" aria-hidden="true">✓</span>
+            <span>
+              <b>Halcyon</b> rises to #1 once evidence is weighed.
+              <span class="math">clip(score − 0.8·mean_delta, p25, p75)</span>, ±2.0 cap —
+              a calibration prior recovered from held-out spike-D anchors.
+            </span>
+          </div>
+
+          <p class="illustrative">
+            <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true">
+              <circle cx="8" cy="8" r="7" fill="none" stroke="oklch(0.72 0.02 265)" stroke-width="1.4"/>
+              <path d="M8 4.4v.2M8 7v4.6" stroke="oklch(0.72 0.02 265)" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+            Projects, scores, ranks and deltas are <b>illustrative</b> — a depiction of the
+            re-ranking mechanism, not live results.
+          </p>
+        </div>
+
+        <p class="sr-only" id="announce" role="status" aria-live="polite"></p>
+      </section>
+
+      <div class="cta">
+        <a class="btn primary" href="https://glasshat-web-o366v7tl2q-uc.a.run.app/judge">
+          See the rank-flip in /judge <span class="ar">→</span>
+        </a>
+        <a class="btn ghost" href="https://glasshat-web-o366v7tl2q-uc.a.run.app/participate">
+          Watch a single self-correct in /participate
+        </a>
+      </div>
+
+      <div class="meta">
+        <span>Gemini 3.1 Flash-Lite on Vertex AI · Google ADK · Arize&nbsp;AX + Phoenix-MCP</span>
+        <span class="sep">·</span>
+        <a href="https://glasshat-api-o366v7tl2q-uc.a.run.app/health">API health <code>{"status":"ok"}</code></a>
+        <span class="sep">·</span>
+        <span>Apache-2.0</span>
+      </div>
+    </div>
+  </main>
+
+<script>
+(function(){
+  "use strict";
+  var board   = document.getElementById("board");
+  var rowsEl  = document.getElementById("rows");
+  var region  = board ? board.parentElement : null;
+  var rows    = Array.prototype.slice.call(document.querySelectorAll("li.row"));
+  var ttl     = document.getElementById("ttlState");
+  var sub     = document.getElementById("boardSub");
+  var announce= document.getElementById("announce");
+
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // measured geometry for vertical translate between raw & audited positions
+  var ROW_STEP = 0; // px between consecutive row centers
+  function measure(){
+    if (rows.length < 2) return;
+    var a = rows[0].getBoundingClientRect();
+    var b = rows[1].getBoundingClientRect();
+    ROW_STEP = b.top - a.top;
+  }
+
+  // place every row at the slot for a given state ("raw" | "aud")
+  function layout(state){
+    rows.forEach(function(li){
+      var domIndex = rows.indexOf(li);              // DOM order == audited order (0-based)
+      var targetRank = parseInt(li.getAttribute(state === "raw" ? "data-raw" : "data-aud"), 10);
+      var slot = targetRank - 1;                     // 0-based slot in this state
+      var dy = (slot - domIndex) * ROW_STEP;
+      li.style.transform = "translateY(" + dy + "px)";
+
+      // rank numeral + score for this state
+      var rankEl = li.querySelector("[data-rank]");
+      var valEl  = li.querySelector(".val");
+      if (rankEl) rankEl.textContent = targetRank;
+      if (valEl){
+        valEl.textContent = valEl.getAttribute(state === "raw" ? "data-raw-score" : "data-aud-score");
+      }
+      li.classList.toggle("leader", targetRank === 1);
+    });
+  }
+
+  function setState(state){
+    if (state === "aud"){
+      region.classList.add("audited");
+      ttl.textContent = "with Glasshat audit";
+      ttl.style.color = "var(--violet)";
+      sub.textContent = "evidence-calibrated · over-confidence pulled back";
+      rows.forEach(function(li){ li.style.setProperty("--accent", "var(--violet)"); });
+    } else {
+      region.classList.remove("audited");
+      ttl.textContent = "raw consensus";
+      ttl.style.color = "var(--amber)";
+      sub.textContent = "over-confident · evidence not yet applied";
+      rows.forEach(function(li){ li.style.setProperty("--accent", "var(--amber)"); });
+    }
+    layout(state);
+  }
+
+  // ---------- REDUCED MOTION: resolve to AUDITED, static, no tilt ----------
+  if (reduce){
+    measure();
+    setState("aud");
+    announce.textContent = "Audit complete. Halcyon is ranked #1 on calibrated, evidence-weighted scores.";
+    return;
+  }
+
+  // ---------- MOTION PATH ----------
+  // 1) Lenticular auto-tilt: continuous slow oscillation of the board in 3D.
+  // 2) Scroll-as-passage: scrolling the stage adds parallax tilt (no hover/click).
+  // 3) IntersectionObserver: when the board enters view, the flip plays once.
+  var rafTilt = 0, baseTiltActive = true;
+  var scrollTilt = 0;
+
+  function tick(t){
+    if (baseTiltActive){
+      var osc = Math.sin(t / 2600);          // slow lenticular sway
+      var rotY = osc * 7.5 + scrollTilt;      // degrees
+      var rotX = Math.cos(t / 3400) * 2.2;
+      board.style.transform =
+        "rotateX(" + rotX.toFixed(2) + "deg) rotateY(" + rotY.toFixed(2) + "deg)";
+    }
+    rafTilt = requestAnimationFrame(tick);
+  }
+  rafTilt = requestAnimationFrame(tick);
+
+  // scroll-as-passage → feeds a little extra tilt while the stage passes
+  function onScroll(){
+    var stage = document.getElementById("stage");
+    var r = stage.getBoundingClientRect();
+    var vh = window.innerHeight || 1;
+    var p = 1 - (r.bottom / (r.height + vh));   // ~0..1 as stage passes upward
+    scrollTilt = (p - 0.5) * 9;                 // ±~4.5deg passage tilt
+  }
+  window.addEventListener("scroll", onScroll, {passive:true});
+  window.addEventListener("resize", function(){ measure(); layout(region.classList.contains("audited") ? "aud" : "raw"); });
+
+  // initial: lay out in RAW state, leader = Nimbus
+  measure();
+  setState("raw");
+
+  // depth-flip orchestration on first reveal
+  var played = false;
+  function playFlip(){
+    if (played) return; played = true;
+
+    // brief hold on raw, then the lenticular "depth-flip" to audited
+    setTimeout(function(){
+      // accentuate the tilt during the flip for the lenticular snap feel
+      var flips = 0;
+      var flipTimer = setInterval(function(){
+        flips++;
+        // amplify oscillation transiently by nudging scrollTilt
+        scrollTilt = (flips % 2 ? 6 : -6);
+        if (flips >= 3){
+          clearInterval(flipTimer);
+          scrollTilt = 0;
+          setState("aud");
+          announce.textContent =
+            "Audit applied. The new #1 is Halcyon — the better-evidenced project — after calibration pulled an over-confident score back within the cap.";
+        }
+      }, 180);
+    }, 1100);
+  }
+
+  if ("IntersectionObserver" in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){ if (e.isIntersecting && e.intersectionRatio > 0.45) playFlip(); });
+    }, {threshold:[0,0.45,0.8]});
+    io.observe(board);
+  } else {
+    // fallback: timer-driven (still unbidden)
+    setTimeout(playFlip, 1400);
+  }
+})();
+</script>
+</body>
+</html>

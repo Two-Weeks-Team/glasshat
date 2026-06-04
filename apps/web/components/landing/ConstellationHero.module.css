@@ -1,0 +1,129 @@
+/* ConstellationHero — celestial star-constellation hero (section F).
+   Palette/fonts come from globals.css (@theme + next/font); this module only
+   holds the scene-specific layout glue, the canvas stage, and the corrected-
+   score readout transitions. Animation work happens on the <canvas> (transform/
+   opacity-free, painted off the main layout) plus a couple of CSS transitions on
+   the readout — no continuous full-viewport CSS animation, so Lighthouse perf
+   stays clean. */
+
+.stage {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(120% 90% at 78% 8%, oklch(0.24 0.07 290 / 0.68), transparent 62%),
+    radial-gradient(140% 100% at 12% 100%, oklch(0.22 0.06 330 / 0.5), transparent 58%),
+    radial-gradient(100% 120% at 50% -10%, oklch(0.2 0.05 205 / 0.45), transparent 52%);
+}
+
+/* ── connective atmosphere: soft fades at the section's top & bottom edges so
+   the full-bleed hero melts into its neighbours instead of a hard dark seam. ── */
+.edgeTop,
+.edgeBottom {
+  position: absolute;
+  inset-inline: 0;
+  z-index: 2;
+  height: clamp(64px, 12vh, 160px);
+  pointer-events: none;
+}
+.edgeTop {
+  top: 0;
+  background: linear-gradient(to bottom, var(--color-bg) 0%, transparent 100%);
+}
+.edgeBottom {
+  bottom: 0;
+  background: linear-gradient(to top, var(--color-bg) 0%, transparent 100%);
+}
+
+/* deep-field vignette that frames the constellation */
+.stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: radial-gradient(
+    120% 120% at 50% 42%,
+    transparent 52%,
+    oklch(0.08 0.02 265 / 0.85) 100%
+  );
+}
+
+@media (max-width: 879px) {
+  .stage::after {
+    background: radial-gradient(
+      140% 120% at 50% 30%,
+      transparent 46%,
+      oklch(0.08 0.02 265 / 0.9) 100%
+    );
+  }
+}
+
+.sky {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ── corrected-score readout (the aria-live target) ── */
+.readout {
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: oklch(0.18 0.02 265 / 0.78);
+  backdrop-filter: blur(6px);
+  transition:
+    border-color 0.6s ease,
+    box-shadow 0.6s ease;
+}
+.readoutWarn {
+  border-color: oklch(0.82 0.15 85 / 0.55);
+  box-shadow: 0 0 26px oklch(0.82 0.15 85 / 0.18);
+}
+.readoutCal {
+  border-color: oklch(0.72 0.17 290 / 0.6);
+  box-shadow: 0 0 30px oklch(0.72 0.17 290 / 0.22);
+}
+
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--color-warn);
+  transition: background 0.6s ease;
+}
+.readoutCal .dot {
+  background: var(--color-accent);
+}
+
+/* The over-confident origin score, struck through as it recedes. */
+.from {
+  color: var(--color-warn);
+  text-decoration: line-through;
+  text-decoration-color: oklch(0.82 0.15 85 / 0.6);
+}
+
+/* The calibrated destination score. */
+.to {
+  color: var(--color-accent);
+  text-shadow: 0 0 22px oklch(0.72 0.17 290 / 0.35);
+}
+
+.formulaCode {
+  font-family: var(--font-display), ui-monospace, monospace;
+  font-style: normal;
+  color: var(--color-accent-2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .readout {
+    transition: none;
+  }
+  .dot {
+    transition: none;
+  }
+}
