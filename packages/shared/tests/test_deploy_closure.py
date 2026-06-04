@@ -42,7 +42,14 @@ def test_arize_extra_ships_phoenix_mcp_client() -> None:
     )
 
 
-def test_arize_extra_has_no_general_purpose_llm_sdk() -> None:
-    forbidden = {"openai", "anthropic", "pydantic-ai"}
+def test_arize_extra_declares_no_forbidden_sdk_or_carrier() -> None:
+    # Forbid both the leaf LLM SDKs AND their known transitive carriers: the most
+    # likely regression here is someone adding the `phoenix` extra's packages
+    # (arize-phoenix / arize-phoenix-otel) to `arize`, which would *transitively*
+    # pull openai/anthropic past a leaf-only check. The CI `uv export` gate is the
+    # full transitive backstop; this unit test guards the realistic direct slip.
+    forbidden = {"openai", "anthropic", "pydantic-ai", "arize-phoenix", "arize-phoenix-otel"}
     leaked = {_req_name(req) for req in _arize_extra()} & forbidden
-    assert not leaked, f"forbidden LLM SDK declared in the arize deploy extra: {sorted(leaked)}"
+    assert not leaked, (
+        f"forbidden LLM SDK / transitive carrier in the arize deploy extra: {sorted(leaked)}"
+    )
