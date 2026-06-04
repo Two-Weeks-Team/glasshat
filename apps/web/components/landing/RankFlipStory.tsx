@@ -120,26 +120,36 @@ export default function RankFlipStory() {
   const [audited, setAudited] = useState(false);
   const [announce, setAnnounce] = useState("");
 
-  // Lay the rows out for a given state by translating each row from its DOM
-  // (audited) slot to its target slot. Pure transform — no layout.
-  const layout = (state: "raw" | "aud", rowStep: number) => {
-    COHORT.forEach((p, domIndex) => {
-      const el = rowRefs.current[domIndex];
-      if (!el) return;
-      const targetRank = state === "raw" ? p.rawRank : p.audRank;
-      const dy = (targetRank - 1 - domIndex) * rowStep;
-      el.style.transform = `translateY(${dy}px)`;
-    });
-  };
-
   useEffect(() => {
     const reduce = prefersReducedMotion();
 
+    // Lay the rows out for a given state by translating each row from its DOM
+    // (audited) slot to its target slot. Pure transform — no layout.
+    const layout = (state: "raw" | "aud", rowStep: number) => {
+      COHORT.forEach((p, domIndex) => {
+        const el = rowRefs.current[domIndex];
+        if (!el) return;
+        const targetRank = state === "raw" ? p.rawRank : p.audRank;
+        const dy = (targetRank - 1 - domIndex) * rowStep;
+        el.style.transform = `translateY(${dy}px)`;
+      });
+    };
+
+    // Measure the natural row pitch from layout geometry. getBoundingClientRect()
+    // includes any active translateY(), so clear row transforms for the read and
+    // restore them after — otherwise a resize while shifted yields a wrong step.
     const measureStep = (): number => {
-      const a = rowRefs.current[0]?.getBoundingClientRect();
-      const b = rowRefs.current[1]?.getBoundingClientRect();
+      const a = rowRefs.current[0];
+      const b = rowRefs.current[1];
       if (!a || !b) return 0;
-      return b.top - a.top;
+      const ta = a.style.transform;
+      const tb = b.style.transform;
+      a.style.transform = "";
+      b.style.transform = "";
+      const step = b.getBoundingClientRect().top - a.getBoundingClientRect().top;
+      a.style.transform = ta;
+      b.style.transform = tb;
+      return step;
     };
 
     // ── Reduced motion: resolve to AUDITED, static, no tilt/oscillation ──
@@ -164,19 +174,27 @@ export default function RankFlipStory() {
     layout("raw", rowStep);
 
     // ── 1) Lenticular auto-tilt: low-amplitude 3D sway, pausable offscreen ──
-    let raf = 0;
-    let running = true; // paused when the section leaves the viewport
+    // The rAF loop is fully torn down when the section leaves the viewport (no
+    // idle per-frame callbacks) and restarted when it returns.
+    let raf = 0; // 0 == loop not scheduled
     let scrollTilt = 0; // transient nudge during the flip "snap"
 
     const tick = (t: number) => {
-      if (running) {
-        const rotY = Math.sin(t / 2600) * 5.5 + scrollTilt; // low amplitude
-        const rotX = Math.cos(t / 3400) * 1.8;
-        board.style.transform = `rotateX(${rotX.toFixed(2)}deg) rotateY(${rotY.toFixed(2)}deg)`;
-      }
+      const rotY = Math.sin(t / 2600) * 5.5 + scrollTilt; // low amplitude
+      const rotX = Math.cos(t / 3400) * 1.8;
+      board.style.transform = `rotateX(${rotX.toFixed(2)}deg) rotateY(${rotY.toFixed(2)}deg)`;
       raf = requestAnimationFrame(tick);
     };
-    raf = requestAnimationFrame(tick);
+    const startLoop = () => {
+      if (!raf) raf = requestAnimationFrame(tick);
+    };
+    const stopLoop = () => {
+      if (raf) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
+    };
+    startLoop();
 
     const onResize = () => {
       rowStep = measureStep();
@@ -218,7 +236,8 @@ export default function RankFlipStory() {
       io = new IntersectionObserver(
         (entries) => {
           for (const e of entries) {
-            running = e.isIntersecting;
+            if (e.isIntersecting) startLoop();
+            else stopLoop();
             region?.classList.toggle(styles.paused, !e.isIntersecting);
             if (e.isIntersecting && e.intersectionRatio > 0.45) playFlip();
           }
@@ -232,7 +251,7 @@ export default function RankFlipStory() {
     }
 
     return () => {
-      cancelAnimationFrame(raf);
+      stopLoop();
       window.removeEventListener("resize", onResize);
       if (holdTimer) clearTimeout(holdTimer);
       if (snapTimer) clearInterval(snapTimer);
@@ -244,7 +263,9 @@ export default function RankFlipStory() {
     <section
       ref={regionRef}
       aria-label="The audit changes who wins: a cohort leaderboard re-ranks from raw consensus to evidence-calibrated scores. Illustrative."
-      className="relative flex min-h-[100svh] w-full flex-col justify-center overflow-hidden py-[clamp(4rem,12vh,8rem)]"
+      className={`relative flex min-h-[100svh] w-full flex-col justify-center overflow-hidden py-[clamp(4rem,12vh,8rem)] ${
+        audited ? styles.audited : ""
+      }`}
     >
       {/* decorative lenticular ridges sweeping the section */}
       <div className={styles.ridges} aria-hidden="true" />

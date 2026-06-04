@@ -101,10 +101,20 @@ const easeInOut = (t: number) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2,
 const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
 const clamp01 = (t: number) => (t < 0 ? 0 : t > 1 ? 1 : t);
 
+// Each distinct color string is parsed once via regex, then reused — the draw
+// loop blends a fixed palette every frame, so this turns per-frame regex/GC into
+// a one-time cost per color.
+const rgbCache = new Map<string, [number, number, number]>();
 function parseRGB(str: string): [number, number, number] {
+  const cached = rgbCache.get(str);
+  if (cached) return cached;
   const m = str.match(/(\d+\.?\d*)/g);
-  if (!m || m.length < 3) return [255, 255, 255];
-  return [parseFloat(m[0]), parseFloat(m[1]), parseFloat(m[2])];
+  const rgb: [number, number, number] =
+    !m || m.length < 3
+      ? [255, 255, 255]
+      : [parseFloat(m[0]), parseFloat(m[1]), parseFloat(m[2])];
+  rgbCache.set(str, rgb);
+  return rgb;
 }
 function blend(a: string, b: string, t: number): string {
   const ca = parseRGB(a);
@@ -141,10 +151,13 @@ type ReadoutPhase = "warn" | "pulling" | "cal";
 export default function ConstellationHero() {
   const sectionRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // The per-frame score is written straight to the DOM via this ref — it must
+  // not be React state, or the rAF loop would re-render the whole hero ~60×/s.
+  const toScoreRef = useRef<HTMLSpanElement>(null);
 
-  // Readout state, driven by the rAF loop (React owns the DOM, not direct writes).
+  // Phase only changes ~3× (warn → pulling → cal), so it stays React state and
+  // drives the aria-live label; the numeric readout is updated through the ref.
   const [phase, setPhase] = useState<ReadoutPhase>("warn");
-  const [toScore, setToScore] = useState<number>(YELLOW.score);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -152,6 +165,13 @@ export default function ConstellationHero() {
     if (!canvas || !section) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+
+    // Resolve each edge's two endpoint nodes once, up front — the draw loop runs
+    // ~60×/s over every edge, so resolving by id per frame was an array scan ×2
+    // per edge per frame. The node set is static, so this is a one-time cost.
+    const resolvedEdges: ReadonlyArray<readonly [SceneNode, SceneNode]> = EDGES.map(
+      ([aId, bId]) => [nodeById(aId), nodeById(bId)] as const,
+    );
 
     const reduce =
       typeof window !== "undefined" &&
@@ -194,7 +214,7 @@ export default function ConstellationHero() {
 
     function updateReadout(pullT: number) {
       const cur = lerp(YELLOW.score, YELLOW.scoreCal ?? YELLOW.score, easeInOut(pullT));
-      setToScore(cur);
+      if (toScoreRef.current) toScoreRef.current.textContent = cur.toFixed(1);
       const next: ReadoutPhase = pullT <= 0.02 ? "warn" : pullT >= 0.985 ? "cal" : "pulling";
       if (next !== lastPhase) {
         lastPhase = next;
@@ -237,8 +257,7 @@ export default function ConstellationHero() {
         const seg = e / nE;
         const local = clamp01((p2 - seg) / ((1 / nE) * 1.6));
         if (local <= 0) continue;
-        const a = nodeById(EDGES[e][0]);
-        const b = nodeById(EDGES[e][1]);
+        const [a, b] = resolvedEdges[e];
         const pa = nodePos(a, p3, W, H);
         const pb = nodePos(b, p3, W, H);
         const ex = lerp(pa.x, pb.x, easeOut(local));
@@ -336,9 +355,7 @@ export default function ConstellationHero() {
         ctx.fillStyle = `rgba(${C.star},${(0.22 + 0.55 * s.z).toFixed(3)})`;
         ctx.fill();
       }
-      for (let e = 0; e < EDGES.length; e++) {
-        const a = nodeById(EDGES[e][0]);
-        const b = nodeById(EDGES[e][1]);
+      for (const [a, b] of resolvedEdges) {
         const pa = nodePos(a, 1, W, H);
         const pb = nodePos(b, 1, W, H);
         const ev = Math.min(a.ev, b.ev);
@@ -372,7 +389,9 @@ export default function ConstellationHero() {
         ctx.fill();
       }
       // Final calibrated readout state.
-      setToScore(YELLOW.scoreCal ?? YELLOW.score);
+      if (toScoreRef.current) {
+        toScoreRef.current.textContent = (YELLOW.scoreCal ?? YELLOW.score).toFixed(1);
+      }
       setPhase("cal");
     }
 
@@ -422,9 +441,10 @@ export default function ConstellationHero() {
         },
         { threshold: 0.35 },
       );
+      // The observer fires immediately if the hero is already in view, and on
+      // scroll-in otherwise — so no timer (a timer would start the scene while
+      // it's still off-screen, wasting the arrival).
       io.observe(section);
-      // Fire even if already in view / observer never triggers.
-      safety = setTimeout(start, 900);
     } else {
       safety = setTimeout(start, 700);
     }
@@ -527,8 +547,11 @@ export default function ConstellationHero() {
                 {YELLOW.score.toFixed(1)}
               </span>
               <span className="text-[1.1rem] text-[var(--color-muted)]">&rarr;</span>
-              <span className={`${styles.to} text-[2.1rem] font-bold tracking-[-0.02em]`}>
-                {toScore.toFixed(1)}
+              <span
+                ref={toScoreRef}
+                className={`${styles.to} text-[2.1rem] font-bold tracking-[-0.02em]`}
+              >
+                {YELLOW.score.toFixed(1)}
               </span>
             </div>
             <p className="font-serif-italic mt-3 text-[0.86rem] leading-[1.5] text-[var(--color-muted)]">

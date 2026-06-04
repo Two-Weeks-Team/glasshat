@@ -32,6 +32,7 @@ const prefersReduced = (): boolean =>
  */
 export default function SpotlightFinale() {
   const stageRef = useRef<HTMLElement | null>(null);
+  const scoreRef = useRef<HTMLSpanElement | null>(null);
   const played = useRef(false);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const raf = useRef<number | null>(null);
@@ -58,16 +59,22 @@ export default function SpotlightFinale() {
       timers.current.push(setTimeout(fn, ms));
     };
 
+    // Per-frame value is written straight to the DOM (ref + textContent) so the
+    // rAF loop avoids a React setState + reconciliation on every animation frame.
+    // React state is committed only once at the end to persist the resolved value.
     const animateScore = (from: number, to: number, ms: number, done: () => void) => {
       let start: number | null = null;
       const frame = (t: number) => {
         if (start === null) start = t;
         const p = Math.min((t - start) / ms, 1);
         const eased = 1 - Math.pow(1 - p, 3);
-        setScore(from + (to - from) * eased);
+        const node = scoreRef.current;
+        if (node) node.textContent = (from + (to - from) * eased).toFixed(1);
         if (p < 1) {
           raf.current = requestAnimationFrame(frame);
         } else {
+          const node2 = scoreRef.current;
+          if (node2) node2.textContent = to.toFixed(1);
           setScore(to);
           done();
         }
@@ -155,12 +162,22 @@ export default function SpotlightFinale() {
       );
       observer.observe(stage);
     }
-    // Safety net if the observer never fires.
-    const fallback = setTimeout(perform, 700);
+    // Safety net only when IntersectionObserver is unavailable, and only if the
+    // stage is actually in view — never auto-play the one-shot finale off-screen.
+    const fallback =
+      observer === null
+        ? setTimeout(() => {
+            const rect = stage.getBoundingClientRect();
+            const inView =
+              rect.top < window.innerHeight * 0.9 &&
+              rect.bottom > window.innerHeight * 0.1;
+            if (inView) perform();
+          }, 700)
+        : null;
 
     return () => {
       observer?.disconnect();
-      clearTimeout(fallback);
+      if (fallback !== null) clearTimeout(fallback);
       for (const id of timers.current) clearTimeout(id);
       timers.current = [];
       if (raf.current !== null) cancelAnimationFrame(raf.current);
@@ -242,7 +259,7 @@ export default function SpotlightFinale() {
           <div className={styles.scorewrap}>
             <span className={`${styles.bracket} ${styles.bracketL}`} aria-hidden="true" />
             <span className={styles.score} aria-hidden="true">
-              {score.toFixed(1)}
+              <span ref={scoreRef}>{score.toFixed(1)}</span>
               <span className={styles.scoreout}> /10</span>
             </span>
             <span className={`${styles.bracket} ${styles.bracketR}`} aria-hidden="true" />
