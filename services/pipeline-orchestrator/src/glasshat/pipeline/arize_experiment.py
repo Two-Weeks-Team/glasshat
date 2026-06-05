@@ -17,8 +17,10 @@ credential-free.
 
 from __future__ import annotations
 
-from collections.abc import Callable
+import asyncio
+from collections.abc import Callable, Coroutine
 from pathlib import Path
+from typing import Any
 
 from glasshat.agents.injection_guard import HeuristicInjectionGuard
 from glasshat.agents.types import EvaluationInput
@@ -36,6 +38,20 @@ DEFAULT_K = 13
 DATASET_NAME = "glasshat-golden"
 EXPERIMENT_NAME = "glasshat-hit-at-13"
 INJECTION_EVALUATOR_NAME = "glasshat-prompt-injection"
+
+
+def _run_sync(coro: Coroutine[Any, Any, Any]) -> Any:
+    """Run an async coroutine to completion from a sync context, even when an event
+    loop is already running (Arize's experiment runner may call the task inside one)
+    — run it in a fresh loop on a worker thread in that case."""
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(coro)
+    import concurrent.futures
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+        return pool.submit(asyncio.run, coro).result()
 
 
 class ExperimentRow(BaseModel):
@@ -160,14 +176,12 @@ def push_to_arize(
     factory = deps_factory or default_deps
 
     def task(example: dict[str, object]) -> dict[str, object]:
-        import asyncio
-
         inp = EvaluationInput(
             rubric_source={"preset_id": "rapid-agent"},
             deck_text=str(example.get("deck_text", "")),
             mode=RunMode.JUDGE,
         )
-        record = asyncio.run(run_evaluation(inp, factory()))
+        record = _run_sync(run_evaluation(inp, factory()))
         return {"final_score": record.final_score, "pre_audit": record.pre_audit_final_score}
 
     class InjectionEvaluator(Evaluator):  # type: ignore[misc]
