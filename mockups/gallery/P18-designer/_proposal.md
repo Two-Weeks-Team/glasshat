@@ -31,7 +31,7 @@
   │      ·  ·  *  ·       *  ·       ·  ·       *               │
   │   *  ·        ___        ·       ·    *                     │
   │           .-'`   `'-.            ╱╲ qdrant                  │
-  │   YELLOW  |  (◉‿◉)  |          *  ╲  503 anchors            │
+  │   YELLOW  |  (◉‿◉)  |          *  ╲  held-out calibration anchors            │
   │   ┌──┐    `─-─────-─'             ╲*                        │
   │   │!!│  ⟿⟿⟿⟿  PHOENIX EYE  ⟸⟸⟸  *                        │
   │   └──┘                                                       │
@@ -76,7 +76,7 @@
   └─────────────────────────────────────────────────────────────┘
                           ↓
   ┌─────────────────────────────────────────────────────────────┐
-  │  FINALE  ·  503-anchor constellation                         │
+  │  FINALE  ·  held-out calibration anchors constellation                         │
   │     ·  *  ·  *    ★(winner)    ·  *  ·  *                   │
   │   "Same engine. Different rubric. Different score."          │
   └─────────────────────────────────────────────────────────────┘

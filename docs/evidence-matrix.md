@@ -1,5 +1,11 @@
 # Glasshat — Evidence Matrix
 
+> **⬆️ 2026-06-05 — newer genuine evidence not in the 2026-05-23 rows below:** a live ADK
+> 2.0 Workflow agent on **Agent Engine** (`reasoningEngines/7480191458771730432`), the **full
+> nested Arize AX trace** (per-hat Gemini spans via `client.spans.list(project="glasshat")`),
+> and AX **Dataset `glasshat-golden` + Experiment `glasshat-hit-at-13-gemini`** (hit@13 0.6154)
+> + code evaluator `glasshat-prompt-injection`. Machine-readable: [`../claudedocs/arize-evidence/ax-live-capture.json`](../claudedocs/arize-evidence/ax-live-capture.json); narrative: README "🛰️ Also deployed…".
+>
 > Every load-bearing claim, with the **exact command or URL** a judge can run and the
 > **observed result**. Companion to [`docs/rapid-agent-compliance.md`](./rapid-agent-compliance.md)
 > and `README.md`. Results below were observed on **2026-05-23** (commit on branch
@@ -13,12 +19,12 @@ Repo: **https://github.com/Two-Weeks-Team/glasshat** · License: **Apache-2.0** 
 
 | Claim | Command | Observed result (2026-05-23) |
 |---|---|---|
-| Python engine + API test suite passes | `uv run pytest` | **243 passed, 3 deselected** (3 = `@integration`, need live creds) |
+| Python engine + API test suite passes | `uv run pytest` | **323 passed, 3 deselected** (3 = `@integration`, need live creds) |
 | Coverage gate (CI) holds | `uv run pytest --cov=glasshat --cov-fail-under=90` | passes (coverage ≈ 97.8%, `uv run --cov`) |
 | Lint clean | `uv run ruff check .` | no errors |
 | Format clean | `uv run ruff format --check .` | no changes needed |
 | Types clean (strict) | `uv run mypy packages agents services apps/api` | passes |
-| Web unit tests pass | `cd apps/web && pnpm test` | **Test Files 15 passed, Tests 40 passed** |
+| Web unit tests pass | `cd apps/web && pnpm test` | **Test Files 21 passed, Tests 74 passed** |
 | Web lint clean | `cd apps/web && pnpm lint` | no errors |
 | Web types clean | `cd apps/web && pnpm typecheck` | `tsc --noEmit` passes |
 | Web builds | `cd apps/web && pnpm build` | static prerender of `/`, `/judge`, `/participate` |

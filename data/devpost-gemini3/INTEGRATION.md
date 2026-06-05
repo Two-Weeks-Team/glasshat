@@ -201,7 +201,7 @@ This is the basis for the AuditLoop's PhoenixConsultantAgent at runtime.
 - 503 corpus pre-seeded into past_evals **at deploy time** (one-time)
 - Demo uploads "MyHackathonSubmission" (or a real project from outside the corpus)
 - Glasshat synthesizes Qdrant rubric, evaluates → shows score + Top-K hit rate against the 503 corpus' 13 winners
-- 3D graph shows the 503 anchor constellation + the new submission's position
+- 3D graph shows the held-out calibration anchor constellation + the new submission's position
 - Recommendation API close: "ranks similar to [Globot] (winner), weaker than [Aegis] (winner) on Tech, stronger than [non-winner X]"
 
 ### Rapid Agent demo (Participant mode primary)

@@ -38,12 +38,12 @@ curl -s -X POST https://glasshat-api-o366v7tl2q-uc.a.run.app/api/evaluate \
 
 | Requirement | Implementation | Code path | Verify | Status |
 |---|---|---|---|---|
-| **Gemini / Vertex AI** | live `gemini-3.1-flash-lite` on the Vertex `global` endpoint (+ `gemini-3.1-pro-preview` for rubric synthesis) | `packages/shared/src/glasshat/shared/llm.py` (`VertexLlmClient`) | `POST <API>/api/evaluate` → real-Gemini `RunRecord` | ✅ Live |
+| **Gemini / Vertex AI** | live `gemini-3.1-flash-lite` on the Vertex `global` endpoint (+ `gemini-3.1-pro` for rubric synthesis) | `packages/shared/src/glasshat/shared/llm.py` (`VertexLlmClient`) | `POST <API>/api/evaluate` → real-Gemini `RunRecord` | ✅ Live |
 | **Agent runtime** (code-owned ADK) | a real **ADK 2.0 graph-`Workflow`** (ingest→synth→plan→6-hat parallel fan-out→join→audit→score), **deployed on the Gemini Enterprise Agent Platform (Agent Engine)** + Cloud Run | `…/pipeline/adk_agents.py` (Workflow), `…/pipeline/agent_engine.py`, `deploy/agent_engine_deploy.py` | live resource `…/reasoningEngines/7480191458771730432` (`stream_query` → `RunRecord`) | ✅ Live (Agent Engine) |
 | **Arize partner integration** | OpenInference/OTLP → **Arize AX** (`otlp.arize.com`): **full nested trace tree** (agent→Workflow→6 hats' Gemini calls, 104 spans verified) **+ Datasets + Experiments + Evaluator Hub**; live **hit@13 = 0.6154** | `…/pipeline/agent_engine.py` (`setup_arize_tracing`), `…/pipeline/arize_experiment.py` | `client.spans.list(project="glasshat")` → 104 spans; AX experiment `glasshat-hit-at-13-gemini` | ✅ Live |
 | **Phoenix MCP server** | ADK `MCPToolset` over stdio → `npx @arizeai/phoenix-mcp@latest`; audit consultant calls the MCP `get-dataset-examples` tool + writes corrections back (learning loop) | `…/pipeline/adk_runtime.py` (`build_phoenix_mcp_toolset`, `PhoenixMcpConsultant`, `PhoenixMcpDatasetWriter`) | `uv run python scripts/real_e2e.py` | ✅ Wired (e2e) — deployed image uses the spike-D calibrated table; the MCP live-trace consultant activates by config flag ([§3](docs/rapid-agent-compliance.md#3-arize-partner-mcp-path-agent--mcp--traceeval--report)) |
 | **Cloud Run** | API + web, project `panelyst-hackathon`, us-central1, min-instances=0 | `infra/deploy.sh`, `infra/cloudbuild-*.yaml`, `infra/Dockerfile.*` | `curl -fsS <API>/health` → 200 | ✅ Live |
-| **CI / tests / live API** | GH Actions: ruff + mypy + pytest (cov ≥ 90) · web lint/tsc/vitest/build · docker · supply-chain leak gate | `.github/workflows/ci.yml` | `uv run pytest` → 224 passed; web 71 passed | ✅ Green |
+| **CI / tests / live API** | GH Actions: ruff + mypy + pytest (cov ≥ 90) · web lint/tsc/vitest/build · docker · supply-chain leak gate | `.github/workflows/ci.yml` | `uv run pytest` → 323 passed; web 74 passed | ✅ Green |
 
 ---
 
@@ -58,6 +58,8 @@ Runtime)** and serves live queries — with the **full nested trace tree** landi
 - **Full nested AX trace tree** — verified via `client.spans.list(project="glasshat")`: **104 spans** across two live queries — `agent_run [glasshat_eval] → invocation → 48× AsyncGenerateContent + 50× AsyncEmbedContent` (the six hats' Gemini generate + embedding calls). The Agent-Engine trace-drop landmine is fixed with an **isolated provider** (`register(set_global_tracer_provider=False)`) + the OpenInference **ADK + google-genai** instrumentors.
 - **Live calibration figure — Arize AX Experiment** — **hit@13 = 0.6154** on real Gemini (8 of 13 historical winners ranked into the top-13), vs **0.3846** mock and **0.26** chance. Binary Winner-badge label → this is **hit@13, not a rank curve**; for this golden set the audit did not reorder the top-13 (Δ = 0). Code: `services/pipeline-orchestrator/src/glasshat/pipeline/arize_experiment.py`.
 - **Arize AX Datasets + Experiments + Evaluator Hub** — a `glasshat-golden` dataset, a `glasshat-hit-at-13-gemini` experiment, and a `glasshat-prompt-injection` code evaluator, all genuine.
+
+Every number is captured in [`claudedocs/arize-evidence/ax-live-capture.json`](claudedocs/arize-evidence/ax-live-capture.json) (re-runnable). **Provenance:** the nested trace is emitted by the **deployed resource** `7480…` (its `invocation` + per-hat Gemini spans); the **hit@13 0.6154** comes from the **experiment harness** (`run_arize_experiment.py`, real Gemini over the golden set) pushed to the same AX space — the same pipeline, a different invocation, not a query of the deployed agent.
 
 Reproduce (owner GCP/Arize creds):
 ```bash
@@ -74,6 +76,13 @@ ARIZE_SPACE_ID=… ARIZE_API_KEY=… LLM_BACKEND=gemini-enterprise \
 > deployment runs the GA `gemini-enterprise` backend (`gemini-3.5-flash`/`gemini-3.1-pro`).
 > Both share one byte-identical pipeline (parity-gated). No "un-gameable" claim; the
 > calibration number is binary-label hit@13, not a rising rank curve.
+>
+> Security scope (honest): the **public Cloud Run demo runs `SCORING_MODE=legacy`** — the
+> historical free-text `SCORE:` extraction, which a planted `SCORE: 10` can steer — and
+> its judge-only endpoints (`/override`, un-redacted views) are **open** (`JUDGE_API_TOKEN`
+> unset). The hardened path ships and is opt-in: `SCORING_MODE=structured` (typed JSON that
+> quarantines the submission) + `JUDGE_API_TOKEN` + the always-on injection guard. Flipping
+> them on the live instance is a user-gated prod redeploy.
 
 ---
 
@@ -171,7 +180,7 @@ Engine, API, and web are built and **CI-green** (SDD + TDD; one PR per phase —
 - **Lighthouse ≥ 90** on all pages — fresh live (post-deploy): landing **92/95/96**, `/judge` **93/96/96**, `/participate` **95/96/96** (Performance / Accessibility / Best-Practices). Motion respects `prefers-reduced-motion`.
 - **Live Arize AX observability**: the deployed service registers to `otlp.arize.com` (project `glasshat`) and emits a span **per agent** (`RubricSynthesizer · BluePlanner · SixHatPanel · Audit · BMADScorer · ReportAssembler`) plus per-hat `hat_assess` spans on every evaluation — verified via live registration logs (no export errors) and a live real-Gemini eval on `gemini-3.1-flash-lite` (e.g. run `2b2e29c2`, final 56.93, 4 audit self-corrections). e2e: `scripts/real_arize_ax_e2e.py`.
 
-- **Mock stack** (no credentials): full `run_evaluation` end-to-end, self-correct, SSE, 316 tests (243 py + 73 web), Docker images build in CI.
+- **Mock stack** (no credentials): full `run_evaluation` end-to-end, self-correct, SSE, 397 tests (323 py + 74 web), Docker images build in CI.
 - **Real e2e** (`scripts/real_e2e.py`): real Vertex Gemini + Vertex embeddings + in-code hybrid retrieval + self-hosted Phoenix + real Phoenix MCP (stdio, `list-projects` via a Google ADK agent) → RubricSynthesizer→6-hat→audit **self-correct** → report. Evidence: `claudedocs/2026-05-21-real-e2e-evidence.md` _(headline numbers there were captured pre-#27 on gemini-2.5; the live path is now gemini-3.1-flash-lite)_.
 - **Live Cloud Run**: both viewports return HTTP 200; `/api/evaluate` returns a self-corrected `RunRecord` on real `gemini-3.1-flash-lite`.
 - **3D self-correction**: `/participate` runs the pipeline and reshapes the constellation from real output — `claudedocs/assets/glasshat-3d-self-correction.png`.

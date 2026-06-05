@@ -59,9 +59,10 @@ function ArizeBand() {
               The calibration consultant reads a{" "}
               <strong className="font-medium text-[var(--color-ink)]">Phoenix dataset over MCP</strong>{" "}
               and writes each correction back — the learning loop is{" "}
-              <span className="text-[var(--color-accent-2)]">wired</span>; the credential-free demo
-              runs the deterministic spike-D prior, so the page never claims a live call it isn&apos;t
-              making.
+              <span className="text-[var(--color-accent-2)]">wired</span>. The credential-free{" "}
+              <strong className="font-medium text-[var(--color-ink)]">Cloud Run demo</strong> runs the
+              deterministic spike-D prior; the genuine live Arize-AX results — the full trace tree and
+              the hit@13 experiment — are the credentialed Agent-Engine run shown next.
             </p>
             <div className="flex flex-wrap gap-2.5 pt-1">
               {["Arize AX · OpenInference/OTLP", "Phoenix · MCP (wired)", "every hat = a span"].map(

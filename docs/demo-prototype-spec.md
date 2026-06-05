@@ -41,7 +41,7 @@ Approval here unlocks ~$X engineering investment and Phase 1 ~10d sequence ([[gl
 - **Zero data fetches** — all state hardcoded; safe to share/embed/airgap
 
 ### Two viewports on one engine
-- **Judge mode** (Qdrant primary demo) — batch evaluation Kanban + Top-K hit rate badge + 503 anchor 3D constellation
+- **Judge mode** (Qdrant primary demo) — batch evaluation Kanban + Top-K hit rate badge + held-out calibration anchor 3D constellation
 - **Participant mode** (Rapid Agent primary demo) — single submission + Phoenix MCP iterate-loop + score animation
 - Toggle in header switches both at runtime; same engine UI, different scenario script
 
@@ -59,7 +59,7 @@ Approval here unlocks ~$X engineering investment and Phase 1 ~10d sequence ([[gl
 ### Visible production-relevant components
 - 6-Hat panel with **Live Bias Meter** dial (sangguen 6.8) — turns red when Yellow over-confident
 - **Score Receipts UI** (sangguen 6.11) — dual-rubric panel showing the same submission scored under TWO synthesized rubrics
-- **3D Evaluation Constellation** — 503 anchors color-coded by tier (gold=winner, grey=non), current submission as glowing magenta point that migrates after audit correction
+- **3D Evaluation Constellation** — held-out calibration anchors color-coded by tier (gold=winner, grey=non), current submission as glowing magenta point that migrates after audit correction
 - **Winner Gravity callout** (sangguen 6.10) — floating tooltip on the moving node
 - **Phoenix Monitor live trace** — append-only log of MCP calls, evaluator firings, calibration deltas
 - **Anti-Pattern Radar narration** (sangguen 6.9) — caption appears at audit moment

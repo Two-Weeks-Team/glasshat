@@ -95,8 +95,8 @@ gcloud artifacts repositories describe "$REPO" \
 # LLM client is location-aware (per-tier *_location, set to "global" below);
 # embeddings (text-embedding-005) stay on the regional endpoint. Models: GA
 # gemini-3.1-flash-lite drives the live eval path (flash + flash_lite tiers);
-# gemini-3.1-pro-preview backs the pro tier (URL rubric synthesis only).
-GEMINI_ENV="GLASSHAT_GEMINI_PRO=gemini-3.1-pro-preview,GLASSHAT_GEMINI_FLASH=gemini-3.1-flash-lite,GLASSHAT_GEMINI_FLASH_LITE=gemini-3.1-flash-lite,GLASSHAT_GEMINI_PRO_LOCATION=global,GLASSHAT_GEMINI_FLASH_LOCATION=global,GLASSHAT_GEMINI_FLASH_LITE_LOCATION=global"
+# gemini-3.1-pro backs the pro tier (URL rubric synthesis only).
+GEMINI_ENV="GLASSHAT_GEMINI_PRO=gemini-3.1-pro,GLASSHAT_GEMINI_FLASH=gemini-3.1-flash-lite,GLASSHAT_GEMINI_FLASH_LITE=gemini-3.1-flash-lite,GLASSHAT_GEMINI_PRO_LOCATION=global,GLASSHAT_GEMINI_FLASH_LOCATION=global,GLASSHAT_GEMINI_FLASH_LITE_LOCATION=global"
 
 if [[ "$MODE" == "real" && "$NO_PHOENIX" == "yes" ]]; then
   echo "==> Mode: REAL Vertex Gemini, tracing OFF (NoOp — phoenix extra omitted)"

@@ -1396,7 +1396,7 @@ body[data-mode="participant"] .viewport-toggle button[aria-pressed="true"] {
     <section class="card card--hero graph-card" aria-labelledby="graph-title">
       <header class="card-header">
         <h2 class="card-title" id="graph-title">▍3D Evaluation Constellation · UMAP(768d Gemini emb → 3d)</h2>
-        <div class="card-badge" id="graph-badge">503 anchors · color = outcome tier · size = evidence depth</div>
+        <div class="card-badge" id="graph-badge">held-out calibration anchors · color = outcome tier · size = evidence depth</div>
       </header>
       <div class="graph-canvas-wrap">
         <canvas id="graph-canvas" aria-hidden="true"></canvas>
@@ -2118,7 +2118,7 @@ function initScene() {
     three.renderer.setSize(w, h, false);
     three.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   }
-  /* Build 503 anchor cloud */
+  /* Build held-out calibration anchor cloud */
   const anchors = [];
   for (let i=0;i<13;i++)  anchors.push({x: rngBox(i+1)*4 + 4, y: rngBox(i+11)*4 + 2, z: rngBox(i+21)*4, tier: 'winner'});
   for (let i=0;i<50;i++)  anchors.push({x: rngBox(i+100)*6, y: rngBox(i+200)*6, z: rngBox(i+300)*6, tier: 'honorable'});

@@ -660,7 +660,7 @@ Per sangguen's "Vector DB must be load-bearing", Qdrant is foregrounded **eight 
 | 0:30-1:00 | LAYER 4 — Yellow card shows evidence_depth = 0.31 (computed from Qdrant retrieval depth) |
 | 1:30-1:45 | LAYER — Recommendation API call visible: positive=[over_confident_anchors] negative=[accurate_anchors], strategy=average_vector |
 | 1:30-1:45 | LAYER — group_by query results: anchor projects + their A1 scores |
-| 1:45-2:30 | LAYER 2 — 503 anchor constellation in 3D, clustered by outcome_tier (gold/silver/grey) |
+| 1:45-2:30 | LAYER 2 — held-out calibration anchor constellation in 3D, clustered by outcome_tier (gold/silver/grey) |
 | 1:45-2:30 | LAYER 4 — corrected node migrates toward winner-anchor cluster (Winner Gravity narration) |
 | 2:30-2:50 | RIGHT panel — group_by query "Ranks similar to X (winner)" + Anti-Pattern Radar narration |
 | 2:50-3:00 | Tagline: "*And the auditor is the vector space.*" |

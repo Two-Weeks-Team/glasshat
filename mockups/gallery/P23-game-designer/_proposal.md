@@ -84,7 +84,7 @@
 │  │   └───────────────┘                                │  └────┘ │
 │  └────────────────────────────────────────────────────┘         │
 │                                                          ⚑ QUEST│
-│  ┌─⌖ 3D CONSTELLATION · 503 ANCHORS────────────────────┐ ✓panel│
+│  ┌─⌖ 3D CONSTELLATION · held-out calibration ANCHORS────────────────────┐ ✓panel│
 │  │   ★      ·     ·          (winners glow gold)       │ ✓det  │
 │  │  · ★ ●pre - - - -→ ●post  ·   ★                    │ ✓phx  │
 │  │     ·    ·     · ★     ·                            │ ✓anch │

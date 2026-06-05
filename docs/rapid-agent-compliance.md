@@ -6,8 +6,21 @@
 > win**; those are historical/planning docs and are banner-marked as such.
 > Companion: [`docs/evidence-matrix.md`](./evidence-matrix.md) (claim → command → result).
 
-Live system: **Gemini `gemini-3.1-flash-lite` (Vertex AI) + Google ADK on Cloud Run +
-Arize AX observability + Phoenix MCP server**, project `panelyst-hackathon`, us-central1.
+> **⬆️ Updated 2026-06-05 — this doc UNDERSTATES the shipped state.** Since the rows below
+> were written, glasshat went further: the evaluation pipeline is now a genuine **ADK 2.0
+> `Workflow` agent DEPLOYED on the Gemini Enterprise Agent Platform (Agent Engine)** — live
+> resource `…/reasoningEngines/7480191458771730432`, serving `stream_query` — with the
+> **full nested trace tree** in Arize AX (per-hat `AsyncGenerateContent`/`AsyncEmbedContent`
+> spans, verified via `client.spans.list(project="glasshat")`) **plus Arize AX Datasets +
+> Experiments + a code Evaluator** (`glasshat-golden`, `glasshat-hit-at-13-gemini`,
+> `glasshat-prompt-injection`; live **hit@13 0.6154**). Where rows below say "ADK on Cloud
+> Run" or "one span per agent", read **README.md "🛰️ Also deployed…"** +
+> [`../claudedocs/arize-evidence/`](../claudedocs/arize-evidence/) as the current truth.
+
+Live system: **Gemini `gemini-3.1-flash-lite` (Vertex AI) on Cloud Run + a genuine ADK 2.0
+Workflow agent on the Gemini Enterprise Agent Platform (Agent Engine) + Arize AX
+observability (full nested trace + datasets/experiments/evals) + Phoenix MCP server**,
+project `panelyst-hackathon`, us-central1.
 
 - Web: https://glasshat-web-o366v7tl2q-uc.a.run.app (`/judge` · `/participate`)
 - API: https://glasshat-api-o366v7tl2q-uc.a.run.app (`/health` · `/api/evaluate`)
@@ -18,12 +31,12 @@ Arize AX observability + Phoenix MCP server**, project `panelyst-hackathon`, us-
 
 | # | Requirement | Implementation in Glasshat | Code path | Verify | Status |
 |---|---|---|---|---|---|
-| 1 | **Gemini on Vertex AI** (Google Cloud AI tool, required) | Location-aware Vertex client; live tier `gemini-3.1-flash-lite` on the Vertex **`global`** endpoint (Gemini 3.x is global-only); `gemini-3.1-pro-preview` for URL→rubric synthesis; `text-embedding-005` (regional) for retrieval | `packages/shared/src/glasshat/shared/llm.py` → `VertexLlmClient` (`_client_for(location)`, lines 41–92); models in `infra/deploy.sh:65`, `.env.example:17–24` | `curl -s -X POST <API>/api/evaluate -d '{"rubric_source":{"preset_id":"rapid-agent"},"deck_text":"…","mode":"judge"}'` → real-Gemini `RunRecord` | ✅ Live |
+| 1 | **Gemini on Vertex AI** (Google Cloud AI tool, required) | Location-aware Vertex client; live tier `gemini-3.1-flash-lite` on the Vertex **`global`** endpoint (Gemini 3.x is global-only); `gemini-3.1-pro` for URL→rubric synthesis; `text-embedding-005` (regional) for retrieval | `packages/shared/src/glasshat/shared/llm.py` → `VertexLlmClient` (`_client_for(location)`, lines 41–92); models in `infra/deploy.sh:65`, `.env.example:17–24` | `curl -s -X POST <API>/api/evaluate -d '{"rubric_source":{"preset_id":"rapid-agent"},"deck_text":"…","mode":"judge"}'` → real-Gemini `RunRecord` | ✅ Live |
 | 2 | **Code-owned agent runtime** (rules name "Agent Builder"; the **Arize track** requires a code-owned runtime — *Gemini CLI / Agent Platform SDK / **Google ADK** / Agent Runtime / **Cloud Run***, and states **"Visual Agent Builder alone is insufficient. Direct code instrumentation is required."**) | **Google ADK** orchestrator, OpenInference-instrumented, deployed on **Cloud Run**. No visual Agent Builder app — that path is *explicitly disallowed* for this track. See §2. | `services/pipeline-orchestrator/src/glasshat/pipeline/adk_runtime.py` (`instrument_adk`, `run_via_adk`); engine `…/pipeline/engine.py`; deploy `infra/deploy.sh` | §2 below + `claudedocs/hackathon-source-2026-05-21/03-arize-resources.md` (the rule, quoted) | ✅ Resolved |
 | 3 | **Arize partner integration** (OpenInference tracing → Arize/Phoenix) | OpenInference auto-instrumentation → **Arize AX** at `otlp.arize.com`; **one span per agent** (`RubricSynthesizer · BluePlanner · SixHatPanel · Audit · BMADScorer · ReportAssembler`) + per-hat `hat_assess`, all carrying `glasshat.*` attributes | `packages/shared/src/glasshat/shared/tracing.py` → `ArizeTracer` (registers via `arize.otel`, line 68); span sites `…/pipeline/engine.py:115–149` | `uv run python scripts/real_arize_ax_e2e.py`; live run `2b2e29c2` (final 56.93, 4 self-corrections) | ✅ Live |
 | 4 | **Partner MCP server** (Phoenix MCP — required by the track) | ADK **`MCPToolset` over stdio** → `npx @arizeai/phoenix-mcp@latest`. The audit's calibration consultant calls the Phoenix MCP **`get-dataset-examples`** tool, parses per-anchor score deltas, and feeds them into the self-correction. See §3. | `…/pipeline/adk_runtime.py` → `build_phoenix_mcp_toolset` (l.31), `PhoenixMcpConsultant.consult` (l.53–96, tool `get-dataset-examples` l.82) | `uv run python scripts/real_e2e.py` (real ADK → Phoenix MCP stdio → pipeline) | ✅ Wired — exercised by e2e (see §3 on deployed vs. live-trace path) |
 | 5 | **Cloud Run deployment** (Google Cloud hosting) | API + web both on Cloud Run, project `panelyst-hackathon`, us-central1, `min-instances=0`; API URL baked into the web bundle at build time | `infra/deploy.sh`, `infra/cloudbuild-api.yaml`, `infra/cloudbuild-web.yaml`, `infra/Dockerfile.api`, `infra/Dockerfile.web` | `curl -fsS https://glasshat-api-o366v7tl2q-uc.a.run.app/health` → 200; web `/`,`/judge`,`/participate` → 200 | ✅ Live |
-| 6 | **CI / tests / Lighthouse / live API** (engineering quality evidence) | GitHub Actions: `ruff` + `ruff format` + `mypy --strict` + `pytest` (coverage gate ≥ 90%); web `eslint` + `tsc` + `vitest` + `next build`; Docker build (api + web) | `.github/workflows/ci.yml` | `uv run pytest` → **243 passed**; `cd apps/web && pnpm test` → **73 passed**; Lighthouse ≥ 90 all pages | ✅ Green |
+| 6 | **CI / tests / Lighthouse / live API** (engineering quality evidence) | GitHub Actions: `ruff` + `ruff format` + `mypy --strict` + `pytest` (coverage gate ≥ 90%); web `eslint` + `tsc` + `vitest` + `next build`; Docker build (api + web) | `.github/workflows/ci.yml` | `uv run pytest` → **323 passed**; `cd apps/web && pnpm test` → **74 passed**; Lighthouse ≥ 90 all pages | ✅ Green |
 
 Status legend: **✅ Live** = running in the deployed Cloud Run service; **✅ Wired** = real
 integration, code path + e2e proven, with the deployment caveat stated in §3;
@@ -122,15 +135,15 @@ it returns is the same math the deployed audit applies.
 
 ## 4. Gemini model — one canonical answer
 
-**Live model = `gemini-3.1-flash-lite`** (Vertex AI, `global` endpoint). `gemini-3.1-pro-preview`
+**Live model = `gemini-3.1-flash-lite`** (Vertex AI, `global` endpoint). `gemini-3.1-pro`
 backs the pro tier (URL→rubric synthesis only). **Gemini 2.5 is not used and is forbidden by
 project policy.**
 
 | Surface | Token | Note |
 |---|---|---|
 | `README.md` | `gemini-3.1-flash-lite` | live model, stated up front |
-| `.env.example:19,23` | `gemini-3.1-pro-preview`, `gemini-3.1-flash-lite` | (`GLASSHAT_GEMINI_FLASH` template default is `gemini-3-flash-preview`; the live deploy overrides FLASH → `gemini-3.1-flash-lite` in `deploy.sh:65`) |
-| `infra/deploy.sh:65` | `gemini-3.1-flash-lite` (flash + flash_lite), `gemini-3.1-pro-preview` (pro) | the values actually deployed |
+| `.env.example:19,23` | `gemini-3.1-pro`, `gemini-3.1-flash-lite` | (`GLASSHAT_GEMINI_FLASH` template default is `gemini-3.5-flash`; the live deploy overrides FLASH → `gemini-3.1-flash-lite` in `deploy.sh:65`) |
+| `infra/deploy.sh:65` | `gemini-3.1-flash-lite` (flash + flash_lite), `gemini-3.1-pro` (pro) | the values actually deployed |
 | `scripts/real_*_e2e.py` | `gemini-3.1-flash-lite` | real-eval scripts |
 
 Any "Gemini 2.5" string that remains in the repo is **explicitly historical** (e.g.
