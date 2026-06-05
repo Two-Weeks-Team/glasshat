@@ -250,9 +250,9 @@ export default function SpotlightFinale() {
             ADK 2.0 Workflow &middot; Arize AX &middot; Apache-2.0
             <br />
             <strong>Deployed as a genuine ADK agent on Agent Engine</strong> &middot;{" "}
-            full nested Arize AX trace ({AGENT_PLATFORM.traceSpans} spans, agent → 6 hats)
-            &middot; live <strong>hit@13 {AGENT_PLATFORM.hitAt13.live}</strong>{" "}(
-            {AGENT_PLATFORM.hitAt13.winnersInTop13} winners in the top-13)
+            full nested Arize AX trace ({`${AGENT_PLATFORM.traceSpans} spans, agent → 6 hats`})
+            &middot; live <strong>hit@13 {AGENT_PLATFORM.hitAt13.live}</strong>{" "}
+            ({`${AGENT_PLATFORM.hitAt13.winnersInTop13} winners in the top-13`})
           </p>
         </div>
 

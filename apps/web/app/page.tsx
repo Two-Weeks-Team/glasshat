@@ -5,6 +5,7 @@ import KineticScore from "@/components/landing/KineticScore";
 import RankFlipStory from "@/components/landing/RankFlipStory";
 import SpotlightFinale from "@/components/landing/SpotlightFinale";
 import { Reveal } from "@/components/Reveal";
+import { AGENT_PLATFORM } from "@/lib/deployment";
 
 // The six de Bono agent/hat spans the engine actually emits (engine.py: each
 // agent + each hat opens its own glasshat.agent span). Honest names, not props.
@@ -112,6 +113,86 @@ function ArizeBand() {
   );
 }
 
+/** Proof band (after ArizeBand): the audit isn't just auditable in theory — the
+ *  whole pipeline is a real ADK agent deployed on the Gemini Enterprise Agent
+ *  Platform, traced in Arize AX, and measured. Every number is from AGENT_PLATFORM
+ *  (verifiable; see claudedocs/arize-evidence/). Honest: binary-label hit@13. */
+function AgentPlatformProof() {
+  const ap = AGENT_PLATFORM;
+  const cards: { big: string; label: string; sub: string; tone: string }[] = [
+    {
+      big: ap.runtime,
+      label: "Deployed on " + ap.platform,
+      sub: ap.surface + " · serving live stream_query · managed Sessions + AGENT_IDENTITY",
+      tone: "var(--color-accent)",
+    },
+    {
+      big: ap.traceSpans + " spans",
+      label: "Full nested Arize AX trace",
+      sub: ap.traceShape + " · verified via client.spans.list(project=glasshat)",
+      tone: "var(--color-accent-2)",
+    },
+    {
+      big: "hit@13 " + ap.hitAt13.live,
+      label: ap.hitAt13.winnersInTop13 + " winners ranked into the top-13",
+      sub: "real Gemini · vs " + ap.hitAt13.mock + " mock · " + ap.hitAt13.chance + " chance",
+      tone: "var(--color-good)",
+    },
+  ];
+  return (
+    <section
+      aria-label="Genuinely deployed on the Gemini Enterprise Agent Platform and measured in Arize AX"
+      className="relative flex min-h-[100svh] w-full items-center justify-center overflow-hidden px-6 py-24"
+    >
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10"
+        style={{
+          background:
+            "radial-gradient(56rem 38rem at 24% 68%, color-mix(in oklch, var(--color-accent) 14%, transparent), transparent 60%), linear-gradient(var(--color-bg), transparent 14%, transparent 86%, var(--color-bg))",
+        }}
+      />
+      <Reveal className="mx-auto w-full max-w-6xl">
+        <p className="font-mono text-sm uppercase tracking-[0.32em] text-[var(--color-accent)]">
+          Genuinely deployed · genuinely measured
+        </p>
+        <h2 className="mt-5 max-w-4xl font-display text-[clamp(2.2rem,5.4vw,4.4rem)] font-bold leading-[1.04] tracking-[-0.03em]">
+          Not a mock. The evaluation brain is a real{" "}
+          <span className="text-gradient font-serif-italic font-medium">ADK agent</span> on Agent
+          Engine — traced, and scored.
+        </h2>
+        <div className="mt-10 grid gap-6 md:grid-cols-3">
+          {cards.map((c) => (
+            <div
+              key={c.label}
+              className="elevate flex flex-col gap-3 rounded-3xl p-7 shadow-[0_30px_80px_-46px_oklch(0.72_0.17_290/0.45)]"
+            >
+              <span
+                className="font-display text-[clamp(1.5rem,2.6vw,2.15rem)] font-bold leading-tight tracking-[-0.02em]"
+                style={{ color: c.tone }}
+              >
+                {c.big}
+              </span>
+              <span className="text-[1rem] font-medium leading-snug text-[var(--color-ink)]">
+                {c.label}
+              </span>
+              <span className="font-mono text-[0.74rem] leading-relaxed text-[var(--color-muted)]">
+                {c.sub}
+              </span>
+            </div>
+          ))}
+        </div>
+        <p className="mt-7 font-mono text-[0.78rem] leading-relaxed text-[var(--color-muted)]">
+          Live Agent Engine resource{" "}
+          <code className="text-[var(--color-accent-2)]">{ap.resource}</code> · AX experiment{" "}
+          <code className="text-[var(--color-accent-2)]">{ap.axExperiment}</code>.{" "}
+          <span className="text-[var(--color-ink)]">{ap.caveat}.</span>
+        </p>
+      </Reveal>
+    </section>
+  );
+}
+
 export default function Home() {
   return (
     <main className="flex flex-col">
@@ -131,6 +212,10 @@ export default function Home() {
       {/* ARIZE · the track's whole point — the audit is auditable on Arize AX */}
       <div data-cine-scene>
         <ArizeBand />
+      </div>
+      {/* PROOF · genuinely deployed on Agent Engine + measured in Arize AX */}
+      <div data-cine-scene>
+        <AgentPlatformProof />
       </div>
       {/* C · 마무리 와우 — the spotlight finale + closing CTA + honest live status */}
       <div data-cine-scene>
