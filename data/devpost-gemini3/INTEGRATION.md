@@ -213,7 +213,7 @@ This is the basis for the AuditLoop's PhoenixConsultantAgent at runtime.
 
 ### The 503 corpus in the demo close
 
-Both demos' close shows: "Glasshat evaluated this against 503 of Gemini 3's 4,499 submissions, anchored to 13 named winners."
+Both demos' close shows: "Glasshat evaluated this against the held-out calibration set, anchored to 13 named winners."
 
 Honest, defensible disclosure.
 

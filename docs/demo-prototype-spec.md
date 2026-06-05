@@ -158,7 +158,7 @@ Per `docs/max-wins-plan.md` §5.1 + sangguen narration locks:
 | 1:27 | Yellow updates | Score animates 9.0 → 7.6, Hat row turns green |
 | 1:45 | 3D fly | Current node migrates toward winner cluster |
 | 1:55 | Gravity callout | Floating tooltip: "72% similar to winner cluster, but pulled toward..." |
-| 2:10 | Anti-Pattern | Caption: "37 of 503 past submissions matched. Winners: 0." |
+| 2:10 | Anti-Pattern | Caption: "37 of CALIBRATION SET matched. Winners: 0." |
 | 2:30 | Dual-Rubric | Variance banner appears: Δ = 14, "correct rubric-aware variance" |
 | 2:38 | Variance hold | Caption emphasizes the variance message |
 | 2:42 | Top-K | Gold badge appears: "9/13 winners in predicted top-13" |

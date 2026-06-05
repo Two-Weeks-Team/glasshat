@@ -122,6 +122,11 @@ elif [[ "$MODE" == "real" ]]; then
   # PHOENIX_COLLECTOR_ENDPOINT is set (Node is in the image); empty endpoint →
   # graceful spike-D table fallback. REPO_GRADER=github-api folds repo evidence in.
   LEARNING_ENV="CONSULTANT_BACKEND=phoenix-mcp,DATASET_WRITER_BACKEND=phoenix-mcp,REPO_GRADER_BACKEND=github-api,PHOENIX_CALIBRATION_DATASET=glasshat-calibration,PHOENIX_COLLECTOR_ENDPOINT=${PHOENIX_COLLECTOR_ENDPOINT},CORS_ALLOW_ORIGINS=${WEB_ORIGIN}"
+  # This Cloud Run demo intentionally runs the GATED DEFAULTS: AGENT_RUNTIME unset →
+  # `python` (the parity-identical path; the genuine ADK 2.0 Workflow agent is the
+  # SEPARATE Agent-Engine deploy, deploy/agent_engine_deploy.py), and SCORING_MODE
+  # unset → `legacy`. The hardened opt-ins (SCORING_MODE=structured + JUDGE_API_TOKEN
+  # as a secret) are a user-gated flip — set them here for the judged/secured instance.
   API_ENV="LLM_BACKEND=vertex,MONITOR_BACKEND=arize,DOCSTORE_BACKEND=${DOCSTORE_BACKEND},GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_REGION=${REGION},GOOGLE_GENAI_USE_VERTEXAI=true,${GEMINI_ENV},ARIZE_SPACE_ID=${ARIZE_SPACE_ID},PHOENIX_PROJECT_NAME=glasshat,${LEARNING_ENV}"
   API_SECRETS=(--set-secrets "PHOENIX_API_KEY=phoenix-api-key:latest")
   echo "==> Learning loop: CONSULTANT/DATASET_WRITER=phoenix-mcp (endpoint='${PHOENIX_COLLECTOR_ENDPOINT:-<unset → table fallback>}'), REPO_GRADER=github-api, CORS→${WEB_ORIGIN}"

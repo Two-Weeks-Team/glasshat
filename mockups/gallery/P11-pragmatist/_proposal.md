@@ -82,7 +82,7 @@
 |              |       │ |   78/100        |  |   71/100        |          |
 |              |       │ +-----------------+  +-----------------+          |
 |              |       │ (3D optional — ?view=2d for ship-today)           |
-|              |  2:30 │ qdrant.search_groups past_evals (503 projects)    |
+|              |  2:30 │ qdrant.search_groups past_evals (the projects)    |
 |              |       │ "ranks similar to · weaker than · stronger than"  |
 |              |  2:50 │ Tagline + Apache-2.0 frame                        |
 |              |                                                           |
