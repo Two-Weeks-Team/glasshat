@@ -12,7 +12,7 @@ from __future__ import annotations
 from glasshat.rubric.models import SynthesizedRubric
 from glasshat.shared.enums import Hat, RunMode
 from glasshat.shared.github_url import parse_github_url
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class Chunk(BaseModel):
@@ -60,6 +60,23 @@ class EvaluationInput(BaseModel):
         if parse_github_url(value) is None:
             raise ValueError("repo_url must be an https://github.com/<owner>/<repo> URL")
         return value
+
+    @model_validator(mode="after")
+    def _participant_rubric_is_preset_only(self) -> EvaluationInput:
+        """M5: a PARTICIPANT run may only pick a vetted ``preset_id`` rubric.
+
+        ``rules_url`` (attacker-controlled rubric source + SSRF surface),
+        ``custom_yaml`` (attacker-authored rubric) and ``rules_pdf_uri`` are
+        judge-only. This is enforced on the *data*, so even if a caller flips the
+        ``mode`` field, a participant payload still cannot smuggle a self-authored
+        rubric that scores itself; the API additionally refuses to honor
+        ``mode=judge`` without judge authorization (see ``apps/api``)."""
+        if self.mode is RunMode.PARTICIPANT and set(self.rubric_source) != {"preset_id"}:
+            raise ValueError(
+                "participant runs must select a preset rubric (rubric_source = "
+                "{'preset_id': ...}); rules_url / custom_yaml / rules_pdf_uri are judge-only"
+            )
+        return self
 
 
 class PlanObject(BaseModel):

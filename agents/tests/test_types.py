@@ -67,6 +67,31 @@ def test_evaluation_input_allows_empty_and_valid_repo_url() -> None:
     assert ok.repo_url == "https://github.com/acme/widget"
 
 
+def test_participant_must_use_preset_rubric() -> None:
+    # M5: participants may only pick a preset; judge-only rubric sources are rejected.
+    for bad_source in (
+        {"custom_yaml": "schema_version: '1.0'"},
+        {"rules_url": "https://rules.example/page"},
+        {"rules_pdf_uri": "gs://bucket/rules.pdf"},
+        {"preset_id": "rapid-agent", "custom_yaml": "x"},  # cannot smuggle extra keys
+        {},  # no source at all
+    ):
+        with pytest.raises(ValidationError):
+            EvaluationInput(rubric_source=bad_source, mode=RunMode.PARTICIPANT)
+
+
+def test_participant_preset_only_is_accepted() -> None:
+    inp = EvaluationInput(rubric_source={"preset_id": "rapid-agent"}, mode=RunMode.PARTICIPANT)
+    assert inp.rubric_source == {"preset_id": "rapid-agent"}
+
+
+def test_judge_mode_may_use_non_preset_sources() -> None:
+    # The same sources a participant cannot use are allowed for a judge run.
+    for src in ({"custom_yaml": "x"}, {"rules_url": "https://rules.example/p"}):
+        inp = EvaluationInput(rubric_source=src, mode=RunMode.JUDGE)
+        assert inp.mode is RunMode.JUDGE
+
+
 def test_plan_object() -> None:
     p = PlanObject(
         hats_enabled=[Hat.WHITE, Hat.BLACK],

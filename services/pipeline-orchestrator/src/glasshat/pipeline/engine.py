@@ -33,6 +33,11 @@ from glasshat.agents.audit import (
 from glasshat.agents.blue_planner import plan
 from glasshat.agents.bmad_scorer import score
 from glasshat.agents.hats import run_panel
+from glasshat.agents.injection_guard import (
+    HeuristicInjectionGuard,
+    InjectionGuard,
+    get_injection_guard,
+)
 from glasshat.agents.report import assemble
 from glasshat.agents.rubric_synthesizer import synthesize
 from glasshat.agents.types import Chunk, EvaluationInput, RunRecord
@@ -40,7 +45,7 @@ from glasshat.ingest import embed_chunks, ingest_deck
 from glasshat.pipeline.events import PipelineEvent, Stage
 from glasshat.rubric.presets import list_presets, load_preset
 from glasshat.shared.blobstore import get_blobstore
-from glasshat.shared.config import Settings, get_settings
+from glasshat.shared.config import ScoringMode, Settings, get_settings
 from glasshat.shared.docstore import get_docstore
 from glasshat.shared.enums import Hat
 from glasshat.shared.ids import new_uuid
@@ -86,6 +91,11 @@ class Deps:
     consultant: Consultant
     dataset_writer: DatasetWriter = field(default_factory=NullDatasetWriter)
     repo_grader: RepoGrader = field(default_factory=NullRepoGrader)
+    injection_guard: InjectionGuard = field(default_factory=HeuristicInjectionGuard)
+    # ``legacy`` (default) keeps the live demo's hat-scoring byte-identical;
+    # ``structured`` switches the panel to typed JSON scoring under a system
+    # instruction that quarantines the untrusted submission (Tier A).
+    scoring_mode: ScoringMode = "legacy"
 
 
 # YELLOW (optimism) over-confidence prior, grounded in spike-D held-out anchors
@@ -159,6 +169,8 @@ def default_deps(settings: Settings | None = None) -> Deps:
         consultant=_select_consultant(settings),
         dataset_writer=_select_dataset_writer(settings),
         repo_grader=_select_repo_grader(settings),
+        injection_guard=get_injection_guard(settings),
+        scoring_mode=settings.scoring_mode,
     )
 
 
@@ -226,6 +238,26 @@ async def run_evaluation(
     run_id = new_uuid()
     emit(Stage.QUEUED, run_id=run_id)
 
+    # Screen the untrusted submission for prompt-injection / score-steering before
+    # it reaches the panel. This does not block the run — the structural defense
+    # (typed scoring + quarantined <submission> in structured mode) is what stops a
+    # planted score — but the verdict is recorded as a glasshat.* span attribute so
+    # an attempt is observable in Arize AX.
+    with deps.tracer.span("input_guard", **{"glasshat.agent": "InjectionGuard"}) as guard_span:
+        # classify is sync; the default heuristic is instant CPU, but the optional
+        # phoenix backend does blocking network I/O — offload so neither stalls the
+        # event loop.
+        verdict = await asyncio.to_thread(deps.injection_guard.classify, inp.deck_text or "")
+        guard_span.set_attr("glasshat.injection_flag", verdict.flagged)
+        guard_span.set_attr("glasshat.injection_guard_backend", verdict.backend)
+        if verdict.flagged:
+            logger.warning(
+                "run %s: submission flagged by injection guard (%s); matched %d pattern(s)",
+                run_id,
+                verdict.backend,
+                len(verdict.matched),
+            )
+
     emit(Stage.INGESTING)
     # Deck and repo evidence are indexed together in a SINGLE index() call:
     # HybridIndex.index() replaces its corpus each call, so two calls would drop
@@ -268,7 +300,9 @@ async def run_evaluation(
         "agent_hats",
         **{"glasshat.agent": "SixHatPanel", "glasshat.hats": len(pln.hats_enabled)},
     ):
-        assessments = await run_panel(pln, rubric, inp, deps.llm, deps.retrieval, deps.tracer)
+        assessments = await run_panel(
+            pln, rubric, inp, deps.llm, deps.retrieval, deps.tracer, scoring_mode=deps.scoring_mode
+        )
 
     emit(Stage.AUDITING)
     emit(Stage.AUDIT_STARTED)

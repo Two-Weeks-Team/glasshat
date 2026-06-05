@@ -11,6 +11,7 @@ from glasshat.agents.rubric_synthesizer import (
 )
 from glasshat.agents.types import EvaluationInput
 from glasshat.rubric.presets import PRESETS_DIR
+from glasshat.shared.enums import RunMode
 from glasshat.shared.errors import SynthesisError
 from glasshat.shared.llm import MockLlmClient
 
@@ -60,14 +61,19 @@ def test_synthesize_preset_path_returns_rapid_agent_25() -> None:
 
 def test_synthesize_custom_yaml_path() -> None:
     body = yaml.safe_load((PRESETS_DIR / "qdrant.yaml").read_text())["synthesized"]
-    inp = EvaluationInput(rubric_source={"custom_yaml": yaml.safe_dump(body)})
+    # custom_yaml is judge-only (M5): a participant may only pick a preset.
+    inp = EvaluationInput(rubric_source={"custom_yaml": yaml.safe_dump(body)}, mode=RunMode.JUDGE)
     r = asyncio.run(synthesize(inp, MockLlmClient()))
     assert r.scoring_rule.aggregation == "simple_average"
 
 
 def test_synthesize_no_source_raises() -> None:
+    # Judge mode so construction passes the M5 participant-preset guard; the empty
+    # source then raises in synthesize() as before.
     with pytest.raises(SynthesisError):
-        asyncio.run(synthesize(EvaluationInput(rubric_source={}), MockLlmClient()))
+        asyncio.run(
+            synthesize(EvaluationInput(rubric_source={}, mode=RunMode.JUDGE), MockLlmClient())
+        )
 
 
 def test_synthesize_from_text_parses_llm_yaml() -> None:
