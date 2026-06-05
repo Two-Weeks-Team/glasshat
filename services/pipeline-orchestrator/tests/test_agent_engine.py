@@ -64,6 +64,14 @@ def test_setup_arize_tracing_uses_isolated_provider(monkeypatch: pytest.MonkeyPa
 
     fake_instr_mod.GoogleADKInstrumentor = _GoogleADKInstrumentor  # type: ignore[attr-defined]
 
+    fake_genai_mod = types.ModuleType("openinference.instrumentation.google_genai")
+
+    class _GoogleGenAIInstrumentor:
+        def instrument(self, *, tracer_provider: Any) -> None:
+            captured["genai_instrumented_with"] = tracer_provider
+
+    fake_genai_mod.GoogleGenAIInstrumentor = _GoogleGenAIInstrumentor  # type: ignore[attr-defined]
+
     monkeypatch.setitem(sys.modules, "arize", fake_arize)
     monkeypatch.setitem(sys.modules, "arize.otel", fake_otel)
     monkeypatch.setitem(sys.modules, "openinference", types.ModuleType("openinference"))
@@ -73,6 +81,7 @@ def test_setup_arize_tracing_uses_isolated_provider(monkeypatch: pytest.MonkeyPa
         types.ModuleType("openinference.instrumentation"),
     )
     monkeypatch.setitem(sys.modules, "openinference.instrumentation.google_adk", fake_instr_mod)
+    monkeypatch.setitem(sys.modules, "openinference.instrumentation.google_genai", fake_genai_mod)
     monkeypatch.setenv("ARIZE_SPACE_ID", "space-123")
     monkeypatch.setenv("ARIZE_API_KEY", "key-456")
 
@@ -80,7 +89,9 @@ def test_setup_arize_tracing_uses_isolated_provider(monkeypatch: pytest.MonkeyPa
     # THE fix: an isolated provider (Agent Engine kills a global one → dropped traces).
     assert captured["set_global_tracer_provider"] is False
     assert captured["space_id"] == "space-123" and captured["api_key"] == "key-456"
+    # Both instrumentors attached to the SAME isolated provider (full nested trace).
     assert captured["instrumented_with"] == "provider-sentinel"
+    assert captured["genai_instrumented_with"] == "provider-sentinel"
 
 
 # --- deployed agent core -------------------------------------------------------
@@ -136,6 +147,7 @@ def test_remote_requirements_use_adk2_not_aiplatform_adk_extra() -> None:
     assert "[adk]" not in joined
     assert "arize-otel>=0.12" in reqs
     assert "openinference-instrumentation-google-adk>=0.1" in reqs
+    assert "openinference-instrumentation-google-genai>=1.0" in reqs  # per-hat Gemini spans
     assert "cloudpickle>=3.0" in reqs  # Agent Engine needs it to deserialize the agent
 
 
