@@ -59,19 +59,6 @@ _GLASSHAT_PACKAGES = (
     "services/pipeline-orchestrator",
 )
 
-# Wheel-name prefixes in dependency order (the dir name != the package name, e.g.
-# services/pipeline-orchestrator → glasshat-pipeline). Used to order the wheels so
-# a one-by-one remote install can resolve each package's glasshat-* deps.
-_WHEEL_DEP_ORDER = (
-    "glasshat_shared",
-    "glasshat_rubric",
-    "glasshat_agents",
-    "glasshat_ingest",
-    "glasshat_code_grader",
-    "glasshat_pipeline",
-)
-
-
 def remote_requirements() -> list[str]:
     """PyPI deps for the deployed agent's own pip env on Agent Engine.
 
@@ -164,41 +151,49 @@ def build_app() -> Any:
     return TracedAdkApp(agent=build_root_agent())
 
 
-def build_wheels(out_dir: Path | None = None) -> list[str]:
-    """Build a wheel for each glasshat workspace package (src-layout namespace
-    packages), returning the wheel paths. Agent Engine pip-installs ``.whl`` files
-    passed in ``extra_packages`` — the reliable way to make the namespace package
-    importable on the remote (a bare src dir would not be)."""
-    import subprocess
+def build_agent_package(staging: Path | None = None) -> Path:
+    """Merge the six workspace packages' ``src/glasshat`` trees into ONE importable
+    ``glasshat/`` source package and return it.
 
-    out = out_dir or (_REPO / "dist" / "agent-engine")
-    out.mkdir(parents=True, exist_ok=True)
-    for existing in out.glob("*.whl"):
-        existing.unlink()
-    for pkg in _GLASSHAT_PACKAGES:
-        subprocess.run(
-            ["uv", "build", "--wheel", "--out-dir", str(out), str(_REPO / pkg)],
-            check=True,
-            cwd=str(_REPO),
-        )
-    # The glasshat wheels declare inter-package deps (glasshat-shared, …) not on
-    # PyPI; return them in DEPENDENCY order (by wheel-name prefix) so a one-by-one
-    # remote install resolves each from the wheels already installed.
-    wheels: list[str] = []
-    for prefix in _WHEEL_DEP_ORDER:
-        wheels.extend(str(w) for w in sorted(out.glob(f"{prefix}-*.whl")))
-    return wheels
+    Agent Engine's ``extra_packages`` COPIES a source path into the deployment (it
+    does NOT pip-install) and puts the deployment root on ``sys.path``. So the glasshat
+    namespace must be a single importable ``glasshat/`` tree at a path whose basename
+    is ``glasshat`` — wheels (copied, never installed) gave ``No module named
+    'glasshat'``. glasshat is a PEP 420 namespace package, so the six subpackage trees
+    merge cleanly. The glasshat-* inter-package deps vanish (it is one tree); only the
+    real PyPI deps remain (declared in ``remote_requirements``)."""
+    import shutil
+
+    staging = staging or (_REPO / "dist" / "agent-engine" / "build")
+    pkg = staging / "glasshat"
+    if pkg.exists():
+        shutil.rmtree(pkg)
+    pkg.mkdir(parents=True)
+    ignore = shutil.ignore_patterns("__pycache__", "*.pyc")
+    for p in _GLASSHAT_PACKAGES:
+        shutil.copytree(_REPO / p / "src" / "glasshat", pkg, dirs_exist_ok=True, ignore=ignore)
+    return pkg
 
 
 def deploy(project: str, location: str, staging_bucket: str) -> str:
     """Create the Agent Engine and return its resource name. Overlay-only."""
+    import os
+
     import vertexai  # cloud SDK, present only in the deploy overlay
 
-    client = vertexai.Client(project=project, location=location)
+    pkg = build_agent_package()  # …/dist/agent-engine/build/glasshat
     cfg = deploy_config(staging_bucket)
-    # Swap the source-dir documentation value for the actually-installable wheels.
-    cfg["extra_packages"] = build_wheels()
-    remote = client.agent_engines.create(agent=build_app(), config=cfg)
+    client = vertexai.Client(project=project, location=location)
+    # extra_packages preserves the path's basename at the deployment root, so run
+    # create from the build dir with the relative path "glasshat" → remote
+    # <root>/glasshat is importable.
+    prev = os.getcwd()
+    os.chdir(pkg.parent)
+    try:
+        cfg["extra_packages"] = [pkg.name]  # "glasshat"
+        remote = client.agent_engines.create(agent=build_app(), config=cfg)
+    finally:
+        os.chdir(prev)
     return str(getattr(remote, "resource_name", remote))
 
 
