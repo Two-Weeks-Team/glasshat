@@ -110,7 +110,7 @@ The Qdrant demo's core scene becomes the **Judge mode batch run on the 503 corpu
 
 - 0:00-0:30 Hook + drag a 503-row CSV onto `/judge` page
 - 0:30-1:30 Live Kanban shows ~30 cards/sec moving through stages; cost meter ticks; total elapsed shown
-- 1:30-2:00 Audit moment fires on a high-profile card (engineered to trigger; e.g., one of the synthetic `/demo` items); 3D graph appears with 503 anchor constellation
+- 1:30-2:00 Audit moment fires on a high-profile card (engineered to trigger; e.g., one of the synthetic `/demo` items); 3D graph appears with held-out calibration anchor constellation
 - 2:00-2:30 Rank table appears; **Top-K hit rate: 9/13 winners** flashes
 - 2:30-2:50 Recommendation API close: "ranks similar to Vector Vintage (winner)" anchor comparison
 - 2:50-3:00 Tagline + reveal teaser: "Same engine has another viewport — see Rapid Agent demo"

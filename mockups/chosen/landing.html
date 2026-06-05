@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#0d1320" />
 <title>Glasshat — The audit layer for AI evaluation</title>
-<meta name="description" content="Stop trusting your LLM judges — verify them. Glasshat scores AI outputs with dual-rubric variance detection + Qdrant-anchored calibration against 503 past hackathon submissions." />
+<meta name="description" content="Stop trusting your LLM judges — verify them. Glasshat scores AI outputs with dual-rubric variance detection + Qdrant-anchored calibration against the past hackathon submissions." />
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -497,7 +497,7 @@ footer.bottom a:hover { text-decoration: underline; }
     <span class="hero-eyebrow">The audit layer for AI evaluation</span>
     <h1 class="hero-title">It <em>audits</em> the judge.</h1>
     <div class="hero-sub">Stop trusting your LLM judges — verify them.</div>
-    <p class="hero-lead">Glasshat scores AI outputs with <strong>dual-rubric variance detection</strong> + Qdrant-anchored calibration against <strong>503 past hackathon submissions</strong>. Built for AI platform teams who must defend every score under SOC 2 / EU AI Act scrutiny.</p>
+    <p class="hero-lead">Glasshat scores AI outputs with <strong>dual-rubric variance detection</strong> + Qdrant-anchored calibration against <strong>the past hackathon submissions</strong>. Built for AI platform teams who must defend every score under SOC 2 / EU AI Act scrutiny.</p>
     <div class="hero-cta-row">
       <a href="demo.html" class="hero-cta primary">▶ Watch the audit (3 min)</a>
       <a href="#proof" class="hero-cta">See proof ↓</a>
@@ -603,7 +603,7 @@ footer.bottom a:hover { text-decoration: underline; }
     <div class="method-card">
       <h4>How we measured</h4>
       <ul>
-        <li>Dataset: <code>gemini3.devpost.com</code> 503 submissions (concluded Feb 2026)</li>
+        <li>Dataset: <code>gemini3.devpost.com</code> the calibration set (concluded Feb 2026)</li>
         <li>Ground truth: 13 named winners (Globot, Aegis, Netra…)</li>
         <li>Vanilla baseline: single LLM-as-judge (gemini-3-pro, no calibration)</li>
         <li>Glasshat: RubricSynthesizer + 6 Hats + Phoenix MCP audit loop + Qdrant.recommend</li>
@@ -724,7 +724,7 @@ footer.bottom a:hover { text-decoration: underline; }
         <div class="scene-num">Act III · 05</div>
         <div class="scene-text">
           <h3>The 3D <strong>constellation</strong> reshapes.</h3>
-          <p>503 past anchor projects sit in a 3D space (UMAP of 768d Gemini embeddings). The current submission's point — magenta — was drifting toward the winner cluster (gold). After correction, it slides toward the "overhyped, undelivered" cluster. The vector space tells the truth.</p>
+          <p>the past anchor projects sit in a 3D space (UMAP of 768d Gemini embeddings). The current submission's point — magenta — was drifting toward the winner cluster (gold). After correction, it slides toward the "overhyped, undelivered" cluster. The vector space tells the truth.</p>
         </div>
         <div class="scene-art">
           <svg viewBox="0 0 320 220">
@@ -813,7 +813,7 @@ footer.bottom a:hover { text-decoration: underline; }
     <a href="playground.html" class="hero-cta" style="background:var(--gold); color:var(--bg-base); border-color:var(--gold);">🎮 Play the audit (voxel boss-fight)</a>
     <a href="https://github.com/Two-Weeks-Team/glasshat" target="_blank" rel="noopener" class="hero-cta">★ Star on GitHub</a>
   </div>
-  <div class="cta-meta">UI prototype · numbers from offline batch on 503 submissions · agent calls simulated for demo · Apache-2.0 · Two-Weeks-Team/glasshat</div>
+  <div class="cta-meta">UI prototype · numbers from offline batch on the calibration set · agent calls simulated for demo · Apache-2.0 · Two-Weeks-Team/glasshat</div>
 </section>
 
 <footer class="bottom">

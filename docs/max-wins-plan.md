@@ -163,7 +163,7 @@
 
 ### 3.4 The Gemini 3 Hackathon as Glasshat's calibration corpus (added 2026-05-14, **actuals updated 2026-05-15**)
 
-**2026-05-15 update**: crawl complete. Actual yield = **503 projects (sequential page 1-21)** with **13 named winners in collected gallery**. Stored at `data/devpost-gemini3/` (commit `d840d2a`). README narrative updates from "524" → **"503 of 4,499 including 13 named winners"** (honest, accurate). Detailed integration plan: `data/devpost-gemini3/INTEGRATION.md`.
+**2026-05-15 update**: crawl complete. Actual yield = **the projects (sequential page 1-21)** with **13 named winners in collected gallery**. Stored at `data/devpost-gemini3/` (commit `d840d2a`). README narrative updates from "524" → **"503 of 4,499 including 13 named winners"** (honest, accurate). Detailed integration plan: `data/devpost-gemini3/INTEGRATION.md`.
 
 
 

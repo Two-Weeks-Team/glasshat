@@ -31,7 +31,7 @@
   │      ·  ·  *  ·       *  ·       ·  ·       *               │
   │   *  ·        ___        ·       ·    *                     │
   │           .-'`   `'-.            ╱╲ qdrant                  │
-  │   YELLOW  |  (◉‿◉)  |          *  ╲  503 anchors            │
+  │   YELLOW  |  (◉‿◉)  |          *  ╲  held-out calibration anchors            │
   │   ┌──┐    `─-─────-─'             ╲*                        │
   │   │!!│  ⟿⟿⟿⟿  PHOENIX EYE  ⟸⟸⟸  *                        │
   │   └──┘                                                       │
@@ -76,7 +76,7 @@
   └─────────────────────────────────────────────────────────────┘
                           ↓
   ┌─────────────────────────────────────────────────────────────┐
-  │  FINALE  ·  503-anchor constellation                         │
+  │  FINALE  ·  held-out calibration anchors constellation                         │
   │     ·  *  ·  *    ★(winner)    ·  *  ·  *                   │
   │   "Same engine. Different rubric. Different score."          │
   └─────────────────────────────────────────────────────────────┘
@@ -113,7 +113,7 @@
 
   STAGE 4 · 01:30 ────────────────────────────────────────────────
    ┌─────────────────────────────────────────────────────────┐
-   │              QDRANT · 503 PAST SUBMISSIONS               │
+   │              QDRANT · CALIBRATION SET               │
    │       ·  ·  *   *  ·  *  ·  *   ·  *  *                 │
    │              ┌─────┐                                     │
    │      ┌─────┐ │ 7.5 │ ┌─────┐                            │
@@ -179,6 +179,6 @@
 
 **Why Phoenix is an eye.** Phoenix MCP is observability — literally the act of seeing. A blinking eye that opens, focuses an iris, and stays watching is the cleanest visual metaphor for *meta-evaluation*. The phoenix-feather eyelashes nod to the Arize Phoenix brand without using their logo.
 
-**Why Qdrant is a constellation.** 503 past submissions = 503 stars. Three anchors lighting up with connecting lines = the Recommendation API call made tactile. The constellation metaphor scales: backdrop dust = full corpus, foreground bright stars = retrieved anchors, gold star = winner cluster. One visual, three layers of meaning.
+**Why Qdrant is a constellation.** CALIBRATION SET = calibration stars. Three anchors lighting up with connecting lines = the Recommendation API call made tactile. The constellation metaphor scales: backdrop dust = full corpus, foreground bright stars = retrieved anchors, gold star = winner cluster. One visual, three layers of meaning.
 
 **Why the final frame is just the eye.** Movie endings are quiet. After the action of correction, the closing shot is the eye still open, still watching, with the winner-star pulsing below. The captions *"Same engine. Different rubric. Different (correct) score."* land in silence — Doumont-style cognitive minimum, maximum recall.

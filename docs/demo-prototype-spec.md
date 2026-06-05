@@ -41,7 +41,7 @@ Approval here unlocks ~$X engineering investment and Phase 1 ~10d sequence ([[gl
 - **Zero data fetches** — all state hardcoded; safe to share/embed/airgap
 
 ### Two viewports on one engine
-- **Judge mode** (Qdrant primary demo) — batch evaluation Kanban + Top-K hit rate badge + 503 anchor 3D constellation
+- **Judge mode** (Qdrant primary demo) — batch evaluation Kanban + Top-K hit rate badge + held-out calibration anchor 3D constellation
 - **Participant mode** (Rapid Agent primary demo) — single submission + Phoenix MCP iterate-loop + score animation
 - Toggle in header switches both at runtime; same engine UI, different scenario script
 
@@ -59,7 +59,7 @@ Approval here unlocks ~$X engineering investment and Phase 1 ~10d sequence ([[gl
 ### Visible production-relevant components
 - 6-Hat panel with **Live Bias Meter** dial (sangguen 6.8) — turns red when Yellow over-confident
 - **Score Receipts UI** (sangguen 6.11) — dual-rubric panel showing the same submission scored under TWO synthesized rubrics
-- **3D Evaluation Constellation** — 503 anchors color-coded by tier (gold=winner, grey=non), current submission as glowing magenta point that migrates after audit correction
+- **3D Evaluation Constellation** — held-out calibration anchors color-coded by tier (gold=winner, grey=non), current submission as glowing magenta point that migrates after audit correction
 - **Winner Gravity callout** (sangguen 6.10) — floating tooltip on the moving node
 - **Phoenix Monitor live trace** — append-only log of MCP calls, evaluator firings, calibration deltas
 - **Anti-Pattern Radar narration** (sangguen 6.9) — caption appears at audit moment
@@ -158,7 +158,7 @@ Per `docs/max-wins-plan.md` §5.1 + sangguen narration locks:
 | 1:27 | Yellow updates | Score animates 9.0 → 7.6, Hat row turns green |
 | 1:45 | 3D fly | Current node migrates toward winner cluster |
 | 1:55 | Gravity callout | Floating tooltip: "72% similar to winner cluster, but pulled toward..." |
-| 2:10 | Anti-Pattern | Caption: "37 of 503 past submissions matched. Winners: 0." |
+| 2:10 | Anti-Pattern | Caption: "37 of CALIBRATION SET matched. Winners: 0." |
 | 2:30 | Dual-Rubric | Variance banner appears: Δ = 14, "correct rubric-aware variance" |
 | 2:38 | Variance hold | Caption emphasizes the variance message |
 | 2:42 | Top-K | Gold badge appears: "9/13 winners in predicted top-13" |

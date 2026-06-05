@@ -291,7 +291,7 @@ footer { padding-top: 32px; border-top: 1px solid var(--border-subtle); color: v
     <a href="https://two-weeks-team.github.io/glasshat/chosen/playground.html" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px; border-radius: 999px; background: var(--primary); color: var(--bg-base); text-decoration: none; font-weight: 800;">🎮 Playground (voxel boss-fight) →</a>
   </div>
   <div class="body" style="margin-top: 12px; font-size: 13px; color: var(--text-muted);">
-    Landing: P05 hero serif + R3F 503-anchor constellation + P13 reliability chart + P18 6-scene cinematic + P17 compliance strip + multi CTA. Custom mix-blend cursor.<br/>
+    Landing: P05 hero serif + R3F calibration-anchor constellation + P13 reliability chart + P18 6-scene cinematic + P17 compliance strip + multi CTA. Custom mix-blend cursor.<br/>
     Demo: P23 game canvas + P25 Phoenix trace always-visible + P01 strike-through + Why-panel + dual-rubric. Judge mode 3min · Participant mode 3min toggle. <strong>Auto-cursor: §10 storyboard 정확한 좌표/시간/클릭.</strong>
   </div>
 </div>
@@ -422,7 +422,7 @@ footer { padding-top: 32px; border-top: 1px solid var(--border-subtle); color: v
     <tr>
       <td><strong>Landing · Hero</strong></td>
       <td><span class="owner-tag p05">P05</span></td>
-      <td>Editorial italic serif "audits the judge." + live R3F 503-anchor constellation + mix-blend custom cursor</td>
+      <td>Editorial italic serif "audits the judge." + live R3F calibration-anchor constellation + mix-blend custom cursor</td>
       <td>5초 첫인상에 SaaS-grade credibility를 즉시 확립. Game launcher 인상 차단</td>
     </tr>
     <tr>
@@ -574,7 +574,7 @@ footer { padding-top: 32px; border-top: 1px solid var(--border-subtle); color: v
     </tr>
     <tr>
       <td>Qdrant UX</td>
-      <td>"503 stars는 read-only spectacle"</td>
+      <td>"calibration stars는 read-only spectacle"</td>
       <td>3D constellation에 hover tooltip + click-to-inspect 활성화 (FE 권고). 사용자가 직접 anchor를 클릭해 다른 winner를 조회 가능. P25 trace pane에서도 동일.</td>
     </tr>
     <tr>
@@ -614,7 +614,7 @@ footer { padding-top: 32px; border-top: 1px solid var(--border-subtle); color: v
       <li>Next.js 16 shell + <code>tokens.css</code></li>
       <li>Shared lib: Hat&lt;Color&gt;, ScoreBar/Strike, MCPCallChip, AnchorList, KPIStrip</li>
       <li><strong>P23 game-canvas</strong> <code>/demo</code> route + party HUD + critical-hit(splash 제외) + score-screen</li>
-      <li><strong>P05 landing hero</strong> + R3F constellation (instanced, 503 anchors) + climax serif reveal</li>
+      <li><strong>P05 landing hero</strong> + R3F constellation (instanced, held-out calibration anchors) + climax serif reveal</li>
     </ul>
   </div>
   <div class="build-col">
@@ -650,7 +650,7 @@ footer { padding-top: 32px; border-top: 1px solid var(--border-subtle); color: v
 <div class="risk-grid">
   <article class="risk-card">
     <div class="head">⚠ R1 · 메인 스레드 프레임 경쟁</div>
-    <div class="body">R3F 503-anchor constellation + P23 game canvas HUD + Motion One scroll 안무가 동시에 메인 스레드 점유 → 중급 노트북에서 climax 시 jank</div>
+    <div class="body">R3F calibration-anchor constellation + P23 game canvas HUD + Motion One scroll 안무가 동시에 메인 스레드 점유 → 중급 노트북에서 climax 시 jank</div>
     <div class="mitigation"><strong>Mitigation →</strong> OffscreenCanvas worker로 anchor 위치 계산 offload + <code>prefers-reduced-motion</code> gate + P18 cinematic은 pre-baked CSS keyframes(JS 없음) + DPR &lt;1.5 기기는 <code>?view=2d</code> P11 fallback 자동 적용</div>
   </article>
 
@@ -728,7 +728,7 @@ footer { padding-top: 32px; border-top: 1px solid var(--border-subtle); color: v
     <div class="wk-time">0:00<br/>↓<br/>0:05</div>
     <div class="wk-body">
       <div class="wk-head"><span class="wk-stars">★ WOW #0</span><span class="wk-label">Hook (P05 serif italic)</span></div>
-      <div class="wk-visual">검정 배경 → P05 italic serif "<em>audits the judge.</em>" 156px 천천히 fade-in. 배경에 P05 R3F 503-anchor constellation 회전 시작. Magenta "this submission" 점 cluster 외곽에 등장.</div>
+      <div class="wk-visual">검정 배경 → P05 italic serif "<em>audits the judge.</em>" 156px 천천히 fade-in. 배경에 P05 R3F calibration-anchor constellation 회전 시작. Magenta "this submission" 점 cluster 외곽에 등장.</div>
       <div class="wk-narration">"Glasshat doesn't just judge projects. It audits the judge."</div>
     </div>
     <div class="wk-owner">P05</div>
@@ -755,9 +755,9 @@ footer { padding-top: 32px; border-top: 1px solid var(--border-subtle); color: v
   <div class="wk-slot wow">
     <div class="wk-time">0:20<br/>↓<br/>0:30</div>
     <div class="wk-body">
-      <div class="wk-head"><span class="wk-stars">★ WOW #1</span><span class="wk-label">503 cards Kanban stream — 스케일 wow</span></div>
-      <div class="wk-visual">P23 Kanban 7-col(queue → ingest → plan → hats → audit → score → done) 풀스크린 오버레이 슬라이드인. 카드들이 ~30/sec 속도로 좌→우로 흐름. 우측 상단: "503 submissions · 21s elapsed · $0.080". P25 trace tree에 spans 누적: <code>qdrant.upsert collection="past_evals" · 503 points</code>.</div>
-      <div class="wk-narration">"503 of Gemini 3's 4,499 submissions — judged in real time."</div>
+      <div class="wk-head"><span class="wk-stars">★ WOW #1</span><span class="wk-label">calibration cards Kanban stream — 스케일 wow</span></div>
+      <div class="wk-visual">P23 Kanban 7-col(queue → ingest → plan → hats → audit → score → done) 풀스크린 오버레이 슬라이드인. 카드들이 ~30/sec 속도로 좌→우로 흐름. 우측 상단: "the calibration set · 21s elapsed · $0.080". P25 trace tree에 spans 누적: <code>qdrant.upsert collection="past_evals" · calibration points</code>.</div>
+      <div class="wk-narration">"the held-out calibration set — judged in real time."</div>
     </div>
     <div class="wk-owner">P23 + P25</div>
   </div>
@@ -989,8 +989,8 @@ footer { padding-top: 32px; border-top: 1px solid var(--border-subtle); color: v
   <div class="wk-slot kick">
     <div class="wk-time">1-3s</div>
     <div class="wk-body">
-      <div class="wk-head"><span class="wk-stars">★ KICK #1</span><span class="wk-label">R3F constellation appears (instanced, 503 anchors)</span></div>
-      <div class="wk-visual">Background에 503 anchor 점들이 instanced로 fade-in. Gold cluster (winner) + grey cloud (non-winner) 분리 visible. Cinematic camera dolly 시작 (P05).</div>
+      <div class="wk-head"><span class="wk-stars">★ KICK #1</span><span class="wk-label">R3F constellation appears (instanced, held-out calibration anchors)</span></div>
+      <div class="wk-visual">Background에 held-out calibration anchor 점들이 instanced로 fade-in. Gold cluster (winner) + grey cloud (non-winner) 분리 visible. Cinematic camera dolly 시작 (P05).</div>
     </div>
     <div class="wk-owner">P05</div>
   </div>

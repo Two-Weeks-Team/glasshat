@@ -644,7 +644,7 @@ This is the demo's first 5-second hook in **both** Qdrant and Rapid Agent versio
 
 1. **Live Bias Meter per Hat** (6.8) — Hat cards show a small dial gauge: rises when the Hat overscores, falls back to normal range *visibly* after Phoenix-MCP + Qdrant-anchor consultation. Makes the bias correction tactile — judges see meters move, not just numbers tick.
 
-2. **Anti-Pattern Radar narration** (6.9) — at audit moment, on-screen text: *"37 of 503 past Gemini 3 submissions matched this profile. Winners: 0. Common failure: vague user, weak repo evidence, no working demo."* Re-uses Qdrant Recommendation API negative anchors; the **narration** is what's new.
+2. **Anti-Pattern Radar narration** (6.9) — at audit moment, on-screen text: *"37 of the past Gemini 3 submissions matched this profile. Winners: 0. Common failure: vague user, weak repo evidence, no working demo."* Re-uses Qdrant Recommendation API negative anchors; the **narration** is what's new.
 
 3. **Winner Gravity narration upgrade** (6.10) — when 3D graph node moves post-correction, floating tooltip: *"72% similar to winner cluster, but pulled toward non-winner pattern by anchor 'X' (similar evidence depth)."* Makes the spatial movement *legible*.
 
@@ -660,7 +660,7 @@ Per sangguen's "Vector DB must be load-bearing", Qdrant is foregrounded **eight 
 | 0:30-1:00 | LAYER 4 — Yellow card shows evidence_depth = 0.31 (computed from Qdrant retrieval depth) |
 | 1:30-1:45 | LAYER — Recommendation API call visible: positive=[over_confident_anchors] negative=[accurate_anchors], strategy=average_vector |
 | 1:30-1:45 | LAYER — group_by query results: anchor projects + their A1 scores |
-| 1:45-2:30 | LAYER 2 — 503 anchor constellation in 3D, clustered by outcome_tier (gold/silver/grey) |
+| 1:45-2:30 | LAYER 2 — held-out calibration anchor constellation in 3D, clustered by outcome_tier (gold/silver/grey) |
 | 1:45-2:30 | LAYER 4 — corrected node migrates toward winner-anchor cluster (Winner Gravity narration) |
 | 2:30-2:50 | RIGHT panel — group_by query "Ranks similar to X (winner)" + Anti-Pattern Radar narration |
 | 2:50-3:00 | Tagline: "*And the auditor is the vector space.*" |
@@ -695,7 +695,7 @@ These exact strings are demo voice / on-screen captions; do not paraphrase in sc
 | Beat | String |
 |---|---|
 | Both demos 0:00-0:05 hook | *"Glasshat doesn't just judge projects. It audits the judge."* |
-| Qdrant demo 1:30-1:45 anti-pattern | *"37 of 503 past submissions matched this profile. Winners: 0."* |
+| Qdrant demo 1:30-1:45 anti-pattern | *"37 of CALIBRATION SET matched this profile. Winners: 0."* |
 | Qdrant demo 1:45-2:30 gravity | *"72% similar to winner cluster, but pulled toward non-winner pattern."* |
 | Qdrant demo 2:50-3:00 close | *"And the auditor is the vector space."* |
 | Rapid Agent demo 2:50-3:00 close | *"And the audit happens mid-iteration."* |

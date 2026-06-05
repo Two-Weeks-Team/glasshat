@@ -95,8 +95,8 @@ gcloud artifacts repositories describe "$REPO" \
 # LLM client is location-aware (per-tier *_location, set to "global" below);
 # embeddings (text-embedding-005) stay on the regional endpoint. Models: GA
 # gemini-3.1-flash-lite drives the live eval path (flash + flash_lite tiers);
-# gemini-3.1-pro-preview backs the pro tier (URL rubric synthesis only).
-GEMINI_ENV="GLASSHAT_GEMINI_PRO=gemini-3.1-pro-preview,GLASSHAT_GEMINI_FLASH=gemini-3.1-flash-lite,GLASSHAT_GEMINI_FLASH_LITE=gemini-3.1-flash-lite,GLASSHAT_GEMINI_PRO_LOCATION=global,GLASSHAT_GEMINI_FLASH_LOCATION=global,GLASSHAT_GEMINI_FLASH_LITE_LOCATION=global"
+# gemini-3.1-pro backs the pro tier (URL rubric synthesis only).
+GEMINI_ENV="GLASSHAT_GEMINI_PRO=gemini-3.1-pro,GLASSHAT_GEMINI_FLASH=gemini-3.1-flash-lite,GLASSHAT_GEMINI_FLASH_LITE=gemini-3.1-flash-lite,GLASSHAT_GEMINI_PRO_LOCATION=global,GLASSHAT_GEMINI_FLASH_LOCATION=global,GLASSHAT_GEMINI_FLASH_LITE_LOCATION=global"
 
 if [[ "$MODE" == "real" && "$NO_PHOENIX" == "yes" ]]; then
   echo "==> Mode: REAL Vertex Gemini, tracing OFF (NoOp — phoenix extra omitted)"
@@ -122,6 +122,11 @@ elif [[ "$MODE" == "real" ]]; then
   # PHOENIX_COLLECTOR_ENDPOINT is set (Node is in the image); empty endpoint →
   # graceful spike-D table fallback. REPO_GRADER=github-api folds repo evidence in.
   LEARNING_ENV="CONSULTANT_BACKEND=phoenix-mcp,DATASET_WRITER_BACKEND=phoenix-mcp,REPO_GRADER_BACKEND=github-api,PHOENIX_CALIBRATION_DATASET=glasshat-calibration,PHOENIX_COLLECTOR_ENDPOINT=${PHOENIX_COLLECTOR_ENDPOINT},CORS_ALLOW_ORIGINS=${WEB_ORIGIN}"
+  # This Cloud Run demo intentionally runs the GATED DEFAULTS: AGENT_RUNTIME unset →
+  # `python` (the parity-identical path; the genuine ADK 2.0 Workflow agent is the
+  # SEPARATE Agent-Engine deploy, deploy/agent_engine_deploy.py), and SCORING_MODE
+  # unset → `legacy`. The hardened opt-ins (SCORING_MODE=structured + JUDGE_API_TOKEN
+  # as a secret) are a user-gated flip — set them here for the judged/secured instance.
   API_ENV="LLM_BACKEND=vertex,MONITOR_BACKEND=arize,DOCSTORE_BACKEND=${DOCSTORE_BACKEND},GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_REGION=${REGION},GOOGLE_GENAI_USE_VERTEXAI=true,${GEMINI_ENV},ARIZE_SPACE_ID=${ARIZE_SPACE_ID},PHOENIX_PROJECT_NAME=glasshat,${LEARNING_ENV}"
   API_SECRETS=(--set-secrets "PHOENIX_API_KEY=phoenix-api-key:latest")
   echo "==> Learning loop: CONSULTANT/DATASET_WRITER=phoenix-mcp (endpoint='${PHOENIX_COLLECTOR_ENDPOINT:-<unset → table fallback>}'), REPO_GRADER=github-api, CORS→${WEB_ORIGIN}"

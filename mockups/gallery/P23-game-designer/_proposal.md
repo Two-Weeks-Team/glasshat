@@ -12,7 +12,7 @@
   "opus_4_7_capability": "Opus 4.7's 1M-context window holds the entire wow-moment-design.md §1-§13 spec while it choreographs the narrative beats (panel → triple-detect → Phoenix MCP → score correction → dual-rubric reveal) into a 5-phase match script with tight pacing, combo escalation, and a deterministic XP→grade mapping — all in one shot, with rubric-faithful narration anchors preserved verbatim.",
   "mvp_scope": "Two interactive HTML pages + 1 proposal. Landing: animated launcher, 3-scenario carousel, achievement grid, party preview, Begin-Audit overlay. Demo: 5-phase auto-running match with party HUD, event log, FX numbers, crit splash, MCP call queue, playable canvas constellation, score-screen reveal with S/A/B/C grade and dual-rubric variance card.",
   "one_liner_pitch": "Glasshat as a boss-fight: six hats as party, Phoenix as meta-judge, score-correction as critical hit, dual-rubric variance as the post-match reveal screen.",
-  "spec_alignment_notes": "Spec source: glasshat/README.md + docs/wow-moment-design.md (no idea.spec.json provided in this run). Anchored verbatim narration strings from wow-moment §13.5 (e.g. '37 of 503 past submissions matched this profile. Winners: 0', 'Same engine. Different rubric. Different (correct) score.'). Hat colors derived from existing mockups/index.html OKLCH tokens (locked L=72 C=0.17, yellow C-capped at 0.13). 5-phase script mirrors wow-moment §2 five-step decomposition. Dual-rubric variance card mirrors §12.1 Layer 2. Triple-redundant detection mirrors §11.1. Phoenix 4-MCP-call chain mirrors §11.2. No invented capabilities — every feature traces to spec."
+  "spec_alignment_notes": "Spec source: glasshat/README.md + docs/wow-moment-design.md (no idea.spec.json provided in this run). Anchored verbatim narration strings from wow-moment §13.5 (e.g. '37 of CALIBRATION SET matched this profile. Winners: 0', 'Same engine. Different rubric. Different (correct) score.'). Hat colors derived from existing mockups/index.html OKLCH tokens (locked L=72 C=0.17, yellow C-capped at 0.13). 5-phase script mirrors wow-moment §2 five-step decomposition. Dual-rubric variance card mirrors §12.1 Layer 2. Triple-redundant detection mirrors §11.1. Phoenix 4-MCP-call chain mirrors §11.2. No invented capabilities — every feature traces to spec."
 }
 ```
 
@@ -31,7 +31,7 @@
 │  │   Don't just judge.     │  │ SUBMISSION · QDRANT VSD  │      │
 │  │   AUDIT THE JUDGE.      │  │ VectorBard               │      │
 │  │                         │  │                          │      │
-│  │   503 past = boss-level │  │ PRE  ▓▓▓▓▓▓▓▓▓ 9.0      │      │
+│  │   the past = boss-level │  │ PRE  ▓▓▓▓▓▓▓▓▓ 9.0      │      │
 │  │   ground truth.         │  │ POST ▓▓▓▓▓▓▓ 7.6        │      │
 │  │                         │  │ ⚠ −1.4 Yellow A1         │      │
 │  │ [▶ BEGIN AUDIT] [⟳ R]   │  │ "37/503 winners: 0"      │      │
@@ -84,7 +84,7 @@
 │  │   └───────────────┘                                │  └────┘ │
 │  └────────────────────────────────────────────────────┘         │
 │                                                          ⚑ QUEST│
-│  ┌─⌖ 3D CONSTELLATION · 503 ANCHORS────────────────────┐ ✓panel│
+│  ┌─⌖ 3D CONSTELLATION · held-out calibration ANCHORS────────────────────┐ ✓panel│
 │  │   ★      ·     ·          (winners glow gold)       │ ✓det  │
 │  │  · ★ ●pre - - - -→ ●post  ·   ★                    │ ✓phx  │
 │  │     ·    ·     · ★     ·                            │ ✓anch │

@@ -1,0 +1,29 @@
+{
+  "captured_at_utc": "2026-06-05T14:32:57.003904+00:00",
+  "agent_engine_resource": "projects/916178791322/locations/us-central1/reasoningEngines/7480191458771730432",
+  "arize_project": "glasshat",
+  "arize_space_id": "U3BhY2U6NDUxMzY6V012Yg==",
+  "trace_span_count_last4h": 165,
+  "trace_span_name_counts": {
+    "agent_run [glasshat_eval]": 6,
+    "invocation [8877433243163426816]": 3,
+    "invocation [glasshat]": 6,
+    "AsyncEmbedContent": 75,
+    "AsyncGenerateContent": 72,
+    "invocation [7480191458771730432]": 3
+  },
+  "ax_dataset": "glasshat-golden",
+  "ax_experiments": [
+    {
+      "id": "RXhwZXJpbWVudDo5ODkwNTpCbW5v",
+      "name": "glasshat-hit-at-13-gemini"
+    },
+    {
+      "id": "RXhwZXJpbWVudDo5ODg5ODppMnFo",
+      "name": "glasshat-hit-at-13"
+    }
+  ],
+  "hit_at_13_live_gemini": 0.6154,
+  "hit_at_13_mock": 0.3846,
+  "hit_at_13_chance": 0.26
+}

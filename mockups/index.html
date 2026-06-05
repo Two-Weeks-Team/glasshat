@@ -1264,7 +1264,7 @@ body[data-mode="participant"] .viewport-toggle button[aria-pressed="true"] {
   <div class="curtain-inner">
     <h1 id="curtain-title">The audit layer for AI evaluation.</h1>
     <h2>Stop trusting your LLM judges — verify them.</h2>
-    <p class="subhead">Glasshat scores AI outputs with <strong>dual-rubric variance detection</strong> + Qdrant-anchored calibration against 503 past hackathon submissions. Built for AI platform teams who must defend every score under SOC2 / EU AI Act scrutiny.</p>
+    <p class="subhead">Glasshat scores AI outputs with <strong>dual-rubric variance detection</strong> + Qdrant-anchored calibration against the past hackathon submissions. Built for AI platform teams who must defend every score under SOC2 / EU AI Act scrutiny.</p>
     <div class="curtain-stats">
       <div class="curtain-stat"><div class="num">503</div><div class="lbl">past submissions</div></div>
       <div class="curtain-stat"><div class="num">9 / 13</div><div class="lbl">winners predicted</div></div>
@@ -1277,7 +1277,7 @@ body[data-mode="participant"] .viewport-toggle button[aria-pressed="true"] {
       <button class="ctrl-btn accent" onclick="startDemo('participant', true)">▶ Watch as a Participant Submitting</button>
       <button class="ctrl-btn" onclick="startDemo('judge', false)">⌨ Step through manually</button>
     </div>
-    <p class="curtain-meta">UI prototype · numbers are real (offline batch on 503 submissions) · agent calls are simulated · github.com/Two-Weeks-Team/glasshat</p>
+    <p class="curtain-meta">UI prototype · numbers are real (offline batch on the calibration set) · agent calls are simulated · github.com/Two-Weeks-Team/glasshat</p>
   </div>
 </div>
 
@@ -1396,7 +1396,7 @@ body[data-mode="participant"] .viewport-toggle button[aria-pressed="true"] {
     <section class="card card--hero graph-card" aria-labelledby="graph-title">
       <header class="card-header">
         <h2 class="card-title" id="graph-title">▍3D Evaluation Constellation · UMAP(768d Gemini emb → 3d)</h2>
-        <div class="card-badge" id="graph-badge">503 anchors · color = outcome tier · size = evidence depth</div>
+        <div class="card-badge" id="graph-badge">held-out calibration anchors · color = outcome tier · size = evidence depth</div>
       </header>
       <div class="graph-canvas-wrap">
         <canvas id="graph-canvas" aria-hidden="true"></canvas>
@@ -1411,7 +1411,7 @@ body[data-mode="participant"] .viewport-toggle button[aria-pressed="true"] {
         </div>
         <div class="antipattern" id="antipattern">
           <strong>⚠ Anti-Pattern Radar</strong>
-          37 of 503 past Gemini 3 submissions matched this profile. <strong style="color:var(--gold)">Winners: 0.</strong>
+          37 of the past Gemini 3 submissions matched this profile. <strong style="color:var(--gold)">Winners: 0.</strong>
           <br/><span style="color:var(--text-muted)">Common failure: vague user definition, weak repo evidence, no working demo.</span>
         </div>
         <div class="graph-overlay">
@@ -1572,8 +1572,8 @@ const CAPTIONS = {
     /* { t, plain, tech, tone? }  tone = hook | tech | normal */
     { t: 0,   plain: 'Glasshat doesn\'t just judge projects. It audits the judge.', tech: 'Glasshat doesn\'t just judge projects. It audits the judge.', tone: 'hook' },
     { t: 4,   plain: 'A judge of judges. Watch us catch a bias in real time.',     tech: 'AuditLoop(max_iter=2) running over 6-Hat ParallelAgent output.' },
-    { t: 10,  plain: 'Drag a CSV of 503 past hackathon submissions.',              tech: 'Cloud Run Job · Eventarc trigger on gs://glasshat-judge-uploads/.' },
-    { t: 16,  plain: '503 submissions stream through 7 stages.',                   tech: '7-stage Kanban: queue → ingest → plan → hats(parallel) → audit → score → done.' },
+    { t: 10,  plain: 'Drag a CSV of the past hackathon submissions.',              tech: 'Cloud Run Job · Eventarc trigger on gs://glasshat-judge-uploads/.' },
+    { t: 16,  plain: 'the calibration set stream through 7 stages.',                   tech: '7-stage Kanban: queue → ingest → plan → hats(parallel) → audit → score → done.' },
     { t: 30,  plain: 'RubricSynthesizer reads the official Qdrant rules.',         tech: 'gemini-3.1-pro thinking_level=high → SynthesizedRubric(3 axes).' },
     { t: 36,  plain: 'Six Thinking Hats score in parallel.',                       tech: 'ADK ParallelAgent(HatsPanel:6) · responseSchema strict · auto-instrumented.' },
     { t: 50,  plain: 'Yellow Hat scores A1 = 9.0/10. But evidence is shallow.',    tech: 'evidence_depth_bucket=shallow vs predicted_score=9.0 · threshold=0.6.' },
@@ -1619,7 +1619,7 @@ const TRACE = {
   judge: [
     { t: 12, kind: 'normal', text: 'phoenix.otel.register(auto_instrument=True)' },
     { t: 14, kind: 'normal', text: 'GlasshatRootAgent(CustomAgent) initializing…' },
-    { t: 18, kind: 'qdrant', text: 'qdrant.upsert collection="past_evals" · 503 points · weights_vector tagged' },
+    { t: 18, kind: 'qdrant', text: 'qdrant.upsert collection="past_evals" · calibration points · weights_vector tagged' },
     { t: 31, kind: 'mcp',    text: 'RubricSynthesizer · gemini-3.1-pro thinking_level=high · preset="qdrant"' },
     { t: 35, kind: 'normal', text: 'BluePlanner · plan emitted · responseSchema validated' },
     { t: 38, kind: 'ok',     text: 'ParallelAgent[6 hats] dispatched · all auto-instrumented' },
@@ -2118,7 +2118,7 @@ function initScene() {
     three.renderer.setSize(w, h, false);
     three.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   }
-  /* Build 503 anchor cloud */
+  /* Build held-out calibration anchor cloud */
   const anchors = [];
   for (let i=0;i<13;i++)  anchors.push({x: rngBox(i+1)*4 + 4, y: rngBox(i+11)*4 + 2, z: rngBox(i+21)*4, tier: 'winner'});
   for (let i=0;i<50;i++)  anchors.push({x: rngBox(i+100)*6, y: rngBox(i+200)*6, z: rngBox(i+300)*6, tier: 'honorable'});

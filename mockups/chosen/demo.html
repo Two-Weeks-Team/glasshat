@@ -635,13 +635,13 @@ footer.bar {
   <div class="curtain-inner">
     <div class="curtain-eyebrow">Glasshat · The audit, recorded</div>
     <h1 id="curtain-h">It <em>audits</em> the judge.</h1>
-    <p class="lead">Watch a real audit happen in 3 minutes. Choose your viewpoint — switch between Judge mode (batch evaluation of 503 past hackathon submissions) and Participant mode (live iterate-to-better-score loop). Phoenix MCP trace panel always visible on the right.</p>
+    <p class="lead">Watch a real audit happen in 3 minutes. Choose your viewpoint — switch between Judge mode (batch evaluation of the past hackathon submissions) and Participant mode (live iterate-to-better-score loop). Phoenix MCP trace panel always visible on the right.</p>
     <div class="curtain-cta">
       <button class="ctrl-btn primary" onclick="startDemo('judge', true)">▶ Watch as a Hackathon Judge (3 min)</button>
       <button class="ctrl-btn" onclick="startDemo('participant', true)">▶ Watch as a Participant (3 min)</button>
       <button class="ctrl-btn" onclick="startDemo('judge', false)">⌨ Step through manually</button>
     </div>
-    <div class="curtain-meta">UI prototype · numbers from offline batch on 503 submissions · agent calls simulated · precise cursor choreography per §10 storyboard</div>
+    <div class="curtain-meta">UI prototype · numbers from offline batch on the calibration set · agent calls simulated · precise cursor choreography per §10 storyboard</div>
   </div>
 </div>
 
@@ -713,7 +713,7 @@ footer.bar {
     <section class="card hero canvas" id="card-canvas" aria-labelledby="canvas-h">
       <div class="card-head">
         <div class="card-title" id="canvas-h">▍3D Evaluation Constellation · UMAP(768d → 3d)</div>
-        <div class="card-badge" id="canvas-badge">503 anchors · gold=winner · grey=non</div>
+        <div class="card-badge" id="canvas-badge">held-out calibration anchors · gold=winner · grey=non</div>
       </div>
       <div class="viewport-stage" id="vstage">
         <!-- Three.js canvas layer -->
@@ -724,7 +724,7 @@ footer.bar {
         <div class="dropzone" id="dropzone">
           <div class="dropzone-inner" id="dz-inner">
             <div class="dropzone-icon">📁</div>
-            <div class="dropzone-title" id="dz-title">Drop CSV of 503 past submissions</div>
+            <div class="dropzone-title" id="dz-title">Drop CSV of CALIBRATION SET</div>
             <div class="dropzone-sub" id="dz-sub">or paste GitHub repo URL</div>
           </div>
         </div>
@@ -756,7 +756,7 @@ footer.bar {
         <!-- Anti-Pattern Radar (Judge ~2:10) -->
         <div class="antipat" id="apr">
           <strong>⚠ Anti-Pattern Radar</strong>
-          37 of 503 past submissions matched this profile. <span class="gold">Winners: 0.</span><br/>
+          37 of CALIBRATION SET matched this profile. <span class="gold">Winners: 0.</span><br/>
           <span style="color:var(--text-muted)">Common failure: vague user, weak repo evidence, no working demo.</span>
         </div>
 
@@ -918,8 +918,8 @@ const CAPS = {
   judge: [
     {t:0,   text:"Glasshat doesn't just judge projects. It audits the judge.", hook:true},
     {t:5,   text:"A judge of judges. Watch us catch a bias in real time."},
-    {t:10,  text:"Drag a CSV of 503 past hackathon submissions."},
-    {t:20,  text:"503 submissions stream through 7 stages — Cloud Run Jobs scale parallel."},
+    {t:10,  text:"Drag a CSV of the past hackathon submissions."},
+    {t:20,  text:"the calibration set stream through 7 stages — Cloud Run Jobs scale parallel."},
     {t:30,  text:"RubricSynthesizer parses the official Qdrant rules — 3-axis rubric."},
     {t:36,  text:"Six Thinking Hats run in parallel under ADK ParallelAgent."},
     {t:50,  text:"Yellow Hat scores A1 = 9.0. But the evidence is only 0.31."},
@@ -963,7 +963,7 @@ const TRACE = {
   judge: [
     {t:12, k:'',       text:'phoenix.otel.register(auto_instrument=True)'},
     {t:14, k:'',       text:'GlasshatRootAgent(CustomAgent) initializing…'},
-    {t:18, k:'qdrant', text:'qdrant.upsert collection="past_evals" · 503 points · weights_vector tagged'},
+    {t:18, k:'qdrant', text:'qdrant.upsert collection="past_evals" · calibration points · weights_vector tagged'},
     {t:22, k:'qdrant', text:'qdrant.search collection="past_evals" · top_k=10 · filter outcome_tier'},
     {t:31, k:'mcp',    text:'RubricSynthesizer · gemini-3.1-pro · thinking_level=high · preset="qdrant"'},
     {t:35, k:'',       text:'BluePlanner · plan emitted · responseSchema validated'},

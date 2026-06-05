@@ -180,7 +180,7 @@ table.trace tr.changed td{background:oklch(96% 0.04 75 / .35)}
     <!-- ── STEP 1 ─ Anchor retrieval ── -->
     <section class="panel">
       <div class="panel-head">
-        <div><span class="label">Step 1 / 5</span><span class="title">Anchor retrieval &mdash; cosine distribution over 503 past_evals</span></div>
+        <div><span class="label">Step 1 / 5</span><span class="title">Anchor retrieval &mdash; cosine distribution over the past_evals</span></div>
         <div class="right">qdrant.search(hybrid+RRF, k=12)</div>
       </div>
       <div class="panel-body">
@@ -538,7 +538,7 @@ table.trace tr.changed td{background:oklch(96% 0.04 75 / .35)}
     <section class="panel">
       <div class="panel-head">
         <div><span class="label">Step 5 / 5</span><span class="title">3D constellation &mdash; PCA-2 projection with density contours</span></div>
-        <div class="right">503 anchors · 12 selected · 1 submission</div>
+        <div class="right">held-out calibration anchors · 12 selected · 1 submission</div>
       </div>
       <div class="panel-body">
         <div>
