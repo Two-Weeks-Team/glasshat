@@ -1,0 +1,11 @@
+{
+  "backend": "mock",
+  "preset_id": "rapid-agent",
+  "n": 50,
+  "n_winners": 13,
+  "k": 13,
+  "hit_at_k_pre_audit": 0.3846,
+  "hit_at_k_post_audit": 0.3846,
+  "delta": 0.0,
+  "caveat": "Offline hit@13 on 50 historical Gemini-3 Devpost submissions with binary Winner-badge labels (13 winners). The source has no rank or score, so this is hit@13, not a rank curve. Backend=mock: the mock scorer is deterministic and illustrative (it does not read meaning from text); the live figure is produced by the same harness with LLM_BACKEND=vertex."
+}

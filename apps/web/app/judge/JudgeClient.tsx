@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { Badge } from "@/components/Badge";
+import { CalibrationBand } from "@/components/CalibrationBand";
 import { ProofStrip } from "@/components/ProofStrip";
 import { RankFlipBoard } from "@/components/RankFlipBoard";
 import { ScoreBar } from "@/components/ScoreBar";
@@ -275,6 +276,11 @@ export function JudgeClient() {
           Shown as soon as the cohort has two or more scored items so judges
           see the audit changing ranks before scrolling. */}
       {items.length >= 2 && <RankFlipBoard items={items} className="mt-6" />}
+
+      {/* Offline aggregate evidence: hit@13 before vs after the audit, against the
+          historical Devpost winner labels. Binary labels → hit@k, never a rank
+          curve; the caveat states the backend honestly. */}
+      <CalibrationBand className="mt-6" />
 
       {/* Ranking / cohort table */}
       <section className="elevate mt-6 overflow-hidden rounded-2xl">
