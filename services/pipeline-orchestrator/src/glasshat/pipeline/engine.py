@@ -337,6 +337,14 @@ async def run_evaluation(
             try:
                 dataset_examples_added = await deps.dataset_writer.write(examples)
             except Exception:  # noqa: BLE001 — writer is best-effort, never block the run
+                # Observable, not silent: a write failure means the learning loop
+                # did not persist this run (e.g. Phoenix unreachable / mcp absent),
+                # which must be visible in the deploy logs rather than masked as 0.
+                logger.warning(
+                    "dataset write failed for run %s; learning loop did not persist this run",
+                    run_id,
+                    exc_info=True,
+                )
                 dataset_examples_added = 0
     emit(Stage.DATASET_WRITE, n_added=dataset_examples_added)
 

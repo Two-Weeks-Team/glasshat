@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
@@ -238,9 +239,12 @@ def test_dataset_writer_receives_one_row_per_correction(tmp_path: Path) -> None:
     assert {row.bucket for row in writer.rows} <= {"low", "mid", "high"}
 
 
-def test_dataset_write_failure_does_not_fail_the_run(tmp_path: Path) -> None:
+def test_dataset_write_failure_does_not_fail_the_run(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
     """A Phoenix outage must never poison the evaluation. The run completes,
-    the RunRecord persists, but `dataset_examples_added` is zero."""
+    the RunRecord persists, `dataset_examples_added` is zero — AND the failure is
+    logged (observable, not silently masked as a benign zero)."""
     deps = _deps(tmp_path)
     deps.dataset_writer = _RaisingDatasetWriter()
     inp = EvaluationInput(
@@ -248,9 +252,15 @@ def test_dataset_write_failure_does_not_fail_the_run(tmp_path: Path) -> None:
         deck_text="we built a novel multi-agent system in python with tests and a clean design",
         mode=RunMode.JUDGE,
     )
-    rec = asyncio.run(run_evaluation(inp, deps))
+    with caplog.at_level(logging.WARNING, logger="glasshat.pipeline.engine"):
+        rec = asyncio.run(run_evaluation(inp, deps))
     assert rec.audit_corrections  # still ran the audit
     assert rec.dataset_examples_added == 0
+    assert any(
+        "did not persist this run" in r.getMessage()
+        for r in caplog.records
+        if r.levelno == logging.WARNING
+    )
 
 
 def test_sse_emits_dataset_lookup_and_write_events(tmp_path: Path) -> None:

@@ -14,6 +14,7 @@ consult — so the agent measurably improves over time. Sources:
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from typing import Protocol, runtime_checkable
@@ -21,6 +22,8 @@ from typing import Protocol, runtime_checkable
 from glasshat.agents.types import AuditCorrection, HatAssessment
 from glasshat.shared.enums import Hat
 from glasshat.shared.retrieval import cosine_similarity
+
+logger = logging.getLogger(__name__)
 
 _GAIN = 0.8
 _THRESHOLD = 0.5
@@ -66,13 +69,30 @@ class FallbackConsultant:
     def __init__(self, primary: Consultant, backup: Consultant) -> None:
         self._primary = primary
         self._backup = backup
+        # One-shot log flags so genuine-vs-fallback is auditable in the deploy
+        # logs without per-cell spam (24+ consults per run). The failure mode is
+        # persistent (missing dep / unreachable endpoint), so logging the first
+        # occurrence per process is the right signal — silence here was how the
+        # learning loop could be inert yet look live.
+        self._warned_fallback = False
+        self._announced_live = False
 
     async def consult(self, hat: Hat, criterion_id: str, bucket: str) -> ConsultResult | None:
         try:
             result = await self._primary.consult(hat, criterion_id, bucket)
         except Exception:  # noqa: BLE001 — Phoenix MCP can fail many ways; we always fall back
+            if not self._warned_fallback:
+                self._warned_fallback = True
+                logger.warning(
+                    "primary consultant failed; this run uses the deterministic "
+                    "calibration prior, not live Phoenix data",
+                    exc_info=True,
+                )
             result = None
         if result is not None and result.n >= _MIN_N:
+            if not self._announced_live:
+                self._announced_live = True
+                logger.info("primary consultant active: live calibration in use (n=%d)", result.n)
             return result
         return await self._backup.consult(hat, criterion_id, bucket)
 
