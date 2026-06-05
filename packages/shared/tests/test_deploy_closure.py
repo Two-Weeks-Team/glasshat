@@ -76,7 +76,9 @@ def test_cloud_sdks_are_not_in_any_uv_dependency_group() -> None:
     # resolution and silently perturbs the deploy closure (google-adk 2.0 -> 1.x,
     # +~55 packages). They must stay out of every group.
     for group, reqs in _root_dependency_groups().items():
-        names = {_req_name(r) for r in reqs}
+        # uv groups may include non-string entries (e.g. group inheritance via an
+        # inline table {"include-group": "other"}); only parse string requirements.
+        names = {_req_name(r) for r in reqs if isinstance(r, str)}
         leaked = names & _CLOUD_ONLY_SDKS
         assert not leaked, (
             f"cloud-only SDK(s) {sorted(leaked)} found in uv dependency-group "
@@ -90,7 +92,7 @@ def test_cloud_requirements_file_carries_the_cloud_sdks() -> None:
     # is the agreed home (installed via an ephemeral `uv run --with-requirements`).
     assert _CLOUD_REQS.exists(), "deploy/requirements-cloud.txt is missing"
     names = {
-        _req_name(line)
+        _req_name(line.split("#")[0])
         for line in _CLOUD_REQS.read_text(encoding="utf-8").splitlines()
         if line.strip() and not line.lstrip().startswith("#")
     }
