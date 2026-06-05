@@ -59,6 +59,18 @@ _GLASSHAT_PACKAGES = (
     "services/pipeline-orchestrator",
 )
 
+# Wheel-name prefixes in dependency order (the dir name != the package name, e.g.
+# services/pipeline-orchestrator → glasshat-pipeline). Used to order the wheels so
+# a one-by-one remote install can resolve each package's glasshat-* deps.
+_WHEEL_DEP_ORDER = (
+    "glasshat_shared",
+    "glasshat_rubric",
+    "glasshat_agents",
+    "glasshat_ingest",
+    "glasshat_code_grader",
+    "glasshat_pipeline",
+)
+
 
 def remote_requirements() -> list[str]:
     """PyPI deps for the deployed agent's own pip env on Agent Engine.
@@ -75,10 +87,14 @@ def remote_requirements() -> list[str]:
         # cloudpickle deserializes the pickled agent on the remote — Agent Engine
         # warns "requirements are missing: {'cloudpickle'}" without it.
         "cloudpickle>=3.0",
+        # Transitive PyPI deps the glasshat wheels need (their pyproject declares
+        # them); without these the remote install/import fails.
         "pydantic>=2.7",
         "pydantic-settings>=2.3",
         "numpy>=2.0",
         "rank-bm25>=0.2",
+        "PyYAML>=6",
+        "httpx>=0.27",
     ]
 
 
@@ -165,7 +181,13 @@ def build_wheels(out_dir: Path | None = None) -> list[str]:
             check=True,
             cwd=str(_REPO),
         )
-    return sorted(str(w) for w in out.glob("*.whl"))
+    # The glasshat wheels declare inter-package deps (glasshat-shared, …) not on
+    # PyPI; return them in DEPENDENCY order (by wheel-name prefix) so a one-by-one
+    # remote install resolves each from the wheels already installed.
+    wheels: list[str] = []
+    for prefix in _WHEEL_DEP_ORDER:
+        wheels.extend(str(w) for w in sorted(out.glob(f"{prefix}-*.whl")))
+    return wheels
 
 
 def deploy(project: str, location: str, staging_bucket: str) -> str:
