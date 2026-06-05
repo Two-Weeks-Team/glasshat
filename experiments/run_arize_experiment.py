@@ -37,6 +37,7 @@ for _pkg in (
 import asyncio  # noqa: E402
 
 from glasshat.pipeline.arize_experiment import (  # noqa: E402
+    EXPERIMENT_NAME,
     build_rows,
     load_or_build_golden,
     push_to_arize,
@@ -48,6 +49,8 @@ _GOLDEN = _REPO / "experiments" / "golden_rapid_agent.json"
 
 
 def main() -> int:
+    # The real-Gemini backend gives the live figure; mock is the illustrative default.
+    backend = "gemini" if os.environ.get("LLM_BACKEND", "").startswith("gemini") else "mock"
     golden = load_or_build_golden(_DATA, _GOLDEN)
     rows = asyncio.run(build_rows(golden))
 
@@ -55,15 +58,21 @@ def main() -> int:
     api_key = os.environ.get("ARIZE_API_KEY")
     pushed_ids: dict[str, str] = {}
     if space_id and api_key:
-        print("Arize creds present → pushing Dataset + Experiment to Arize AX…")
-        pushed_ids = push_to_arize(rows, space_id=space_id, api_key=api_key)
+        # Backend-suffixed experiment name so the mock and live runs don't collide.
+        print(f"Arize creds present → pushing Dataset + Experiment (backend={backend})…")
+        pushed_ids = push_to_arize(
+            rows,
+            space_id=space_id,
+            api_key=api_key,
+            experiment_name=f"{EXPERIMENT_NAME}-{backend}",
+        )
     else:
         print(
             "ARIZE_SPACE_ID / ARIZE_API_KEY not set → running OFFLINE only "
             "(no AX upload). Set both to push the Dataset + Experiment to Arize AX."
         )
 
-    summary = summarize(rows, pushed=bool(pushed_ids))
+    summary = summarize(rows, backend=backend, pushed=bool(pushed_ids))
     print(json.dumps(summary.model_dump(), indent=2))
     if pushed_ids:
         print("Arize AX resources:", json.dumps(pushed_ids, indent=2))

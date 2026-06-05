@@ -17,10 +17,8 @@ credential-free.
 
 from __future__ import annotations
 
-import asyncio
-from collections.abc import Callable, Coroutine
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any
 
 from glasshat.agents.injection_guard import HeuristicInjectionGuard
 from glasshat.agents.types import EvaluationInput
@@ -38,20 +36,6 @@ DEFAULT_K = 13
 DATASET_NAME = "glasshat-golden"
 EXPERIMENT_NAME = "glasshat-hit-at-13"
 INJECTION_EVALUATOR_NAME = "glasshat-prompt-injection"
-
-
-def _run_sync(coro: Coroutine[Any, Any, Any]) -> Any:
-    """Run an async coroutine to completion from a sync context, even when an event
-    loop is already running (Arize's experiment runner may call the task inside one)
-    — run it in a fresh loop on a worker thread in that case."""
-    try:
-        asyncio.get_running_loop()
-    except RuntimeError:
-        return asyncio.run(coro)
-    import concurrent.futures
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
-        return pool.submit(asyncio.run, coro).result()
 
 
 class ExperimentRow(BaseModel):
@@ -158,7 +142,6 @@ def push_to_arize(
     *,
     space_id: str,
     api_key: str,
-    deps_factory: Callable[[], Deps] | None = None,
     dataset_name: str = DATASET_NAME,
     experiment_name: str = EXPERIMENT_NAME,
 ) -> dict[str, str]:
@@ -169,20 +152,33 @@ def push_to_arize(
     from arize.experiments import EvaluationResult, Evaluator
 
     client = ArizeClient(api_key=api_key)
-    dataset = client.datasets.create(
-        name=dataset_name, space=space_id, examples=arize_examples(rows)
-    )
+    # Idempotent: the golden examples are backend-independent, so reuse an existing
+    # dataset of the same name (a re-run otherwise 409s "Dataset name already exists").
+    try:
+        dataset = client.datasets.create(
+            name=dataset_name, space=space_id, examples=arize_examples(rows)
+        )
+        dataset_id = str(getattr(dataset, "id", dataset_name))
+    except Exception as exc:  # noqa: BLE001 — narrow on the conflict, re-raise otherwise
+        if "conflict" in type(exc).__name__.lower() or "already exists" in str(exc).lower():
+            dataset_id = dataset_name  # experiments.run references the dataset by name
+        else:
+            raise
 
-    factory = deps_factory or default_deps
+    # The task returns the ALREADY-computed scores (from ``rows``) rather than
+    # re-running the pipeline — so the AX experiment scores match the reported hit@k
+    # exactly and the (expensive) real-Gemini scoring happens once, not twice.
+    _by_id = {r.software_id: r for r in rows}
 
     def task(example: dict[str, object]) -> dict[str, object]:
-        inp = EvaluationInput(
-            rubric_source={"preset_id": "rapid-agent"},
-            deck_text=str(example.get("deck_text", "")),
-            mode=RunMode.JUDGE,
-        )
-        record = _run_sync(run_evaluation(inp, factory()))
-        return {"final_score": record.final_score, "pre_audit": record.pre_audit_final_score}
+        row = _by_id.get(str(example.get("software_id", "")))
+        if row is None:
+            return {"final_score": 0.0, "pre_audit": 0.0, "placed": False}
+        return {
+            "final_score": row.final_score,
+            "pre_audit": row.pre_audit_final_score,
+            "placed": row.placed,
+        }
 
     class InjectionEvaluator(Evaluator):  # type: ignore[misc]
         name = INJECTION_EVALUATOR_NAME
@@ -204,7 +200,7 @@ def push_to_arize(
         evaluators=[InjectionEvaluator()],
     )
     return {
-        "dataset": str(getattr(dataset, "id", dataset_name)),
+        "dataset": dataset_id,
         "experiment": str(getattr(experiment, "id", experiment_name)),
     }
 
