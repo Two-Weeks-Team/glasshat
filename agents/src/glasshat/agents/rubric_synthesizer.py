@@ -8,6 +8,7 @@ agent's behaviour *is* its prompt: ``prompts/rubric_synthesizer.md``.
 
 from __future__ import annotations
 
+import asyncio
 import ipaddress
 import socket
 from pathlib import Path
@@ -120,7 +121,11 @@ def assert_fetchable(url: str, settings: Settings | None = None) -> str:
     allow = [h.strip().lower() for h in settings.rules_url_allowed_hosts.split(",") if h.strip()]
     if allow and host.lower() not in allow:
         raise SynthesisError(f"rules_url host '{host}' is not in the allowlist (SSRF guard)")
-    for ip in _resolved_ips(host):
+    try:
+        resolved = _resolved_ips(host)
+    except OSError as exc:  # socket.gaierror (and kin): unresolvable host
+        raise SynthesisError(f"rules_url host '{host}' could not be resolved (SSRF guard)") from exc
+    for ip in resolved:
         if _blocked_ip(ip):
             raise SynthesisError(
                 "rules_url resolves to a private/loopback/metadata address (SSRF guard)"
@@ -130,7 +135,9 @@ def assert_fetchable(url: str, settings: Settings | None = None) -> str:
 
 async def _fetch_url(url: str, settings: Settings | None = None) -> str:
     settings = settings or get_settings()
-    assert_fetchable(url, settings)
+    # assert_fetchable does blocking DNS resolution — offload so it never stalls
+    # the event loop.
+    await asyncio.to_thread(assert_fetchable, url, settings)
     return await _stream_capped(url, settings)
 
 

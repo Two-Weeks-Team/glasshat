@@ -244,7 +244,10 @@ async def run_evaluation(
     # planted score — but the verdict is recorded as a glasshat.* span attribute so
     # an attempt is observable in Arize AX.
     with deps.tracer.span("input_guard", **{"glasshat.agent": "InjectionGuard"}) as guard_span:
-        verdict = deps.injection_guard.classify(inp.deck_text or "")
+        # classify is sync; the default heuristic is instant CPU, but the optional
+        # phoenix backend does blocking network I/O — offload so neither stalls the
+        # event loop.
+        verdict = await asyncio.to_thread(deps.injection_guard.classify, inp.deck_text or "")
         guard_span.set_attr("glasshat.injection_flag", verdict.flagged)
         guard_span.set_attr("glasshat.injection_guard_backend", verdict.backend)
         if verdict.flagged:

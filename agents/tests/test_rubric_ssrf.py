@@ -54,6 +54,13 @@ def test_allows_listed_public_host_literal_ip() -> None:
     assert assert_fetchable("https://93.184.216.34/rules", s) == "93.184.216.34"
 
 
+def test_unresolvable_host_raises_synthesis_error() -> None:
+    # The reserved `.invalid` TLD (RFC 6761) never resolves → gaierror is mapped to
+    # a clean SynthesisError, not an unhandled internal exception.
+    with pytest.raises(SynthesisError, match="could not be resolved"):
+        assert_fetchable("https://no-such-host.invalid/rules", _settings())
+
+
 def test_blocked_ip_predicate() -> None:
     assert _blocked_ip(ipaddress.ip_address("127.0.0.1"))
     assert _blocked_ip(ipaddress.ip_address("169.254.169.254"))

@@ -30,7 +30,9 @@ logger = logging.getLogger(__name__)
 # precision (low false-positive on genuine pitch text) over recall — the typed
 # response schema is the real defense; this is the observable tripwire.
 _INJECTION_PATTERNS: tuple[re.Pattern[str], ...] = tuple(
-    re.compile(p, re.IGNORECASE)
+    # DOTALL so a bounded ``.{0,40}`` gap still matches when the attacker splits the
+    # payload across newlines (a common single-line-filter bypass).
+    re.compile(p, re.IGNORECASE | re.DOTALL)
     for p in (
         r"\bscore\s*[:=]\s*\d",  # "SCORE: 10", "score = 9"
         r"\bgive\s+(?:me|this|us|it)\b.{0,40}\b(?:10|ten|perfect|full|maximum|max)\b",
