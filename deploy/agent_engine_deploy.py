@@ -7,8 +7,11 @@ OWNER-RUN, deploy-time tooling. The cloud SDK (``google-cloud-aiplatform
 break the lean image's ADK 2.0 Workflow API). Run this in an isolated overlay:
 
     GOOGLE_CLOUD_PROJECT=panelyst-hackathon GOOGLE_CLOUD_LOCATION=us-central1 \\
-    uv run --no-project --with-requirements deploy/requirements-cloud.txt \\
+    uv run --with-requirements deploy/requirements-cloud.txt \\
         python deploy/agent_engine_deploy.py --staging-bucket gs://glasshat-agent-staging
+
+(The project env brings glasshat + google-adk 2.0; the overlay adds the cloud SDK.
+``--no-project`` would drop glasshat, so it is intentionally NOT used.)
 
 Add ``--dry-run`` to print the deploy config (requirements / extra packages / env)
 without creating anything — that path imports no cloud SDK and is what CI exercises.
@@ -22,11 +25,27 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import sys
 from pathlib import Path
 from typing import Any
 
 # Repo root = two levels up from this file (deploy/agent_engine_deploy.py).
 _REPO = Path(__file__).resolve().parents[1]
+
+# uv-managed CPython does not process the editable .pth files, so put the glasshat
+# src layouts on the path explicitly (same dirs as the pytest `pythonpath`) — the
+# overlay run brings the cloud SDK + google-adk but not the editable workspace.
+for _pkg in (
+    "packages/shared",
+    "packages/rubric",
+    "agents",
+    "services/ingest",
+    "services/code-grader",
+    "services/pipeline-orchestrator",
+):
+    _src = str(_REPO / _pkg / "src")
+    if _src not in sys.path:
+        sys.path.insert(0, _src)
 
 # The workspace packages the deployed agent needs, in dependency order. Each is a
 # pip-installable package (has its own pyproject.toml + src/glasshat namespace);
@@ -121,12 +140,34 @@ def build_app() -> Any:
     return TracedAdkApp(agent=build_root_agent())
 
 
+def build_wheels(out_dir: Path | None = None) -> list[str]:
+    """Build a wheel for each glasshat workspace package (src-layout namespace
+    packages), returning the wheel paths. Agent Engine pip-installs ``.whl`` files
+    passed in ``extra_packages`` — the reliable way to make the namespace package
+    importable on the remote (a bare src dir would not be)."""
+    import subprocess
+
+    out = out_dir or (_REPO / "dist" / "agent-engine")
+    out.mkdir(parents=True, exist_ok=True)
+    for existing in out.glob("*.whl"):
+        existing.unlink()
+    for pkg in _GLASSHAT_PACKAGES:
+        subprocess.run(
+            ["uv", "build", "--wheel", "--out-dir", str(out), str(_REPO / pkg)],
+            check=True,
+            cwd=str(_REPO),
+        )
+    return sorted(str(w) for w in out.glob("*.whl"))
+
+
 def deploy(project: str, location: str, staging_bucket: str) -> str:
     """Create the Agent Engine and return its resource name. Overlay-only."""
-    import vertexai  # noqa: F401 — cloud SDK, present only in the deploy overlay
+    import vertexai  # cloud SDK, present only in the deploy overlay
 
     client = vertexai.Client(project=project, location=location)
     cfg = deploy_config(staging_bucket)
+    # Swap the source-dir documentation value for the actually-installable wheels.
+    cfg["extra_packages"] = build_wheels()
     remote = client.agent_engines.create(agent=build_app(), config=cfg)
     return str(getattr(remote, "resource_name", remote))
 

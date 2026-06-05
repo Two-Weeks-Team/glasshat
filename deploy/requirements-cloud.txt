@@ -14,9 +14,9 @@
 #
 # Usage (drivers install this in a throwaway overlay; nothing is persisted to the
 # project venv or the lockfile):
-#   uv run --no-project --with-requirements deploy/requirements-cloud.txt \
+#   uv run --with-requirements deploy/requirements-cloud.txt \
 #       python deploy/agent_engine_deploy.py
-#   uv run --no-project --with-requirements deploy/requirements-cloud.txt \
+#   uv run --with-requirements deploy/requirements-cloud.txt \
 #       python experiments/run_arize_experiment.py
 #
 # The deployed *remote* agent declares its OWN runtime deps (google-adk 2.0,
