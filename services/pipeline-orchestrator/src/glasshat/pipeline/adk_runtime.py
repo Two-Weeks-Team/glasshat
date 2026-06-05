@@ -278,8 +278,13 @@ async def run_via_adk(  # pragma: no cover - requires the full live stack
     from glasshat.shared.tracing import PhoenixTracer
 
     settings = settings or get_settings()
-    instrument_adk(settings.phoenix_project_name)
     from glasshat.agents.audit import TableConsultant
+
+    # Register the Phoenix provider ONCE (in the tracer) and attach the ADK
+    # instrumentor to THAT provider — no separate instrument_adk() register, so the
+    # agent span tree and the manual glasshat.* spans share a single provider.
+    tracer = PhoenixTracer(settings)
+    maybe_instrument_adk(tracer)
 
     live_consultant = PhoenixMcpConsultant(
         base_url=settings.phoenix_collector_endpoint,
@@ -292,12 +297,13 @@ async def run_via_adk(  # pragma: no cover - requires the full live stack
         retrieval=HybridIndex(),
         docstore=get_docstore(settings),
         blobstore=get_blobstore(settings),
-        tracer=PhoenixTracer(settings),
+        tracer=tracer,
         consultant=FallbackConsultant(primary=live_consultant, backup=cold_start),
         dataset_writer=PhoenixMcpDatasetWriter(
             base_url=settings.phoenix_collector_endpoint,
             api_key=settings.phoenix_api_key,
             dataset=settings.phoenix_calibration_dataset,
         ),
+        agent_runtime="adk",  # genuinely run the ADK graph (matches the function name)
     )
     return await run_evaluation(inp, deps)

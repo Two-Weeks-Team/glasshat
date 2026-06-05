@@ -50,10 +50,11 @@ from glasshat.shared.ids import new_uuid
 # ``ctx.session.id`` (verified to hold object references in-process).
 _RUN_REGISTRY: dict[str, RunContext] = {}
 
-# The six hats, in canonical order. The ParallelAgent runs one leaf per hat; the
-# gather step re-orders by ``pln.hats_enabled`` so the assembled assessment list
-# matches ``run_panel`` exactly.
-_HATS: tuple[Hat, ...] = (Hat.WHITE, Hat.RED, Hat.YELLOW, Hat.BLACK, Hat.GREEN, Hat.BLUE)
+# One ParallelAgent leaf per hat, derived directly from the enum (no separate
+# hardcoded list to drift out of sync). Leaf order here is only the span-tree
+# layout; the gather step re-orders by ``pln.hats_enabled`` so the assembled
+# assessment list matches ``run_panel`` exactly.
+_HATS: tuple[Hat, ...] = tuple(Hat)
 
 
 async def _adk_hats_enter(ctx: RunContext) -> None:
@@ -116,8 +117,8 @@ def _build_pipeline_agent() -> Any:
         async def _run_async_impl(self, adk_ctx: Any) -> Any:
             ctx = _RUN_REGISTRY[adk_ctx.session.id]
             await _STAGE_DISPATCH[self.stage_name](ctx)
-            return
-            yield  # pragma: no cover - marks this an async generator (ADK contract)
+            if False:  # pragma: no cover - marks this an async generator (ADK contract)
+                yield
 
     class _HatLeaf(BaseAgent):  # type: ignore[misc]
         """One hat of the panel, run concurrently inside the ParallelAgent."""
@@ -127,8 +128,8 @@ def _build_pipeline_agent() -> Any:
         async def _run_async_impl(self, adk_ctx: Any) -> Any:
             ctx = _RUN_REGISTRY[adk_ctx.session.id]
             await _adk_run_one_hat(ctx, self.hat_value)
-            return
-            yield  # pragma: no cover - marks this an async generator (ADK contract)
+            if False:  # pragma: no cover - marks this an async generator (ADK contract)
+                yield
 
     def leaf(name: str) -> Any:
         return _StageLeaf(name=name, stage_name=name)
