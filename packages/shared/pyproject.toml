@@ -12,7 +12,7 @@ dependencies = [
 
 [project.optional-dependencies]
 # Lazy-imported real backends — not installed in CI; only when using that backend.
-vertex = ["google-genai>=0.3", "google-adk>=1.0"]
+vertex = ["google-genai>=0.3", "google-adk>=2.0"]
 phoenix = [
     "arize-phoenix>=11",
     "arize-phoenix-otel>=0.6",

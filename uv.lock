@@ -857,7 +857,7 @@ provides-extras = ["vertex", "phoenix", "arize", "firestore", "gcs"]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "google-adk", specifier = ">=1.0" },
+    { name = "google-adk", specifier = ">=2.0" },
     { name = "hypothesis", specifier = ">=6" },
     { name = "mypy", specifier = ">=1.11" },
     { name = "pytest", specifier = ">=8" },
@@ -1012,7 +1012,7 @@ requires-dist = [
     { name = "arize-otel", marker = "extra == 'arize'", specifier = ">=0.12" },
     { name = "arize-phoenix", marker = "extra == 'phoenix'", specifier = ">=11" },
     { name = "arize-phoenix-otel", marker = "extra == 'phoenix'", specifier = ">=0.6" },
-    { name = "google-adk", marker = "extra == 'vertex'", specifier = ">=1.0" },
+    { name = "google-adk", marker = "extra == 'vertex'", specifier = ">=2.0" },
     { name = "google-cloud-firestore", marker = "extra == 'firestore'", specifier = ">=2.16" },
     { name = "google-cloud-storage", marker = "extra == 'gcs'", specifier = ">=2.16" },
     { name = "google-genai", marker = "extra == 'vertex'", specifier = ">=0.3" },

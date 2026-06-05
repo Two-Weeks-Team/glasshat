@@ -1,23 +1,29 @@
-"""ADK runtime: the evaluation pipeline as a genuine Google ADK agent graph.
+"""ADK runtime: the evaluation pipeline as a genuine Google ADK 2.0 Workflow graph.
 
 ``AGENT_RUNTIME=adk`` runs the SAME stage functions as the python runtime, but
-wired as a real ADK graph::
+wired as a real **ADK 2.0 Workflow** (graph-based "Workflow Runtime", GA
+2026-05-19). The composition agents ``SequentialAgent`` / ``ParallelAgent`` /
+``LoopAgent`` are deprecated in ADK 2.0; this module uses the canonical
+``Workflow(edges=…)`` graph where each stage is a ``FunctionNode`` and the six
+hats are an unconditional parallel fan-out joined by a ``JoinNode``::
 
-    SequentialAgent[
-        input_guard, ingest, synthesize, plan,
-        hats_enter, ParallelAgent[ one agent per hat ], hats_gather,
-        LoopAgent[ audit ],            # single convergent pass today
-        score, persist,
-    ]
+    START → input_guard → ingest → synthesize → plan → hats_enter
+          → ( hat_white ‖ hat_red ‖ hat_yellow ‖ hat_black ‖ hat_green ‖ hat_blue )
+          → JoinNode → hats_gather → audit → score → persist
 
-executed by the ADK ``Runner``. With the OpenInference Google ADK instrumentor
-registered (live deployment), this emits a nested span TREE to Arize AX — the
-Sequential → Parallel[6 hats] → Loop[audit] shape — instead of the python path's
-flat manual spans. Every leaf calls the identical pure stage function over the
-shared :class:`~glasshat.pipeline.engine.RunContext`, so the ``RunRecord`` and the
-ordered SSE stream are byte-identical to the python path (the parity test is the
-gate). ``google-adk`` is imported lazily, so importing this module never requires
-the SDK; the agent classes are built only when a run actually uses ``adk``.
+driven by the ADK ``Runner`` (``InMemoryRunner(node=workflow)``). With the
+OpenInference Google-ADK instrumentor registered (live deployment), the graph
+emits a nested span TREE to Arize AX — the sequential spine with a parallel
+fan-out/join subtree — instead of the python path's flat manual spans. Every node
+calls the identical pure stage function over the shared
+:class:`~glasshat.pipeline.engine.RunContext`, so the ``RunRecord`` and the ordered
+SSE stream are byte-identical to the python path (the parity test is the gate).
+``google-adk`` is imported lazily, so importing this module never requires the
+SDK; the graph is built only when a run actually uses ``adk``.
+
+The single-pass audit (Tier B's ``LoopAgent(max_iterations=1)``) is a single audit
+node here — byte-identical to the python path's one convergent pass. A future
+multi-iteration audit would become a loop edge back into the audit node.
 """
 
 from __future__ import annotations
@@ -44,21 +50,20 @@ from glasshat.pipeline.events import Stage
 from glasshat.shared.enums import Hat
 from glasshat.shared.ids import new_uuid
 
-# ADK agents (pydantic, not picklable) cannot carry the live RunContext as a
-# field, and the ADK session store would deep-copy it. Instead each run registers
-# its context under its unique ADK session id; the leaf agents look it up by
-# ``ctx.session.id`` (verified to hold object references in-process).
+# ADK nodes (pydantic) and the ADK session store cannot carry the live, unpicklable
+# RunContext. Instead each run registers its context under its unique run key; the
+# node callables close over that key (a plain str) and look the context up here.
 _RUN_REGISTRY: dict[str, RunContext] = {}
 
-# One ParallelAgent leaf per hat, derived directly from the enum (no separate
-# hardcoded list to drift out of sync). Leaf order here is only the span-tree
+# One hat node per enum member, derived directly from the enum (no separate
+# hardcoded list to drift out of sync). Fan-out order here is only the span-tree
 # layout; the gather step re-orders by ``pln.hats_enabled`` so the assembled
 # assessment list matches ``run_panel`` exactly.
 _HATS: tuple[Hat, ...] = tuple(Hat)
 
 
 async def _adk_hats_enter(ctx: RunContext) -> None:
-    """Emit the single HATS_RUNNING event (the ParallelAgent provides the span tree)."""
+    """Emit the single HATS_RUNNING event (the parallel fan-out provides the span tree)."""
     assert ctx.pln is not None
     ctx.emit(Stage.HATS_RUNNING, hats=[h.value for h in ctx.pln.hats_enabled])
 
@@ -90,7 +95,7 @@ async def _adk_run_one_hat(ctx: RunContext, hat_value: str) -> None:
 
 # name -> stage coroutine. The deterministic stages reuse the engine's stage
 # functions verbatim; only the hats are split (enter / per-hat / gather) so they
-# can fan out across a ParallelAgent.
+# can fan out across the parallel group.
 _STAGE_DISPATCH: dict[str, Callable[[RunContext], Awaitable[None]]] = {
     "input_guard": stage_input_guard,
     "ingest": stage_ingest,
@@ -103,55 +108,45 @@ _STAGE_DISPATCH: dict[str, Callable[[RunContext], Awaitable[None]]] = {
     "persist": stage_persist,
 }
 
+# The sequential spine, in order. ``hats_enter`` fans out to the six hat nodes;
+# the JoinNode then resumes the spine at ``hats_gather``.
+_SPINE_BEFORE_HATS = ("input_guard", "ingest", "synthesize", "plan", "hats_enter")
+_SPINE_AFTER_HATS = ("hats_gather", "audit", "score", "persist")
 
-def _build_pipeline_agent() -> Any:
-    """Construct the root ADK SequentialAgent. Defined here (lazy) so the google-adk
-    import only happens on the ``adk`` path."""
-    from google.adk.agents import BaseAgent, LoopAgent, ParallelAgent, SequentialAgent
 
-    class _StageLeaf(BaseAgent):  # type: ignore[misc]
-        """A deterministic stage: looks up its run context and awaits the stage fn."""
+def _build_workflow(run_key: str) -> Any:
+    """Construct the root ADK 2.0 ``Workflow`` for one run. Defined here (lazy) so the
+    google-adk import only happens on the ``adk`` path.
 
-        stage_name: str = ""
+    Each node is a ``FunctionNode`` with ``parameter_binding="state"`` whose callable
+    closes over ``run_key`` and runs the matching stage over the registered
+    ``RunContext``. The callable takes a bare ``ctx`` parameter (no annotation) so
+    ADK's state binding never tries to resolve a ``Context`` type hint under this
+    module's ``from __future__ import annotations``."""
+    from google.adk import Workflow
+    from google.adk.workflow import FunctionNode, JoinNode
 
-        async def _run_async_impl(self, adk_ctx: Any) -> Any:
-            ctx = _RUN_REGISTRY[adk_ctx.session.id]
-            await _STAGE_DISPATCH[self.stage_name](ctx)
-            if False:  # pragma: no cover - marks this an async generator (ADK contract)
-                yield
+    def stage_node(stage_name: str) -> Any:
+        async def _run(ctx: Any) -> None:  # noqa: ARG001 — ADK binds ctx; we use run_key
+            await _STAGE_DISPATCH[stage_name](_RUN_REGISTRY[run_key])
 
-    class _HatLeaf(BaseAgent):  # type: ignore[misc]
-        """One hat of the panel, run concurrently inside the ParallelAgent."""
+        return FunctionNode(func=_run, name=stage_name, parameter_binding="state")
 
-        hat_value: str = ""
+    def hat_node(hat: Hat) -> Any:
+        async def _run(ctx: Any) -> None:  # noqa: ARG001 — ADK binds ctx; we use run_key
+            await _adk_run_one_hat(_RUN_REGISTRY[run_key], hat.value)
 
-        async def _run_async_impl(self, adk_ctx: Any) -> Any:
-            ctx = _RUN_REGISTRY[adk_ctx.session.id]
-            await _adk_run_one_hat(ctx, self.hat_value)
-            if False:  # pragma: no cover - marks this an async generator (ADK contract)
-                yield
+        return FunctionNode(func=_run, name=f"hat_{hat.value}", parameter_binding="state")
 
-    def leaf(name: str) -> Any:
-        return _StageLeaf(name=name, stage_name=name)
-
-    panel = ParallelAgent(
-        name="six_hat_panel",
-        sub_agents=[_HatLeaf(name=f"hat_{h.value}", hat_value=h.value) for h in _HATS],
-    )
-    audit_loop = LoopAgent(name="audit_loop", max_iterations=1, sub_agents=[leaf("audit")])
-    return SequentialAgent(
+    hats = tuple(hat_node(h) for h in _HATS)
+    return Workflow(
         name="glasshat_pipeline",
-        sub_agents=[
-            leaf("input_guard"),
-            leaf("ingest"),
-            leaf("synthesize"),
-            leaf("plan"),
-            leaf("hats_enter"),
-            panel,
-            leaf("hats_gather"),
-            audit_loop,
-            leaf("score"),
-            leaf("persist"),
+        edges=[
+            # START → sequential spine → fan-out to the six hats (the tuple = an
+            # unconditional parallel group).
+            ("START", *(stage_node(s) for s in _SPINE_BEFORE_HATS), hats),
+            # Join the six hats, then resume the sequential spine.
+            (hats, JoinNode(name="six_hat_join"), *(stage_node(s) for s in _SPINE_AFTER_HATS)),
         ],
     )
 
@@ -159,12 +154,12 @@ def _build_pipeline_agent() -> Any:
 async def run_evaluation_adk(
     inp: EvaluationInput, deps: Deps, *, on_event: EventSink | None = None
 ) -> RunRecord:
-    """Run the pipeline through the ADK agent graph and return the RunRecord.
+    """Run the pipeline through the ADK 2.0 Workflow graph and return the RunRecord.
 
     Mirrors :func:`~glasshat.pipeline.engine.run_evaluation` exactly: same QUEUED
     event, same stage order, same per-stage events — only the orchestration is an
-    ADK ``Runner`` driving the agent tree. A stage that raises propagates out of
-    ``run_async`` (and halts the sequence), so failure paths match the python path.
+    ADK ``Runner`` driving the Workflow graph. A node that raises propagates out of
+    ``run_async`` (and halts the graph), so failure paths match the python path.
     """
     from google.adk.runners import InMemoryRunner
     from google.genai import types as gtypes
@@ -172,14 +167,16 @@ async def run_evaluation_adk(
     ctx = RunContext(inp=inp, deps=deps, emit=make_emit(on_event), run_id=new_uuid())
     ctx.emit(Stage.QUEUED, run_id=ctx.run_id)
 
-    root = _build_pipeline_agent()
     session_id = f"glasshat-{ctx.run_id}"
     _RUN_REGISTRY[session_id] = ctx
     try:
-        runner = InMemoryRunner(agent=root, app_name="glasshat")
+        root = _build_workflow(session_id)
+        runner = InMemoryRunner(node=root, app_name="glasshat")
         await runner.session_service.create_session(
             app_name="glasshat", user_id="glasshat", session_id=session_id
         )
+        # The seed message is ignored by the state-bound nodes (which read the
+        # RunContext from the registry); ADK requires a message to start a run.
         message = gtypes.Content(role="user", parts=[gtypes.Part(text="evaluate")])
         async for _event in runner.run_async(
             user_id="glasshat", session_id=session_id, new_message=message
