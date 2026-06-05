@@ -28,7 +28,7 @@ Last updated: 2026-05-14 KST (superseded — see v3 handoff).
 - [x] Full plan committed: [`PLAN.md`](PLAN.md) (mirrored from the umbrella tracker, built from a 6-expert-team analysis).
 - [x] Authoritative architecture doc: [`docs/architecture.md`](docs/architecture.md) (topology, agent graph mermaid, sequence mermaid, phase-by-phase deployment, abstractions, the two human gates).
 - [x] **GCP project bootstrap** ([`docs/gcp-setup.md`](docs/gcp-setup.md)) — `panelyst-hackathon` project (916178791322) on `app.2weeks@gmail.com`, billing linked to 크레딧계정 (`01B677-A6E5C9-B265AF`), 13 APIs enabled, service account `panelyst-dev` with 8 roles, SA key at `~/.config/gcloud/panelyst-dev-sa-key.json` (mode 600, outside the repo).
-- [x] **Vertex AI Gemini panel verified live** ([`docs/gcp-setup.md`](docs/gcp-setup.md)) — `gemini-3.1-pro-preview` / `gemini-3-flash-preview` / `gemini-3.1-flash-lite` on **global** endpoint; 2.5 fallbacks on us-central1. All 6 models confirmed working with the SA key.
+- [x] **Vertex AI Gemini panel verified live** ([`docs/gcp-setup.md`](docs/gcp-setup.md)) — `gemini-3.1-pro` / `gemini-3.5-flash` / `gemini-3.1-flash-lite` on **global** endpoint; 2.5 fallbacks on us-central1. All 6 models confirmed working with the SA key.
 - [x] `.env` populated locally (gitignored); `.env.example` updated to the verified configuration with all phase 1–5 env vars; abstraction switches documented.
 
 ### Not started (in priority order)
@@ -58,12 +58,12 @@ Last updated: 2026-05-14 KST (superseded — see v3 handoff).
 | SA key | `~/.config/gcloud/panelyst-dev-sa-key.json` (mode 600) |
 | Default region | `us-central1` (Gemini 2.5 + Cloud Run + Firestore) |
 | **Gemini 3 family endpoint** | **`global`** (regional returns 404) |
-| Pro model | `gemini-3.1-pro-preview` @ global (preview; eval-JSON p50 ≈ 9.3s) |
-| Flash model | `gemini-3-flash-preview` @ global (preview; p50 ≈ 4.0s) |
+| Pro model | `gemini-3.1-pro` @ global (preview; eval-JSON p50 ≈ 9.3s) |
+| Flash model | `gemini-3.5-flash` @ global (preview; p50 ≈ 4.0s) |
 | Flash-Lite model | `gemini-3.1-flash-lite` @ global (**GA**; p50 ≈ 1.3s — fastest) |
 | Pro/Flash/Lite fallbacks | `gemini-2.5-pro` / `gemini-2.5-flash` / `gemini-2.5-flash-lite` @ us-central1 |
 
-Gotchas (also in docs/gcp-setup.md): `gemini-3-pro-preview` returns 404 — the real 3-Pro slot is `gemini-3.1-pro-preview`. Gemini 2.5 Pro is a thinking model — needs ≥2000 output tokens or hits MAX_TOKENS. Don't rely on ADC; use the SA key.
+Gotchas (also in docs/gcp-setup.md): `gemini-3-pro-preview` returns 404 — the real 3-Pro slot is `gemini-3.1-pro`. Gemini 2.5 Pro is a thinking model — needs ≥2000 output tokens or hits MAX_TOKENS. Don't rely on ADC; use the SA key.
 
 ## §4 — Persistent memory
 

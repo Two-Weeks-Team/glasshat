@@ -39,25 +39,44 @@ monitor — **not a chatbot**.
 
 ## How we built it
 - **Gemini 3.1 Flash-Lite on Vertex AI** (global endpoint) for synthesis, the
-  six-hat panel, and scoring; **`text-embedding-005`** for evidence retrieval.
-- **Google ADK** orchestration; every agent and every hat is its own span.
-- **Arize AX** observability over OpenInference/OTLP. A **Phoenix-MCP calibration
-  consultant + Phoenix-Dataset write-back loop** is implemented and E2E-verified
-  offline; the credential-free live image runs the deterministic spike-D prior, and
-  the MCP path activates by config flag when a Phoenix endpoint is set — so the
-  audit *can* improve over time without overclaiming the live URL.
+  six-hat panel, and scoring; **`text-embedding-005`** for evidence retrieval. The
+  Agent-Engine deployment runs the GA `gemini-enterprise` backend
+  (`gemini-3.5-flash` / `gemini-3.1-pro`).
+- **Google ADK 2.0** — the whole pipeline is a real **`Workflow` graph**
+  (ingest → synth → plan → 6-hat parallel fan-out → join → audit → score),
+  **deployed as a genuine agent on the Gemini Enterprise Agent Platform (Agent
+  Engine)** — live resource `reasoningEngines/7480191458771730432`, serving
+  `stream_query`. The credential-free Cloud Run demo runs the parity-identical
+  python path (byte-identical RunRecord+SSE).
+- **Arize AX** observability over OpenInference/OTLP. The deployed agent emits a
+  **full nested trace tree** (agent → Workflow → each of the six hats' Gemini
+  generate + embed calls — 104 spans in a two-query capture, verified via
+  `client.spans.list(project="glasshat")`), using an isolated tracer-provider so
+  Agent Engine doesn't drop the global one. We also ran a real **Arize AX
+  Experiment** over a `glasshat-golden` Dataset with a `glasshat-prompt-injection`
+  code Evaluator: **hit@13 = 0.6154** on real Gemini (8 of 13 historical winners
+  ranked into the top-13) vs 0.3846 mock / 0.26 chance — a binary Winner-label
+  hit@13, not a rank curve.
+- A **Phoenix-MCP calibration consultant + Phoenix-Dataset write-back loop** is
+  implemented and E2E-verified; the credential-free live image runs the
+  deterministic spike-D prior, and the MCP path activates by config flag when a
+  Phoenix endpoint is set — so we state exactly which path is live rather than
+  overclaim.
 - **In-code hybrid retrieval** (Vertex embeddings + cosine + BM25 + RRF) — **no
   vector database**. A GitHub-REST **metadata-only** code grader (no clone) folds
   repo evidence into retrieval.
 - TypeScript/Next.js PWA front end with a real-time SSE trace, 3D constellation,
-  and rank-flip board. Python monorepo (uv workspace), 243 Python + 73 web tests,
-  97.8% coverage, CI with a Gemini/Google-only dependency gate.
+  and rank-flip board. Python monorepo (uv workspace), **323 Python + 74 web
+  tests**, CI with a Gemini/Google-only dependency gate (the deployed image ships
+  no general-purpose LLM SDKs).
 
 ## How it maps to the judging criteria
 - **Technological Implementation (primary / tie-break #1):** a real
   self-correction *algorithm* grounded in held-out calibration data — not prompt
-  theatre. Deployed live on Vertex + ADK + Arize with a measured ±2.0-bounded
-  correction, reproducible run-to-run, 97.8% test coverage.
+  theatre. The evaluation brain is a genuine **ADK 2.0 Workflow agent deployed on
+  the Gemini Enterprise Agent Platform (Agent Engine)**, traced end-to-end in
+  **Arize AX** (full nested tree) and measured with an **Arize AX Experiment**
+  (hit@13 0.6154). Measured ±2.0-bounded correction, reproducible run-to-run.
 - **Design:** the correction is the interface — over-confidence visibly recedes,
   the graph reshapes, and a rank-flip board makes "the audit changes who wins"
   legible in one glance.
@@ -79,9 +98,11 @@ monitor — **not a chatbot**.
   fixed sample inputs for a reliable live demo.
 
 ## Accomplishments / What's next
-- Live, reproducible, Apache-2.0, with a self-correction that's real math.
-- Next: activate the live Phoenix-MCP consultant by default and accumulate
-  per-rubric calibration so the audit sharpens with every evaluation.
+- Live, reproducible, Apache-2.0, with a self-correction that's real math —
+  **genuinely deployed on Agent Engine, traced in Arize AX, and measured (hit@13)**.
+- Next: flip the live demo to the hardened `structured` scoring mode + judge auth,
+  activate the live Phoenix-MCP consultant by default, and accumulate per-rubric
+  calibration so the audit sharpens with every evaluation.
 
 ## Built with
 `google-cloud` · `vertex-ai` · `gemini` · `google-adk` · `arize` · `arize-ax` ·
@@ -96,7 +117,14 @@ monitor — **not a chatbot**.
 - **Repo:** _(teammate inserts public repo link)_
 
 ## Honest disclosures (keep — they raise credibility)
-- Live model is **`gemini-3.1-flash-lite`** (Gemini 2.5 is not used).
+- Live model is **`gemini-3.1-flash-lite`** (Gemini 2.5 is not used); the
+  Agent-Engine deploy runs GA `gemini-3.5-flash` / `gemini-3.1-pro`.
+- **hit@13 0.6154 is a binary Winner-label metric, not a rising rank curve**; on
+  this golden set the audit did not reorder the top-13 (Δ=0). We never claim the
+  judge is "un-gameable".
+- The public Cloud Run demo runs `SCORING_MODE=legacy` (the hardened
+  `structured` mode + judge-auth are opt-in); the Agent-Engine agent is the genuine
+  ADK runtime (Cloud Run runs the parity-identical python path).
 - The deployed image ships **no** general-purpose LLM SDKs (Gemini/Google only,
   CI-enforced).
 - The "Qdrant" rubric preset is an **external rule set Glasshat judges against**,

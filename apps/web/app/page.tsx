@@ -162,9 +162,9 @@ function AgentPlatformProof() {
           <span className="text-gradient font-serif-italic font-medium">ADK agent</span> on Agent
           Engine — traced, and scored.
         </h2>
-        <div className="mt-10 grid gap-6 md:grid-cols-3">
+        <ul role="list" className="mt-10 grid list-none gap-6 p-0 md:grid-cols-3">
           {cards.map((c) => (
-            <div
+            <li
               key={c.label}
               className="elevate flex flex-col gap-3 rounded-3xl p-7 shadow-[0_30px_80px_-46px_oklch(0.72_0.17_290/0.45)]"
             >
@@ -180,9 +180,9 @@ function AgentPlatformProof() {
               <span className="font-mono text-[0.74rem] leading-relaxed text-[var(--color-muted)]">
                 {c.sub}
               </span>
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
         <p className="mt-7 font-mono text-[0.78rem] leading-relaxed text-[var(--color-muted)]">
           Live Agent Engine resource{" "}
           <code className="text-[var(--color-accent-2)]">{ap.resource}</code> · AX experiment{" "}
