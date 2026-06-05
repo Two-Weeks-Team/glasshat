@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
+import { AGENT_PLATFORM } from "@/lib/deployment";
+
 import styles from "./SpotlightFinale.module.css";
 
 /* Honest illustrative numbers: an over-confident 9.0 pulled back to a
@@ -244,8 +246,13 @@ export default function SpotlightFinale() {
               <code>{'API /health → {"status":"ok"}'}</code>
             </a>
             <br />
-            Gemini 3.1 Flash-Lite on Vertex AI &middot; Google ADK &middot; Arize AX
-            + Phoenix-MCP calibration loop (wired) &middot; Apache-2.0
+            Gemini 3.1 Flash-Lite on the Gemini Enterprise Agent Platform &middot; Google
+            ADK 2.0 Workflow &middot; Arize AX &middot; Apache-2.0
+            <br />
+            <strong>Deployed as a genuine ADK agent on Agent Engine</strong> &middot;{" "}
+            full nested Arize AX trace ({AGENT_PLATFORM.traceSpans} spans, agent → 6 hats)
+            &middot; live <strong>hit@13 {AGENT_PLATFORM.hitAt13.live}</strong>{" "}(
+            {AGENT_PLATFORM.hitAt13.winnersInTop13} winners in the top-13)
           </p>
         </div>
 
