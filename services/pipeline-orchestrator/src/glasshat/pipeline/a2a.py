@@ -79,10 +79,11 @@ def build_agent_card(*, host: str = "0.0.0.0", port: int = 8080, protocol: str =
     )
 
 
-def build_a2a_app(*, host: str = "0.0.0.0", port: int = 8080) -> Any:
+def build_a2a_app(*, host: str = "0.0.0.0", port: int = 8080, protocol: str = "http") -> Any:
     """Build the A2A Starlette app wrapping the glasshat ADK agent. Overlay-only
     (``a2a-sdk`` + ADK a2a). Serves the AgentCard (from :func:`build_agent_card`)
-    plus the A2A JSON-RPC methods; run it with uvicorn."""
+    plus the A2A JSON-RPC methods; run it with uvicorn. Set ``protocol="https"`` when
+    serving behind a TLS proxy so the advertised card URL is correct."""
     from glasshat.pipeline.agent_engine import build_root_agent
     from google.adk.a2a.utils.agent_to_a2a import to_a2a
 
@@ -90,5 +91,6 @@ def build_a2a_app(*, host: str = "0.0.0.0", port: int = 8080) -> Any:
         build_root_agent(),
         host=host,
         port=port,
-        agent_card=build_agent_card(host=host, port=port),
+        protocol=protocol,
+        agent_card=build_agent_card(host=host, port=port, protocol=protocol),
     )

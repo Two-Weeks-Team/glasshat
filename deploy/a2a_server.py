@@ -35,9 +35,15 @@ def main() -> int:
     from glasshat.pipeline.a2a import build_a2a_app
 
     host = os.environ.get("A2A_HOST", "0.0.0.0")
-    port = int(os.environ.get("A2A_PORT", "8080"))
+    raw_port = os.environ.get("A2A_PORT", "8080")
+    try:
+        port = int(raw_port)
+    except ValueError:
+        print(f"ERROR: A2A_PORT must be an integer, got {raw_port!r}")
+        return 2
+    protocol = os.environ.get("A2A_PROTOCOL", "http")
     print(f"glasshat A2A server on {host}:{port} — card at /.well-known/agent-card.json")
-    uvicorn.run(build_a2a_app(host=host, port=port), host=host, port=port)
+    uvicorn.run(build_a2a_app(host=host, port=port, protocol=protocol), host=host, port=port)
     return 0
 
 
