@@ -32,3 +32,7 @@ google-cloud-aiplatform[agent_engines]>=1.112
 arize-otel>=0.12
 arize>=7.19
 arize-phoenix-evals>=0.20
+
+# A2A protocol server (deploy/a2a_server.py): the a2a SDK + an ASGI server.
+a2a-sdk>=0.2
+uvicorn>=0.30

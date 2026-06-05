@@ -138,6 +138,9 @@ module = [
     "opentelemetry.*",
     "mcp",
     "mcp.*",
+    "a2a",
+    "a2a.*",
+    "uvicorn",
 ]
 ignore_missing_imports = true
 follow_imports = "skip"
