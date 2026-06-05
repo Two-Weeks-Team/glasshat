@@ -84,25 +84,30 @@ def extra_package_dirs() -> list[str]:
     return [str(_REPO / p) for p in _GLASSHAT_PACKAGES]
 
 
+# Agent Engine sets these automatically and REJECTS them in spec.deployment_spec.env
+# ("Environment variable name '…' is reserved"). The deployed agent still reads
+# GOOGLE_CLOUD_PROJECT/LOCATION from the platform-provided env.
+_RESERVED_ENV = frozenset({"GOOGLE_CLOUD_PROJECT", "GOOGLE_CLOUD_LOCATION", "PORT"})
+
+
 def remote_env_vars() -> dict[str, str]:
     """Env for the deployed agent. The real Gemini backend + Arize tracer are
     selected here; secrets (ARIZE_*) are passed through from the deploy env, never
-    hard-coded. Defaults keep the agent functional even without Arize creds (tracing
-    just no-ops)."""
+    hard-coded. Reserved platform vars (GOOGLE_CLOUD_PROJECT/LOCATION) are omitted —
+    Agent Engine provides them and rejects them if set explicitly. Defaults keep the
+    agent functional even without Arize creds (tracing just no-ops)."""
     env: dict[str, str] = {
         "LLM_BACKEND": os.environ.get("LLM_BACKEND", "gemini-enterprise"),
         "AGENT_RUNTIME": "adk",
         "MONITOR_BACKEND": "arize",
         "GOOGLE_GENAI_USE_VERTEXAI": "true",
-        "GOOGLE_CLOUD_PROJECT": os.environ.get("GOOGLE_CLOUD_PROJECT", ""),
-        "GOOGLE_CLOUD_LOCATION": os.environ.get("GOOGLE_CLOUD_LOCATION", "us-central1"),
         "ARIZE_PROJECT_NAME": os.environ.get("ARIZE_PROJECT_NAME", "glasshat"),
     }
     # Pass Arize creds through only if present (so tracing is genuine when set).
     for key in ("ARIZE_SPACE_ID", "ARIZE_API_KEY"):
         if os.environ.get(key):
             env[key] = os.environ[key]
-    return {k: v for k, v in env.items() if v}
+    return {k: v for k, v in env.items() if v and k not in _RESERVED_ENV}
 
 
 def deploy_config(staging_bucket: str) -> dict[str, Any]:

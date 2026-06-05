@@ -155,6 +155,9 @@ def test_deploy_config_is_well_formed() -> None:
     assert cfg["env_vars"]["AGENT_RUNTIME"] == "adk"
     assert cfg["env_vars"]["MONITOR_BACKEND"] == "arize"
     assert cfg["env_vars"]["GOOGLE_GENAI_USE_VERTEXAI"] == "true"
+    # Reserved platform vars must NOT be set (Agent Engine rejects them).
+    assert "GOOGLE_CLOUD_PROJECT" not in cfg["env_vars"]
+    assert "GOOGLE_CLOUD_LOCATION" not in cfg["env_vars"]
     # JSON-serializable (it gets printed by --dry-run).
     json.dumps(cfg)
 
