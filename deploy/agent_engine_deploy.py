@@ -98,19 +98,25 @@ _RESERVED_ENV = frozenset({"GOOGLE_CLOUD_PROJECT", "GOOGLE_CLOUD_LOCATION", "POR
 
 
 def remote_env_vars() -> dict[str, str]:
-    """Env for the deployed agent. The real Gemini backend + Arize tracer are
-    selected here; secrets (ARIZE_*) are passed through from the deploy env, never
-    hard-coded. Reserved platform vars (GOOGLE_CLOUD_PROJECT/LOCATION) are omitted —
-    Agent Engine provides them and rejects them if set explicitly. Defaults keep the
-    agent functional even without Arize creds (tracing just no-ops)."""
+    """Env for the deployed agent. The real Gemini backend is selected here; secrets
+    (ARIZE_*) are passed through from the deploy env, never hard-coded. Reserved
+    platform vars (GOOGLE_CLOUD_PROJECT/LOCATION) are omitted — Agent Engine provides
+    them and rejects them if set explicitly.
+
+    NOTE: ``MONITOR_BACKEND`` is intentionally NOT set to ``arize``. The genuine Arize
+    AX trace tree comes from the OpenInference ADK INSTRUMENTOR registered ONCE in
+    ``TracedAdkApp.set_up`` (``setup_arize_tracing``); leaving the pipeline's manual
+    ArizeTracer on would double-register a tracer provider (and crash without creds).
+    The manual tracer therefore stays NoOp (default backend, phoenix SDK absent on the
+    remote), so the agent SERVES credential-free and tracing is single-sourced."""
     env: dict[str, str] = {
         "LLM_BACKEND": os.environ.get("LLM_BACKEND", "gemini-enterprise"),
         "AGENT_RUNTIME": "adk",
-        "MONITOR_BACKEND": "arize",
         "GOOGLE_GENAI_USE_VERTEXAI": "true",
         "ARIZE_PROJECT_NAME": os.environ.get("ARIZE_PROJECT_NAME", "glasshat"),
     }
-    # Pass Arize creds through only if present (so tracing is genuine when set).
+    # Pass Arize creds through only if present (so the instrumentor tracing in
+    # set_up is genuine when set).
     for key in ("ARIZE_SPACE_ID", "ARIZE_API_KEY"):
         if os.environ.get(key):
             env[key] = os.environ[key]

@@ -154,8 +154,10 @@ def test_deploy_config_is_well_formed() -> None:
     assert cfg["staging_bucket"] == "gs://glasshat-agent-staging"
     assert cfg["identity_type"] == "AGENT_IDENTITY"
     assert cfg["env_vars"]["AGENT_RUNTIME"] == "adk"
-    assert cfg["env_vars"]["MONITOR_BACKEND"] == "arize"
     assert cfg["env_vars"]["GOOGLE_GENAI_USE_VERTEXAI"] == "true"
+    # MONITOR_BACKEND must NOT be arize: the instrumentor (set_up) is the single
+    # tracer-provider registration; a manual ArizeTracer would double-register.
+    assert cfg["env_vars"].get("MONITOR_BACKEND") != "arize"
     # Reserved platform vars must NOT be set (Agent Engine rejects them).
     assert "GOOGLE_CLOUD_PROJECT" not in cfg["env_vars"]
     assert "GOOGLE_CLOUD_LOCATION" not in cfg["env_vars"]
