@@ -51,6 +51,19 @@ dev = [
     # `vertex` extra; this dev entry just makes the parity gate runnable in CI.
     "google-adk>=1.0",
 ]
+# NOTE on cloud tooling (Agent-Engine deploy driver + Arize AX datasets/experiments
+# /evals): these are DELIBERATELY NOT a uv dependency-group. `google-cloud-aiplatform`
+# (and `arize`/`arize-phoenix-evals`, which pull it transitively) pins google-adk<2,
+# which is INCOMPATIBLE with the google-adk 2.0 the lean deploy image needs for the
+# ADK 2.0 Workflow API. Under uv's single universal resolution, locking them would
+# drag the DEPLOY CLOSURE's google-adk down from 2.0 and balloon it by ~55 packages
+# — violating the lean-image invariant. They therefore live in a standalone pip
+# requirements file (`deploy/requirements-cloud.txt`) that is NEVER in `uv.lock`,
+# NEVER in the `--extra vertex --extra arize` closure, and NEVER in the Cloud Run
+# image. The deploy/experiment drivers install it in an isolated ephemeral overlay:
+#   uv run --no-project --with-requirements deploy/requirements-cloud.txt python …
+# and the deployed *remote* agent declares ADK 2.0 in agent_engines.create(
+# config={"requirements": [...]}) — a separate pip env on Agent Engine itself.
 
 [tool.pytest.ini_options]
 addopts = "-q -m 'not integration' --import-mode=importlib"

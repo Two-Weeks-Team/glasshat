@@ -14,7 +14,14 @@ from typing import Literal
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-LlmBackend = Literal["vertex", "mock"]
+# LLM backend selector. ``gemini-enterprise`` is the canonical name for the real
+# Google cloud model backend: "Vertex AI" was renamed → **Gemini Enterprise Agent
+# Platform** at Cloud Next 2026 (the product left the Cloud Console on 2026-05-21).
+# The Python SDK still imports as ``vertexai``/``google.genai`` (namespace lag), so
+# ``vertex`` is kept as a working deprecated alias — deployed envs that set
+# ``LLM_BACKEND=vertex`` keep working unchanged. ``mock`` is the credential-free
+# default used by tests/CI.
+LlmBackend = Literal["gemini-enterprise", "vertex", "mock"]
 MonitorBackend = Literal["phoenix-local", "phoenix-cloud", "arize"]
 DocStoreBackend = Literal["memory", "sqlite", "firestore"]
 BlobBackend = Literal["local-fs", "gcs"]
@@ -63,15 +70,14 @@ class Settings(BaseSettings):
     google_genai_use_vertexai: bool = True
 
     # --- Gemini model tiers (GLASSHAT_-prefixed in .env) ---
-    gemini_pro: str = Field(
-        default="gemini-3.1-pro-preview", validation_alias="GLASSHAT_GEMINI_PRO"
-    )
+    # GA model strings (Gemini API changelog, June 2026). ``gemini-3.1-pro`` and
+    # ``gemini-3.5-flash`` are GA; the older ``-preview`` image/model aliases shut
+    # down 2026-06-25. ``gemini-3.1-flash-lite`` is already GA. Overridable per env.
+    gemini_pro: str = Field(default="gemini-3.1-pro", validation_alias="GLASSHAT_GEMINI_PRO")
     gemini_pro_location: str = Field(
         default="global", validation_alias="GLASSHAT_GEMINI_PRO_LOCATION"
     )
-    gemini_flash: str = Field(
-        default="gemini-3-flash-preview", validation_alias="GLASSHAT_GEMINI_FLASH"
-    )
+    gemini_flash: str = Field(default="gemini-3.5-flash", validation_alias="GLASSHAT_GEMINI_FLASH")
     gemini_flash_location: str = Field(
         default="global", validation_alias="GLASSHAT_GEMINI_FLASH_LOCATION"
     )

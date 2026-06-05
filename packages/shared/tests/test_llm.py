@@ -103,6 +103,12 @@ def test_get_llm_client_returns_vertex_when_configured() -> None:
     assert isinstance(get_llm_client(s), VertexLlmClient)  # lazy: no creds needed to construct
 
 
+def test_get_llm_client_accepts_gemini_enterprise_alias() -> None:
+    # The canonical name and the deprecated ``vertex`` alias select the same client.
+    s = Settings(_env_file=None, llm_backend="gemini-enterprise")  # type: ignore[call-arg]
+    assert isinstance(get_llm_client(s), VertexLlmClient)
+
+
 def test_vertex_locations_map_tiers_to_config() -> None:
     s = Settings(  # type: ignore[call-arg]
         _env_file=None,
@@ -137,7 +143,7 @@ def test_vertex_generate_pro_and_flash_lite_use_distinct_endpoints() -> None:
     s = Settings(  # type: ignore[call-arg]
         _env_file=None,
         llm_backend="vertex",
-        gemini_pro="gemini-3.1-pro-preview",
+        gemini_pro="gemini-3.1-pro",
         gemini_pro_location="global",
         gemini_flash_lite="gemini-3.1-flash-lite",
         gemini_flash_lite_location="us-east5",
@@ -148,7 +154,7 @@ def test_vertex_generate_pro_and_flash_lite_use_distinct_endpoints() -> None:
     c._clients["us-east5"] = regional_client
     asyncio.run(c.generate("p", tier="pro"))
     asyncio.run(c.generate("f", tier="flash_lite"))
-    assert global_client.aio.models.generate_calls == [("gemini-3.1-pro-preview", "p")]
+    assert global_client.aio.models.generate_calls == [("gemini-3.1-pro", "p")]
     assert regional_client.aio.models.generate_calls == [("gemini-3.1-flash-lite", "f")]
 
 
