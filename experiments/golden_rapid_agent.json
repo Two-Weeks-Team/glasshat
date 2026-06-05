@@ -1,0 +1,302 @@
+[
+  {
+    "software_id": "1156703",
+    "title": "Globot",
+    "tagline": "Multi-Agents. 2M-token compliance analysis. Satellite imagery risk detection. Globot turns sudden supply chain chaos into confident decisions in 60 seconds.",
+    "placed": true
+  },
+  {
+    "software_id": "1187800",
+    "title": "Aegis: Autonomous Multi-Agent Crisis Command",
+    "tagline": "An autonomous multi-agent command center that prevents 911 collapse by triaging thousands of distress signals instantly using Google Gemini 3.",
+    "placed": true
+  },
+  {
+    "software_id": "1187761",
+    "title": "Netra: Empowering the Visually Impaired",
+    "tagline": "Restoring independence through AI. Netra provides the visually impaired with a high-speed vision system that reads text, recognizes faces, and describes surroundings in real-time.",
+    "placed": true
+  },
+  {
+    "software_id": "1185630",
+    "title": "Proofy.AI",
+    "tagline": "An explainable, Gemini-powered verification platform built to restore trust in digital media.",
+    "placed": true
+  },
+  {
+    "software_id": "1173309",
+    "title": "Agent-weaver",
+    "tagline": "Turn Gemini into a coordinated team of 5 specialized AI agents with shared memory, human-verified annotations, and real-time collaboration between teams and their agents.",
+    "placed": true
+  },
+  {
+    "software_id": "1189749",
+    "title": "Orphafold",
+    "tagline": "OrphaFold orchestrates specialized Gemini 3 agents to bridge Orphanet, UniProt, Pubmed and AlphaFold data. Our AI Agents automates rare disease research to discover hidden therapeutic connections.",
+    "placed": true
+  },
+  {
+    "software_id": "1161565",
+    "title": "Orbital Assets",
+    "tagline": "The first Investment Bank for the solar system. Orbital Assets, powered by Gemini 3 Reasoning, turns raw NASA asteroid data into rigorous, physics-based financial valuations.",
+    "placed": true
+  },
+  {
+    "software_id": "1150748",
+    "title": "Logic Lift",
+    "tagline": "Logic Lift uses Gemini 3 to perform 'Logic Archaeology'\u2014autonomously recovering critical financial business logic from legacy COBOL and verifying it into cloud-native Python with 100% parity.",
+    "placed": true
+  },
+  {
+    "software_id": "1145230",
+    "title": "AgentGuard: The Semantic Firewall for the Agentic Web",
+    "tagline": "The SSL for AI Agents. A Semantic Firewall that uses Gemini 3.0 to distinguish helpful shoppers from malicious scrapers in real-time.",
+    "placed": true
+  },
+  {
+    "software_id": "1183526",
+    "title": "PROCSee",
+    "tagline": "PROCSee turns your system into a crime scene \u2014 and autonomously investigates every process",
+    "placed": true
+  },
+  {
+    "software_id": "1159843",
+    "title": "BatteryForgeAI",
+    "tagline": "Multi-agent battery intelligence. Specialized AI for vision-based defect detection, charging optimization, and fleet safety to maximize battery lifecycle and performance.",
+    "placed": true
+  },
+  {
+    "software_id": "1173738",
+    "title": "Gemini GeoFlow",
+    "tagline": "Fusing Text and Terrain: An LLM-Powered Pipeline for Preparing Archaeological Datasets",
+    "placed": true
+  },
+  {
+    "software_id": "1167552",
+    "title": "CineStream: A2A Mesh & Cinematic Learning",
+    "tagline": "A2A Intelligence Mesh & Academy: Eliminating 'Knowledge Friction' via strategic executive synthesis and high-fidelity cinematic pedagogy for all.",
+    "placed": true
+  },
+  {
+    "software_id": "1027753",
+    "title": "Batteryexchange",
+    "tagline": "It's a distance expander with replacement battery within local stations by online slot booking facilitie.",
+    "placed": false
+  },
+  {
+    "software_id": "1039274",
+    "title": "AuoraMind",
+    "tagline": "Knowledge that shines in every corner",
+    "placed": false
+  },
+  {
+    "software_id": "1070561",
+    "title": "---",
+    "tagline": "----",
+    "placed": false
+  },
+  {
+    "software_id": "1075797",
+    "title": "Edify AI",
+    "tagline": "Edify AI revolutionizes education with AI-powered courses, immersive AR classrooms, and AI-inspired career tools that prepare you for success. Unlock personalized, future-ready learning today!",
+    "placed": false
+  },
+  {
+    "software_id": "1076561",
+    "title": "Global Pathfinder",
+    "tagline": "An Agentic AI that turns complex immigration PDFs into real-time voice conversations using Gemini 3, ElevenLabs, and Mistral OCR.",
+    "placed": false
+  },
+  {
+    "software_id": "1085037",
+    "title": "Raitha Mitra",
+    "tagline": "AI Raitha Mitra is an intelligent agricultural platform that empowers farmers with AI-powered crop disease detection and comprehensive treatment recommendations in multiple Indian languages.",
+    "placed": false
+  },
+  {
+    "software_id": "1090374",
+    "title": "Twin aluminia",
+    "tagline": "Twin Aluminia is a smart web platform connecting the aluminium industry with AI-powered insights, predictions, and solutions for faster, smarter, and efficient operations",
+    "placed": false
+  },
+  {
+    "software_id": "1094054",
+    "title": "SmartCarrer",
+    "tagline": "SmartCareer.in is an AI-powered platform that helps users instantly build and optimize ATS-friendly resumes with speed, scalability, and intelligence.",
+    "placed": false
+  },
+  {
+    "software_id": "1102689",
+    "title": "Stellar Insight Labs",
+    "tagline": "Illuminating new worlds through intelligent discovery",
+    "placed": false
+  },
+  {
+    "software_id": "1103653",
+    "title": "krishi sakhi",
+    "tagline": "Using GenKit, Gemini API, and IoT, Krishi Sakhi is a worldwide AI-powered agri-ecosystem that provides farmers with yield forecasts, real-time data, and direct market access",
+    "placed": false
+  },
+  {
+    "software_id": "1106788",
+    "title": "Krishi Sakhi",
+    "tagline": "KrishiX empowers every farmer with AI-driven insights \u2014 from weather-based crop planning to real-time pest alerts and smart market predictions. It\u2019s not just an app; it\u2019s a personal agri-assistant",
+    "placed": false
+  },
+  {
+    "software_id": "1107101",
+    "title": "PadhaKU",
+    "tagline": "PadhaKU - An AI powered, gesture controlled education platform. PadhaKU uses AI and gesture recognition to make education personalized, accessible, and engaging for all students.",
+    "placed": false
+  },
+  {
+    "software_id": "1115448",
+    "title": "AceUp-interview",
+    "tagline": "AI-powered system interview platform with automated grading, real-time proctoring, and interactive AI interviews that help companies evaluate engineers quickly and consistently.",
+    "placed": false
+  },
+  {
+    "software_id": "1123296",
+    "title": "VOXVIBE\u2122",
+    "tagline": "'Talk Good Play Better' voice power-up for kid-safe VR gaming",
+    "placed": false
+  },
+  {
+    "software_id": "1130325",
+    "title": "Memora",
+    "tagline": "Making memories visible, making images accessible.",
+    "placed": false
+  },
+  {
+    "software_id": "1133089",
+    "title": "Go Green Chain",
+    "tagline": "A shared blockchain truth layer for ESG loans, where climate data becomes transparent, verifiable, and alive.",
+    "placed": false
+  },
+  {
+    "software_id": "1133959",
+    "title": "COGNI-ADAPT",
+    "tagline": "Transforming how neurodiverse learners access and engage with educational content through AI-powered adaptive technology.",
+    "placed": false
+  },
+  {
+    "software_id": "1134936",
+    "title": "Aibubu Learning App",
+    "tagline": "Aibubu is a learning platform provides different learning journey for students and teachers to record and publish their tutorials. Build with gemini models and elevenlabs voice models.",
+    "placed": false
+  },
+  {
+    "software_id": "1136669",
+    "title": "NutriCare Agents",
+    "tagline": "NutriCare Agents: Revolutionizing nutrition with AI-driven, personalized meal recommendations tailored to your health, tastes, and lifestyle \u2014 for a healthier, smarter tomorrow!",
+    "placed": false
+  },
+  {
+    "software_id": "1137455",
+    "title": "Wastewise",
+    "tagline": "AI-powered waste management for everyone. WasteWise helps you classify items, estimate value, and schedule eco-friendly pickups\u2014making recycling smarter, faster, and more rewarding.",
+    "placed": false
+  },
+  {
+    "software_id": "1137849",
+    "title": "Healthflow",
+    "tagline": "AI-enhanced medical management. From analyzing lab reports and ai imaging to generating notes, HealthFlow automates the complex, letting doctors focus on care and patients focus on health.",
+    "placed": false
+  },
+  {
+    "software_id": "1138469",
+    "title": "CompassGenie: An Agentic AI Orchestrator for Google Maps",
+    "tagline": "Don't just search the map. Talk to it. Born from a honeymoon 'App-Switching Hell,' CompassGenie merges Maps, Vision, Weather & AQI alerts into one AI conversation.",
+    "placed": false
+  },
+  {
+    "software_id": "1139926",
+    "title": "Epilog",
+    "tagline": "The \"Why\" engine for AI agents. Epilog captures traces and screenshots to diagnose root causes\u2014like popups or paywalls\u2014turning cryptic failures into actionable insights and auto-generated fixes.",
+    "placed": false
+  },
+  {
+    "software_id": "1140004",
+    "title": "Frosty Spark",
+    "tagline": "Making teaching and learning fun again for Kids!",
+    "placed": false
+  },
+  {
+    "software_id": "1140012",
+    "title": "Medlog",
+    "tagline": "A voice-first health memory that reconciles fragmented medical events using Gemini 3 Flash.",
+    "placed": false
+  },
+  {
+    "software_id": "1140062",
+    "title": "Deep Research Agent",
+    "tagline": "7 sources. 1 answer. Powered by Gemini 3.",
+    "placed": false
+  },
+  {
+    "software_id": "1140074",
+    "title": "Spatial Engine AI",
+    "tagline": "The First AI That Sees Light Like a Physicist. Deterministic Physics + Generative Vision.",
+    "placed": false
+  },
+  {
+    "software_id": "1140225",
+    "title": "Stasis",
+    "tagline": "Stasis is a smart app that ensures medicines are taken at the right time with the right food, highlights key doses, checks drug safety, sends reminders, and simplifies care for patients and caregiver.",
+    "placed": false
+  },
+  {
+    "software_id": "1140256",
+    "title": "AuthEase",
+    "tagline": "A simple way to verify content and learn to detect AI.",
+    "placed": false
+  },
+  {
+    "software_id": "1140331",
+    "title": "Antimatters",
+    "tagline": "\"Serendipitize\" Bits to Atoms",
+    "placed": false
+  },
+  {
+    "software_id": "1140352",
+    "title": "LearnHub",
+    "tagline": "LearnHub is a Gemini-powered platform providing accessible education for all. By removing barriers for students of all abilities, we ensure every learner can study effectively without restrictions.",
+    "placed": false
+  },
+  {
+    "software_id": "1140378",
+    "title": "GENESIS-X: Universal Coherence Engine (Logos Dual)",
+    "tagline": "\"Visionary Architect & Concept Creator. I lead the integration of the Cronos Rescris framework with Gemini 3's reasoning capabilities to achieve symbiotic coherence.\" Cristian Popescu",
+    "placed": false
+  },
+  {
+    "software_id": "1140417",
+    "title": "Living Memory",
+    "tagline": "Every family has stories worth preserving \u2014 but they live in fading photographs and aging memories. We built Living Memory so that no story is ever lost.",
+    "placed": false
+  },
+  {
+    "software_id": "1140432",
+    "title": "StonksAI",
+    "tagline": "Gemini 3 processes 7 real-time data streams (price feeds, news, fundamentals, technicals) into unified market intelligence. Multi-source synthesis delivers research-grade analysis in seconds.",
+    "placed": false
+  },
+  {
+    "software_id": "1140444",
+    "title": "The Reflex: MINT-AI",
+    "tagline": "An AI-assisted Motivational Interviewing training tool that builds practitioner reflexes through simulated and role-play practice enhancing person-centered carewithout replacing human relationship.",
+    "placed": false
+  },
+  {
+    "software_id": "1140468",
+    "title": "Fit Form",
+    "tagline": "Fit Form solves the PDF struggle. Using Gemini, it reads and predicts form fields to auto-fill data instantly. Less typing; just upload any messy PDF and let AI map the chaos for you.",
+    "placed": false
+  },
+  {
+    "software_id": "1140591",
+    "title": "Tapit",
+    "tagline": "Ai augmented learning environment. An AI reading companion that lets users double tap any word or sentence to understand it instantly without leaving the page reducing context.",
+    "placed": false
+  }
+]
