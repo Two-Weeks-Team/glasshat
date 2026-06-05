@@ -264,8 +264,9 @@ class RunContext:
     run_id: str
     rubric: SynthesizedRubric | None = None
     pln: PlanObject | None = None
-    # per-hat assessment batches keyed by hat value (the ADK ParallelAgent writes
-    # these concurrently; the gather step concatenates them in hats_enabled order).
+    # per-hat assessment batches keyed by hat value (the ADK Workflow's parallel
+    # hat fan-out writes these concurrently; the gather step concatenates them in
+    # hats_enabled order).
     hat_batches: dict[str, list[HatAssessment]] = field(default_factory=dict)
     assessments: list[HatAssessment] = field(default_factory=list)
     weight_aware: bool = False
@@ -352,8 +353,8 @@ async def stage_plan(ctx: RunContext) -> None:
 
 async def stage_hats(ctx: RunContext) -> None:
     """Run the full six-hat panel (python runtime). The ADK runtime replaces this
-    with a ParallelAgent of one agent per hat + a gather, producing identical
-    assessments; both emit the single HATS_RUNNING event below."""
+    with a Workflow parallel fan-out of one node per hat + a JoinNode + gather,
+    producing identical assessments; both emit the single HATS_RUNNING event below."""
     deps = ctx.deps
     assert ctx.pln is not None and ctx.rubric is not None
     ctx.emit(Stage.HATS_RUNNING, hats=[h.value for h in ctx.pln.hats_enabled])
@@ -478,7 +479,7 @@ async def stage_persist(ctx: RunContext) -> None:
 
 # The pipeline as an ordered list of stage functions over a shared RunContext.
 # The ``python`` runtime awaits them in sequence; the ``adk`` runtime wraps the
-# same callables in ADK agents (hats fanned out to a ParallelAgent).
+# same callables in an ADK 2.0 Workflow graph (hats fanned out to a parallel group).
 PIPELINE_STAGES: tuple[Callable[[RunContext], Any], ...] = (
     stage_input_guard,
     stage_ingest,

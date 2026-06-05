@@ -49,7 +49,8 @@ dev = [
     # The ADK runtime (AGENT_RUNTIME=adk) is exercised by the parity test, so CI
     # installs google-adk here. It also ships in the deployed image via the
     # `vertex` extra; this dev entry just makes the parity gate runnable in CI.
-    "google-adk>=1.0",
+    # >=2.0 is required: the adk runtime uses the ADK 2.0 Workflow graph API.
+    "google-adk>=2.0",
 ]
 # NOTE on cloud tooling (Agent-Engine deploy driver + Arize AX datasets/experiments
 # /evals): these are DELIBERATELY NOT a uv dependency-group. `google-cloud-aiplatform`
