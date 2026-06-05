@@ -72,6 +72,9 @@ def remote_requirements() -> list[str]:
         "google-genai>=0.3",
         "arize-otel>=0.12",
         "openinference-instrumentation-google-adk>=0.1",
+        # Traces the per-hat Gemini calls (google.genai) under the agent/Workflow
+        # spans → the full nested AX trace tree.
+        "openinference-instrumentation-google-genai>=1.0",
         # cloudpickle deserializes the pickled agent on the remote — Agent Engine
         # warns "requirements are missing: {'cloudpickle'}" without it.
         "cloudpickle>=3.0",

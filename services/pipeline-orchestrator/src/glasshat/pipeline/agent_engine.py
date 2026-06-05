@@ -52,6 +52,7 @@ def setup_arize_tracing(*, force: bool = False) -> bool:
     # the deployed agent actually enables tracing.
     from arize.otel import register
     from openinference.instrumentation.google_adk import GoogleADKInstrumentor
+    from openinference.instrumentation.google_genai import GoogleGenAIInstrumentor
 
     tracer_provider = register(
         space_id=space_id,
@@ -60,7 +61,12 @@ def setup_arize_tracing(*, force: bool = False) -> bool:
         # Agent Engine shuts down a GLOBAL provider during init → dropped traces.
         set_global_tracer_provider=False,
     )
+    # The ADK instrumentor traces the agent/Workflow invocation structure; the
+    # google-genai instrumentor traces the per-hat Gemini calls underneath (the hats
+    # call google.genai directly, not via ADK LlmAgents), so the AX trace shows the
+    # full nested tree — agent → Workflow → the six hats' generate_content/embeddings.
     GoogleADKInstrumentor().instrument(tracer_provider=tracer_provider)
+    GoogleGenAIInstrumentor().instrument(tracer_provider=tracer_provider)
     _TRACING_ENABLED = True
     return True
 
