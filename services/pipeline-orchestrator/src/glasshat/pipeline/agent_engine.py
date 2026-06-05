@@ -96,7 +96,10 @@ def build_root_agent() -> Any:
             parts = content.parts if content is not None else []
             text = "".join(p.text for p in parts if getattr(p, "text", None))
             record = await evaluate_message(text)
+            # invocation_id is REQUIRED by the Agent Engine managed Session service
+            # (a bare Event → 400 INVALID_ARGUMENT on append). Carry it from the ctx.
             yield Event(
+                invocation_id=getattr(ctx, "invocation_id", ""),
                 author=self.name,
                 content=gtypes.Content(
                     role="model", parts=[gtypes.Part(text=record.model_dump_json())]
