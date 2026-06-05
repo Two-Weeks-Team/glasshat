@@ -5,7 +5,10 @@
 > scope for this document. Hand this to whoever records.
 
 **Track:** Google Cloud Rapid Agent Hackathon — **Arize track**.
-**Live model:** Vertex AI **`gemini-3.1-flash-lite`** (global endpoint).
+**Live model:** Vertex AI **`gemini-3.1-flash-lite`** (global endpoint); the
+Agent-Engine deploy runs GA `gemini-enterprise`.
+**Also deployed:** a genuine **ADK 2.0 Workflow agent on the Gemini Enterprise
+Agent Platform (Agent Engine)** — resource `reasoningEngines/7480191458771730432`.
 **One-liner:** *"Glasshat doesn't just judge projects — it audits the judge."*
 
 ## Hard rules for the recording
@@ -55,17 +58,19 @@
   *who wins*. The raw consensus ranks one project first; the audited rank puts a
   different, better-evidenced project on top."
 
-### 1:55–2:25 — The observability story (Arize AX + Phoenix MCP)
-- **On screen:** the trace/proof panel — every agent + every hat is its own span;
-  show the `dataset_lookup` / `phoenix_consultation` / `anchor_retrieval` events
-  in the SSE stream.
-- **VO (HONEST — read verbatim):** "Every step is a trace span in **Arize AX**.
-  The Phoenix-MCP calibration consultant — which reads a Phoenix dataset over MCP
-  and writes each correction back, so the calibration *can* improve over time — is
-  implemented and wired, but the credential-free demo image you're watching runs
-  the deterministic spike-D prior. The live MCP path activates by config flag when
-  a Phoenix endpoint is set. We show you exactly which one is running, not more."
-- **Caption chip:** `Arize AX · Phoenix MCP (wired; demo runs spike-D prior)`
+### 1:55–2:25 — The observability story (genuinely deployed + traced + measured)
+- **On screen:** the landing **"Agent Platform proof"** band — the three stat cards
+  (ADK 2.0 Workflow on Agent Engine · 104-span nested AX trace · hit@13 0.6154) —
+  then the SSE trace panel where every agent + hat is its own span.
+- **VO (HONEST — read verbatim):** "This isn't a mock. The evaluation brain is a
+  real **ADK 2.0 Workflow agent deployed on the Gemini Enterprise Agent Platform**,
+  and every agent and hat opens its own span in **Arize AX** — a full nested trace
+  tree, 104 spans, verified live. We ran an **Arize AX experiment** on past
+  hackathon data: **hit@13 of 0.6154** — eight of thirteen real winners ranked into
+  the top thirteen. That's a binary winner-label hit rate, not a rank curve. The
+  Phoenix-MCP calibration loop is wired; the credential-free demo runs the
+  deterministic spike-D prior. We show you exactly which path is live, not more."
+- **Caption chip:** `Agent Engine · Arize AX (104-span trace) · hit@13 0.6154`
 
 ### 2:25–2:45 — Close (live + open)
 - **On screen:** the live URL typed into a browser, `/health` returning
@@ -80,8 +85,8 @@
 |---|---|
 | 2 | `Gemini 3.1 Flash-Lite · Vertex AI · Google ADK` |
 | 3 | `clip(score − 0.8·mean_delta, p25, p75) · ±2.0 cap` |
-| 5 | `Arize AX · Phoenix MCP (wired; demo runs spike-D prior)` |
-| 5 | (small) `Qdrant rubric shown is judged content, not a dependency` |
+| 5 | `Agent Engine · Arize AX (104-span trace) · hit@13 0.6154` |
+| 5 | (small) `Phoenix MCP wired; demo runs spike-D prior · Qdrant rubric = judged content, not a dependency` |
 | 6 | `live · reproducible · Apache-2.0` |
 
 ## Pre-flight checklist (recorder)
