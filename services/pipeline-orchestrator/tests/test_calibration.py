@@ -21,8 +21,10 @@ from glasshat.shared.llm import MockLlmClient
 from glasshat.shared.retrieval import HybridIndex
 from glasshat.shared.tracing import NoOpTracer
 
-_DATA = Path(__file__).resolve().parents[3] / "data" / "devpost-gemini3"
-_EXPERIMENTS = Path(__file__).resolve().parents[3] / "experiments"
+_REPO = Path(__file__).resolve().parents[3]
+_DATA = _REPO / "data" / "devpost-gemini3"
+_EXPERIMENTS = _REPO / "experiments"
+_WEB_RESULT = _REPO / "apps" / "web" / "lib" / "calibration-result.json"
 
 
 def _mock_deps(tmp_path: Path) -> Deps:
@@ -91,3 +93,11 @@ def test_committed_golden_and_result_are_consistent() -> None:
     assert result["n_winners"] == 13
     assert result["backend"] == "mock"
     assert result["delta"] == round(result["hit_at_k_post_audit"] - result["hit_at_k_pre_audit"], 4)
+
+
+def test_web_copy_matches_experiments_result() -> None:
+    # The /judge page renders the web copy; it must never drift from the canonical
+    # experiments result (both are emitted by run_calibration_experiment.py).
+    assert _WEB_RESULT.read_text(encoding="utf-8") == (
+        _EXPERIMENTS / "calibration_result.json"
+    ).read_text(encoding="utf-8")

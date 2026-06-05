@@ -14,5 +14,8 @@ describe("CalibrationBand", () => {
     // The non-negotiable honesty disclaimer must be on screen.
     expect(screen.getByText(/not a rank curve/i)).toBeInTheDocument();
     expect(screen.getAllByText(/backend=mock/i).length).toBeGreaterThan(0);
+    // The committed result has delta=0; it must read as "no change", not "+0 pts".
+    expect(screen.getByText(/no change/i)).toBeInTheDocument();
+    expect(screen.queryByText(/\+0 pts/i)).toBeNull();
   });
 });

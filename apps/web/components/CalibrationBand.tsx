@@ -15,7 +15,15 @@ export function CalibrationBand({ className = "" }: { className?: string }) {
   const pre = Math.round(calibration.hit_at_k_pre_audit * 100);
   const post = Math.round(calibration.hit_at_k_post_audit * 100);
   const deltaPts = Math.round(calibration.delta * 100);
-  const deltaLabel = `${deltaPts >= 0 ? "+" : ""}${deltaPts} pts`;
+  const noChange = deltaPts === 0;
+  // Don't dress up a zero as a win: a flat result reads "±0 pts / no change",
+  // never an ambiguous "+0 pts" that glances as positive.
+  const deltaLabel = noChange ? "±0 pts" : `${deltaPts > 0 ? "+" : "−"}${Math.abs(deltaPts)} pts`;
+  const deltaSub = noChange
+    ? "no change in top-13 hit rate on this run"
+    : deltaPts > 0
+      ? "winners ranked higher after audit"
+      : "winners ranked lower after audit";
 
   return (
     <section
@@ -34,7 +42,7 @@ export function CalibrationBand({ className = "" }: { className?: string }) {
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
         <StatCard label="hit@13 before audit" value={`${pre}%`} sub="pre-calibration ranking" />
         <StatCard label="hit@13 after audit" value={`${post}%`} sub="post-calibration ranking" />
-        <StatCard label="Audit effect" value={deltaLabel} sub="change in top-13 hit rate" />
+        <StatCard label="Audit effect" value={deltaLabel} sub={deltaSub} />
       </div>
 
       <p className="mt-3 text-xs leading-relaxed text-[var(--color-muted)]">{calibration.caveat}</p>
