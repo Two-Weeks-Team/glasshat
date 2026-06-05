@@ -26,10 +26,10 @@ export interface ProofChip {
 export const PROOF_CHIPS: ProofChip[] = [
   {
     id: "gemini",
-    label: "Gemini / Vertex",
+    label: "Gemini / GEAP",
     detail: "3.1-flash-lite",
     state: "live",
-    title: "Vertex AI generation on the deployed API (global endpoint).",
+    title: "Gemini generation on the Gemini Enterprise Agent Platform (Vertex AI SDK · global endpoint).",
   },
   {
     id: "adk",

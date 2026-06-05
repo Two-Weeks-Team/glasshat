@@ -1,0 +1,34 @@
+# Cloud tooling for the Gemini Enterprise Agent Platform deploy + Arize AX
+# datasets / experiments / evals drivers. This is OWNER-RUN, deploy-time / local
+# tooling — it is NOT part of the application and is installed in an ISOLATED
+# ephemeral overlay, never into the lean Cloud Run image and never into uv.lock.
+#
+# WHY a standalone requirements file instead of a uv dependency-group:
+#   google-cloud-aiplatform (and arize / arize-phoenix-evals, which pull it in)
+#   pin google-adk<2. The lean deploy image needs google-adk 2.0 for the ADK 2.0
+#   Workflow API (P1). uv resolves the whole workspace with ONE google-adk
+#   version, so locking these would drag the deploy closure's google-adk down to
+#   1.x and balloon it by ~55 transitive packages — breaking the lean-image
+#   invariant. Keeping them OUT of uv.lock guarantees the closure is untouched and
+#   the supply-chain leak gate stays green by construction.
+#
+# Usage (drivers install this in a throwaway overlay; nothing is persisted to the
+# project venv or the lockfile):
+#   uv run --no-project --with-requirements deploy/requirements-cloud.txt \
+#       python deploy/agent_engine_deploy.py
+#   uv run --no-project --with-requirements deploy/requirements-cloud.txt \
+#       python experiments/run_arize_experiment.py
+#
+# The deployed *remote* agent declares its OWN runtime deps (google-adk 2.0,
+# arize-otel, the OpenInference ADK instrumentor) in
+# agent_engines.create(config={"requirements": [...]}) — a separate pip
+# environment provisioned on Agent Engine, independent of everything here.
+
+# Agent-Engine deploy driver (vertexai.Client().agent_engines.create(...)).
+google-cloud-aiplatform[agent_engines]>=1.112
+
+# Arize AX client + OTLP exporter + LLM-as-judge eval library (datasets,
+# experiments, Evaluator Hub, annotations).
+arize-otel>=0.12
+arize>=7.19
+arize-phoenix-evals>=0.20

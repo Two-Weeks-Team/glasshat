@@ -1,9 +1,12 @@
-"""LLM adapter: deterministic ``mock`` backend + real Vertex Gemini backend.
+"""LLM adapter: deterministic ``mock`` backend + real Gemini backend.
 
 The ``mock`` backend is a complete, deterministic implementation (hash-seeded) —
-not a stub — used for tests/CI with no credentials. The Vertex backend lazily
-imports ``google.genai`` so importing this module never requires the SDK.
-Selection is by ``Settings.llm_backend``. AI policy: Gemini/Google only.
+not a stub — used for tests/CI with no credentials. The real backend (selector
+``gemini-enterprise``, alias ``vertex``) targets the Gemini Enterprise Agent
+Platform (the 2026 rename of "Vertex AI"); it lazily imports ``google.genai`` so
+importing this module never requires the SDK. The SDK namespace is still
+``vertexai``/``google.genai``. Selection is by ``Settings.llm_backend``. AI
+policy: Gemini/Google only.
 """
 
 from __future__ import annotations
@@ -185,8 +188,14 @@ class VertexLlmClient:
 
 
 def get_llm_client(settings: Settings | None = None) -> LlmClient:
-    """Return the configured LLM client (``mock`` default, ``vertex`` when set)."""
+    """Return the configured LLM client (``mock`` default; real Gemini when set).
+
+    ``gemini-enterprise`` is the canonical real-backend name (Gemini Enterprise
+    Agent Platform, the 2026 rename of "Vertex AI"); ``vertex`` is its kept-working
+    deprecated alias. Both select the same :class:`VertexLlmClient` — the SDK still
+    imports as ``vertexai``/``google.genai``.
+    """
     settings = settings or get_settings()
-    if settings.llm_backend == "vertex":
+    if settings.llm_backend in ("gemini-enterprise", "vertex"):
         return VertexLlmClient(settings)
     return MockLlmClient()

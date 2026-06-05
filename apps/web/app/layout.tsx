@@ -46,7 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <footer className="border-t border-[var(--color-border)]/60">
           <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-6 py-4 text-xs text-[var(--color-muted)]">
             <span>
-              Glasshat · Gemini (Vertex AI) + Google ADK + Arize Phoenix · Rapid Agent / Arize track
+              Glasshat · Gemini on Gemini Enterprise Agent Platform + Google ADK + Arize AX · Rapid Agent / Arize track
             </span>
             <ApiStatus />
           </div>
