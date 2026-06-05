@@ -39,11 +39,41 @@ curl -s -X POST https://glasshat-api-o366v7tl2q-uc.a.run.app/api/evaluate \
 | Requirement | Implementation | Code path | Verify | Status |
 |---|---|---|---|---|
 | **Gemini / Vertex AI** | live `gemini-3.1-flash-lite` on the Vertex `global` endpoint (+ `gemini-3.1-pro-preview` for rubric synthesis) | `packages/shared/src/glasshat/shared/llm.py` (`VertexLlmClient`) | `POST <API>/api/evaluate` → real-Gemini `RunRecord` | ✅ Live |
-| **Agent runtime** ("Agent Builder") | the **Arize track** mandates a *code-owned* runtime and states **visual Agent Builder alone is insufficient** → **Google ADK + Cloud Run** | `services/pipeline-orchestrator/src/glasshat/pipeline/adk_runtime.py`; `infra/deploy.sh` | [compliance §2](docs/rapid-agent-compliance.md#2-agent-builder-ambiguity--resolved) | ✅ Resolved |
-| **Arize partner integration** | OpenInference/OTLP → **Arize AX** (`otlp.arize.com`); one span per agent + per hat | `packages/shared/src/glasshat/shared/tracing.py` (`ArizeTracer`); `…/pipeline/engine.py:115-149` | `uv run python scripts/real_arize_ax_e2e.py` | ✅ Live |
+| **Agent runtime** (code-owned ADK) | a real **ADK 2.0 graph-`Workflow`** (ingest→synth→plan→6-hat parallel fan-out→join→audit→score), **deployed on the Gemini Enterprise Agent Platform (Agent Engine)** + Cloud Run | `…/pipeline/adk_agents.py` (Workflow), `…/pipeline/agent_engine.py`, `deploy/agent_engine_deploy.py` | live resource `…/reasoningEngines/7480191458771730432` (`stream_query` → `RunRecord`) | ✅ Live (Agent Engine) |
+| **Arize partner integration** | OpenInference/OTLP → **Arize AX** (`otlp.arize.com`): **full nested trace tree** (agent→Workflow→6 hats' Gemini calls, 104 spans verified) **+ Datasets + Experiments + Evaluator Hub**; live **hit@13 = 0.6154** | `…/pipeline/agent_engine.py` (`setup_arize_tracing`), `…/pipeline/arize_experiment.py` | `client.spans.list(project="glasshat")` → 104 spans; AX experiment `glasshat-hit-at-13-gemini` | ✅ Live |
 | **Phoenix MCP server** | ADK `MCPToolset` over stdio → `npx @arizeai/phoenix-mcp@latest`; audit consultant calls the MCP `get-dataset-examples` tool + writes corrections back (learning loop) | `…/pipeline/adk_runtime.py` (`build_phoenix_mcp_toolset`, `PhoenixMcpConsultant`, `PhoenixMcpDatasetWriter`) | `uv run python scripts/real_e2e.py` | ✅ Wired (e2e) — deployed image uses the spike-D calibrated table; the MCP live-trace consultant activates by config flag ([§3](docs/rapid-agent-compliance.md#3-arize-partner-mcp-path-agent--mcp--traceeval--report)) |
 | **Cloud Run** | API + web, project `panelyst-hackathon`, us-central1, min-instances=0 | `infra/deploy.sh`, `infra/cloudbuild-*.yaml`, `infra/Dockerfile.*` | `curl -fsS <API>/health` → 200 | ✅ Live |
 | **CI / tests / live API** | GH Actions: ruff + mypy + pytest (cov ≥ 90) · web lint/tsc/vitest/build · docker · supply-chain leak gate | `.github/workflows/ci.yml` | `uv run pytest` → 224 passed; web 71 passed | ✅ Green |
+
+---
+
+### 🛰️ Also deployed as a genuine ADK 2.0 *Workflow* agent on the Gemini Enterprise Agent Platform
+
+Beyond the Cloud Run front door, the **evaluation brain itself is deployed as a real
+ADK 2.0 graph-`Workflow` agent on the Gemini Enterprise Agent Platform (Agent Engine/
+Runtime)** and serves live queries — with the **full nested trace tree** landing in
+**Arize AX**. (Vertex AI was renamed → Gemini Enterprise Agent Platform at Cloud Next 2026; the SDK still imports as `vertexai`.)
+
+- **Live Agent Engine resource** — `…/reasoningEngines/7480191458771730432` (managed Sessions + Memory Bank + `AGENT_IDENTITY`). A `stream_query` returns a real `RunRecord` with a live `final_score`. Code: `services/pipeline-orchestrator/src/glasshat/pipeline/agent_engine.py`, `deploy/agent_engine_deploy.py`.
+- **Full nested AX trace tree** — verified via `client.spans.list(project="glasshat")`: **104 spans** across two live queries — `agent_run [glasshat_eval] → invocation → 48× AsyncGenerateContent + 50× AsyncEmbedContent` (the six hats' Gemini generate + embedding calls). The Agent-Engine trace-drop landmine is fixed with an **isolated provider** (`register(set_global_tracer_provider=False)`) + the OpenInference **ADK + google-genai** instrumentors.
+- **Live calibration figure — Arize AX Experiment** — **hit@13 = 0.6154** on real Gemini (8 of 13 historical winners ranked into the top-13), vs **0.3846** mock and **0.26** chance. Binary Winner-badge label → this is **hit@13, not a rank curve**; for this golden set the audit did not reorder the top-13 (Δ = 0). Code: `services/pipeline-orchestrator/src/glasshat/pipeline/arize_experiment.py`.
+- **Arize AX Datasets + Experiments + Evaluator Hub** — a `glasshat-golden` dataset, a `glasshat-hit-at-13-gemini` experiment, and a `glasshat-prompt-injection` code evaluator, all genuine.
+
+Reproduce (owner GCP/Arize creds):
+```bash
+# deploy the ADK 2.0 Workflow agent to Agent Engine
+GOOGLE_CLOUD_PROJECT=panelyst-hackathon GOOGLE_CLOUD_QUOTA_PROJECT=panelyst-hackathon \
+  uv run --with-requirements deploy/requirements-cloud.txt \
+  python deploy/agent_engine_deploy.py --project=panelyst-hackathon --staging-bucket gs://glasshat-agent-staging
+# run the hit@13 Arize AX experiment on real Gemini
+ARIZE_SPACE_ID=… ARIZE_API_KEY=… LLM_BACKEND=gemini-enterprise \
+  uv run --with-requirements deploy/requirements-cloud.txt python experiments/run_arize_experiment.py
+```
+
+> Honest scope: the Cloud Run demo above runs `gemini-3.1-flash-lite`; the Agent-Engine
+> deployment runs the GA `gemini-enterprise` backend (`gemini-3.5-flash`/`gemini-3.1-pro`).
+> Both share one byte-identical pipeline (parity-gated). No "un-gameable" claim; the
+> calibration number is binary-label hit@13, not a rising rank curve.
 
 ---
 
