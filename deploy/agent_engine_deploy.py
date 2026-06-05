@@ -72,6 +72,9 @@ def remote_requirements() -> list[str]:
         "google-genai>=0.3",
         "arize-otel>=0.12",
         "openinference-instrumentation-google-adk>=0.1",
+        # cloudpickle deserializes the pickled agent on the remote — Agent Engine
+        # warns "requirements are missing: {'cloudpickle'}" without it.
+        "cloudpickle>=3.0",
         "pydantic>=2.7",
         "pydantic-settings>=2.3",
         "numpy>=2.0",

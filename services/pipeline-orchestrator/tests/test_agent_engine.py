@@ -136,6 +136,7 @@ def test_remote_requirements_use_adk2_not_aiplatform_adk_extra() -> None:
     assert "[adk]" not in joined
     assert "arize-otel>=0.12" in reqs
     assert "openinference-instrumentation-google-adk>=0.1" in reqs
+    assert "cloudpickle>=3.0" in reqs  # Agent Engine needs it to deserialize the agent
 
 
 def test_extra_package_dirs_exist_and_cover_the_pipeline() -> None:
