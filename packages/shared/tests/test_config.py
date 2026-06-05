@@ -21,7 +21,7 @@ def test_defaults_load_without_env(monkeypatch: pytest.MonkeyPatch) -> None:
     assert s.monitor_backend == "phoenix-local"
     assert s.docstore_backend == "memory"
     assert s.blob_backend == "local-fs"
-    assert s.agent_runtime == "adk-local"
+    assert s.agent_runtime == "python"
     assert s.phoenix_project_name == "glasshat"
 
 

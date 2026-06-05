@@ -35,6 +35,12 @@ MIN_INSTANCES="${MIN_INSTANCES:-1}"
 # it knowing the per-IP limit multiplies by the instance count. Default 4 is
 # ample for demo/judging load while keeping the limiter and cost bounded.
 MAX_INSTANCES="${MAX_INSTANCES:-4}"
+# Explicit Cloud Run request timeout for the API (default is 300s when unset). A
+# full evaluation streams the six-hat panel + audit over SSE; the ADK runtime
+# (AGENT_RUNTIME=adk) adds agent-graph overhead. 600s gives generous headroom for
+# the long-poll SSE connection without relying on the implicit default. Keep the
+# per-call LLM timeout (shared.llm._CALL_TIMEOUT_S) well under this.
+API_TIMEOUT="${API_TIMEOUT:-600}"
 # The docstore default (memory) is process-local: /api/runs lookups are not
 # durable across cold restarts. For durable run history set the backend to
 # firestore AND grant the Cloud Run runtime SA roles/datastore.user with a
@@ -134,6 +140,7 @@ gcloud builds submit --project="$PROJECT" \
 echo "==> Deploying API to Cloud Run (min-instances=${MIN_INSTANCES})..."
 gcloud run deploy glasshat-api --project="$PROJECT" --region="$REGION" \
   --image="$API_IMAGE" --min-instances="$MIN_INSTANCES" --max-instances="$MAX_INSTANCES" \
+  --timeout="$API_TIMEOUT" \
   --allow-unauthenticated \
   --set-env-vars="$API_ENV" ${API_SECRETS[@]+"${API_SECRETS[@]}"}
 

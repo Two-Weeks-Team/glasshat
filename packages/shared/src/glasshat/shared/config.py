@@ -18,7 +18,14 @@ LlmBackend = Literal["vertex", "mock"]
 MonitorBackend = Literal["phoenix-local", "phoenix-cloud", "arize"]
 DocStoreBackend = Literal["memory", "sqlite", "firestore"]
 BlobBackend = Literal["local-fs", "gcs"]
-AgentRuntime = Literal["adk-local", "adk-cloud-run"]
+# Orchestration runtime for the evaluation pipeline. ``python`` (default) runs the
+# stages as a plain async sequence (today's path, byte-identical). ``adk`` runs the
+# SAME stages as a genuine Google ADK agent graph (Sequential → Parallel[hats] →
+# Loop[audit]) so the OpenInference ADK instrumentor emits a nested span TREE to
+# Arize AX instead of flat manual spans. Both paths produce an identical RunRecord
+# and the identical ordered SSE stream (asserted by the parity test); ``adk`` is
+# opt-in until a gated redeploy flips it.
+AgentRuntime = Literal["python", "adk"]
 ConsultantBackend = Literal["table", "phoenix-mcp", "anchor"]
 DatasetWriterBackend = Literal["null", "phoenix-mcp"]
 RepoGraderBackend = Literal["null", "github-api"]
@@ -80,7 +87,7 @@ class Settings(BaseSettings):
     monitor_backend: MonitorBackend = "phoenix-local"
     docstore_backend: DocStoreBackend = "memory"
     blob_backend: BlobBackend = "local-fs"
-    agent_runtime: AgentRuntime = "adk-local"
+    agent_runtime: AgentRuntime = "python"
     # Learning loop (Improvement A): on deployed Cloud Run the audit reads
     # accumulated calibration deltas from Phoenix via MCP and writes this run's
     # corrections back to the same dataset. Default stays on the deterministic
