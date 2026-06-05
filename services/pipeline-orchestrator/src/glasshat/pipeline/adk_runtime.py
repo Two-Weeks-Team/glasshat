@@ -51,12 +51,52 @@ def _mcp_server_params(base_url: str, api_key: str) -> Any:
 
 
 def instrument_adk(project_name: str = "glasshat") -> None:  # pragma: no cover - requires SDKs
-    """Register OpenInference + the Google ADK instrumentor against Phoenix."""
+    """Register OpenInference + the Google ADK instrumentor against Phoenix.
+
+    Legacy helper (registers its own Phoenix provider). The genuine Tier B path
+    instead reuses the one provider the configured tracer already registered — see
+    :func:`maybe_instrument_adk` — so the agent span tree and the ``glasshat.*``
+    manual spans land on a single provider (no split / dropped traces)."""
     from openinference.instrumentation.google_adk import GoogleADKInstrumentor
     from phoenix.otel import register
 
     tracer_provider = register(project_name=project_name, auto_instrument=True)
     GoogleADKInstrumentor().instrument(tracer_provider=tracer_provider)
+
+
+# Process-wide guard: the Google ADK instrumentor must attach to the tracer
+# provider exactly once (a second instrument() would double-count / drop spans).
+_ADK_INSTRUMENTED = {"done": False}
+
+
+def instrument_adk_on_provider(tracer_provider: Any) -> None:  # pragma: no cover - requires SDKs
+    """Attach the Google ADK instrumentor to an ALREADY-registered tracer provider.
+
+    Idempotent: a second call is a no-op, so across the process the provider is
+    registered once (by the tracer) and instrumented once (here)."""
+    if _ADK_INSTRUMENTED["done"]:
+        return
+    from openinference.instrumentation.google_adk import GoogleADKInstrumentor
+
+    GoogleADKInstrumentor().instrument(tracer_provider=tracer_provider)
+    _ADK_INSTRUMENTED["done"] = True
+
+
+def maybe_instrument_adk(tracer: Any) -> bool:
+    """Wire the ADK instrumentor onto the configured tracer's single provider.
+
+    Real ``ArizeTracer`` / ``PhoenixTracer`` expose ``tracer_provider`` (registered
+    once in their ``__init__``); the ADK agent spans attach to it so the nested
+    tree shows up in the SAME Arize/Phoenix project as the manual spans. A
+    ``NoOpTracer`` (tests / CI / no SDK) has no provider, so this is a safe no-op —
+    the parity path never needs the instrumentor, only the live trace tree does.
+
+    Returns ``True`` when instrumentation was wired."""
+    provider = getattr(tracer, "tracer_provider", None)
+    if provider is None:
+        return False
+    instrument_adk_on_provider(provider)
+    return True
 
 
 def build_phoenix_mcp_toolset(base_url: str, api_key: str = "") -> Any:  # pragma: no cover

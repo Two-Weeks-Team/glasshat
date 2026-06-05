@@ -47,7 +47,11 @@ class PhoenixTracer:  # pragma: no cover - requires the phoenix extra + collecto
         settings = settings or get_settings()
         from phoenix.otel import register
 
-        register(project_name=settings.phoenix_project_name, auto_instrument=True)
+        # Keep the registered provider so the ADK instrumentor (Tier B) can attach
+        # to THIS single provider instead of registering a second one.
+        self.tracer_provider = register(
+            project_name=settings.phoenix_project_name, auto_instrument=True
+        )
         from opentelemetry import trace
 
         self._tracer = trace.get_tracer("glasshat")
@@ -72,7 +76,10 @@ class ArizeTracer:  # pragma: no cover - requires the arize-otel extra + creds
         settings = settings or get_settings()
         from arize.otel import register
 
-        register(
+        # Register the Arize AX provider ONCE as the global provider, and keep it so
+        # the ADK instrumentor (Tier B) attaches the nested agent spans to this same
+        # provider rather than registering a second one (which would split traces).
+        self.tracer_provider = register(
             space_id=settings.arize_space_id,
             api_key=settings.phoenix_api_key,
             project_name=settings.phoenix_project_name,

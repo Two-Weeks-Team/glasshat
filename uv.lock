@@ -829,6 +829,7 @@ vertex = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "google-adk" },
     { name = "hypothesis" },
     { name = "mypy" },
     { name = "pytest" },
@@ -856,6 +857,7 @@ provides-extras = ["vertex", "phoenix", "arize", "firestore", "gcs"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "google-adk", specifier = ">=1.0" },
     { name = "hypothesis", specifier = ">=6" },
     { name = "mypy", specifier = ">=1.11" },
     { name = "pytest", specifier = ">=8" },

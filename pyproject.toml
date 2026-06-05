@@ -46,6 +46,10 @@ dev = [
     "mypy>=1.11",
     "types-PyYAML",
     "hypothesis>=6",
+    # The ADK runtime (AGENT_RUNTIME=adk) is exercised by the parity test, so CI
+    # installs google-adk here. It also ships in the deployed image via the
+    # `vertex` extra; this dev entry just makes the parity gate runnable in CI.
+    "google-adk>=1.0",
 ]
 
 [tool.pytest.ini_options]
@@ -103,6 +107,11 @@ exclude = '(^|/)tests/'
 mypy_path = "packages/shared/src:packages/rubric/src:agents/src:services/ingest/src:services/code-grader/src:services/pipeline-orchestrator/src:apps/api/src"
 
 [[tool.mypy.overrides]]
+# Third-party SDK boundaries. ``follow_imports = "skip"`` treats them as ``Any``
+# even when installed (google-adk pulls opentelemetry + mcp into the dev env for
+# the ADK parity test); without it, mypy would type-check those untyped/partly
+# typed packages and flag our lazy SDK call sites. We intentionally keep the SDK
+# edge dynamically typed.
 module = [
     "rank_bm25.*",
     "google",
@@ -111,8 +120,10 @@ module = [
     "arize",
     "arize.*",
     "openinference.*",
+    "opentelemetry",
     "opentelemetry.*",
     "mcp",
     "mcp.*",
 ]
 ignore_missing_imports = true
+follow_imports = "skip"
