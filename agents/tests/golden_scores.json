@@ -1,0 +1,58 @@
+{
+  "cmux-aim": {
+    "legacy": {
+      "completeness": 2.1273,
+      "innovation": 3.0133,
+      "presentation": 2.9013,
+      "problem-fit": 2.462,
+      "technical-execution": 2.8333
+    },
+    "structured": {
+      "completeness": 3.4107,
+      "innovation": 2.666,
+      "presentation": 3.1847,
+      "problem-fit": 2.7587,
+      "technical-execution": 3.2867
+    }
+  },
+  "gemini3": {
+    "legacy": {
+      "impact": 2.9527,
+      "innovation": 3.2593,
+      "presentation": 3.4627,
+      "tech-implementation": 3.058
+    },
+    "structured": {
+      "impact": 2.5367,
+      "innovation": 2.0773,
+      "presentation": 2.8353,
+      "tech-implementation": 2.6993
+    }
+  },
+  "qdrant": {
+    "legacy": {
+      "functionality": 3.378,
+      "originality": 2.6993,
+      "user-experience": 2.2333
+    },
+    "structured": {
+      "functionality": 2.6993,
+      "originality": 2.656,
+      "user-experience": 2.4907
+    }
+  },
+  "rapid-agent": {
+    "legacy": {
+      "design": 2.3167,
+      "potential-impact": 2.9313,
+      "quality-of-idea": 2.406,
+      "tech-implementation": 1.91
+    },
+    "structured": {
+      "design": 3.058,
+      "potential-impact": 3.146,
+      "quality-of-idea": 3.376,
+      "tech-implementation": 3.2807
+    }
+  }
+}

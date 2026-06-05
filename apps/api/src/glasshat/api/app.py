@@ -10,8 +10,10 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import secrets
 import time
 from collections import deque
+from collections.abc import Mapping
 from typing import Any
 
 from fastapi import Depends, FastAPI, HTTPException, Request
@@ -24,6 +26,7 @@ from glasshat.pipeline.engine import Deps, default_deps, run_evaluation
 from glasshat.pipeline.events import PipelineEvent, sse_line
 from glasshat.rubric.presets import list_presets, load_preset
 from glasshat.shared.config import Settings, get_settings
+from glasshat.shared.enums import RunMode
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
@@ -81,6 +84,48 @@ class OverrideRequest(BaseModel):
     reason: str = ""
 
 
+class ParticipantScore(BaseModel):
+    """One criterion's score as shown to a participant (no audit internals)."""
+
+    criterion_id: str
+    score: float
+
+
+class ParticipantRunView(BaseModel):
+    """The redacted run view a participant may read (M6).
+
+    Deliberately omits the full ``rubric`` (criterion weights / descriptors /
+    source clauses) and the per-correction calibration internals (``mean_delta`` /
+    ``n``) — leaking those would hand an entrant the exact knobs to game. The
+    self-correction *story* survives (pre vs post score, how many corrections),
+    just not the magnitudes. Judges (bearer-authed) get the full record.
+    """
+
+    run_id: str
+    final_score: float
+    pre_audit_final_score: float = 0.0
+    scores: list[ParticipantScore]
+    corrections_count: int = 0
+    mode: str = RunMode.PARTICIPANT.value
+    created_at: str = ""
+
+
+def _participant_view(record: Mapping[str, Any]) -> dict[str, Any]:
+    """Project a stored run record down to the participant-safe fields."""
+    scores = [
+        {"criterion_id": s["criterion_id"], "score": s["score"]} for s in record.get("scores", [])
+    ]
+    return ParticipantRunView(
+        run_id=str(record.get("run_id", "")),
+        final_score=float(record.get("final_score", 0.0)),
+        pre_audit_final_score=float(record.get("pre_audit_final_score", 0.0)),
+        scores=[ParticipantScore(**s) for s in scores],
+        corrections_count=len(record.get("audit_corrections", [])),
+        mode=str(record.get("mode", RunMode.PARTICIPANT.value)),
+        created_at=str(record.get("created_at", "")),
+    ).model_dump()
+
+
 class PresetInfo(BaseModel):
     """A rubric preset summary for the picker (gate-0 rubric selection)."""
 
@@ -110,6 +155,37 @@ def create_app(deps: Deps | None = None, settings: Settings | None = None) -> Fa
     app.state.deps = deps or default_deps()
 
     limiter = _SlidingWindowRateLimiter(settings.rate_limit_per_minute)
+    judge_token = settings.judge_api_token
+    _judge_open_warned = {"done": False}
+
+    def _is_judge(request: Request) -> bool:
+        """Whether the caller may take judge-only actions (override, JUDGE-mode
+        runs, un-redacted run views). When ``JUDGE_API_TOKEN`` is unset the judge
+        surface is OPEN (local/CI/demo) but warns once; when set it requires a
+        constant-time ``Authorization: Bearer <token>`` match."""
+        if not judge_token:
+            if not _judge_open_warned["done"]:
+                logger.warning(
+                    "JUDGE_API_TOKEN unset — judge endpoints (override, judge-mode runs, "
+                    "un-redacted run views) are OPEN. Set it in any exposed deployment."
+                )
+                _judge_open_warned["done"] = True
+            return True
+        provided = request.headers.get("authorization", "")
+        return secrets.compare_digest(provided, f"Bearer {judge_token}")
+
+    def _require_judge(request: Request) -> None:
+        if not _is_judge(request):
+            raise HTTPException(status_code=401, detail="judge authorization required")
+
+    def _enforce_mode(inp: EvaluationInput, request: Request) -> None:
+        # M5 server-enforcement: a JUDGE-mode run (which unlocks rules_url /
+        # custom_yaml rubrics) is honored only for an authorized judge; an
+        # unauthenticated caller cannot escalate by setting mode=judge. (A
+        # participant payload with a non-preset source is already rejected at
+        # validation, returning 422.)
+        if inp.mode is RunMode.JUDGE and not _is_judge(request):
+            raise HTTPException(status_code=403, detail="judge mode requires authorization")
 
     async def _rate_limit(request: Request) -> None:
         # async so it runs on the event loop, not FastAPI's thread pool: the
@@ -144,16 +220,19 @@ def create_app(deps: Deps | None = None, settings: Settings | None = None) -> Fa
         return out
 
     @app.post("/api/plan", dependencies=[Depends(_rate_limit)])
-    async def plan_preview(inp: EvaluationInput) -> PlanObject:
+    async def plan_preview(inp: EvaluationInput, request: Request) -> PlanObject:
+        _enforce_mode(inp, request)
         rubric = await synthesize(inp, _deps().llm)
         return plan(rubric, inp)
 
     @app.post("/api/evaluate", dependencies=[Depends(_rate_limit)])
-    async def evaluate(inp: EvaluationInput) -> RunRecord:
+    async def evaluate(inp: EvaluationInput, request: Request) -> RunRecord:
+        _enforce_mode(inp, request)
         return await run_evaluation(inp, _deps())
 
     @app.post("/api/evaluate/stream", dependencies=[Depends(_rate_limit)])
-    async def evaluate_stream(inp: EvaluationInput) -> StreamingResponse:
+    async def evaluate_stream(inp: EvaluationInput, request: Request) -> StreamingResponse:
+        _enforce_mode(inp, request)
         queue: asyncio.Queue[PipelineEvent | None] = asyncio.Queue()
         failed = {"error": False}
 
@@ -181,13 +260,20 @@ def create_app(deps: Deps | None = None, settings: Settings | None = None) -> Fa
         return StreamingResponse(_gen(), media_type="text/event-stream")
 
     @app.get("/api/runs/{run_id}")
-    def get_run(run_id: str) -> dict[str, Any]:
+    def get_run(run_id: str, request: Request) -> dict[str, Any]:
         record = _deps().docstore.get("runs", run_id)
         if record is None:
             raise HTTPException(status_code=404, detail="run not found")
-        return dict(record)
+        # M6: judges (bearer-authed, or open in demo) see the full record;
+        # everyone else gets the redacted participant view.
+        if _is_judge(request):
+            return dict(record)
+        return _participant_view(record)
 
-    @app.post("/api/runs/{run_id}/override", dependencies=[Depends(_rate_limit)])
+    @app.post(
+        "/api/runs/{run_id}/override",
+        dependencies=[Depends(_rate_limit), Depends(_require_judge)],
+    )
     def override(run_id: str, body: OverrideRequest) -> dict[str, Any]:
         record = _deps().docstore.get("runs", run_id)
         if record is None:

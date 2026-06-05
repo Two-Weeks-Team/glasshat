@@ -9,6 +9,7 @@ Selection is by ``Settings.llm_backend``. AI policy: Gemini/Google only.
 from __future__ import annotations
 
 import asyncio
+import json
 import random
 from collections.abc import Awaitable, Callable, Sequence
 from typing import Any
@@ -61,7 +62,27 @@ class MockLlmClient:
     def __init__(self, embedding_dim: int = 768) -> None:
         self._dim = embedding_dim
 
-    async def generate(self, prompt: str, *, tier: str = _TIER_DEFAULT, **kwargs: Any) -> str:
+    async def generate(
+        self,
+        prompt: str,
+        *,
+        tier: str = _TIER_DEFAULT,
+        response_schema: Any = None,
+        system_instruction: str | None = None,
+        **kwargs: Any,
+    ) -> str:
+        if response_schema is not None:
+            # Structured mode: emit schema-valid JSON deterministically. The score
+            # is derived from the (system_instruction + prompt) hash — NOT from any
+            # `SCORE:` text inside the prompt — so a planted `SCORE: 10` in an
+            # untrusted deck cannot steer the mock's output (parity with the real
+            # Vertex path, where the system instruction quarantines the submission).
+            basis = f"{tier}:{system_instruction or ''}:{prompt}"
+            seed = int(sha256_hex(basis)[:6], 16)
+            score = round((seed % 1001) / 100.0, 2)
+            return json.dumps(
+                {"score": score, "rationale": f"[mock:{tier}] {sha256_hex(basis)[:24]}"}
+            )
         return f"[mock:{tier}] {sha256_hex(f'{tier}:{prompt}')[:32]}"
 
     async def embed(self, texts: Sequence[str]) -> list[list[float]]:
@@ -116,14 +137,36 @@ class VertexLlmClient:
             self._clients[location] = client
         return client
 
-    async def generate(self, prompt: str, *, tier: str = _TIER_DEFAULT, **kwargs: Any) -> str:
+    async def generate(
+        self,
+        prompt: str,
+        *,
+        tier: str = _TIER_DEFAULT,
+        response_schema: Any = None,
+        system_instruction: str | None = None,
+        **kwargs: Any,
+    ) -> str:
         model = self._models().get(tier, self._settings.gemini_flash)
         location = self._locations().get(tier, self._settings.gemini_flash_location)
 
         async def _op() -> str:
-            resp = await self._client_for(location).aio.models.generate_content(
-                model=model, contents=prompt
-            )
+            call_kwargs: dict[str, Any] = {"model": model, "contents": prompt}
+            if response_schema is not None or system_instruction is not None:
+                # Lazy import keeps google.genai out of the import path for the
+                # mock/CI runtime. ``structured`` scoring asks Gemini for typed
+                # JSON under a system instruction that quarantines the submission.
+                # Only attach a config when one is needed, so the legacy call stays
+                # byte-identical.
+                from google.genai import types as genai_types
+
+                call_kwargs["config"] = genai_types.GenerateContentConfig(
+                    system_instruction=system_instruction,
+                    response_mime_type=(
+                        "application/json" if response_schema is not None else None
+                    ),
+                    response_schema=response_schema,
+                )
+            resp = await self._client_for(location).aio.models.generate_content(**call_kwargs)
             return str(resp.text or "")
 
         return await _with_retry(_op)

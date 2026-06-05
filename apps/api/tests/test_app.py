@@ -238,6 +238,71 @@ class _RaisingLlm(MockLlmClient):
         raise RuntimeError("synthesizer boom")
 
 
+# --- Tier A: judge authorization + participant redaction (M5 / M6 / M8) ------
+
+
+def _judge_client(tmp_path: Path, token: str = "t0p-secret") -> TestClient:
+    from glasshat.shared.config import Settings
+
+    settings = Settings(  # type: ignore[call-arg]
+        _env_file=None, judge_api_token=token, rate_limit_per_minute=0
+    )
+    return TestClient(create_app(deps=_mock_deps(tmp_path), settings=settings))
+
+
+_BEARER = {"Authorization": "Bearer t0p-secret"}
+_PARTICIPANT_BODY = {"rubric_source": {"preset_id": "rapid-agent"}, "deck_text": "we built x"}
+_JUDGE_BODY = {**_PARTICIPANT_BODY, "mode": "judge"}
+
+
+def test_judge_mode_requires_authorization(tmp_path: Path) -> None:
+    c = _judge_client(tmp_path)
+    # mode=judge without a bearer token is refused (M5 server-enforcement).
+    assert c.post("/api/evaluate", json=_JUDGE_BODY).status_code == 403
+    # ...and is honored with the bearer token.
+    assert c.post("/api/evaluate", json=_JUDGE_BODY, headers=_BEARER).status_code == 200
+
+
+def test_participant_run_needs_no_auth(tmp_path: Path) -> None:
+    c = _judge_client(tmp_path)
+    assert c.post("/api/evaluate", json=_PARTICIPANT_BODY).status_code == 200
+
+
+def test_participant_cannot_use_custom_rubric(tmp_path: Path) -> None:
+    c = _judge_client(tmp_path)
+    r = c.post(
+        "/api/evaluate",
+        json={"rubric_source": {"custom_yaml": "x"}, "deck_text": "y", "mode": "participant"},
+    )
+    assert r.status_code == 422  # M5 rejected at validation
+
+
+def test_override_requires_judge_token(tmp_path: Path) -> None:
+    c = _judge_client(tmp_path)
+    run_id = c.post("/api/evaluate", json=_JUDGE_BODY, headers=_BEARER).json()["run_id"]
+    ov = {"criterion_id": "tech-implementation", "score": 4.0, "reason": "r"}
+    assert c.post(f"/api/runs/{run_id}/override", json=ov).status_code == 401  # no bearer
+    assert c.post(f"/api/runs/{run_id}/override", json=ov, headers=_BEARER).status_code == 200
+
+
+def test_run_view_is_redacted_for_participant_but_full_for_judge(tmp_path: Path) -> None:
+    c = _judge_client(tmp_path)
+    run_id = c.post("/api/evaluate", json=_JUDGE_BODY, headers=_BEARER).json()["run_id"]
+
+    # No bearer → redacted participant view: no rubric internals, no audit deltas.
+    redacted = c.get(f"/api/runs/{run_id}").json()
+    assert redacted["run_id"] == run_id
+    assert "final_score" in redacted and "scores" in redacted
+    assert "corrections_count" in redacted
+    assert "rubric" not in redacted
+    assert "audit_corrections" not in redacted
+    assert all(set(s) == {"criterion_id", "score"} for s in redacted["scores"])
+
+    # Bearer → full record (rubric + audit internals present).
+    full = c.get(f"/api/runs/{run_id}", headers=_BEARER).json()
+    assert "rubric" in full and "audit_corrections" in full
+
+
 def test_stream_terminates_when_engine_raises(tmp_path: Path) -> None:
     """An exception inside the pipeline must close the SSE stream (sentinel in the
     `finally`), not hang — if TestClient returns, the generator terminated."""
