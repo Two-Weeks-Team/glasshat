@@ -36,7 +36,7 @@
     "English-only on every artifact; no marketing superlatives.",
     "Hero 'Trace it. Trust it.' is sacred — verbatim at F4 primary, F11 echo, and close.",
     "Honesty rails: never 'un-gameable'; never '503 anchors'; hit@13 0.6154 is a binary Winner-label metric, NOT a rank curve (audit Delta = 0 on this golden set).",
-    "State which path is which: the public Cloud Run demo runs the deterministic spike-D prior with SCORING_MODE=legacy (AGENT_RUNTIME=python, parity-identical); the genuine live Arize AX results are the credentialed Agent Engine run.",
+    "State which path is which: the public Cloud Run demo runs the live Phoenix-MCP calibration loop (reads + writes the dataset over MCP per request) on the SCORING_MODE=legacy python path; the full nested trace tree + the hit@13 experiment are the credentialed Agent Engine run.",
     "Model is Gemini 3.1 Flash-Lite via Vertex AI — do not claim a different model.",
     "F4 hero holds >= 5s; every timestamp rolls up to 180s; SLIDE_DURATION sums to 180s of frame budget.",
     "Modifier-key guard 'if(e.metaKey||e.ctrlKey||e.altKey)return;' present; recording mode hides all chrome."
@@ -55,7 +55,7 @@
     "model": "Gemini 3.1 Flash-Lite via Vertex AI, orchestrated with Google ADK 2.0",
     "license": "Apache-2.0",
     "repo": "github.com/Two-Weeks-Team/glasshat",
-    "demo_path_caveat": "public Cloud Run demo = deterministic spike-D prior, SCORING_MODE=legacy, AGENT_RUNTIME=python (parity-identical RunRecord + SSE, gated default); genuine ADK Workflow + live AX results = credentialed Agent Engine run"
+    "demo_path_caveat": "public Cloud Run demo = live Phoenix-MCP calibration loop (read+write per request), SCORING_MODE=legacy python path; full nested trace tree + hit@13 experiment = credentialed Agent Engine run (spike-D = the dataset seed/fallback)"
   },
   "_palette_override": {
     "note": "Schema color_palette enum lacks our custom dark scheme; oklch-warm-gold selected as nearest valid value, but the deck uses the locked dark-oklch cinematic palette below (purple->cyan->green, bright-cyan hero accent, NOT gold).",

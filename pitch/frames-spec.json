@@ -350,7 +350,7 @@
           { "left": "Project A  #2", "right": "Project B  #2" }
         ],
         "chip": "hit@13 0.6154 · Arize AX experiment",
-        "honest_chip": "binary Winner-label · not a rank curve · demo runs spike-D prior"
+        "honest_chip": "binary Winner-label · not a rank curve · audit Δ=0 on this set · live Phoenix-MCP loop"
       },
       "animation_timeline": [
         { "selector": "terminal-lines", "anim": "right-rows", "delay": 0.2 },
@@ -409,7 +409,7 @@
           "Apache-2.0"
         ],
         "call": "github.com/Two-Weeks-Team/glasshat",
-        "honest_note": "hit@13 = binary Winner-label, not a rank curve · public demo runs the spike-D prior (SCORING_MODE=legacy); live AX results = credentialed Agent Engine run."
+        "honest_note": "hit@13 = binary Winner-label, not a rank curve · the public demo runs the live Phoenix-MCP calibration loop (SCORING_MODE=legacy python path); the full trace tree + the hit@13 experiment = credentialed Agent Engine run."
       }
     }
   ],

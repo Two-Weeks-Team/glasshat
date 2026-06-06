@@ -9,7 +9,7 @@
 - Never say "un-gameable." The audit *raises the bar and makes the score observable* — that is the claim.
 - Never say "503 anchors." The calibration prior is the held-out spike-D prior; the golden labels are binary Winner badges.
 - `hit@13 = 0.6154` is a **binary Winner-label hit rate, not a rank curve.** On this golden set the audit did **not** reorder the top-13 (Δ = 0).
-- Say which path is which: the **public Cloud Run demo** runs the deterministic **spike-D prior** with `SCORING_MODE=legacy` (`AGENT_RUNTIME=python`, parity-identical RunRecord + SSE). The **genuine live Arize AX results** are the **credentialed Agent Engine** run.
+- Say which path is which: the **public Cloud Run demo** runs the **live Phoenix-MCP calibration loop** (reads + writes the `glasshat-calibration` dataset over MCP per request) on the `SCORING_MODE=legacy` python path. The **full nested trace tree + the hit@13 experiment** are the **credentialed Agent Engine** run. (spike-D = the dataset's seed/fallback.)
 - Model is **Gemini 3.1 Flash-Lite via Vertex AI**. Orchestrated with **Google ADK 2.0**.
 
 ---
@@ -168,7 +168,7 @@
 - ✓ Apache-2.0
 
 **Call:** `github.com/Two-Weeks-Team/glasshat`
-**Honest note (on screen):** *hit@13 = binary Winner-label, not a rank curve · public demo runs the spike-D prior (`SCORING_MODE=legacy`); live AX results = credentialed Agent Engine run.*
+**Honest note (on screen):** *hit@13 = binary Winner-label, not a rank curve · the public demo runs the live Phoenix-MCP calibration loop (`SCORING_MODE=legacy` python path); the full trace tree + the hit@13 experiment = credentialed Agent Engine run.*
 
 **VO:** *(silent — hold 12s while the recorder cuts)*
 
