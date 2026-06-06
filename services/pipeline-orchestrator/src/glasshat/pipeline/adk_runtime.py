@@ -111,12 +111,6 @@ def build_phoenix_mcp_toolset(base_url: str, api_key: str = "") -> Any:  # pragm
     )
 
 
-def _percentile(values: list[float], pct: float) -> float:
-    ordered = sorted(values)
-    idx = min(len(ordered) - 1, max(0, round(pct * (len(ordered) - 1))))
-    return ordered[idx]
-
-
 class PhoenixMcpConsultant:
     """Consultant that derives calibration stats from Phoenix over MCP stdio.
 
@@ -149,7 +143,9 @@ class PhoenixMcpConsultant:
         async def _call() -> Any:
             async with stdio_client(params) as (read, write), ClientSession(read, write) as session:
                 await session.initialize()
-                return await session.call_tool("get-dataset-examples", {"dataset": self._dataset})
+                return await session.call_tool(
+                    "get-dataset-examples", {"dataset_name": self._dataset}
+                )
 
         # Bound the single round-trip: a hung npx/stdio session must not hang the run.
         result = await asyncio.wait_for(_call(), timeout=_MCP_CALL_TIMEOUT)
@@ -167,8 +163,13 @@ class PhoenixMcpConsultant:
         return ConsultResult(
             mean_delta=statistics.mean(deltas),
             n=len(deltas),
-            p25=_percentile(deltas, 0.25),
-            p75=_percentile(deltas, 0.75),
+            # p25/p75 are the SCORE clip bounds for apply_correction
+            # (clip(raw_score, p25, p75)) — NOT delta percentiles. Match the
+            # table/anchor convention (ConsultResult(mean_delta, n, 0.0, 10.0)) so
+            # the live MCP correction equals the deterministic prior instead of
+            # being crushed onto the ±2 cap.
+            p25=0.0,
+            p75=10.0,
         )
 
 
@@ -179,6 +180,8 @@ def _parse_examples(
 
     Reads the shape the writer emits — ``input.{hat,criterion,bucket}`` +
     ``output.delta`` — tolerating a flat ``{hat,criterion,bucket,delta}`` fallback.
+    phoenix-mcp's ``get-dataset-examples`` wraps the rows as
+    ``{"data": {"examples": [...]}}``, so unwrap ``data`` before reading ``examples``.
     """
     import json
 
@@ -191,6 +194,8 @@ def _parse_examples(
             payload = json.loads(text)
         except (ValueError, TypeError):
             continue
+        if isinstance(payload, dict) and isinstance(payload.get("data"), dict):
+            payload = payload["data"]  # phoenix-mcp wraps rows under "data"
         examples = payload if isinstance(payload, list) else payload.get("examples", [])
         for ex in examples:
             if not isinstance(ex, dict):
@@ -251,7 +256,7 @@ class PhoenixMcpDatasetWriter:
                 await session.initialize()
                 await session.call_tool(
                     "add-dataset-examples",
-                    {"dataset": self._dataset, "examples": rows},
+                    {"dataset_name": self._dataset, "examples": rows},
                 )
 
         # Bound the round-trip: a hung npx/stdio session must not hang the run.
