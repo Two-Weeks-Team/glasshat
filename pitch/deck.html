@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Glasshat · Cinematic Demo Deck — record-ready (188s · animated)</title>
+<title>Glasshat · Cinematic Demo Deck — record-ready (2:12 slides · animated)</title>
 <style>
   :root{
     /* Dark oklch cinematic — purple → cyan → green. Hero accent = bright cyan (NOT gold). */
@@ -630,13 +630,13 @@
             <span>Apache-2.0</span>
           </div>
           <div class="cover-meta">
-            <div class="deck-meta"><b>188 s</b> · runtime</div>
+            <div class="deck-meta"><b>2:12</b> · runtime</div>
             <div class="deck-meta"><b>13</b> · slides</div>
-            <div class="deck-meta"><b>0:35–1:00</b> · F4 hero</div>
+            <div class="deck-meta"><b>0:34–0:39</b> · F4 hero</div>
             <div><b>104</b> · AX spans</div>
             <div><b>hit@13 0.6154</b></div>
           </div>
-          <div class="cover-cta">→ press → to begin · press F to play the full 188s</div>
+          <div class="cover-cta">→ press → to begin · press F to play the full 2:12</div>
         </div>
       </div>
     </div>
@@ -1207,7 +1207,7 @@
     <div class="body">
       <div class="canvas-wrap">
         <div class="close-content">
-          <div class="close-stat"><b>188 seconds.</b> &nbsp;<b>One audited score.</b></div>
+          <div class="close-stat"><b>One run.</b> &nbsp;<b>One audited score.</b></div>
           <div class="close-h">Trace it. <i>Trust it.</i></div>
           <div style="font-family:ui-serif,Georgia,serif;font-style:italic;font-size:17px;color:var(--muted);margin:-2px 0 18px;letter-spacing:.01em">For any score that has to be <span style="color:var(--text)">defended</span> — grants, hiring, content moderation, every model-as-judge pipeline.</div>
           <div class="close-checks">
@@ -1258,7 +1258,7 @@
   <b>RECORDING</b>
   <div class="timer" id="timer">0.0s</div>
   <button id="btn-play-opening" class="play-range"><span>▶ Opening · F1→F4 (60s)</span><kbd>O</kbd></button>
-  <button id="btn-play-full" class="play-range"><span>▶ Full · cover→F11 (188s)</span><kbd>F</kbd></button>
+  <button id="btn-play-full" class="play-range"><span>▶ Full · cover→F11 (2:12)</span><kbd>F</kbd></button>
   <button id="btn-rec"><span>Recording mode</span><kbd>R</kbd></button>
   <button id="btn-auto"><span>Auto-advance</span><kbd>A</kbd></button>
   <button id="btn-replay"><span>Replay slide</span><kbd>P</kbd></button>
@@ -1302,21 +1302,28 @@
   const doneRange = document.getElementById('done-range');
 
   // Per-slide duration budget (seconds). Drives auto-advance + auto-ind animation.
-  // Recorded video = cover→F11 = 188s (cover 8 + content 180). Close (12) is post-roll.
+  // Deck slides cover→F11 = 132s / 2:12 (cover 5 + content 127). Close (12) is post-roll.
+  // Final video runs longer: in the cut, F8–F9 are replaced by a live /participate
+  // screen-recording (~30–50s), so the delivered video is ≈2:30–2:50.
   // order: cover, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, close
+  // Re-timed to the recorded narration beats (split from the 1.2x take; each frame =
+  // beat clip length + a short visual tail). Beat clips (s): F1 16.7, F2 7.1, F3 7.4,
+  // F4 2.0, F5 12.5, F6 10.1, F7 11.4, F8 8.1, F9 21.0, F10 7.3, F11 6.3. In the final
+  // cut F8–F9 are replaced by a live /participate screen-recording; this array keeps
+  // them held for a slides-only fallback.
   const SLIDE_DURATION = [
-    8,   // 01 · Cover
-    10,  // 02 · F1  0:00–0:10
-    15,  // 03 · F2  0:10–0:25
-    10,  // 04 · F3  0:25–0:35
-    25,  // 05 · F4  0:35–1:00  (HERO — 25s hold)
-    6,   // 06 · F5  1:00–1:06
-    24,  // 07 · F6  1:06–1:30
-    24,  // 08 · F7  1:30–1:54
-    26,  // 09 · F8  1:54–2:20
-    26,  // 10 · F9  2:20–2:46
-    9,   // 11 · F10 2:46–2:55
-    5,   // 12 · F11 2:55–3:00
+    5,   // 01 · Cover (no VO — title hold)
+    18,  // 02 · F1  0:00–0:18
+    8,   // 03 · F2  0:18–0:26
+    8,   // 04 · F3  0:26–0:34
+    5,   // 05 · F4  0:34–0:39  (HERO — clip 2s + dramatic hold)
+    14,  // 06 · F5  0:39–0:53
+    12,  // 07 · F6  0:53–1:05
+    13,  // 08 · F7  1:05–1:18
+    9,   // 09 · F8  1:18–1:27  (live-rec in final cut)
+    22,  // 10 · F9  1:27–1:49  (live-rec in final cut)
+    9,   // 11 · F10 1:49–1:58
+    9,   // 12 · F11 1:58–2:07
     12   // 13 · Closing
   ];
 
@@ -1629,7 +1636,7 @@
       case 'a': case 'A': e.preventDefault(); toggleAuto(); break;
       case 'p': case 'P': e.preventDefault(); replay(); break;
       case 'o': case 'O': e.preventDefault(); playRange(1, 4, 'opening · F1 → F4 · 60s'); break;
-      case 'f': case 'F': e.preventDefault(); playRange(0, 11, 'full · cover → F11 · 188s'); break;
+      case 'f': case 'F': e.preventDefault(); playRange(0, 11, 'full · cover → F11 · 2:12'); break;
       default:
         if(/^[0-9]$/.test(e.key)){
           const n = e.key === '0' ? 9 : (parseInt(e.key, 10) - 1);
@@ -1656,7 +1663,7 @@
     overview.classList.contains('show') ? closeOverview() : openOverview();
   });
   document.getElementById('btn-play-opening').addEventListener('click', () => playRange(1, 4, 'opening · F1 → F4 · 60s'));
-  document.getElementById('btn-play-full').addEventListener('click', () => playRange(0, 11, 'full · cover → F11 · 188s'));
+  document.getElementById('btn-play-full').addEventListener('click', () => playRange(0, 11, 'full · cover → F11 · 2:12'));
 
   // Touch swipe
   let tStartX = 0, tStartY = 0;
