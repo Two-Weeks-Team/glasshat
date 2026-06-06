@@ -12,15 +12,15 @@ describe("ProofStrip", () => {
     }
   });
 
-  it("marks the four core pillars live and Phoenix MCP as wired", () => {
+  it("marks all five pillars live (incl. the live Phoenix-MCP loop)", () => {
     render(<ProofStrip />);
-    for (const id of ["gemini", "adk", "cloudrun", "arize"]) {
+    for (const id of ["gemini", "adk", "cloudrun", "arize", "phoenixmcp"]) {
       expect(screen.getByTestId(`proof-chip-${id}`)).toHaveAttribute("data-state", "live");
     }
+    // The Phoenix MCP chip is live: the deployed audit reads + writes the
+    // calibration dataset over MCP per request (verified against prod).
     const mcp = screen.getByTestId("proof-chip-phoenixmcp");
-    expect(mcp).toHaveAttribute("data-state", "wired");
-    // Honesty: the Phoenix MCP chip must not claim "live".
-    expect(mcp).toHaveAccessibleName(/wired/i);
+    expect(mcp).toHaveAccessibleName(/live/i);
   });
 
   it("shows the live model on the Gemini chip", () => {

@@ -41,6 +41,10 @@ MAX_INSTANCES="${MAX_INSTANCES:-4}"
 # the long-poll SSE connection without relying on the implicit default. Keep the
 # per-call LLM timeout (shared.llm._CALL_TIMEOUT_S) well under this.
 API_TIMEOUT="${API_TIMEOUT:-600}"
+# The live Phoenix-MCP audit spawns an `npx @arizeai/phoenix-mcp` Node subprocess
+# per request (read consult + write-back) ON TOP of the Python eval; 512Mi OOM-kills
+# the container (→ 503). 2Gi fits Python + Node with headroom.
+API_MEMORY="${API_MEMORY:-2Gi}"
 # The docstore default (memory) is process-local: /api/runs lookups are not
 # durable across cold restarts. For durable run history set the backend to
 # firestore AND grant the Cloud Run runtime SA roles/datastore.user with a
@@ -145,7 +149,7 @@ gcloud builds submit --project="$PROJECT" \
 echo "==> Deploying API to Cloud Run (min-instances=${MIN_INSTANCES})..."
 gcloud run deploy glasshat-api --project="$PROJECT" --region="$REGION" \
   --image="$API_IMAGE" --min-instances="$MIN_INSTANCES" --max-instances="$MAX_INSTANCES" \
-  --timeout="$API_TIMEOUT" \
+  --timeout="$API_TIMEOUT" --memory="$API_MEMORY" \
   --allow-unauthenticated \
   --set-env-vars="$API_ENV" ${API_SECRETS[@]+"${API_SECRETS[@]}"}
 

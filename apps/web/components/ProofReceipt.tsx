@@ -93,7 +93,7 @@ export function ProofReceipt({ record, sample = false }: ProofReceiptProps) {
       <p className="mt-3 text-xs text-[var(--color-muted)]">
         <span style={{ color: "var(--color-good)" }}>live</span> fields are read from this run&apos;s
         RunRecord; <span>static</span> fields are the deployment&apos;s fixed config. The Phoenix
-        MCP calibration path is E2E-verified; the deployed audit uses the table prior.
+        MCP calibration loop reads + writes the live dataset over MCP per request.
       </p>
     </div>
   );

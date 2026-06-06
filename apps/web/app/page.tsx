@@ -21,7 +21,7 @@ const TRACE_SPANS: { name: string; tone: string; w: string }[] = [
 /** ARIZE emphasis (full-bleed) — the Arize track is the whole point: the audit is
  *  *auditable* because every agent, every hat, and the self-correction is a trace
  *  span in Arize AX. Honest: AX tracing is live; the Phoenix-MCP calibration loop
- *  is wired (the credential-free demo runs the deterministic spike-D prior). */
+ *  runs live too (reads + writes the dataset over MCP per request). */
 function ArizeBand() {
   return (
     <section
@@ -58,14 +58,14 @@ function ArizeBand() {
             <p className="max-w-xl text-[0.98rem] leading-relaxed text-[var(--color-muted)]">
               The calibration consultant reads a{" "}
               <strong className="font-medium text-[var(--color-ink)]">Phoenix dataset over MCP</strong>{" "}
-              and writes each correction back — the learning loop is{" "}
-              <span className="text-[var(--color-accent-2)]">wired</span>. The credential-free{" "}
-              <strong className="font-medium text-[var(--color-ink)]">Cloud Run demo</strong> runs the
-              deterministic spike-D prior; the genuine live Arize-AX results — the full trace tree and
+              and writes each correction back — the learning loop runs{" "}
+              <span className="text-[var(--color-accent-2)]">live</span> on the{" "}
+              <strong className="font-medium text-[var(--color-ink)]">Cloud Run demo</strong> (a
+              Cloud-SQL-backed Phoenix); the genuine live Arize-AX results — the full trace tree and
               the hit@13 experiment — are the credentialed Agent-Engine run shown next.
             </p>
             <div className="flex flex-wrap gap-2.5 pt-1">
-              {["Arize AX · OpenInference/OTLP", "Phoenix · MCP (wired)", "every hat = a span"].map(
+              {["Arize AX · OpenInference/OTLP", "Phoenix · MCP (live)", "every hat = a span"].map(
                 (b) => (
                   <span
                     key={b}

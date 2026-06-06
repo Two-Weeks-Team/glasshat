@@ -23,7 +23,7 @@ describe("ProofReceipt", () => {
     render(<ProofReceipt record={record} />);
     const staticGroup = screen.getByTestId("receipt-group-static");
     expect(within(staticGroup).getByText("gemini-3.1-flash-lite")).toBeInTheDocument();
-    expect(staticGroup).toHaveTextContent("table-prior");
+    expect(staticGroup).toHaveTextContent("phoenix-mcp");
   });
 
   it("has a copy control for the run id", () => {
