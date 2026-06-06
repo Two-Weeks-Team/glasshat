@@ -1,5 +1,11 @@
 # Rapid Agent — Visual Proof Checklist (2026-05-24)
 
+> **Superseded note (2026-06-06):** the "Phoenix MCP = amber / wired / table prior"
+> statements below were accurate when this was captured. The deployed audit now runs
+> the **live Phoenix-MCP loop** (per-request read + write-back against a Cloud-SQL-backed
+> Phoenix on Cloud Run), so all five chips are green/live — see
+> [`docs/rapid-agent-compliance.md`](../rapid-agent-compliance.md) §3.
+
 A judge-runnable checklist for the **visible** proof surfaces, not a script.
 Companion to [`docs/rapid-agent-compliance.md`](../rapid-agent-compliance.md) and
 [`docs/evidence-matrix.md`](../evidence-matrix.md).
