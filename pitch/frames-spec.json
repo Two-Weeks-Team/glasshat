@@ -421,7 +421,7 @@
   },
   "ranges": {
     "opening": { "start_position": 2, "end_position": 5, "label": "opening · F1 → F4 · 60s", "button_label": "▶ Opening · F1→F4 (60s)", "key": "o" },
-    "full": { "start_position": 2, "end_position": 12, "label": "full · F1 → F11 · 180s", "button_label": "▶ Full · F1→F11 (180s)", "key": "f" }
+    "full": { "start_position": 1, "end_position": 12, "label": "full · cover → F11 · 188s", "button_label": "▶ Full · cover→F11 (188s)", "key": "f" }
   },
   "slide_duration": [8, 10, 15, 10, 25, 6, 24, 24, 26, 26, 9, 5, 12]
 }

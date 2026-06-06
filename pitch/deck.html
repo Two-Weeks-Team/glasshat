@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Glasshat · Cinematic Demo Deck — record-ready (180s · animated)</title>
+<title>Glasshat · Cinematic Demo Deck — record-ready (188s · animated)</title>
 <style>
   :root{
     /* Dark oklch cinematic — purple → cyan → green. Hero accent = bright cyan (NOT gold). */
@@ -437,7 +437,9 @@
   /* F9 SCORE GAUGE recede (9.0→7.6 region) */
   .slide.active .c-f9 .pane.score .gauge i{
     width:90% !important;
-    animation:aGaugeRecede 2.2s var(--d,3.4s) cubic-bezier(.65,.05,.36,1) forwards
+    /* fixed 3.4s — must NOT inherit the pane's --d:.8s, so it recedes in sync with
+       the 9.0→7.6 number roll (data-delay 3400), not 2.6s early. */
+    animation:aGaugeRecede 2.2s 3.4s cubic-bezier(.65,.05,.36,1) forwards
   }
   @keyframes aGaugeRecede{0%{width:90%}100%{width:76%}}
 
@@ -624,13 +626,13 @@
             <span>Apache-2.0</span>
           </div>
           <div class="cover-meta">
-            <div class="deck-meta"><b>180 s</b> · runtime</div>
+            <div class="deck-meta"><b>188 s</b> · runtime</div>
             <div class="deck-meta"><b>11</b> · frames</div>
             <div class="deck-meta"><b>0:35–1:00</b> · F4 hero</div>
             <div><b>104</b> · AX spans</div>
             <div><b>hit@13 0.6154</b></div>
           </div>
-          <div class="cover-cta">→ press → to begin · press F to play the full 180s</div>
+          <div class="cover-cta">→ press → to begin · press F to play the full 188s</div>
         </div>
       </div>
     </div>
@@ -1200,7 +1202,7 @@
     <div class="body">
       <div class="canvas-wrap">
         <div class="close-content">
-          <div class="close-stat"><b>180 seconds.</b> &nbsp;<b>11 frames.</b> &nbsp;<b>One audited score.</b></div>
+          <div class="close-stat"><b>188 seconds.</b> &nbsp;<b>One audited score.</b></div>
           <div class="close-h">Trace it. <i>Trust it.</i></div>
           <div style="font-family:ui-serif,Georgia,serif;font-style:italic;font-size:17px;color:var(--muted);margin:-2px 0 18px;letter-spacing:.01em">For any score that has to be <span style="color:var(--text)">defended</span> — grants, hiring, content moderation, every model-as-judge pipeline.</div>
           <div class="close-checks">
@@ -1295,7 +1297,7 @@
   const doneRange = document.getElementById('done-range');
 
   // Per-slide duration budget (seconds). Drives auto-advance + auto-ind animation.
-  // Recorded video = F1→F11 = 180s. Cover (8) + close (12) bookend the recording.
+  // Recorded video = cover→F11 = 188s (cover 8 + content 180). Close (12) is post-roll.
   // order: cover, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, close
   const SLIDE_DURATION = [
     8,   // 01 · Cover
