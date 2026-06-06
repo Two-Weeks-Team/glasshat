@@ -194,9 +194,16 @@ def _parse_examples(
             payload = json.loads(text)
         except (ValueError, TypeError):
             continue
-        if isinstance(payload, dict) and isinstance(payload.get("data"), dict):
-            payload = payload["data"]  # phoenix-mcp wraps rows under "data"
-        examples = payload if isinstance(payload, list) else payload.get("examples", [])
+        if isinstance(payload, dict):
+            if isinstance(payload.get("data"), dict):
+                payload = payload["data"]  # phoenix-mcp wraps rows under "data"
+            examples = payload.get("examples", [])
+        elif isinstance(payload, list):
+            examples = payload
+        else:
+            continue  # scalar JSON (bool/number/null) — nothing to parse, skip
+        if not isinstance(examples, list):
+            continue
         for ex in examples:
             if not isinstance(ex, dict):
                 continue

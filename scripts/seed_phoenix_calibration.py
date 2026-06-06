@@ -68,6 +68,20 @@ def main() -> None:
                     outputs.append({"delta": mean_delta})
 
     client = Client(base_url=base_url, api_key=api_key)
+
+    # Idempotent: drop any existing dataset of this name first so re-running
+    # produces a single clean dataset (the phoenix client exposes no delete, so
+    # use the REST endpoint directly). Re-seeding is the normal reset path.
+    import httpx
+
+    headers = {"authorization": f"Bearer {api_key}"} if api_key else {}
+    with httpx.Client(base_url=base_url, headers=headers, timeout=20.0) as http:
+        existing = http.get("/v1/datasets").json().get("data", [])
+        for d in existing:
+            if d.get("name") == _DATASET:
+                http.delete(f"/v1/datasets/{d['id']}")
+                print(f"  removed existing dataset id={d['id']}")
+
     ds = client.datasets.create_dataset(
         name=_DATASET,
         inputs=inputs,
