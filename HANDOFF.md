@@ -27,7 +27,7 @@ Last updated: 2026-05-14 KST (superseded — see v3 handoff).
 - [x] Repo scaffold (README + monorepo dir skeleton + `.gitignore` + LICENSE Apache-2.0).
 - [x] Full plan committed: [`PLAN.md`](PLAN.md) (mirrored from the umbrella tracker, built from a 6-expert-team analysis).
 - [x] Authoritative architecture doc: [`docs/architecture.md`](docs/architecture.md) (topology, agent graph mermaid, sequence mermaid, phase-by-phase deployment, abstractions, the two human gates).
-- [x] **GCP project bootstrap** ([`docs/gcp-setup.md`](docs/gcp-setup.md)) — `panelyst-hackathon` project (916178791322) on `app.2weeks@gmail.com`, billing linked to 크레딧계정 (`01B677-A6E5C9-B265AF`), 13 APIs enabled, service account `panelyst-dev` with 8 roles, SA key at `~/.config/gcloud/panelyst-dev-sa-key.json` (mode 600, outside the repo).
+- [x] **GCP project bootstrap** ([`docs/gcp-setup.md`](docs/gcp-setup.md)) — `panelyst-hackathon` project (916178791322) on `[REDACTED-EMAIL]`, billing linked to 크레딧계정 (`[REDACTED-BILLING-ID]`), 13 APIs enabled, service account `panelyst-dev` with 8 roles, SA key at `~/.config/gcloud/panelyst-dev-sa-key.json` (mode 600, outside the repo).
 - [x] **Vertex AI Gemini panel verified live** ([`docs/gcp-setup.md`](docs/gcp-setup.md)) — `gemini-3.1-pro` / `gemini-3.5-flash` / `gemini-3.1-flash-lite` on **global** endpoint; 2.5 fallbacks on us-central1. All 6 models confirmed working with the SA key.
 - [x] `.env` populated locally (gitignored); `.env.example` updated to the verified configuration with all phase 1–5 env vars; abstraction switches documented.
 
@@ -53,7 +53,7 @@ Last updated: 2026-05-14 KST (superseded — see v3 handoff).
 | Item | Value |
 |---|---|
 | GCP project | `panelyst-hackathon` (`916178791322`) |
-| Billing | `01B677-A6E5C9-B265AF` (크레딧계정, app.2weeks@gmail.com) |
+| Billing | `[REDACTED-BILLING-ID]` (크레딧계정, [REDACTED-EMAIL]) |
 | Service account | `panelyst-dev@panelyst-hackathon.iam.gserviceaccount.com` |
 | SA key | `~/.config/gcloud/panelyst-dev-sa-key.json` (mode 600) |
 | Default region | `us-central1` (Gemini 2.5 + Cloud Run + Firestore) |

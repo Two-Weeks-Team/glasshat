@@ -18,13 +18,20 @@ This directory contains the full crawl of the **Gemini 3 Hackathon** on Devpost,
 
 ## Quick Start
 
-Recommended primary files:
+The hit@13 **golden set** — used by `experiments/build_golden_set.py`, the Arize AX
+experiment (`arize_experiment.py`), and the calibration tests — is the small, tracked pair:
 
 ```text
-data/devpost-gemini3/gemini3_dataset.json
-data/devpost-gemini3/projects.json
-data/devpost-gemini3/github-recrawl-2026-05-16/results.jsonl
+data/devpost-gemini3/submissions.json   # gallery submissions + is_winner flag
+data/devpost-gemini3/winners.json       # the 13 Winner-badged entries
 ```
+
+> **The raw scrape is gitignored.** `gemini3_dataset.json` (45 MB) and `projects.json`
+> (42 MB) are the full Devpost-gallery scrape. They are **gitignored** (see `.gitignore`)
+> to respect Devpost's terms on redistributing scraped submissions and to keep the repo
+> lean — nothing in the codebase imports them (verified by `grep`). They were derived from
+> the public gallery at the URLs above; **re-fetch from those pages** if you need the raw
+> dump. The experiment and tests do **not** need them — they run on the tracked golden set.
 
 ## Files
 
