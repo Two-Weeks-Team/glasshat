@@ -224,8 +224,12 @@ export default function SpotlightFinale() {
           <p className={styles.sub}>
             A rubric-aware AI evaluator scores with a six-hat panel, grounds every
             sub-score in retrieved evidence, then pulls its own optimism back to
-            where the evidence actually supports. Watch the spotlight find one
-            verdict and correct it.
+            where the evidence actually supports. Every step is a trace span in
+            Arize&nbsp;AX &mdash; so the score is one you can open, and check.
+          </p>
+          <p className="mt-7 font-display text-[clamp(1.5rem,3vw,2.4rem)] font-bold leading-tight tracking-[-0.02em]">
+            Trace it.{" "}
+            <span className="text-gradient font-serif-italic font-medium">Trust it.</span>
           </p>
 
           <div className={styles.links}>
