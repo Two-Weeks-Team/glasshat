@@ -64,7 +64,12 @@ export const PROOF_CHIPS: ProofChip[] = [
   },
 ];
 
-/** State → presentation. `live` = green/check, `wired` = amber, `muted` = grey. */
+/**
+ * State → presentation. `live` = green/check, `wired` = amber, `muted` = grey.
+ * All five chips are currently `live`; `wired` is retained (not dead code) so any
+ * future integration that is real-but-not-on-every-request can signal it honestly
+ * in amber rather than overclaiming `live`.
+ */
 export const PROOF_STATE_UI: Record<
   ProofState,
   { color: string; mark: string; word: string }

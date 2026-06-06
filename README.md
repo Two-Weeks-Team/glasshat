@@ -106,9 +106,11 @@ deck.pdf + repo URL + rubric source
         │     (dense cosine + BM25 + RRF); every agent + hat is its own Arize AX span
         │
    AuditLoop  (calibration self-correct: clip(score − 0.8·mean_delta, p25, p75))  ── glasshat.agents.audit
-        │     Consultant protocol: deployed path = calibrated prior from spike-D
-        │     held-out anchors (TableConsultant); live-trace variant = PhoenixMcpConsultant
-        │     (queries per-cell drift over Phoenix MCP/stdio — exercised by scripts/real_*_e2e.py)
+        │     Consultant protocol: deployed path = PhoenixMcpConsultant — reads per-cell
+        │     drift from the live glasshat-calibration dataset + writes each correction
+        │     back, over Phoenix MCP/stdio per request (Cloud-SQL-backed Phoenix on Cloud
+        │     Run); TableConsultant (spike-D held-out prior) is the fallback when no
+        │     PHOENIX_COLLECTOR_ENDPOINT is set
         │
    BMADScorer → ReportAssembler  (final score in the rubric's native scale)
         │
@@ -134,7 +136,7 @@ deck.pdf + repo URL + rubric source
 | `apps/web` | `glasshat-web` | Next.js 16: landing + `/judge` (batch rank · tie-break · gate-2 override · lock) + `/participate` (plan gate · live SSE monitor · evidence · audit callouts · 3D self-correction) |
 | `infra/` | — | Dockerfiles, compose, Cloud Run deploy |
 
-**Config-flip backends** (env): `LLM_BACKEND` (`mock`\|`vertex`), `MONITOR_BACKEND` (`phoenix-local`\|`phoenix-cloud`), `DOCSTORE_BACKEND` (`memory`\|`sqlite`\|`firestore`), `BLOB_BACKEND` (`local-fs`\|`gcs`), `AGENT_RUNTIME` (`adk-local`\|`adk-cloud-run`). The `mock`/`memory`/`local-fs`/`noop` backends are complete, deterministic implementations — the whole engine runs and is tested with **zero credentials**.
+**Config-flip backends** (env): `LLM_BACKEND` (`mock`\|`vertex`\|`gemini-enterprise`), `MONITOR_BACKEND` (`phoenix-local`\|`phoenix-cloud`\|`arize`), `CONSULTANT_BACKEND` (`table`\|`phoenix-mcp`\|`anchor`), `DOCSTORE_BACKEND` (`memory`\|`sqlite`\|`firestore`), `BLOB_BACKEND` (`local-fs`\|`gcs`), `AGENT_RUNTIME` (`python`\|`adk`). The `mock`/`memory`/`local-fs`/`noop` backends are complete, deterministic implementations — the whole engine runs and is tested with **zero credentials**.
 
 ## Reproduce
 
