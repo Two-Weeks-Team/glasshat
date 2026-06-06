@@ -493,6 +493,10 @@ export default function ConstellationHero() {
 
         {/* Hero block — sits low-left so the constellation breathes. */}
         <div className="flex flex-col justify-end self-end pb-[2vh]">
+          <p className="mb-4 max-w-[44ch] text-[clamp(0.95rem,1.5vw,1.18rem)] font-medium leading-[1.5] text-[var(--color-muted)]">
+            AI writes the submissions now &mdash; by the thousands.{" "}
+            <span className="text-[var(--color-ink)]">The judging didn&apos;t change.</span>
+          </p>
           <h1 className="font-display max-w-[15ch] text-[clamp(2.8rem,7.5vw,6.5rem)] font-bold leading-[1.02] tracking-[-0.03em]">
             Trace it.{" "}
             <em className="font-serif-italic text-gradient text-[1.04em] font-medium">
