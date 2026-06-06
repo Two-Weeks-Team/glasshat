@@ -34,7 +34,7 @@ project `panelyst-hackathon`, us-central1.
 | 1 | **Gemini on Vertex AI** (Google Cloud AI tool, required) | Location-aware Vertex client; live tier `gemini-3.1-flash-lite` on the Vertex **`global`** endpoint (Gemini 3.x is global-only); `gemini-3.1-pro` for URL→rubric synthesis; `text-embedding-005` (regional) for retrieval | `packages/shared/src/glasshat/shared/llm.py` → `VertexLlmClient` (`_client_for(location)`, lines 41–92); models in `infra/deploy.sh:99`, `.env.example:17–24` | `curl -s -X POST <API>/api/evaluate -d '{"rubric_source":{"preset_id":"rapid-agent"},"deck_text":"…","mode":"judge"}'` → real-Gemini `RunRecord` | ✅ Live |
 | 2 | **Code-owned agent runtime** (rules name "Agent Builder"; the **Arize track** requires a code-owned runtime — *Gemini CLI / Agent Platform SDK / **Google ADK** / Agent Runtime / **Cloud Run***, and states **"Visual Agent Builder alone is insufficient. Direct code instrumentation is required."**) | **Google ADK** orchestrator, OpenInference-instrumented, deployed on **Cloud Run**. No visual Agent Builder app — that path is *explicitly disallowed* for this track. See §2. | `services/pipeline-orchestrator/src/glasshat/pipeline/adk_runtime.py` (`instrument_adk`, `run_via_adk`); engine `…/pipeline/engine.py`; deploy `infra/deploy.sh` | §2 below + `claudedocs/hackathon-source-2026-05-21/03-arize-resources.md` (the rule, quoted) | ✅ Resolved |
 | 3 | **Arize partner integration** (OpenInference tracing → Arize/Phoenix) | OpenInference auto-instrumentation → **Arize AX** at `otlp.arize.com`; **one span per agent** (`RubricSynthesizer · BluePlanner · SixHatPanel · Audit · BMADScorer · ReportAssembler`) + per-hat `hat_assess`, all carrying `glasshat.*` attributes | `packages/shared/src/glasshat/shared/tracing.py` → `ArizeTracer` (registers via `arize.otel`, line 68); span sites `…/pipeline/engine.py:115–149` | `uv run python scripts/real_arize_ax_e2e.py`; live run `2b2e29c2` (final 56.93, 4 self-corrections) | ✅ Live |
-| 4 | **Partner MCP server** (Phoenix MCP — required by the track) | ADK **`MCPToolset` over stdio** → `npx @arizeai/phoenix-mcp@latest`. The audit's calibration consultant calls the Phoenix MCP **`get-dataset-examples`** tool, parses per-anchor score deltas, and feeds them into the self-correction. See §3. | `…/pipeline/adk_runtime.py` → `build_phoenix_mcp_toolset` (l.31), `PhoenixMcpConsultant.consult` (l.53–96, tool `get-dataset-examples` l.82) | `uv run python scripts/real_e2e.py` (real ADK → Phoenix MCP stdio → pipeline) | ✅ Wired — exercised by e2e (see §3 on deployed vs. live-trace path) |
+| 4 | **Partner MCP server** (Phoenix MCP — required by the track) | ADK **`MCPToolset` over stdio** → `npx @arizeai/phoenix-mcp@latest`. The audit's calibration consultant calls the Phoenix MCP **`get-dataset-examples`** tool, parses per-anchor score deltas, and feeds them into the self-correction. See §3. | `…/pipeline/adk_runtime.py` → `build_phoenix_mcp_toolset` (l.31), `PhoenixMcpConsultant.consult` (l.53–96, tool `get-dataset-examples` l.82) | `uv run python scripts/real_e2e.py` (real ADK → Phoenix MCP stdio → pipeline) | ✅ **Live** — the deployed audit does a per-request MCP round-trip (read `get-dataset-examples` + write-back `add-dataset-examples`) against a Cloud-SQL-backed Phoenix on Cloud Run (`PHOENIX_COLLECTOR_ENDPOINT` set). See §3. |
 | 5 | **Cloud Run deployment** (Google Cloud hosting) | API + web both on Cloud Run, project `panelyst-hackathon`, us-central1, `min-instances=0`; API URL baked into the web bundle at build time | `infra/deploy.sh`, `infra/cloudbuild-api.yaml`, `infra/cloudbuild-web.yaml`, `infra/Dockerfile.api`, `infra/Dockerfile.web` | `curl -fsS https://glasshat-api-o366v7tl2q-uc.a.run.app/health` → 200; web `/`,`/judge`,`/participate` → 200 | ✅ Live |
 | 6 | **CI / tests / Lighthouse / live API** (engineering quality evidence) | GitHub Actions: `ruff` + `ruff format` + `mypy --strict` + `pytest` (coverage gate ≥ 90%); web `eslint` + `tsc` + `vitest` + `next build`; Docker build (api + web) | `.github/workflows/ci.yml` | `uv run pytest` → **323 passed**; `cd apps/web && pnpm test` → **74 passed**; Lighthouse ≥ 90 all pages | ✅ Green |
 
@@ -94,12 +94,14 @@ EvaluationInput (deck_text + rubric_source [+ repo_url])
    │     engine.py:115-149
    │
    ▼  AuditLoop — self-correction needs calibration stats per (hat, criterion, evidence-bucket)
-   │     ┌─ DEPLOYED path: TableConsultant — spike-D held-out calibrated prior
-   │     │     (_YELLOW_DELTA_BY_BUCKET, engine.py:61) → deterministic, no network
-   │     └─ LIVE-TRACE path: PhoenixMcpConsultant.consult(hat,criterion,bucket)
-   │           ADK MCPToolset over stdio → `npx @arizeai/phoenix-mcp@latest`
-   │           → Phoenix MCP tool `get-dataset-examples` (adk_runtime.py:82)
-   │           → parse per-anchor deltas → mean/p25/p75
+   │     ┌─ DEPLOYED (live): PhoenixMcpConsultant.consult(hat,criterion,bucket)
+   │     │     ADK MCPToolset over stdio → `npx @arizeai/phoenix-mcp` →
+   │     │     `get-dataset-examples` → parse per-anchor deltas → mean/n; each
+   │     │     correction written back via `add-dataset-examples` (the learning loop),
+   │     │     against a Cloud-SQL-backed Phoenix on Cloud Run
+   │     │     (PHOENIX_COLLECTOR_ENDPOINT set; seed: scripts/seed_phoenix_calibration.py)
+   │     └─ FALLBACK: TableConsultant — spike-D held-out prior
+   │           (_YELLOW_DELTA_BY_BUCKET, engine.py) when no Phoenix endpoint is configured
    │     clip(score − 0.8·mean_delta, p25, p75)   ← the on-screen self-correct
    │
    ▼  BMADScorer → ReportAssembler → RunRecord (audit_corrections[])
