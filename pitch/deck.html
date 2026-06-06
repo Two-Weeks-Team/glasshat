@@ -1322,11 +1322,11 @@
       t.style.opacity = '0';
       t.style.transform = 'scale(.5)';
       const d = 50 + i * 22;
-      setTimeout(() => {
+      slideTimers.push(setTimeout(() => {
         t.style.transition = 'opacity .42s ease-out, transform .42s cubic-bezier(.34,1.56,.64,1)';
         t.style.opacity = '1';
         t.style.transform = 'scale(1)';
-      }, d);
+      }, d));
     });
   }
 
@@ -1343,6 +1343,7 @@
       el.textContent = fmt(from);
       const t0 = performance.now() + delay;
       function tick(now){
+        if(!slide.classList.contains('active')) return;  // stop stale ticks after navigation
         if(now < t0){ requestAnimationFrame(tick); return; }
         const elapsed = now - t0;
         const p = Math.min(elapsed / dur, 1);
@@ -1368,11 +1369,12 @@
       let i = 0;
       const startAt = performance.now() + delay;
       function tick(now){
+        if(!slide.classList.contains('active')) return;  // stop stale ticks after navigation
         if(now < startAt){ requestAnimationFrame(tick); return; }
         if(i < text.length){
           el.textContent += text[i] === '\\n' ? '\n' : text[i];
           i++;
-          setTimeout(() => requestAnimationFrame(tick), perChar);
+          slideTimers.push(setTimeout(() => requestAnimationFrame(tick), perChar));
         } else {
           el.classList.add('done');
         }
