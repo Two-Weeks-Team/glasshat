@@ -26,7 +26,7 @@
 | 권위 아키텍처 문서 | ✅ | `docs/architecture.md` — 토폴로지 텍스트 다이어그램 + 에이전트 그래프 mermaid + 시퀀스 mermaid + Phase 1-5 배포 매트릭스 + 인터페이스 추상화 + 2 휴먼 게이트 + non-chatbot/agent rationale |
 | 전체 plan | ✅ | `PLAN.md` (엄브렐라 mirror — 6-전문가-팀 분석 + 듀얼 제출 전략 + 페이즈 + 리스크 + open items + next work) |
 | 핸드오프 | ✅ | `HANDOFF.md` (이 세션 마무리 직전 상태) |
-| GCP 풀 셋업 | ✅ | project `panelyst-hackathon` (916178791322), 결제 크레딧계정(`01B677-A6E5C9-B265AF`), 13 APIs, SA `panelyst-dev@…`, 8 역할, 키 `~/.config/gcloud/panelyst-dev-sa-key.json` (mode 600, repo 외부) — `docs/gcp-setup.md` |
+| GCP 풀 셋업 | ✅ | project `panelyst-hackathon` (916178791322), 결제 크레딧계정(`[REDACTED-BILLING-ID]`), 13 APIs, SA `panelyst-dev@…`, 8 역할, 키 `~/.config/gcloud/panelyst-dev-sa-key.json` (mode 600, repo 외부) — `docs/gcp-setup.md` |
 | Vertex Gemini 3-tier 라이브 검증 | ✅ | `gemini-3.1-pro-preview` (global, p50 9.3s eval-JSON) · `gemini-3-flash-preview` (global, p50 4.0s) · `gemini-3.1-flash-lite` GA (global, p50 1.3s) + 2.5 패밀리 폴백 (us-central1) — 6모델 × 7 location 매트릭스 측정 |
 | `.env` (gitignored) | ✅ | 실값 채워짐 — 3-tier 모델 + global/regional 분리 + 폴백 + 토큰 예산 + Phase 1-5 abstraction switches |
 | `.env.example` | ✅ | 검증된 템플릿 |

@@ -35,3 +35,18 @@ uv.lock.bak
 
 # Claude Code transient runtime artifacts (should never be version-controlled)
 .claude/scheduled_tasks.lock
+
+# Secrets / credentials (never commit)
+*.log
+*.pem
+*.p12
+*.pfx
+*-key.json
+*-credentials.json
+*service-account*.json
+
+# Large raw Devpost scrape — gitignored to respect Devpost ToS + keep the repo lean.
+# The hit@13 golden set (used by the experiment + tests) is the small winners.json +
+# submissions.json, which stay tracked. See data/devpost-gemini3/README.md to regenerate.
+data/devpost-gemini3/gemini3_dataset.json
+data/devpost-gemini3/projects.json

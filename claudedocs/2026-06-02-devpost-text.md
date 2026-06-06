@@ -38,8 +38,10 @@ own official rules** — and:
    graph reshapes, and **writes the correction back** so the prior sharpens every run.
    The dataset is seeded from the held-out spike-D anchors; with no Phoenix endpoint the
    audit falls back to that same deterministic prior.
-4. Shows **the audit changing who wins**: a rank-flip board puts the
-   better-evidenced project on top once calibration is applied.
+4. Shows the audit **recalibrate the whole cohort**: a recalibration board
+   re-scores every project against the evidence and shows it honestly — on the
+   historical golden set the audit recalibrated without reordering the top-13
+   (Δ=0); it doesn't fake a flip.
 
 It is an artifact-ingesting evaluation pipeline **and** a transparent fairness
 monitor — **not a chatbot**.
@@ -73,7 +75,7 @@ monitor — **not a chatbot**.
   vector database**. A GitHub-REST **metadata-only** code grader (no clone) folds
   repo evidence into retrieval.
 - TypeScript/Next.js PWA front end with a real-time SSE trace, 3D constellation,
-  and rank-flip board. Python monorepo (uv workspace), **323 Python + 74 web
+  and recalibration board. Python monorepo (uv workspace), **323 Python + 74 web
   tests**, CI with a Gemini/Google-only dependency gate (the deployed image ships
   no general-purpose LLM SDKs).
 
@@ -85,8 +87,9 @@ monitor — **not a chatbot**.
   **Arize AX** (full nested tree) and measured with an **Arize AX Experiment**
   (hit@13 0.6154). Measured ±2.0-bounded correction, reproducible run-to-run.
 - **Design:** the correction is the interface — over-confidence visibly recedes,
-  the graph reshapes, and a rank-flip board makes "the audit changes who wins"
-  legible in one glance.
+  the graph reshapes, and a recalibration board makes the audit's bounded ±2.0
+  re-scoring legible in one glance (honestly: on the golden set the ranking held,
+  Δ=0 — we show that, not a fake flip).
 - **Potential Impact:** any evaluation that must be *defended* — hackathons,
   grants, hiring, model-as-judge pipelines — needs an audit layer. Glasshat is
   rubric-agnostic, so it generalizes across rule sets.
@@ -123,7 +126,7 @@ monitor — **not a chatbot**.
 - **Live API health:** https://glasshat-api-o366v7tl2q-uc.a.run.app/health → `{"status":"ok"}`
 - **License:** Apache-2.0
 - **Demo video:** _(teammate inserts link)_
-- **Repo:** _(teammate inserts public repo link)_
+- **Repo:** https://github.com/Two-Weeks-Team/glasshat
 
 ## Honest disclosures (keep — they raise credibility)
 - Live model is **`gemini-3.1-flash-lite`** (Gemini 2.5 is not used); the

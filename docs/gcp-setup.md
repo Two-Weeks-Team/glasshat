@@ -6,10 +6,10 @@ Verified working configuration as of **2026-05-14**. This is the recipe; the `.e
 
 | Item | Value |
 |---|---|
-| Owner | `app.2weeks@gmail.com` |
+| Owner | `[REDACTED-EMAIL]` |
 | Project ID | `panelyst-hackathon` |
 | Project number | `916178791322` |
-| Billing account | `01B677-A6E5C9-B265AF` ("크레딧계정") |
+| Billing account | `[REDACTED-BILLING-ID]` ("크레딧계정") |
 | Default region (Gemini 2.5 + Cloud Run + Firestore) | `us-central1` |
 | Endpoint for Gemini 3 family | **`global`** (regional endpoints return 404) |
 
@@ -49,7 +49,7 @@ Source of truth for the test: [`/tmp/panelyst-model-test.json`](/tmp/panelyst-mo
 
 ```bash
 PROJECT_ID=panelyst-hackathon
-BILLING=01B677-A6E5C9-B265AF
+BILLING=[REDACTED-BILLING-ID]
 REGION=us-central1
 
 # project

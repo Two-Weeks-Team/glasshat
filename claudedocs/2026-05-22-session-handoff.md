@@ -44,7 +44,7 @@
 
 **실 e2e 입증(item 4)**: `scripts/real_e2e.py` — 실 Vertex Gemini(gemini-2.5-flash) + Vertex 임베딩(text-embedding-005) + 인코드 하이브리드 + self-host Phoenix(80 spans) + 실 Phoenix MCP stdio(27 tools, ADK agent의 list-projects 호출) → RubricSynthesizer(25/25/25/25)→6-hat→audit self-correct(8.0→7.04 등)→final 54.04. 증거: `claudedocs/2026-05-21-real-e2e-evidence.md`.
 
-**환경**: node v22.16.0 · pnpm 9.15.0 · uv 0.11.7 · GCP ADC 존재(app.2weeks@gmail.com) · billing 크레딧계정 `01B677-A6E5C9-B265AF` 연결 · ⚠️ **활성 gcloud project = `ss-v2-prod`(프로덕션!)** — 배포 시 항상 `--project=panelyst-hackathon` 명시(deploy.sh가 자동으로 그렇게 함). Docker daemon DOWN(이미지 빌드는 CI/Cloud Build에서).
+**환경**: node v22.16.0 · pnpm 9.15.0 · uv 0.11.7 · GCP ADC 존재([REDACTED-EMAIL]) · billing 크레딧계정 `[REDACTED-BILLING-ID]` 연결 · ⚠️ **활성 gcloud project = `ss-v2-prod`(프로덕션!)** — 배포 시 항상 `--project=panelyst-hackathon` 명시(deploy.sh가 자동으로 그렇게 함). Docker daemon DOWN(이미지 빌드는 CI/Cloud Build에서).
 
 ---
 

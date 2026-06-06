@@ -36,7 +36,7 @@
 다음 세션에서 그대로 붙여넣어 빌드 가드 시작 (2026-05-21 보강: SDD+TDD 방법론 + 페이즈별 PR 분리 + 끝까지 완벽 검증 — 사용자 지시):
 
 ```
-/goal Panelyst(glasshat) Arize 트랙 제품이 실제 빌드·배포되어 완성된 상태. SDD+TDD로 구성하고 페이즈별 PR로 분리하며 끝까지 완벽 검증. 대화에 surface된 증거로 전부 입증할 때만 달성: (0) 방법론 — SDD: 각 컴포넌트는 docs/ 스펙(architecture·rubric-synthesis-spec·hybrid-mode-spec)에서 도출한 타입/스키마/계약(OpenAPI 등)을 먼저 확정 후 구현. TDD: 모든 단위는 실패테스트 먼저(red)→최소구현(green)→리팩터; 테스트가 구현보다 먼저 커밋된 git 순서 또는 커버리지로 입증. (1) 페이즈별 PR: 빌드 페이즈(packages{shared,rubric} → services/shared{llm,retrieval} → ingest+에이전트 파이프라인 → apps{api,web} → infra+CI+배포)마다 독립 feature 브랜치→PR→main 머지(squash 금지). 단일 mega-PR 금지. gh pr list 머지목록으로 페이즈 경계 입증. 각 PR은 CI green(lint/typecheck/test/build) + 해당 페이즈 검증 evidence 없이는 머지 안 함. (2) 빈 scaffold(agents/, apps/web, apps/api, services/{ingest,pipeline-orchestrator,code-grader}, packages/{rubric,shared}, infra/)가 전부 실제 production 코드로 채워짐 — find 출력으로 real-file>0, 핵심 경로 grep "mock|stub|placeholder|TODO|not implemented" 0건. (3) 빌드 green: build exit 0 + 타입체크/lint 통과. 테스트 실패 0건 + .github/workflows CI 존재 + 커버리지 리포트 surface. (4) 실 입력 e2e(mock 없음): 진짜 Vertex Gemini(ADK + GoogleADKInstrumentor OpenInference auto-instrument) + Vertex 임베딩 + in-code hybrid retrieval(코사인+rank-bm25+RRF, weight-aware anchor, Firestore 저장, 503 corpus 시드) + 진짜 Phoenix 트레이스 송신 + 진짜 Phoenix MCP(MCPToolset stdio) 호출 로그 — RubricSynthesizer(공식 룰→25/25/25/25+순서 tie-break)→6-hat→triple audit→Phoenix MCP self-correct 점수변화까지 실행 출력으로 노출. (5) 라이브 배포: Cloud Run(project panelyst-hackathon, us-central1, min=0) URL curl HTTP 200, /judge·/participate 두 뷰포트 응답. (6) 3D self-correction: SSE로 6-hat 점수 self-correct + 3D 그래프(PCA/UMAP) 재형성이 실제 파이프라인 출력으로 구동됨을 로그/스크린샷으로 surface. (7) 최종 완벽 검증: 전체 e2e 재실행 통과 + 모든 페이즈 PR 머지 + CI green + 배포 200 동시 입증. README Arize 단독 재서술(Qdrant dual-claim 제거, dual-rubric variance 기능 유지) + 배포 링크 + 재현 가이드. 제약: AI는 Gemini/Google 전용(OpenAI/Anthropic 금지); Qdrant 미사용(Vertex+in-code); 오케스트레이터=ADK; GCP=app.2weeks@gmail.com/billing 크레딧계정; 프로덕션 서버·타 프로젝트 미관여; .env 사용자 확인없이 수정금지(Secret Manager); 잠근 결정(스코어링·Qdrant제거·Google전용AI·ADK) 우선; mock/stub 금지; feature 브랜치+squash 금지; 시작 전 git pull. 데모영상 녹화 제외.
+/goal Panelyst(glasshat) Arize 트랙 제품이 실제 빌드·배포되어 완성된 상태. SDD+TDD로 구성하고 페이즈별 PR로 분리하며 끝까지 완벽 검증. 대화에 surface된 증거로 전부 입증할 때만 달성: (0) 방법론 — SDD: 각 컴포넌트는 docs/ 스펙(architecture·rubric-synthesis-spec·hybrid-mode-spec)에서 도출한 타입/스키마/계약(OpenAPI 등)을 먼저 확정 후 구현. TDD: 모든 단위는 실패테스트 먼저(red)→최소구현(green)→리팩터; 테스트가 구현보다 먼저 커밋된 git 순서 또는 커버리지로 입증. (1) 페이즈별 PR: 빌드 페이즈(packages{shared,rubric} → services/shared{llm,retrieval} → ingest+에이전트 파이프라인 → apps{api,web} → infra+CI+배포)마다 독립 feature 브랜치→PR→main 머지(squash 금지). 단일 mega-PR 금지. gh pr list 머지목록으로 페이즈 경계 입증. 각 PR은 CI green(lint/typecheck/test/build) + 해당 페이즈 검증 evidence 없이는 머지 안 함. (2) 빈 scaffold(agents/, apps/web, apps/api, services/{ingest,pipeline-orchestrator,code-grader}, packages/{rubric,shared}, infra/)가 전부 실제 production 코드로 채워짐 — find 출력으로 real-file>0, 핵심 경로 grep "mock|stub|placeholder|TODO|not implemented" 0건. (3) 빌드 green: build exit 0 + 타입체크/lint 통과. 테스트 실패 0건 + .github/workflows CI 존재 + 커버리지 리포트 surface. (4) 실 입력 e2e(mock 없음): 진짜 Vertex Gemini(ADK + GoogleADKInstrumentor OpenInference auto-instrument) + Vertex 임베딩 + in-code hybrid retrieval(코사인+rank-bm25+RRF, weight-aware anchor, Firestore 저장, 503 corpus 시드) + 진짜 Phoenix 트레이스 송신 + 진짜 Phoenix MCP(MCPToolset stdio) 호출 로그 — RubricSynthesizer(공식 룰→25/25/25/25+순서 tie-break)→6-hat→triple audit→Phoenix MCP self-correct 점수변화까지 실행 출력으로 노출. (5) 라이브 배포: Cloud Run(project panelyst-hackathon, us-central1, min=0) URL curl HTTP 200, /judge·/participate 두 뷰포트 응답. (6) 3D self-correction: SSE로 6-hat 점수 self-correct + 3D 그래프(PCA/UMAP) 재형성이 실제 파이프라인 출력으로 구동됨을 로그/스크린샷으로 surface. (7) 최종 완벽 검증: 전체 e2e 재실행 통과 + 모든 페이즈 PR 머지 + CI green + 배포 200 동시 입증. README Arize 단독 재서술(Qdrant dual-claim 제거, dual-rubric variance 기능 유지) + 배포 링크 + 재현 가이드. 제약: AI는 Gemini/Google 전용(OpenAI/Anthropic 금지); Qdrant 미사용(Vertex+in-code); 오케스트레이터=ADK; GCP=[REDACTED-EMAIL]/billing 크레딧계정; 프로덕션 서버·타 프로젝트 미관여; .env 사용자 확인없이 수정금지(Secret Manager); 잠근 결정(스코어링·Qdrant제거·Google전용AI·ADK) 우선; mock/stub 금지; feature 브랜치+squash 금지; 시작 전 git pull. 데모영상 녹화 제외.
 ```
 
 ---
@@ -71,16 +71,16 @@
 
 | 자원 | 값 |
 |---|---|
-| GCP 활성 계정 | `app.2weeks@gmail.com` |
+| GCP 활성 계정 | `[REDACTED-EMAIL]` |
 | 프로젝트 | `panelyst-hackathon` |
 | 리전 | `us-central1` |
-| 결제 | `01B677-A6E5C9-B265AF` ("크레딧계정", open, 연결됨) |
+| 결제 | `[REDACTED-BILLING-ID]` ("크레딧계정", open, 연결됨) |
 | ADC | 이 머신엔 존재 (`~/.config/gcloud/application_default_credentials.json`) |
 | 활성 API | run, aiplatform(Vertex), artifactregistry, cloudbuild, secretmanager |
 | 배포 | Cloud Run, `min-instances=0` |
 
 **다른 컴퓨터에서 해야 할 환경 셋업** (git으로 안 옴):
-- `gcloud auth login` + `gcloud auth application-default login` (계정 app.2weeks@gmail.com), `gcloud config set project panelyst-hackathon`.
+- `gcloud auth login` + `gcloud auth application-default login` (계정 [REDACTED-EMAIL]), `gcloud config set project panelyst-hackathon`.
 - `.env`는 gitignored — `.env.example` 기준으로 재생성, secret은 Secret Manager.
 - Phoenix Cloud(app.phoenix.arize.com) 가입 + API key (또는 self-host).
 - `spikes/.venv`는 uv-managed, 머신 로컬 — 새 머신에선 `uv sync` 재생성.
