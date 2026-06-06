@@ -1,0 +1,69 @@
+{
+  "_schema_version": "0.1.0",
+  "_filled_ratio": 1.0,
+  "project_name": "Glasshat",
+  "project_one_liner": "The audit layer for AI evaluation — every judgment becomes a traceable, self-correcting span you can open in Arize AX.",
+  "audience": "hackathon-judges",
+  "runtime_seconds": 180,
+  "narrative_arc": "problem-first",
+  "hero_copy": "Trace it. Trust it.",
+  "hero_pattern": "stop-start",
+  "color_palette": "oklch-warm-gold",
+  "tone": "agro-drop-thrill",
+  "judging_criteria": [
+    { "name": "technical-implementation", "weight": 0.3 },
+    { "name": "innovation-creativity", "weight": 0.25 },
+    { "name": "arize-partner-integration", "weight": 0.25 },
+    { "name": "impact-completeness", "weight": 0.2 }
+  ],
+  "prize_categories": [
+    "Google Cloud Rapid Agent Hackathon — Arize track",
+    "Best use of Arize AX observability",
+    "Best agent on the Gemini Enterprise Agent Platform"
+  ],
+  "key_visuals": [
+    "chain: submission -> AI judge -> score -> ? (the ? pulses red — nobody audits it)",
+    "audit reversal: score -> audit -> corrected score (green)",
+    "constellation grid of cyan trace spans = the gallery-hero at F4",
+    "counter roll 0 -> 104 spans in one evaluation",
+    "ADK 2.0 Workflow hierarchy: Ingest -> RubricSynth -> Planner -> 6-hat ParallelAgent -> Join -> Audit -> Score -> Report",
+    "live RunRecord JSON filling beside the synthesized rubric",
+    "six-hat panel: White Red Yellow Black Green Blue, YELLOW running hot",
+    "triple-pane audit moment: panel 9.0 -> audit (calibration prior, clip math) -> score 7.6",
+    "terminal client.spans.list(project='glasshat') -> nested span tree; rank-flip board with hit@13 0.6154"
+  ],
+  "constraints": [
+    "English-only on every artifact; no marketing superlatives.",
+    "Hero 'Trace it. Trust it.' is sacred — verbatim at F4 primary, F11 echo, and close.",
+    "Honesty rails: never 'un-gameable'; never '503 anchors'; hit@13 0.6154 is a binary Winner-label metric, NOT a rank curve (audit Delta = 0 on this golden set).",
+    "State which path is which: the public Cloud Run demo runs the deterministic spike-D prior with SCORING_MODE=legacy (AGENT_RUNTIME=python, parity-identical); the genuine live Arize AX results are the credentialed Agent Engine run.",
+    "Model is Gemini 3.1 Flash-Lite via Vertex AI — do not claim a different model.",
+    "F4 hero holds >= 5s; every timestamp rolls up to 180s; SLIDE_DURATION sums to 180s of frame budget.",
+    "Modifier-key guard 'if(e.metaKey||e.ctrlKey||e.altKey)return;' present; recording mode hides all chrome."
+  ],
+  "backup_variants": [
+    "If the live AX trace is unavailable at record time, show the captured ax-live-capture.json (re-runnable) and say so.",
+    "Honest fallback line for the calibration beat: 'On this golden set the audit did not reorder the top-13 (Delta = 0); the value is the observable, bounded correction — not a rank flip claim.'"
+  ],
+  "_facts_verified": {
+    "agent_engine_resource": "projects/916178791322/locations/us-central1/reasoningEngines/7480191458771730432 (serving; stream_query returns a real RunRecord with a live final_score)",
+    "arize_trace": "OpenInference/OTLP -> Arize AX (otlp.arize.com): full nested trace tree (agent -> Workflow -> 6 hats' Gemini calls), 104 spans verified via client.spans.list(project='glasshat')",
+    "arize_experiment": "glasshat-hit-at-13-gemini over dataset glasshat-golden + glasshat-prompt-injection code evaluator; hit@13 = 0.6154 on real Gemini (8 of 13 historical winners in top-13) vs 0.3846 mock / 0.26 chance; binary Winner-label, audit Delta = 0",
+    "adk_workflow_stages": "input_guard -> ingest -> synthesize -> plan -> hats_enter -> [6 hats parallel group] -> six_hat_join -> hats_gather -> audit -> score -> persist (genuine ADK 2.0 Workflow graph, FunctionNode spine + JoinNode)",
+    "calibration_formula": "clip(score - 0.8*mean_delta, p25, p75) with a +/-2.0 cap; mean_delta strongest where evidence is thin (low-evidence bucket 1.453)",
+    "sample_scores": "raw panel consensus 9.0 -> audited/corrected 7.6 (SSE score_corrected to:7.6)",
+    "model": "Gemini 3.1 Flash-Lite via Vertex AI, orchestrated with Google ADK 2.0",
+    "license": "Apache-2.0",
+    "repo": "github.com/Two-Weeks-Team/glasshat",
+    "demo_path_caveat": "public Cloud Run demo = deterministic spike-D prior, SCORING_MODE=legacy, AGENT_RUNTIME=python (parity-identical RunRecord + SSE, gated default); genuine ADK Workflow + live AX results = credentialed Agent Engine run"
+  },
+  "_palette_override": {
+    "note": "Schema color_palette enum lacks our custom dark scheme; oklch-warm-gold selected as nearest valid value, but the deck uses the locked dark-oklch cinematic palette below (purple->cyan->green, bright-cyan hero accent, NOT gold).",
+    "bg": "oklch(0.12 0.02 285)",
+    "problem_judge": "oklch(0.72 0.18 290) violet",
+    "failure": "oklch(0.70 0.20 25) red",
+    "pivot_trust_payoff": "oklch(0.78 0.16 155) green",
+    "architecture_trace_arize": "oklch(0.80 0.12 220) cyan",
+    "hero_accent": "oklch(0.85 0.13 200) bright cyan"
+  }
+}

@@ -1,0 +1,1655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Glasshat · Cinematic Demo Deck — record-ready (180s · animated)</title>
+<style>
+  :root{
+    /* Dark oklch cinematic — purple → cyan → green. Hero accent = bright cyan (NOT gold). */
+    --bg:        oklch(0.12 0.02 285);
+    --bg-2:      oklch(0.16 0.025 285);
+    --surface:   oklch(0.20 0.03 285);
+    --surface-2: oklch(0.26 0.035 285);
+    --line:      oklch(0.32 0.04 285);
+    --text:      oklch(0.96 0.01 285);
+    --muted:     oklch(0.68 0.02 285);
+    /* Remapped tokens so the ported CSS reads in the new hue axis:
+       --warm / --gold  = hero bright-cyan accent
+       --cool           = cyan (audit · trace · Arize)
+       --green          = green (pivot · trust · payoff)
+       --violet         = violet (problem · judge)
+       --red            = red (failure) */
+    --warm:      oklch(0.82 0.13 205);
+    --warm-deep: oklch(0.70 0.13 210);
+    --gold:      oklch(0.85 0.13 200);
+    --cool:      oklch(0.80 0.12 220);
+    --green:     oklch(0.78 0.16 155);
+    --violet:    oklch(0.72 0.18 290);
+    --red:       oklch(0.70 0.20 25);
+    --pink:      oklch(0.74 0.16 330);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#000;color:var(--text);font:14px/1.55 ui-sans-serif,-apple-system,Inter,"Apple SD Gothic Neo",sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
+  body{height:100vh;width:100vw}
+  code{font-family:ui-monospace,"SF Mono",Menlo,monospace;background:var(--bg-2);padding:1px 6px;border-radius:4px;font-size:.94em;border:1px solid var(--line)}
+
+  /* DECK + SLIDE FRAMING */
+  .deck{position:relative;width:100vw;height:100vh;overflow:hidden}
+  .slide{
+    position:absolute;inset:0;display:grid;grid-template-rows:54px 1fr 44px;
+    background:var(--bg);
+    opacity:0;visibility:hidden;transform:scale(.985);
+    transition:opacity .42s ease, visibility .42s, transform .55s ease
+  }
+  .slide.active{opacity:1;visibility:visible;transform:scale(1);z-index:5}
+  .slide.prev{transform:scale(.985) translateX(-2vw);z-index:1}
+
+  /* TOP BAR */
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0 28px;border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,var(--bg-2),var(--bg));
+    font-family:ui-monospace,monospace;font-size:11.5px;letter-spacing:.08em;color:var(--muted);
+  }
+  .topbar .time{color:var(--cool);font-weight:700}
+  .topbar .id{color:var(--text);font-weight:700;letter-spacing:.18em}
+  .topbar .right{display:flex;gap:18px;align-items:center}
+  .topbar .counter{color:var(--gold);font-weight:700;letter-spacing:.16em}
+  .topbar .esc{color:var(--muted);font-size:11px;letter-spacing:.12em}
+
+  /* BODY (split: canvas + script) */
+  .body{display:grid;grid-template-columns:62fr 38fr;gap:0;min-height:0}
+  .canvas-wrap{
+    display:grid;place-items:center;padding:32px;border-right:1px solid var(--line);
+    background:radial-gradient(ellipse at center, oklch(0.15 0.03 285), #000 75%);
+    min-height:0;overflow:hidden
+  }
+  .script-wrap{
+    display:flex;flex-direction:column;justify-content:center;
+    padding:42px 44px;gap:18px;background:var(--bg-2);min-height:0;overflow:auto
+  }
+  .script-wrap .meta-tag{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .script-wrap h2{font-family:ui-serif,Georgia,"Apple SD Gothic Neo",serif;font-size:42px;font-weight:800;line-height:1.05;letter-spacing:-.02em;color:var(--text)}
+  .script-wrap .vo{
+    font-style:italic;font-size:20px;line-height:1.55;color:oklch(0.94 0.02 285);
+    border-left:3px solid var(--cool);padding:6px 0 6px 18px;
+    font-family:ui-serif,Georgia,"Apple SD Gothic Neo",serif
+  }
+  .script-wrap .vo b{color:var(--gold);font-style:italic;font-weight:800}
+  .script-wrap .vo i{color:var(--text)}
+  .script-wrap .vo::before{content:"VO";display:block;font-style:normal;font-family:ui-monospace,monospace;color:var(--cool);font-size:10px;letter-spacing:.24em;margin-bottom:8px;font-weight:800}
+  .script-wrap .stage{
+    background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;
+    font-size:12.5px;line-height:1.55;color:oklch(0.86 0.02 285)
+  }
+  .script-wrap .stage b{color:var(--red);font-weight:700;letter-spacing:.04em}
+  .script-wrap .stage .tone{display:block;margin-top:6px;font-size:11px;color:var(--muted);font-family:ui-monospace,monospace;letter-spacing:.04em}
+
+  /* BOTTOM NAV BAR */
+  .navbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0 24px;border-top:1px solid var(--line);
+    background:var(--bg-2);
+    font-family:ui-monospace,monospace;font-size:11.5px;color:var(--muted)
+  }
+  .navbar .keys{display:flex;gap:14px;align-items:center}
+  .navbar .keys kbd{background:var(--bg);border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:1.5px 7px;color:var(--text);font-size:11px;font-family:ui-monospace,monospace}
+  .navbar .progress{flex:1;margin:0 22px;height:3px;background:var(--bg);border-radius:2px;overflow:hidden;position:relative}
+  .navbar .progress i{display:block;height:100%;background:linear-gradient(90deg,var(--violet),var(--cool),var(--green));transition:width .4s ease}
+  .navbar .nav-btn{cursor:pointer;color:var(--muted);user-select:none;padding:4px 10px;border-radius:5px}
+  .navbar .nav-btn:hover{color:var(--gold);background:var(--bg)}
+
+  /* HEADER ECHO — hero phrase ribbon at top of every slide */
+  .echo{position:absolute;left:50%;top:54px;transform:translateX(-50%);
+    background:linear-gradient(180deg,oklch(0.22 0.06 205 / .6),transparent);
+    padding:5px 22px;border-bottom-left-radius:8px;border-bottom-right-radius:8px;
+    font-family:ui-serif,Georgia,serif;font-style:italic;font-size:11.5px;letter-spacing:.04em;color:oklch(0.86 0.06 205);z-index:6;pointer-events:none;opacity:.6}
+  .echo i{color:var(--gold);font-weight:700}
+
+  /* ============ COVER SLIDE ============ */
+  .slide.cover{grid-template-rows:54px 1fr 44px}
+  .slide.cover .body{grid-template-columns:1fr;background:radial-gradient(ellipse at center, oklch(0.24 0.08 290 / .35), #000 75%)}
+  .slide.cover .canvas-wrap{border-right:0;background:transparent;padding:30px}
+  .cover-content{text-align:center;max-width:1000px}
+  .cover-eyebrow{font-family:ui-monospace,monospace;font-size:11.5px;letter-spacing:.32em;color:var(--gold);font-weight:700;margin-bottom:24px}
+  .cover-title{font-family:ui-serif,Georgia,"Apple SD Gothic Neo",serif;font-size:78px;font-weight:800;letter-spacing:-.03em;line-height:1;color:var(--text);margin-bottom:14px}
+  .cover-sub{font-size:18px;color:var(--muted);margin-bottom:40px;letter-spacing:.02em}
+  .cover-hero{
+    font-family:ui-serif,Georgia,"Apple SD Gothic Neo",serif;
+    font-size:80px;font-weight:800;letter-spacing:-.03em;line-height:1.05;
+    color:var(--text);margin:30px 0 16px;
+    text-shadow:0 0 40px oklch(0.82 0.13 205 / .35)
+  }
+  .cover-hero i{color:var(--gold);font-style:italic;font-weight:800;text-shadow:0 0 50px oklch(0.85 0.13 200 / .6)}
+  .cover-tag{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted);letter-spacing:.18em;margin-top:14px}
+  .cover-meta{margin-top:52px;display:flex;gap:24px;justify-content:center;flex-wrap:wrap;font-size:12px;color:var(--muted);font-family:ui-monospace,monospace}
+  .cover-meta div{padding:8px 16px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+  .cover-meta b{color:var(--gold)}
+  .cover-chips{margin-top:22px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  .cover-chips span{font-family:ui-monospace,monospace;font-size:11.5px;letter-spacing:.06em;color:var(--cool);border:1px solid var(--cool);background:oklch(0.26 0.08 220 / .35);padding:5px 12px;border-radius:99px}
+  .cover-cta{margin-top:30px;color:var(--cool);font-size:13px;font-family:ui-monospace,monospace;letter-spacing:.22em;animation:blink 1.6s ease-in-out infinite}
+  @keyframes blink{0%,100%{opacity:.4}50%{opacity:1}}
+
+  /* ============ HERO SLIDE (F4) — full immersive ============ */
+  .slide.hero .body{grid-template-columns:1fr}
+  .slide.hero .canvas-wrap{border-right:0;padding:0;position:relative}
+  .slide.hero .script-wrap{display:none}
+  .hero-canvas-full{position:absolute;inset:0;background:linear-gradient(180deg,#08101a,#000)}
+  .hero-canvas-full .grid{position:absolute;inset:8% 6%;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(5,1fr);gap:6px}
+  .hero-canvas-full .tile{border-radius:5px;border:1px solid rgba(120,200,255,.10);position:relative;overflow:hidden}
+  .hero-canvas-full .tile::after{content:"";position:absolute;inset:0;background:linear-gradient(135deg,transparent 40%,rgba(140,220,255,.10) 50%,transparent 60%)}
+  .hero-canvas-full .tile::before{content:"";position:absolute;left:6px;top:6px;width:5px;height:5px;border-radius:50%;background:oklch(0.85 0.13 205 / .8);box-shadow:0 0 8px oklch(0.85 0.13 205 / .7)}
+  .hero-canvas-full::before{
+    content:"";position:absolute;left:0;right:0;top:30%;bottom:30%;
+    background:radial-gradient(ellipse at center,rgba(0,0,0,.86) 35%,transparent 80%);z-index:5
+  }
+  .hero-canvas-full .lab{
+    position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;z-index:8;
+    color:#fff;font-family:ui-serif,Georgia,"Apple SD Gothic Neo",serif;
+    font-size:104px;font-weight:800;letter-spacing:-.03em;line-height:1.05;
+    text-shadow:0 6px 50px #000, 0 0 32px oklch(0.82 0.13 205 / .35)
+  }
+  .hero-canvas-full .lab i{color:var(--gold);font-style:italic;font-weight:800;text-shadow:0 0 48px oklch(0.85 0.13 200 / .7)}
+  .hero-canvas-full .echo-mini{position:absolute;left:0;right:0;top:calc(50% + 70px);text-align:center;color:oklch(0.78 0.06 205);font-size:13.5px;letter-spacing:.40em;text-transform:uppercase;font-family:ui-monospace,monospace;z-index:8;font-weight:700}
+  .hero-canvas-full .vo-overlay{
+    position:absolute;left:50%;bottom:60px;transform:translateX(-50%);z-index:10;
+    background:rgba(0,0,0,.65);border:1px solid var(--cool);
+    padding:14px 24px;border-radius:10px;
+    font-family:ui-serif,Georgia,serif;font-style:italic;font-size:18px;color:#eee;
+    backdrop-filter:blur(6px)
+  }
+  .hero-canvas-full .vo-overlay::before{content:"VO  ";font-style:normal;font-family:ui-monospace,monospace;color:var(--cool);font-size:10px;letter-spacing:.24em;font-weight:800}
+  .hero-canvas-full .vo-overlay b{color:var(--gold);font-weight:800}
+
+  /* ============ CLOSING SLIDE ============ */
+  .slide.close .body{grid-template-columns:1fr;background:radial-gradient(ellipse at 50% 35%, oklch(0.22 0.06 155 / .35), #000 75%)}
+  .slide.close .canvas-wrap{border-right:0;background:transparent;padding:30px}
+  .close-content{text-align:center;max-width:900px}
+  .close-stat{font-family:ui-serif,Georgia,serif;font-size:28px;color:var(--muted);margin-bottom:8px;letter-spacing:.04em}
+  .close-stat b{color:var(--text);font-weight:800;font-style:italic}
+  .close-h{font-family:ui-serif,Georgia,serif;font-size:68px;font-weight:800;line-height:1.05;letter-spacing:-.02em;margin:24px 0 14px}
+  .close-h i{color:var(--gold);font-style:italic}
+  .close-checks{margin:36px auto 24px;display:grid;grid-template-columns:repeat(2,1fr);gap:10px;max-width:780px;text-align:left}
+  .close-checks div{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:11px 16px;font-size:13px;color:oklch(0.86 0.02 285)}
+  .close-checks div::before{content:"✓ ";color:var(--green);font-weight:800}
+  .close-call{margin-top:24px;font-family:ui-monospace,monospace;font-size:14px;color:var(--gold);letter-spacing:.18em}
+  .close-note{margin-top:14px;color:var(--muted);font-size:11.5px;font-family:ui-monospace,monospace;letter-spacing:.02em;line-height:1.6;max-width:760px;margin-left:auto;margin-right:auto}
+
+  /* ============ INDEX OVERVIEW (Esc) ============ */
+  .overview{position:fixed;inset:0;background:rgba(0,0,0,.92);backdrop-filter:blur(16px);display:none;z-index:50;padding:36px 40px;overflow-y:auto}
+  .overview.show{display:block}
+  .overview h3{font-family:ui-serif,Georgia,serif;font-size:24px;margin-bottom:6px;letter-spacing:-.01em}
+  .overview .ovsub{color:var(--muted);font-size:12.5px;margin-bottom:24px;font-family:ui-monospace,monospace;letter-spacing:.06em}
+  .ov-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .ov-tile{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;cursor:pointer;transition:transform .15s, border-color .15s;min-height:140px;display:flex;flex-direction:column;gap:8px}
+  .ov-tile:hover{border-color:var(--cool);transform:translateY(-2px)}
+  .ov-tile .ov-num{font-family:ui-monospace,monospace;color:var(--gold);font-size:11px;letter-spacing:.18em;font-weight:800}
+  .ov-tile .ov-time{font-family:ui-monospace,monospace;color:var(--cool);font-size:11px}
+  .ov-tile .ov-title{font-family:ui-serif,Georgia,serif;font-size:16px;font-weight:700;line-height:1.2;margin-top:auto}
+  .ov-tile .ov-line{font-style:italic;color:var(--muted);font-size:11.5px;line-height:1.45}
+
+  /* ============================================ */
+  /* CANVAS-SPECIFIC */
+  /* ============================================ */
+  .canvas-frame{
+    width:min(100%, calc((100vh - 200px) * 16 / 9));
+    aspect-ratio:16/9;background:#000;position:relative;overflow:hidden;
+    border:1px solid var(--line);border-radius:10px;box-shadow:0 26px 90px rgba(0,0,0,.6)
+  }
+  .canvas-frame .speed{position:absolute;left:14px;bottom:14px;background:rgba(0,0,0,.7);color:var(--cool);font-family:ui-monospace,monospace;font-size:13px;padding:4px 10px;border-radius:5px;border:1px solid var(--cool);z-index:30}
+
+  /* SHARED HEADING (F1/F2/F3) */
+  .c-f1 .h, .c-f2 .h, .c-f3 .h{
+    position:absolute;top:9%;left:4%;right:4%;text-align:center;
+    color:#fff;font-family:ui-serif,Georgia,"Apple SD Gothic Neo",serif;
+    font-size:clamp(40px, 5.4vw, 80px);font-weight:800;letter-spacing:-.02em;line-height:1.05;
+    z-index:8
+  }
+  .c-f1 .h .accent{color:var(--violet);font-style:italic;text-shadow:0 0 38px oklch(0.72 0.18 290 / .6)}
+  .c-f2 .h .accent{color:var(--red);font-weight:800;text-shadow:0 0 38px oklch(0.70 0.20 25 / .55)}
+  .c-f3 .h .accent{color:var(--green);font-style:italic;text-shadow:0 0 38px oklch(0.78 0.16 155 / .6)}
+  .c-f1 .h{text-shadow:0 0 32px oklch(0.72 0.18 290 / .25)}
+  .c-f2 .h{text-shadow:0 0 32px oklch(0.70 0.20 25 / .25)}
+  .c-f3 .h{text-shadow:0 0 32px oklch(0.78 0.16 155 / .25)}
+
+  /* F1 — cold problem (violet) */
+  .c-f1{background:radial-gradient(circle at 50% 50%,oklch(0.18 0.05 290),#000 75%)}
+  .c-f1 .arrow{position:absolute;top:48%;left:6%;right:6%;display:flex;align-items:center;gap:12px;justify-content:space-between}
+  .c-f1 .blk{flex:1;border:2px solid oklch(0.55 0.10 290);color:oklch(0.86 0.06 290);font-family:ui-monospace,monospace;font-size:21px;text-align:center;padding:22px 0;border-radius:10px;background:oklch(0.30 0.08 290 / .18)}
+  .c-f1 .blk.q{border-color:var(--red);color:var(--red);background:oklch(0.30 0.18 25 / .25);font-size:48px;flex:0 0 16%}
+  @keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+  .c-f1 .arr{color:oklch(0.55 0.06 290);font-size:24px}
+
+  /* F2 — failure pattern (red strikethrough) */
+  .c-f2{background:#0c0810}
+  .c-f2 .stack{position:absolute;left:50%;top:36%;transform:translateX(-50%);display:flex;flex-direction:column;gap:11px;width:66%}
+  .c-f2 .row{background:oklch(0.22 0.03 285);border:1px solid var(--line);border-radius:10px;padding:14px 22px;color:#bbb;font-size:18px;display:flex;justify-content:space-between;align-items:center;text-decoration:line-through;text-decoration-color:var(--red);text-decoration-thickness:2.5px}
+  .c-f2 .row .v{color:var(--red);font-family:ui-monospace,monospace;font-size:13.5px;text-decoration:none}
+
+  /* F3 — pivot (green) */
+  .c-f3{background:radial-gradient(circle at 50% 50%,oklch(0.20 0.06 155),#000 75%)}
+  .c-f3 .arrow{position:absolute;top:52%;left:8%;right:8%;display:flex;align-items:center;gap:14px;justify-content:space-between}
+  .c-f3 .blk{flex:1;border:2px solid var(--green);color:var(--green);font-family:ui-monospace,monospace;font-size:22px;text-align:center;padding:22px 0;border-radius:10px;background:oklch(0.30 0.10 155 / .15);font-weight:700}
+  .c-f3 .blk.first{background:oklch(0.30 0.10 155 / .35);box-shadow:0 0 36px oklch(0.50 0.15 155 / .4)}
+  .c-f3 .arr{color:oklch(0.50 0.10 155);font-size:26px}
+
+  /* F5 — kick (cyan counter) */
+  .c-f5{background:#000}
+  .c-f5 .count{position:absolute;left:0;right:0;top:34%;text-align:center;font-size:200px;font-weight:800;color:var(--cool);text-shadow:0 0 90px oklch(0.80 0.12 220 / .6);font-family:ui-monospace,monospace;letter-spacing:-.04em;line-height:1}
+  .c-f5 .lbl{position:absolute;left:0;right:0;top:18%;text-align:center;color:#bbb;font-size:18px;letter-spacing:.20em;text-transform:uppercase}
+  .c-f5 .breakdown{position:absolute;left:0;right:0;bottom:14%;text-align:center;color:#9aa;font-size:14.5px;font-family:ui-monospace,monospace;letter-spacing:.06em}
+
+  /* F6 — architecture (cyan/violet) */
+  .c-f6{background:linear-gradient(180deg,#06080f,#000)}
+  .c-f6 svg{width:100%;height:100%;display:block}
+  .c-f6 .lbl{position:absolute;top:5.5%;left:0;right:0;text-align:center;color:var(--cool);font-size:15px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;z-index:5}
+  .c-f6 .foot{position:absolute;bottom:5%;left:0;right:0;text-align:center;color:var(--green);font-size:12.5px;font-family:ui-monospace,monospace;letter-spacing:.04em;z-index:5}
+
+  /* F7 — socratic (green pivot) */
+  .c-f7{background:#0a0f0c}
+  .c-f7 .editor{position:absolute;inset:6% 4%;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .c-f7 .left{padding:18px;background:#0f1512;border-radius:10px;border:1px solid #1a241c;display:flex;flex-direction:column;gap:8px}
+  .c-f7 .left .pf{font-family:ui-monospace,monospace;font-size:13.5px;color:#9ad2a6}
+  .c-f7 .left .modal{background:#152019;border:1px solid #243a2c;border-radius:10px;padding:14px;color:#cfe6d6;font-size:13.5px;margin-top:4px}
+  .c-f7 .left .modal h4{font-size:12.5px;color:var(--cool);margin-bottom:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:700}
+  .c-f7 .left .modal .opt{padding:8px 12px;border:1px solid #243a2c;border-radius:6px;margin:5px 0;background:#1a2820;font-family:ui-monospace,monospace;font-size:12.5px}
+  .c-f7 .left .modal .opt.sel{background:oklch(0.30 0.10 155 / .4);border-color:var(--green);color:#cfeed8;font-weight:700}
+  .c-f7 .right{padding:18px;background:#080c0a;border:1px solid #1a241c;border-radius:10px;font-family:ui-monospace,monospace;font-size:13px;color:#bdd;line-height:1.65}
+  .c-f7 .right h5{color:var(--muted);font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-family:ui-sans-serif,sans-serif;margin-bottom:10px}
+  .c-f7 .right .k{color:var(--cool)}
+  .c-f7 .right .s{color:#9c6}
+  .c-f7 .right .ratio{margin-top:12px;color:var(--green);font-weight:700;font-size:13px}
+
+  /* F8 — six-hat panel (violet) */
+  .c-f8{background:#0c0a12}
+  .c-f8 .hats{position:absolute;inset:9% 5%;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:14px}
+  .c-f8 .hat{border-radius:12px;border:1px solid var(--line);background:var(--surface);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:6px;position:relative;overflow:hidden}
+  .c-f8 .hat .dot{width:30px;height:30px;border-radius:50%;border:2px solid #fff3}
+  .c-f8 .hat .nm{font-family:ui-sans-serif,sans-serif;font-size:15px;font-weight:700;color:#fff;letter-spacing:.02em}
+  .c-f8 .hat .role{font-family:ui-monospace,monospace;font-size:10.5px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+  .c-f8 .hat .sc{font-family:ui-monospace,monospace;font-size:30px;font-weight:800;color:var(--cool);line-height:1}
+  .c-f8 .hat.w .dot{background:#f4f4f6}
+  .c-f8 .hat.r .dot{background:var(--red)}
+  .c-f8 .hat.y .dot{background:oklch(0.85 0.16 95)}
+  .c-f8 .hat.k .dot{background:#22242c;border-color:#555}
+  .c-f8 .hat.g .dot{background:var(--green)}
+  .c-f8 .hat.b .dot{background:var(--cool)}
+  .c-f8 .hat.hot{border-color:oklch(0.85 0.16 95);box-shadow:0 0 0 2px oklch(0.85 0.16 95 / .35),0 0 36px oklch(0.85 0.16 95 / .45)}
+  .c-f8 .hat.hot .sc{color:oklch(0.88 0.16 95)}
+  .c-f8 .hat.hot::after{content:"running hot";position:absolute;top:8px;right:10px;font-family:ui-monospace,monospace;font-size:9.5px;letter-spacing:.1em;color:oklch(0.88 0.16 95);text-transform:uppercase}
+
+  /* F9 — triple-pane audit (green payoff) */
+  .c-f9{background:#06080f}
+  .c-f9 .triple{position:absolute;inset:6% 4%;display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:12px}
+  .c-f9 .pane{background:#0d1018;border:1px solid #1a1d28;border-radius:10px;padding:14px;font-family:ui-monospace,monospace;font-size:13.5px;color:#9ab;overflow:hidden;position:relative;line-height:1.55}
+  .c-f9 .pane h5{color:var(--cool);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;font-family:ui-sans-serif,sans-serif;font-weight:700}
+  .c-f9 .pane.panel{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+  .c-f9 .pane.panel .raw{font-size:78px;color:var(--violet);font-weight:800;line-height:1;font-family:ui-monospace,monospace;text-shadow:0 0 36px oklch(0.72 0.18 290 / .45)}
+  .c-f9 .pane.panel .sub{color:#778;font-size:12.5px;margin-top:8px;font-family:ui-sans-serif,sans-serif}
+  .c-f9 .pane.audit .ln{padding:6px 0;border-bottom:1px solid #1a1d28;color:#bcd}
+  .c-f9 .pane.audit .ln.math{color:var(--cool);font-size:12.5px}
+  .c-f9 .pane.audit .yel{color:oklch(0.88 0.16 95)}
+  .c-f9 .pane.score{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+  .c-f9 .pane.score .num{font-size:86px;color:var(--green);font-weight:800;line-height:1;letter-spacing:-.02em;text-shadow:0 0 40px oklch(0.78 0.16 155 / .55);font-family:ui-monospace,monospace}
+  .c-f9 .pane.score .max{color:#666;font-size:18px;margin-top:4px;font-family:ui-sans-serif,sans-serif}
+  .c-f9 .pane.score .gauge{margin-top:14px;width:90%;height:7px;background:#1a1d28;border-radius:99px;overflow:hidden}
+  .c-f9 .pane.score .gauge i{display:block;height:100%;width:76%;background:linear-gradient(90deg,var(--violet),var(--green))}
+  .c-f9 .pane.score .delta{margin-top:12px;color:var(--cool);font-size:12.5px;letter-spacing:.04em}
+
+  /* F10 — terminal + rank-flip browser (cyan payoff) */
+  .c-f10{background:#0a0d12}
+  .c-f10 .term{position:absolute;left:5%;right:53%;top:9%;bottom:9%;background:#070a08;border-radius:8px;padding:16px;font-family:ui-monospace,monospace;font-size:12.5px;color:#a8d8c0;border:1px solid #16201a;line-height:1.7;overflow:hidden}
+  .c-f10 .term .cmd{color:var(--cool)}
+  .c-f10 .term .tree{color:#9bc}
+  .c-f10 .term .tot{color:var(--green);font-weight:700;margin-top:8px}
+  .c-f10 .browser2{position:absolute;left:50%;right:5%;top:9%;bottom:9%;background:#fff;border-radius:8px;overflow:hidden;border:1px solid #ddd;box-shadow:0 24px 80px rgba(0,0,0,.6)}
+  .c-f10 .browser2 .bar{background:#e9e9ed;padding:9px 12px;font-size:12.5px;color:#444;display:flex;align-items:center;gap:8px}
+  .c-f10 .browser2 .bar::before{content:"● ● ●";letter-spacing:4px;color:#bbb;margin-right:8px}
+  .c-f10 .browser2 .url{background:#fff;border:1px solid #d0d0d4;border-radius:5px;padding:4px 9px;color:#222;flex:1;font-family:ui-monospace,monospace;font-size:11.5px}
+  .c-f10 .browser2 .body{padding:14px;background:#f7f8fa;height:100%;color:#111}
+  .c-f10 .browser2 h4{font-size:14px;margin-bottom:10px;color:#111}
+  .c-f10 .flip{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px}
+  .c-f10 .flip .col h6{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#888;margin-bottom:6px}
+  .c-f10 .flip .rk{background:#fff;border:1px solid #e2e2e6;border-radius:5px;padding:8px 10px;margin:5px 0;color:#333;display:flex;justify-content:space-between}
+  .c-f10 .flip .rk.win{border-color:oklch(0.62 0.16 155);background:oklch(0.92 0.06 155);color:#0d3a22;font-weight:700}
+  .c-f10 .chip{position:absolute;left:50%;bottom:3%;transform:translateX(-50%);background:#000;border:1px solid var(--cool);color:var(--cool);font-family:ui-monospace,monospace;font-size:12px;padding:6px 14px;border-radius:99px;z-index:5;white-space:nowrap}
+  .c-f10 .honest{position:absolute;left:50%;bottom:-1px;transform:translateX(-50%);color:var(--muted);font-family:ui-monospace,monospace;font-size:9.5px;letter-spacing:.02em}
+
+  /* F11 — outro (hero cyan) */
+  .c-f11{background:radial-gradient(circle at 50% 60%,oklch(0.20 0.06 205),#000 80%)}
+  .c-f11 .repo{position:absolute;left:6%;right:6%;top:7%;background:#0d1418;border-radius:10px;border:1px solid #1a242a;padding:13px 18px;font-size:14px;color:#aab;font-family:ui-monospace,monospace}
+  .c-f11 .repo b{color:#fff}
+  .c-f11 .badges{position:absolute;left:6%;right:6%;top:22%;display:flex;flex-wrap:wrap;gap:7px}
+  .c-f11 .b{background:#1a2024;border:1px solid #2a3236;color:#cde;padding:5px 10px;border-radius:5px;font-size:12px;font-family:ui-monospace,monospace}
+  .c-f11 .b.warm{background:oklch(0.28 0.10 205);border-color:var(--cool);color:var(--cool)}
+  .c-f11 .b.cool{background:oklch(0.28 0.10 220);border-color:var(--cool);color:var(--cool)}
+  .c-f11 .b.green{background:oklch(0.28 0.10 155);border-color:var(--green);color:var(--green)}
+  .c-f11 .b.violet{background:oklch(0.28 0.12 290);border-color:var(--violet);color:var(--violet)}
+  .c-f11 .install{position:absolute;left:6%;right:6%;top:44%;background:#000;border:1px solid var(--cool);border-radius:10px;padding:16px;font-family:ui-monospace,monospace;color:var(--green);font-size:14px;line-height:1.8}
+  .c-f11 .install .pr{color:#667}
+  .c-f11 .lockup{position:absolute;left:0;right:0;bottom:6%;text-align:center;color:#fff;font-size:20px;font-weight:600;line-height:1.5}
+  .c-f11 .lockup b{color:var(--cool)}
+  .c-f11 .lockup-echo{display:inline-block;margin-top:8px;font-family:ui-serif,Georgia,serif;font-size:26px;font-weight:700;letter-spacing:-.01em;color:var(--gold);text-shadow:0 0 28px oklch(0.85 0.13 200 / .5)}
+  .c-f11 .lockup-echo i{font-style:italic;color:var(--gold)}
+
+  /* responsive */
+  @media (max-width:1100px){
+    .body{grid-template-columns:1fr}
+    .canvas-wrap{border-right:0;border-bottom:1px solid var(--line);min-height:48vh}
+    .script-wrap{padding:24px 26px}
+    .script-wrap h2{font-size:30px}
+    .script-wrap .vo{font-size:16px}
+    .cover-title{font-size:50px}
+    .cover-hero{font-size:54px}
+    .hero-canvas-full .lab{font-size:60px}
+    .ov-grid{grid-template-columns:repeat(2,1fr)}
+    .close-h{font-size:42px}
+    .c-f8 .hats{grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(3,1fr)}
+  }
+  @media (max-width:680px){
+    .topbar{padding:0 14px;font-size:10.5px}
+    .topbar .esc{display:none}
+    .navbar .keys kbd{padding:1.5px 5px;font-size:10px}
+    .cover-title{font-size:36px}
+    .cover-hero{font-size:36px}
+    .hero-canvas-full .lab{font-size:36px}
+    .close-checks{grid-template-columns:1fr}
+  }
+
+  /* ============================================ */
+  /* ============ ANIMATION ENGINE ============== */
+  /* ============================================ */
+  .slide:not(.active) [data-anim]{opacity:0}
+  .slide.active [data-anim]{opacity:0;animation-fill-mode:forwards;animation-timing-function:cubic-bezier(.22,.7,.32,1)}
+
+  .slide.active [data-anim="fade"]    {animation:aFade .55s var(--d,0s) forwards}
+  .slide.active [data-anim="up"]      {animation:aUp .55s var(--d,0s) forwards}
+  .slide.active [data-anim="right"]   {animation:aRight .5s var(--d,0s) forwards}
+  .slide.active [data-anim="pop"]     {animation:aPop .45s var(--d,0s) forwards}
+  .slide.active [data-anim="spawn"]   {animation:aSpawn .42s var(--d,0s) cubic-bezier(.34,1.56,.64,1) forwards}
+  .slide.active [data-anim="glow"]    {animation:aGlow .8s var(--d,0s) forwards}
+  .slide.active [data-anim="strike"]  {animation:aStrike 1.1s var(--d,0s) forwards;text-decoration-color:transparent !important}
+  .slide.active [data-anim="reveal"]  {animation:aReveal .55s var(--d,0s) forwards}
+  .slide.active [data-anim="bloom"]   {animation:aBloom .9s var(--d,0s) forwards}
+  .slide.active [data-anim="land"]    {animation:aLand .6s var(--d,0s) forwards}
+
+  @keyframes aFade   {from{opacity:0}to{opacity:1}}
+  @keyframes aUp     {from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes aRight  {from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:translateX(0)}}
+  @keyframes aPop    {0%{opacity:0;transform:scale(.7)}80%{transform:scale(1.08)}100%{opacity:1;transform:scale(1)}}
+  @keyframes aSpawn  {0%{opacity:0;transform:scale(.5)}100%{opacity:1;transform:scale(1)}}
+  @keyframes aGlow   {0%{opacity:0;filter:brightness(.4)}50%{opacity:1}100%{opacity:1;filter:brightness(1)}}
+  @keyframes aStrike {0%{text-decoration-color:transparent}40%{text-decoration-color:transparent;opacity:.55}100%{text-decoration-color:var(--red);opacity:1}}
+  @keyframes aReveal {0%{opacity:0;clip-path:inset(0 100% 0 0)}100%{opacity:1;clip-path:inset(0 0 0 0)}}
+  @keyframes aBloom  {0%{opacity:0;transform:scale(.85);filter:blur(8px) brightness(.5)}100%{opacity:1;transform:scale(1);filter:blur(0) brightness(1)}}
+  @keyframes aLand   {0%{opacity:0;transform:translateY(60px) scale(.92)}70%{transform:translateY(-6px) scale(1.02)}100%{opacity:1;transform:translateY(0) scale(1)}}
+
+  /* HERO LETTER REVEAL — for F4 hero copy */
+  .hero-letters{display:inline-block}
+  .hero-letters .w{display:inline-block;opacity:0;transform:translateY(.35em) scale(.95);filter:blur(6px)}
+  .slide.active .hero-letters .w{
+    animation:aWord .9s cubic-bezier(.22,.7,.32,1) both;
+    animation-delay:calc(var(--w-d, 1.5s) + var(--n,0) * .14s)
+  }
+  @keyframes aWord{
+    0%{opacity:0;transform:translateY(.35em) scale(.95);filter:blur(6px)}
+    100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}
+  }
+
+  /* TYPEWRITER */
+  .tw{font-family:ui-monospace,monospace;white-space:pre-wrap;word-break:break-word}
+  .tw::after{content:"▎";color:var(--cool);animation:aCaret .8s steps(1) infinite;display:inline-block;margin-left:1px}
+  .tw.done::after{display:none}
+  @keyframes aCaret{50%{opacity:0}}
+
+  /* COUNTER digits */
+  .num-roll{font-variant-numeric:tabular-nums}
+
+  /* F9 SCORE GAUGE recede (9.0→7.6 region) */
+  .slide.active .c-f9 .pane.score .gauge i{
+    width:90% !important;
+    animation:aGaugeRecede 2.2s var(--d,3.4s) cubic-bezier(.65,.05,.36,1) forwards
+  }
+  @keyframes aGaugeRecede{0%{width:90%}100%{width:76%}}
+
+  /* F1 PULSE on ? — starts only when active */
+  .slide:not(.active) .c-f1 .blk.q{animation:none;opacity:0}
+  .slide.active .c-f1 .blk.q{
+    animation:aPop .5s 2.8s forwards, pulse 1.4s 3.5s infinite
+  }
+
+  /* F8 YELLOW glow-hot */
+  .slide.active .c-f8 .hat.hot{
+    animation:aHatHot .7s 1.8s cubic-bezier(.34,1.56,.64,1) forwards
+  }
+  @keyframes aHatHot{
+    0%{box-shadow:0 0 0 0 oklch(0.85 0.16 95 / 0)}
+    100%{box-shadow:0 0 0 2px oklch(0.85 0.16 95 / .35),0 0 36px oklch(0.85 0.16 95 / .45)}
+  }
+
+  /* F6 svg fade-in */
+  .slide.active .c-f6 svg{opacity:0;animation:aFade .8s .2s forwards}
+
+  /* F10 browser slide-in */
+  .slide.active .c-f10 .browser2{
+    transform:translateX(120%);opacity:0;
+    animation:aBrowserSlide .9s 2.2s cubic-bezier(.22,.7,.32,1) forwards
+  }
+  @keyframes aBrowserSlide{0%{transform:translateX(120%);opacity:0}100%{transform:translateX(0);opacity:1}}
+
+  .c-f9 .pane.score .num{font-variant-numeric:tabular-nums;will-change:contents}
+
+  /* ============================================ */
+  /* ============ CONTROL PANEL ================== */
+  /* ============================================ */
+  .ctrl{
+    position:fixed;right:18px;bottom:60px;z-index:40;
+    background:rgba(0,0,0,.78);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;backdrop-filter:blur(10px);
+    display:flex;flex-direction:column;gap:6px;font-family:ui-monospace,monospace;font-size:11px;color:var(--muted)
+  }
+  .ctrl b{color:var(--gold);font-weight:700;letter-spacing:.18em;font-size:9.5px;display:block;margin-bottom:2px}
+  .ctrl button{
+    background:var(--bg-2);border:1px solid var(--line);color:var(--text);
+    padding:5px 10px;border-radius:5px;cursor:pointer;font-family:ui-monospace,monospace;font-size:11px;
+    display:flex;justify-content:space-between;align-items:center;gap:10px;min-width:170px
+  }
+  .ctrl button:hover{border-color:var(--cool);color:var(--cool)}
+  .ctrl button.on{background:oklch(0.30 0.14 155 / .35);border-color:var(--green);color:var(--green)}
+  .ctrl button kbd{background:var(--bg);border:1px solid var(--line);padding:1px 5px;border-radius:3px;font-size:9.5px;color:var(--muted)}
+  .ctrl button.on kbd{color:var(--green);border-color:var(--green)}
+  .timer{
+    color:var(--cool);font-weight:700;text-align:center;letter-spacing:.04em;
+    background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:5px 10px;font-size:13px
+  }
+
+  /* RECORDING MODE — hide chrome, canvas full-bleed.
+     Single 1fr row (NOT 0-height tracks with display:none chrome). */
+  body.rec .topbar,
+  body.rec .navbar,
+  body.rec .echo,
+  body.rec .script-wrap,
+  body.rec .ctrl,
+  body.rec .canvas-frame .speed{display:none !important}
+  body.rec .slide{grid-template-rows:1fr !important}
+  body.rec .slide .body{grid-row:1 !important;grid-template-columns:1fr !important}
+  body.rec .canvas-wrap{padding:0 !important;border:0 !important;background:#000 !important}
+  body.rec .canvas-frame{
+    width:100% !important;height:100% !important;max-width:none;
+    aspect-ratio:auto;border-radius:0;border:0;box-shadow:none
+  }
+  body.rec .slide.cover .canvas-wrap,
+  body.rec .slide.close .canvas-wrap{
+    padding:40px !important;
+    background:radial-gradient(ellipse at center, oklch(0.24 0.08 290 / .35), #000 75%) !important
+  }
+  body.rec .hero-canvas-full{position:absolute;inset:0}
+  /* Floating recording timer (re-shown since .ctrl is hidden) */
+  body.rec #rec-timer{
+    display:flex !important;
+    position:fixed;left:14px;top:14px;z-index:60;
+    background:rgba(0,0,0,.7);color:var(--cool);border:1px solid var(--cool);
+    padding:6px 12px;border-radius:6px;
+    font-family:ui-monospace,monospace;font-size:13px;font-weight:700;letter-spacing:.04em;
+    align-items:center;gap:8px;backdrop-filter:blur(6px)
+  }
+  body.rec #rec-timer::before{content:"●";color:#ff5050;animation:aRec 1s steps(2) infinite}
+  @keyframes aRec{50%{opacity:0}}
+  #rec-timer{display:none}
+  /* Cinematic = absolutely clean canvas. Hide the rec timer too. */
+  body.cinematic #rec-timer{display:none !important}
+
+  /* CINEMATIC MODE — hide on-canvas VO box (canvas-only capture) */
+  body.cinematic .vo-overlay{display:none !important}
+  body.cinematic .echo-mini{opacity:.35}
+
+  /* COUNTDOWN OVERLAY (3 → 2 → 1 → GO) */
+  .countdown{
+    position:fixed;inset:0;z-index:200;display:none;
+    background:rgba(0,0,0,.92);place-items:center;backdrop-filter:blur(8px);
+    font-family:ui-serif,Georgia,serif;color:var(--gold);
+    font-size:240px;font-weight:800;letter-spacing:-.04em;text-align:center;line-height:1
+  }
+  .countdown.show{display:grid}
+  .countdown .num{animation:aCountdown 1s cubic-bezier(.22,.7,.32,1) forwards}
+  @keyframes aCountdown{
+    0%{transform:scale(.4);opacity:0;filter:blur(20px)}
+    25%{transform:scale(1);opacity:1;filter:blur(0)}
+    78%{transform:scale(1);opacity:1;filter:blur(0)}
+    100%{transform:scale(1.6);opacity:0;filter:blur(8px)}
+  }
+  .countdown .num.go{font-size:160px;color:var(--green);text-shadow:0 0 60px oklch(0.78 0.16 155 / .6)}
+  .countdown .label{
+    position:absolute;bottom:60px;left:0;right:0;text-align:center;
+    font-family:ui-monospace,monospace;font-size:14px;color:var(--muted);letter-spacing:.32em;text-transform:uppercase;font-weight:700
+  }
+  .countdown .label b{color:var(--cool)}
+
+  /* DONE OVERLAY */
+  .done-overlay{
+    position:fixed;inset:0;z-index:200;display:none;
+    background:rgba(0,0,0,.85);place-items:center;backdrop-filter:blur(8px);
+    font-family:ui-serif,Georgia,serif;font-weight:800;letter-spacing:-.02em;text-align:center
+  }
+  .done-overlay.show{display:grid;animation:aFade .35s forwards}
+  .done-overlay .big{font-size:88px;color:var(--green);line-height:1.05}
+  .done-overlay .small{margin-top:12px;font-family:ui-monospace,monospace;font-size:13px;color:var(--muted);letter-spacing:.18em;text-transform:uppercase}
+
+  /* PLAY RANGE BUTTON */
+  .ctrl button.play-range{
+    background:oklch(0.30 0.12 205 / .25);border-color:var(--cool);color:var(--cool);
+    font-weight:700
+  }
+  .ctrl button.play-range:hover{background:oklch(0.36 0.12 205 / .4)}
+
+  /* AUTO-ADVANCE INDICATOR */
+  .autoind{
+    position:fixed;left:0;right:0;top:0;height:2px;
+    background:linear-gradient(90deg,var(--violet),var(--cool),var(--green));
+    transform-origin:left;transform:scaleX(0);
+    z-index:60;pointer-events:none;display:none
+  }
+  body.auto .autoind{display:block;animation:aAuto var(--auto-dur,8s) linear forwards}
+  @keyframes aAuto{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+
+  @media print{
+    body,html{overflow:visible;height:auto;background:#fff;color:#111}
+    .deck{height:auto;width:auto}
+    .slide{position:static;display:block;page-break-after:always;opacity:1;visibility:visible;transform:none;height:auto;min-height:100vh}
+    .slide.hero .script-wrap{display:block !important}
+    .navbar,.echo,.cover-cta{display:none}
+  }
+</style>
+</head>
+<body>
+
+<!-- DECK -->
+<div class="deck" id="deck">
+
+  <!-- ============== SLIDE 1: COVER ============== -->
+  <section class="slide cover active" data-slide="1" data-id="cover">
+    <div class="topbar">
+      <span class="time">cover</span>
+      <span class="id">GLASSHAT · CINEMATIC DEMO DECK</span>
+      <span class="right"><span class="counter">01 / 13</span><span class="esc">esc · overview</span></span>
+    </div>
+    <div class="body">
+      <div class="canvas-wrap">
+        <div class="cover-content">
+          <div class="cover-eyebrow">★ Google Cloud Rapid Agent Hackathon · Arize track</div>
+          <div class="cover-title">Glasshat</div>
+          <div class="cover-sub">the audit layer for AI evaluation</div>
+          <div class="cover-hero">Trace it. <i>Trust it.</i></div>
+          <div class="cover-tag">ARIZE TRACK · ADK 2.0 WORKFLOW · AGENT ENGINE</div>
+          <div class="cover-chips">
+            <span>Gemini 3.1 Flash-Lite</span>
+            <span>Google ADK 2.0</span>
+            <span>Arize AX</span>
+            <span>Apache-2.0</span>
+          </div>
+          <div class="cover-meta">
+            <div><b>180 s</b> · runtime</div>
+            <div><b>11</b> · frames</div>
+            <div><b>0:35–1:00</b> · F4 hero</div>
+            <div><b>104</b> · AX spans</div>
+            <div><b>hit@13 0.6154</b></div>
+          </div>
+          <div class="cover-cta">→ press → to begin · press F to play the full 180s</div>
+        </div>
+      </div>
+    </div>
+    <div class="navbar">
+      <span class="keys"><kbd>→</kbd><kbd>space</kbd> next · <kbd>esc</kbd> overview · <kbd>1-9</kbd> jump · <kbd>F</kbd> cinematic</span>
+      <div class="progress"><i style="width:7.7%"></i></div>
+      <span class="nav-btn" data-act="next">next →</span>
+    </div>
+  </section>
+
+  <!-- ============== SLIDE 2: F1 — WHO AUDITS THE JUDGE ============== -->
+  <section class="slide" data-slide="2" data-id="f1">
+    <div class="topbar">
+      <span class="time">0:00 – 0:10</span>
+      <span class="id">F1 · THE AGRO · WHO AUDITS THE JUDGE</span>
+      <span class="right"><span class="counter">02 / 13</span><span class="esc">esc · overview</span></span>
+    </div>
+    <div class="body">
+      <div class="canvas-wrap">
+        <div class="canvas-frame c-f1">
+          <div class="h" data-anim="up" style="--d:.15s">who audits the <span class="accent">judge?</span></div>
+          <div class="arrow">
+            <div class="blk" data-anim="pop" style="--d:1.0s">submission</div>
+            <div class="arr" data-anim="fade" style="--d:1.35s">→</div>
+            <div class="blk" data-anim="pop" style="--d:1.6s">AI judge</div>
+            <div class="arr" data-anim="fade" style="--d:1.95s">→</div>
+            <div class="blk" data-anim="pop" style="--d:2.2s">score</div>
+            <div class="arr" data-anim="fade" style="--d:2.55s">→</div>
+            <div class="blk q">?</div>
+          </div>
+        </div>
+      </div>
+      <div class="script-wrap">
+        <div class="meta-tag">act i · the agro</div>
+        <h2>Nobody audits the score.</h2>
+        <div class="vo">"Every hackathon. Every grant. Every model-as-judge pipeline. Runs on a score <b>nobody audits.</b>"</div>
+        <div class="stage">
+          <b>Delivery:</b> prosecutor opening. No smile. Land each fragment — hackathon · grant · pipeline. Pause before "nobody audits." Point at the pulsing ?.
+          <span class="tone">tone: prosecutor opening</span>
+        </div>
+      </div>
+    </div>
+    <div class="navbar">
+      <span class="nav-btn" data-act="prev">← prev</span>
+      <span class="keys"><kbd>←</kbd> · <kbd>→</kbd> · <kbd>esc</kbd></span>
+      <div class="progress"><i style="width:15.4%"></i></div>
+      <span class="nav-btn" data-act="next">next →</span>
+    </div>
+  </section>
+
+  <!-- ============== SLIDE 3: F2 — FAILURE CASCADE ============== -->
+  <section class="slide" data-slide="3" data-id="f2">
+    <span class="echo">Trace it. <i>Trust it.</i></span>
+    <div class="topbar">
+      <span class="time">0:10 – 0:25</span>
+      <span class="id">F2 · THE INDICTMENT</span>
+      <span class="right"><span class="counter">03 / 13</span><span class="esc">esc · overview</span></span>
+    </div>
+    <div class="body">
+      <div class="canvas-wrap">
+        <div class="canvas-frame c-f2">
+          <div class="h" data-anim="up" style="--d:.15s">confident. fast. <span class="accent">unaccountable.</span></div>
+          <div class="stack">
+            <div class="row" data-anim="strike" style="--d:1.0s"><span>no evidence for the score</span><span class="v">why 9.0?</span></div>
+            <div class="row" data-anim="strike" style="--d:2.0s"><span>no calibration</span><span class="v">vs what?</span></div>
+            <div class="row" data-anim="strike" style="--d:3.0s"><span>no audit trail</span><span class="v">no spans</span></div>
+            <div class="row" data-anim="strike" style="--d:4.0s"><span>can't reproduce it</span><span class="v">run twice ≠</span></div>
+            <div class="row" data-anim="strike" style="--d:5.0s"><span>can't trust it</span><span class="v">black box</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="script-wrap">
+        <div class="meta-tag">act i · the indictment</div>
+        <h2>Worse than a human judge.</h2>
+        <div class="vo">"An AI judge is worse. Confident. Fast. Wrong — <b>with no way to check it.</b>"</div>
+        <div class="stage">
+          <b>Delivery:</b> indictment. Drop pitch on each strikethrough beat as it lands. The em-dash before "with no way to check it" is a held breath. The judge nods.
+          <span class="tone">tone: indictment</span>
+        </div>
+      </div>
+    </div>
+    <div class="navbar">
+      <span class="nav-btn" data-act="prev">← prev</span>
+      <span class="keys"><kbd>←</kbd> · <kbd>→</kbd> · <kbd>esc</kbd></span>
+      <div class="progress"><i style="width:23.1%"></i></div>
+      <span class="nav-btn" data-act="next">next →</span>
+    </div>
+  </section>
+
+  <!-- ============== SLIDE 4: F3 — PIVOT ============== -->
+  <section class="slide" data-slide="4" data-id="f3">
+    <span class="echo">Trace it. <i>Trust it.</i></span>
+    <div class="topbar">
+      <span class="time">0:25 – 0:35</span>
+      <span class="id">F3 · THE PIVOT · AUDIT THE JUDGE</span>
+      <span class="right"><span class="counter">04 / 13</span><span class="esc">esc · overview</span></span>
+    </div>
+    <div class="body">
+      <div class="canvas-wrap">
+        <div class="canvas-frame c-f3">
+          <div class="h" data-anim="up" style="--d:.15s"><span class="accent">audit</span> the judge.</div>
+          <div class="arrow">
+            <div class="blk first" data-anim="bloom" style="--d:1.1s">score</div>
+            <div class="arr" data-anim="fade" style="--d:1.8s">→</div>
+            <div class="blk" data-anim="bloom" style="--d:1.9s">audit</div>
+            <div class="arr" data-anim="fade" style="--d:2.5s">→</div>
+            <div class="blk" data-anim="bloom" style="--d:2.7s">corrected score</div>
+          </div>
+        </div>
+      </div>
+      <div class="script-wrap">
+        <div class="meta-tag">act ii · the pivot</div>
+        <h2>Audit the judgment itself.</h2>
+        <div class="vo">"So we flipped it. Don't only judge the work. <b>Audit the judgment itself.</b>"</div>
+        <div class="stage">
+          <b>Delivery:</b> say "So we flipped it" like you've solved something. Then go quiet. "Audit the judgment itself" lands as a calm statement of fact, not a sales line.
+          <span class="tone">tone: maker who figured it out</span>
+        </div>
+      </div>
+    </div>
+    <div class="navbar">
+      <span class="nav-btn" data-act="prev">← prev</span>
+      <span class="keys"><kbd>←</kbd> · <kbd>→</kbd> · <kbd>esc</kbd></span>
+      <div class="progress"><i style="width:30.8%"></i></div>
+      <span class="nav-btn" data-act="next">next →</span>
+    </div>
+  </section>
+
+  <!-- ============== SLIDE 5: F4 — THE HERO ============== -->
+  <section class="slide hero" data-slide="5" data-id="f4">
+    <div class="topbar">
+      <span class="time">0:35 – 1:00</span>
+      <span class="id">F4 · THE HERO · TRACE IT. TRUST IT.</span>
+      <span class="right"><span class="counter">05 / 13</span><span class="esc">esc · overview</span></span>
+    </div>
+    <div class="body">
+      <div class="canvas-wrap">
+        <div class="hero-canvas-full">
+          <div class="grid">
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.42 0.12 200),oklch(0.22 0.10 200))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.44 0.12 210),oklch(0.24 0.10 210))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.46 0.12 220),oklch(0.26 0.10 220))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.44 0.12 230),oklch(0.24 0.10 230))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.42 0.12 240),oklch(0.22 0.10 240))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.44 0.13 250),oklch(0.24 0.11 250))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.46 0.13 260),oklch(0.26 0.11 260))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.44 0.13 270),oklch(0.24 0.11 270))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.40 0.11 195),oklch(0.22 0.09 195))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.42 0.11 205),oklch(0.24 0.09 205))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.44 0.12 215),oklch(0.26 0.10 215))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.42 0.12 225),oklch(0.24 0.10 225))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.40 0.12 235),oklch(0.22 0.10 235))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.42 0.13 245),oklch(0.24 0.11 245))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.44 0.13 255),oklch(0.26 0.11 255))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.42 0.13 265),oklch(0.24 0.11 265))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.38 0.10 198),oklch(0.20 0.08 198))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.40 0.10 208),oklch(0.22 0.08 208))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.42 0.11 218),oklch(0.24 0.09 218))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.40 0.11 228),oklch(0.22 0.09 228))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.38 0.11 238),oklch(0.20 0.09 238))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.40 0.12 248),oklch(0.22 0.10 248))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.42 0.12 258),oklch(0.24 0.10 258))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.40 0.12 268),oklch(0.22 0.10 268))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.36 0.09 200),oklch(0.18 0.07 200))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.38 0.10 215),oklch(0.20 0.08 215))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.40 0.11 230),oklch(0.22 0.09 230))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.38 0.11 245),oklch(0.20 0.09 245))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.36 0.10 260),oklch(0.18 0.08 260))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.38 0.10 270),oklch(0.20 0.08 270))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.40 0.12 205),oklch(0.22 0.10 205))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.42 0.13 222),oklch(0.24 0.11 222))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.44 0.13 240),oklch(0.26 0.11 240))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.42 0.12 258),oklch(0.24 0.10 258))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.40 0.12 268),oklch(0.22 0.10 268))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.46 0.14 212),oklch(0.26 0.12 212))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.46 0.14 232),oklch(0.26 0.12 232))"></div>
+            <div class="tile" style="background:linear-gradient(135deg,oklch(0.46 0.14 252),oklch(0.26 0.12 252))"></div>
+          </div>
+          <div class="lab"><span class="hero-letters">
+            <span class="w" style="--n:0">Trace&nbsp;</span><span class="w" style="--n:1">it.&nbsp;</span><span class="w" style="--n:2"><i>Trust&nbsp;</i></span><span class="w" style="--n:3"><i>it.</i></span>
+          </span></div>
+          <div class="echo-mini" data-anim="fade" style="--d:3.4s">the audit layer for AI evaluation</div>
+          <div class="vo-overlay" data-anim="up" style="--d:4.0s">"Every judgment becomes a trace you can open. And audit. <b>Trace it. Trust it.</b>"</div>
+        </div>
+      </div>
+    </div>
+    <div class="navbar">
+      <span class="nav-btn" data-act="prev">← prev</span>
+      <span class="keys" style="color:var(--gold);font-weight:700">★ DELAYED HERO · 25s hold · half-beat silence after the hero line</span>
+      <div class="progress"><i style="width:38.5%"></i></div>
+      <span class="nav-btn" data-act="next">next →</span>
+    </div>
+  </section>
+
+  <!-- ============== SLIDE 6: F5 — 104 SPANS ============== -->
+  <section class="slide" data-slide="6" data-id="f5">
+    <span class="echo">Trace it. <i>Trust it.</i></span>
+    <div class="topbar">
+      <span class="time">1:00 – 1:06</span>
+      <span class="id">F5 · THE KICK · 104 SPANS</span>
+      <span class="right"><span class="counter">06 / 13</span><span class="esc">esc · overview</span></span>
+    </div>
+    <div class="body">
+      <div class="canvas-wrap">
+        <div class="canvas-frame c-f5">
+          <div class="lbl" data-anim="up" style="--d:.2s">spans in one evaluation</div>
+          <div class="count num-roll" data-counter data-target="104" data-dur="1400">0</div>
+          <div class="breakdown" data-anim="fade" style="--d:2.6s">6 hats · every Gemini generate + embed · one nested Arize AX trace</div>
+        </div>
+      </div>
+      <div class="script-wrap">
+        <div class="meta-tag">act iii · the kick</div>
+        <h2>One nested Arize AX trace.</h2>
+        <div class="vo">"How? Every hat. Every retrieval. Every score — a span in Arize AX. <b>A hundred and four of them. One evaluation.</b>"</div>
+        <div class="stage">
+          <b>Delivery:</b> "How?" is a question to the room — a beat of audience participation. Rule-of-three rhythm: every-hat / every-retrieval / every-score. Land 104 on the rolled number.
+          <span class="tone">tone: rule-of-three confidence</span>
+        </div>
+      </div>
+    </div>
+    <div class="navbar">
+      <span class="nav-btn" data-act="prev">← prev</span>
+      <span class="keys"><kbd>←</kbd> · <kbd>→</kbd> · <kbd>esc</kbd></span>
+      <div class="progress"><i style="width:46.2%"></i></div>
+      <span class="nav-btn" data-act="next">next →</span>
+    </div>
+  </section>
+
+  <!-- ============== SLIDE 7: F6 — ARCHITECTURE ============== -->
+  <section class="slide" data-slide="7" data-id="f6">
+    <span class="echo">Trace it. <i>Trust it.</i></span>
+    <div class="topbar">
+      <span class="time">1:06 – 1:30</span>
+      <span class="id">F6 · ARCHITECTURE · ADK 2.0 WORKFLOW</span>
+      <span class="right"><span class="counter">07 / 13</span><span class="esc">esc · overview</span></span>
+    </div>
+    <div class="body">
+      <div class="canvas-wrap">
+        <div class="canvas-frame c-f6">
+          <div class="lbl">one ADK 2.0 Workflow graph</div>
+          <svg viewBox="0 0 560 290">
+            <g font-family="ui-sans-serif" font-size="10" fill="oklch(0.88 0.02 285)">
+              <!-- sequential spine -->
+              <rect x="24" y="36" width="78" height="30" rx="6" fill="oklch(0.26 0.10 220)" stroke="oklch(0.80 0.12 220)"/>
+              <text x="63" y="55" text-anchor="middle" fill="oklch(0.92 0.06 220)" font-weight="700">Ingest</text>
+              <line x1="102" y1="51" x2="120" y2="51" stroke="oklch(0.40 0.04 285)" stroke-width="1.2"/>
+              <rect x="120" y="36" width="100" height="30" rx="6" fill="oklch(0.26 0.10 220)" stroke="oklch(0.80 0.12 220)"/>
+              <text x="170" y="55" text-anchor="middle" fill="oklch(0.92 0.06 220)" font-weight="700">RubricSynth</text>
+              <line x1="220" y1="51" x2="238" y2="51" stroke="oklch(0.40 0.04 285)" stroke-width="1.2"/>
+              <rect x="238" y="36" width="84" height="30" rx="6" fill="oklch(0.26 0.10 220)" stroke="oklch(0.80 0.12 220)"/>
+              <text x="280" y="55" text-anchor="middle" fill="oklch(0.92 0.06 220)" font-weight="700">Planner</text>
+              <!-- fan out to 6 hats -->
+              <line x1="280" y1="66" x2="280" y2="86" stroke="oklch(0.40 0.04 285)" stroke-width="1"/>
+              <text x="280" y="100" text-anchor="middle" fill="oklch(0.72 0.18 290)" font-size="9.5" font-weight="700">6-hat ParallelAgent</text>
+              <g font-size="9">
+                <rect x="40"  y="112" width="70" height="30" rx="6" fill="#f1f1f4" stroke="#ccd"/>
+                <text x="75"  y="131" text-anchor="middle" fill="#1a1a22" font-weight="700">White</text>
+                <rect x="118" y="112" width="70" height="30" rx="6" fill="oklch(0.30 0.16 25)" stroke="var(--red)"/>
+                <text x="153" y="131" text-anchor="middle" fill="oklch(0.92 0.10 25)" font-weight="700">Red</text>
+                <rect x="196" y="112" width="70" height="30" rx="6" fill="oklch(0.32 0.14 95)" stroke="oklch(0.85 0.16 95)"/>
+                <text x="231" y="131" text-anchor="middle" fill="oklch(0.95 0.10 95)" font-weight="700">Yellow</text>
+                <rect x="274" y="112" width="70" height="30" rx="6" fill="oklch(0.22 0.02 285)" stroke="#667"/>
+                <text x="309" y="131" text-anchor="middle" fill="#cdd" font-weight="700">Black</text>
+                <rect x="352" y="112" width="70" height="30" rx="6" fill="oklch(0.30 0.12 155)" stroke="var(--green)"/>
+                <text x="387" y="131" text-anchor="middle" fill="oklch(0.94 0.08 155)" font-weight="700">Green</text>
+                <rect x="430" y="112" width="70" height="30" rx="6" fill="oklch(0.30 0.10 220)" stroke="var(--cool)"/>
+                <text x="465" y="131" text-anchor="middle" fill="oklch(0.94 0.06 220)" font-weight="700">Blue</text>
+              </g>
+              <!-- join -->
+              <line x1="270" y1="142" x2="270" y2="162" stroke="oklch(0.40 0.04 285)" stroke-width="1"/>
+              <rect x="222" y="162" width="96" height="28" rx="6" fill="oklch(0.24 0.06 285)" stroke="oklch(0.66 0.06 285)"/>
+              <text x="270" y="180" text-anchor="middle" fill="oklch(0.90 0.02 285)" font-weight="700">Join (six_hat)</text>
+              <!-- tail spine -->
+              <line x1="270" y1="190" x2="270" y2="206" stroke="oklch(0.40 0.04 285)" stroke-width="1"/>
+              <g font-size="9.5">
+                <rect x="120" y="206" width="84" height="28" rx="6" fill="oklch(0.28 0.12 290)" stroke="var(--violet)"/>
+                <text x="162" y="224" text-anchor="middle" fill="oklch(0.94 0.08 290)" font-weight="700">Audit (loop)</text>
+                <line x1="204" y1="220" x2="222" y2="220" stroke="oklch(0.40 0.04 285)" stroke-width="1.2"/>
+                <rect x="222" y="206" width="64" height="28" rx="6" fill="oklch(0.30 0.12 155)" stroke="var(--green)"/>
+                <text x="254" y="224" text-anchor="middle" fill="oklch(0.94 0.08 155)" font-weight="700">Score</text>
+                <line x1="286" y1="220" x2="304" y2="220" stroke="oklch(0.40 0.04 285)" stroke-width="1.2"/>
+                <rect x="304" y="206" width="72" height="28" rx="6" fill="oklch(0.30 0.10 220)" stroke="var(--cool)"/>
+                <text x="340" y="224" text-anchor="middle" fill="oklch(0.94 0.06 220)" font-weight="700">Report</text>
+              </g>
+              <text x="280" y="260" text-anchor="middle" fill="oklch(0.66 0.02 285)" font-size="9">every node opens its own Arize AX span · the full tree, not a flat list</text>
+            </g>
+          </svg>
+          <div class="foot">deployed on the Gemini Enterprise Agent Platform · Agent Engine · reasoningEngines/7480191458771730432</div>
+        </div>
+      </div>
+      <div class="script-wrap">
+        <div class="meta-tag">act iii · architecture</div>
+        <h2>A real agent. Not a notebook.</h2>
+        <div class="vo">"One ADK 2.0 Workflow. Six hats in parallel. Deployed as a real agent on Agent Engine — <b>not a notebook.</b>"</div>
+        <div class="stage">
+          <b>Delivery:</b> builder explaining their workshop. Trace the spine with your eyes. "Not a notebook" is the line judges remember — the em-dash before it is a held breath.
+          <span class="tone">tone: builder explaining</span>
+        </div>
+      </div>
+    </div>
+    <div class="navbar">
+      <span class="nav-btn" data-act="prev">← prev</span>
+      <span class="keys"><kbd>←</kbd> · <kbd>→</kbd> · <kbd>esc</kbd></span>
+      <div class="progress"><i style="width:53.9%"></i></div>
+      <span class="nav-btn" data-act="next">next →</span>
+    </div>
+  </section>
+
+  <!-- ============== SLIDE 8: F7 — RUBRIC SYNTH + LIVE JSON ============== -->
+  <section class="slide" data-slide="8" data-id="f7">
+    <span class="echo">Trace it. <i>Trust it.</i></span>
+    <div class="topbar">
+      <span class="time">1:30 – 1:54</span>
+      <span class="id">F7 · SOCRATIC · RUBRIC SYNTHESIS</span>
+      <span class="right"><span class="counter">08 / 13</span><span class="esc">esc · overview</span></span>
+    </div>
+    <div class="body">
+      <div class="canvas-wrap">
+        <div class="canvas-frame c-f7">
+          <div class="editor">
+            <div class="left">
+              <div class="pf tw" data-typewriter="$ rubric_synthesizer ← evaluator's own rules" data-tw-dur="1400" data-tw-delay="200"></div>
+              <div class="modal" data-anim="up" style="--d:1.9s">
+                <h4>synthesized rubric · 4 criteria</h4>
+                <div class="opt"     data-anim="fade" style="--d:2.3s">technical (0.30)</div>
+                <div class="opt"     data-anim="fade" style="--d:2.5s">innovation (0.25)</div>
+                <div class="opt sel" data-anim="pop"  style="--d:2.7s">arize integration (0.25)</div>
+                <div class="opt"     data-anim="fade" style="--d:2.5s">impact (0.20)</div>
+              </div>
+            </div>
+            <div class="right">
+              <h5 data-anim="fade" style="--d:.4s">runs/&lt;id&gt;/RunRecord.json</h5>
+              <div data-anim="fade" style="--d:3.3s">{</div>
+              <div data-anim="right" style="--d:3.6s">&nbsp;&nbsp;<span class="k">"criterion"</span>: <span class="s">"arize-integration"</span>,</div>
+              <div data-anim="right" style="--d:4.0s">&nbsp;&nbsp;<span class="k">"hat_scores"</span>: { white <span class="s">8.1</span>, yellow <span class="s">9.4</span> },</div>
+              <div data-anim="right" style="--d:4.4s">&nbsp;&nbsp;<span class="k">"evidence"</span>: [<span class="s">"trace#104"</span>, <span class="s">"exp:hit@13"</span>],</div>
+              <div data-anim="right" style="--d:4.8s">&nbsp;&nbsp;<span class="k">"final_score"</span>: <span class="s">7.6</span>,</div>
+              <div data-anim="right" style="--d:5.2s">&nbsp;&nbsp;<span class="k">"audited"</span>: <span class="s">true</span></div>
+              <div data-anim="fade" style="--d:5.6s">}</div>
+              <div class="ratio" data-anim="bloom" style="--d:6.2s">▣ grounded in retrieved evidence</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="script-wrap">
+        <div class="meta-tag">act iii · socratic</div>
+        <h2>Grounded in retrieved evidence.</h2>
+        <div class="vo">"It reads the evaluator's own rules. Synthesizes the rubric. Then <b>every hat grounds its score in retrieved evidence.</b>"</div>
+        <div class="stage">
+          <b>Delivery:</b> confident craftsman. "Synthesizes the rubric" is the pivot. The closer "grounds its score in retrieved evidence" lands as a quiet payoff — no score is free of evidence.
+          <span class="tone">tone: confident craftsman</span>
+        </div>
+      </div>
+    </div>
+    <div class="navbar">
+      <span class="nav-btn" data-act="prev">← prev</span>
+      <span class="keys"><kbd>←</kbd> · <kbd>→</kbd> · <kbd>esc</kbd></span>
+      <div class="progress"><i style="width:61.6%"></i></div>
+      <span class="nav-btn" data-act="next">next →</span>
+    </div>
+  </section>
+
+  <!-- ============== SLIDE 9: F8 — SIX-HAT PANEL ============== -->
+  <section class="slide" data-slide="9" data-id="f8">
+    <span class="echo">Trace it. <i>Trust it.</i></span>
+    <div class="topbar">
+      <span class="time">1:54 – 2:20</span>
+      <span class="id">F8 · SIX PERSPECTIVES · WATCH YELLOW</span>
+      <span class="right"><span class="counter">09 / 13</span><span class="esc">esc · overview</span></span>
+    </div>
+    <div class="body">
+      <div class="canvas-wrap">
+        <div class="canvas-frame c-f8">
+          <div class="hats">
+            <div class="hat w" data-anim="spawn" style="--d:.2s"><span class="dot"></span><span class="nm">White</span><span class="role">facts</span><span class="sc">7.8</span></div>
+            <div class="hat r" data-anim="spawn" style="--d:.4s"><span class="dot"></span><span class="nm">Red</span><span class="role">instinct</span><span class="sc">7.1</span></div>
+            <div class="hat y hot" data-anim="spawn" style="--d:.6s"><span class="dot"></span><span class="nm">Yellow</span><span class="role">optimism</span><span class="sc">9.4</span></div>
+            <div class="hat k" data-anim="spawn" style="--d:.8s"><span class="dot"></span><span class="nm">Black</span><span class="role">caution</span><span class="sc">6.5</span></div>
+            <div class="hat g" data-anim="spawn" style="--d:1.0s"><span class="dot"></span><span class="nm">Green</span><span class="role">creativity</span><span class="sc">8.0</span></div>
+            <div class="hat b" data-anim="spawn" style="--d:1.2s"><span class="dot"></span><span class="nm">Blue</span><span class="role">process</span><span class="sc">7.6</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="script-wrap">
+        <div class="meta-tag">act iv · the six hats</div>
+        <h2>One runs hot.</h2>
+        <div class="vo">"Six perspectives score in parallel. <b>Watch Yellow</b> — optimism — run hot."</div>
+        <div class="stage">
+          <b>Delivery:</b> showman + invitation. "Watch Yellow" is a finger on the screen. The em-dashes around "optimism" set it apart. Let the over-confident YELLOW card glow before you move on.
+          <span class="tone">tone: showman + invitation</span>
+        </div>
+      </div>
+    </div>
+    <div class="navbar">
+      <span class="nav-btn" data-act="prev">← prev</span>
+      <span class="keys"><kbd>←</kbd> · <kbd>→</kbd> · <kbd>esc</kbd></span>
+      <div class="progress"><i style="width:69.3%"></i></div>
+      <span class="nav-btn" data-act="next">next →</span>
+    </div>
+  </section>
+
+  <!-- ============== SLIDE 10: F9 — THE AUDIT MOMENT ============== -->
+  <section class="slide" data-slide="10" data-id="f9">
+    <span class="echo">Trace it. <i>Trust it.</i></span>
+    <div class="topbar">
+      <span class="time">2:20 – 2:46</span>
+      <span class="id">F9 · THE WOW · THE AUDIT SELF-CORRECTS</span>
+      <span class="right"><span class="counter">10 / 13</span><span class="esc">esc · overview</span></span>
+    </div>
+    <div class="body">
+      <div class="canvas-wrap">
+        <div class="canvas-frame c-f9">
+          <span class="speed">live · math shown</span>
+          <div class="triple">
+            <div class="pane panel" data-anim="fade" style="--d:.2s">
+              <h5>panel · raw consensus</h5>
+              <div class="raw">9.0</div>
+              <div class="sub">/ 10 · six-hat median</div>
+            </div>
+            <div class="pane audit" data-anim="fade" style="--d:.4s">
+              <h5>audit · calibration prior</h5>
+              <div class="ln" data-anim="right" style="--d:1.0s"><span class="yel">YELLOW</span> over-scored</div>
+              <div class="ln" data-anim="right" style="--d:1.4s">delta = <span class="yel">+1.453</span> (low-evidence)</div>
+              <div class="ln math" data-anim="right" style="--d:1.8s">clip(score − 0.8·mean_delta,</div>
+              <div class="ln math" data-anim="right" style="--d:2.0s">&nbsp;&nbsp;&nbsp;&nbsp;p25, p75)</div>
+              <div class="ln" data-anim="right" style="--d:2.4s">±2.0 cap · bidirectional</div>
+              <div class="ln" data-anim="fade" style="--d:3.0s;color:var(--green)">strongest where evidence is thin</div>
+            </div>
+            <div class="pane score" data-anim="fade" style="--d:.6s">
+              <h5>score · corrected</h5>
+              <div class="num num-roll" data-counter data-target="76" data-from="90" data-decimal="1" data-dur="2000" data-delay="3400">9.0</div>
+              <div class="max">/ 10</div>
+              <div class="gauge"><i></i></div>
+              <div class="delta" data-anim="fade" style="--d:6.0s">9.0 → 7.6 · −1.4 · ±2.0 bounded</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="script-wrap">
+        <div class="meta-tag">act iv · the audit moment</div>
+        <h2>Live. With the math shown.</h2>
+        <div class="vo">"Now watch. Yellow over-scored. Against a held-out calibration prior — strongest where the evidence is thin — the audit catches its own over-confidence. And pulls the score back. <b>Live. With the math shown.</b>"</div>
+        <div class="stage">
+          <b>Delivery:</b> live narration. "Now watch" = pointing at the screen. Rapid-fire fragments. The em-dashes around "strongest where the evidence is thin" are held breaths. Land "Live. With the math shown." as two discrete beats — the math is on screen, not hidden.
+          <span class="tone">tone: live narration</span>
+        </div>
+      </div>
+    </div>
+    <div class="navbar">
+      <span class="nav-btn" data-act="prev">← prev</span>
+      <span class="keys" style="color:var(--gold);font-weight:700">★ THE WOW · self-correction 9.0 → 7.6 · the math is on screen</span>
+      <div class="progress"><i style="width:77.0%"></i></div>
+      <span class="nav-btn" data-act="next">next →</span>
+    </div>
+  </section>
+
+  <!-- ============== SLIDE 11: F10 — OPEN ARIZE / RANK-FLIP ============== -->
+  <section class="slide" data-slide="11" data-id="f10">
+    <span class="echo">Trace it. <i>Trust it.</i></span>
+    <div class="topbar">
+      <span class="time">2:46 – 2:55</span>
+      <span class="id">F10 · THE PAYOFF · OPEN ARIZE</span>
+      <span class="right"><span class="counter">11 / 13</span><span class="esc">esc · overview</span></span>
+    </div>
+    <div class="body">
+      <div class="canvas-wrap">
+        <div class="canvas-frame c-f10">
+          <div class="term">
+            <div class="cmd" data-anim="right" style="--d:.2s">$ client.spans.list(project="glasshat")</div>
+            <div class="tree" data-anim="right" style="--d:.6s">agent · glasshat_pipeline</div>
+            <div class="tree" data-anim="right" style="--d:.9s">&nbsp;└ Workflow · ingest→synth→plan</div>
+            <div class="tree" data-anim="right" style="--d:1.2s">&nbsp;&nbsp;&nbsp;&nbsp;├ hat_white  · gemini + embed</div>
+            <div class="tree" data-anim="right" style="--d:1.5s">&nbsp;&nbsp;&nbsp;&nbsp;├ hat_yellow · gemini + embed</div>
+            <div class="tree" data-anim="right" style="--d:1.8s">&nbsp;&nbsp;&nbsp;&nbsp;└ … 6 hats · join · audit · score</div>
+            <div class="tot" data-anim="fade" style="--d:2.2s">104 spans · 1 trace</div>
+          </div>
+          <div class="browser2">
+            <div class="bar"><span class="url">glasshat.app/judge · rank-flip board</span></div>
+            <div class="body">
+              <h4 data-anim="up" style="--d:3.0s">without audit&nbsp;&nbsp;vs&nbsp;&nbsp;with Glasshat audit</h4>
+              <div class="flip">
+                <div class="col">
+                  <h6>without audit</h6>
+                  <div class="rk" data-anim="right" style="--d:3.4s"><span>Project B</span><span>#1</span></div>
+                  <div class="rk" data-anim="right" style="--d:3.7s"><span>Project A</span><span>#2</span></div>
+                </div>
+                <div class="col">
+                  <h6>with Glasshat audit</h6>
+                  <div class="rk win" data-anim="right" style="--d:4.2s"><span>Project A</span><span>#1</span></div>
+                  <div class="rk" data-anim="right" style="--d:4.5s"><span>Project B</span><span>#2</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="chip" data-anim="fade" style="--d:5.0s">hit@13 0.6154 · Arize AX experiment</div>
+          <div class="honest">binary Winner-label · not a rank curve · public demo runs the spike-D prior</div>
+        </div>
+      </div>
+      <div class="script-wrap">
+        <div class="meta-tag">act v · the payoff</div>
+        <h2>The audit changes who wins.</h2>
+        <div class="vo">"Open Arize. Every span is there. And on a whole cohort — <b>the audit changes who wins.</b>"</div>
+        <div class="stage">
+          <b>Delivery:</b> maker exhaling. "Every span is there" while the tree prints. The em-dash before "the audit changes who wins" is the gut-punch beat. Honest on camera: this is cohort-level; hit@13 0.6154 is a binary Winner-label hit rate; on the golden set the top-13 did not reorder (Δ = 0). Don't claim a rank flip on that set.
+          <span class="tone">tone: maker exhaling</span>
+        </div>
+      </div>
+    </div>
+    <div class="navbar">
+      <span class="nav-btn" data-act="prev">← prev</span>
+      <span class="keys" style="color:var(--gold);font-weight:700">★ THE EMOTIONAL PAYOFF · hold the span tree + rank-flip board</span>
+      <div class="progress"><i style="width:84.7%"></i></div>
+      <span class="nav-btn" data-act="next">next →</span>
+    </div>
+  </section>
+
+  <!-- ============== SLIDE 12: F11 — OUTRO ============== -->
+  <section class="slide" data-slide="12" data-id="f11">
+    <span class="echo">Trace it. <i>Trust it.</i></span>
+    <div class="topbar">
+      <span class="time">2:55 – 3:00</span>
+      <span class="id">F11 · OUTRO</span>
+      <span class="right"><span class="counter">12 / 13</span><span class="esc">esc · overview</span></span>
+    </div>
+    <div class="body">
+      <div class="canvas-wrap">
+        <div class="canvas-frame c-f11">
+          <div class="repo" data-anim="up" style="--d:.1s"><b>github.com/Two-Weeks-Team/glasshat</b> · Apache-2.0</div>
+          <div class="badges">
+            <span class="b cool"   data-anim="pop" style="--d:.5s">Gemini 3.1 Flash-Lite</span>
+            <span class="b violet" data-anim="pop" style="--d:.6s">ADK 2.0 Workflow</span>
+            <span class="b cool"   data-anim="pop" style="--d:.7s">Arize AX</span>
+            <span class="b violet" data-anim="pop" style="--d:.75s">Phoenix MCP · calibration</span>
+            <span class="b green"  data-anim="pop" style="--d:.8s">Agent Engine · live</span>
+            <span class="b"        data-anim="pop" style="--d:.9s">License Apache-2.0</span>
+            <span class="b cool"   data-anim="pop" style="--d:1.0s">104-span trace</span>
+            <span class="b green"  data-anim="pop" style="--d:1.1s">hit@13 0.6154</span>
+            <span class="b violet" data-anim="pop" style="--d:1.2s">Datasets + Experiment</span>
+            <span class="b"        data-anim="pop" style="--d:1.3s">code Evaluator</span>
+          </div>
+          <div class="install tw" data-typewriter="$ git clone github.com/Two-Weeks-Team/glasshat&#10;$ uv run experiments/run_arize_experiment.py   # live hit@13" data-tw-dur="2200" data-tw-delay="1900"></div>
+          <div class="lockup" data-anim="bloom" style="--d:3.6s">Open source · <b>Apache-2.0</b><br><span class="lockup-echo">Trace it. <i>Trust it.</i></span></div>
+        </div>
+      </div>
+      <div class="script-wrap">
+        <div class="meta-tag">act v · outro</div>
+        <h2>Open source. Apache-2.0.</h2>
+        <div class="vo">"Open source. Apache 2.0. <b>Trace it. Trust it.</b>"</div>
+        <div class="stage">
+          <b>Delivery:</b> the closer hero line is the last thing said in the entire video. Slow it down. Each syllable. <i>"Trace · it · · Trust · it."</i> Then silence. Then the music tail.
+          <span class="tone">tone: arrival</span>
+        </div>
+      </div>
+    </div>
+    <div class="navbar">
+      <span class="nav-btn" data-act="prev">← prev</span>
+      <span class="keys"><kbd>←</kbd> · <kbd>→</kbd> · <kbd>esc</kbd></span>
+      <div class="progress"><i style="width:92.3%"></i></div>
+      <span class="nav-btn" data-act="next">next →</span>
+    </div>
+  </section>
+
+  <!-- ============== SLIDE 13: CLOSING ============== -->
+  <section class="slide close" data-slide="13" data-id="close">
+    <div class="topbar">
+      <span class="time">— · END</span>
+      <span class="id">TRACE IT. TRUST IT.</span>
+      <span class="right"><span class="counter">13 / 13</span><span class="esc">esc · overview</span></span>
+    </div>
+    <div class="body">
+      <div class="canvas-wrap">
+        <div class="close-content">
+          <div class="close-stat"><b>180 seconds.</b> &nbsp;<b>11 frames.</b> &nbsp;<b>One audited score.</b></div>
+          <div class="close-h">Trace it. <i>Trust it.</i></div>
+          <div style="font-family:ui-serif,Georgia,serif;font-style:italic;font-size:17px;color:var(--muted);margin:-2px 0 18px;letter-spacing:.01em">For any score that has to be <span style="color:var(--text)">defended</span> — grants, hiring, content moderation, every model-as-judge pipeline.</div>
+          <div class="close-checks">
+            <div>ADK 2.0 Workflow on Agent Engine</div>
+            <div>full nested Arize AX trace · 104 spans</div>
+            <div>Datasets + Experiment (hit@13 0.6154) + code Evaluator</div>
+            <div>six-hat audit self-corrects · 9.0 → 7.6 · ±2.0 bounded</div>
+            <div>live + reproducible</div>
+            <div>Apache-2.0 · open source</div>
+          </div>
+          <div class="close-call">★ "TRACE IT. TRUST IT."  ·  THIS IS THE LAST WORD ON SCREEN ★</div>
+          <div class="close-note">github.com/Two-Weeks-Team/glasshat · honest note: hit@13 = binary Winner-label, not a rank curve · the public Cloud Run demo runs the deterministic spike-D prior (SCORING_MODE=legacy, AGENT_RUNTIME=python); the live Arize AX results are the credentialed Agent Engine run.</div>
+        </div>
+      </div>
+    </div>
+    <div class="navbar">
+      <span class="nav-btn" data-act="prev">← prev</span>
+      <span class="keys"><kbd>esc</kbd> overview · <kbd>1</kbd> back to cover</span>
+      <div class="progress"><i style="width:100%"></i></div>
+      <span class="nav-btn" data-act="first">↺ restart</span>
+    </div>
+  </section>
+
+</div><!-- /deck -->
+
+<!-- AUTO-ADVANCE PROGRESS INDICATOR -->
+<div class="autoind" id="autoind"></div>
+
+<!-- FLOATING REC TIMER (visible only in recording mode) -->
+<div id="rec-timer"><span id="rec-timer-text">0.0s</span><span style="color:#889;font-weight:400">· F<span id="rec-timer-frame">1</span> / 13</span></div>
+
+<!-- COUNTDOWN BEFORE CINEMATIC PLAYBACK -->
+<div class="countdown" id="countdown">
+  <div class="num" id="countdown-num">3</div>
+  <div class="label">CINEMATIC PLAYBACK STARTS IN… <b id="countdown-range">F1 → F11</b></div>
+</div>
+
+<!-- DONE OVERLAY -->
+<div class="done-overlay" id="done-overlay">
+  <div>
+    <div class="big">END · <span id="done-range">F1→F11</span></div>
+    <div class="small">press R to exit recording mode · press F to replay</div>
+  </div>
+</div>
+
+<!-- CONTROL PANEL -->
+<aside class="ctrl" id="ctrl">
+  <b>RECORDING</b>
+  <div class="timer" id="timer">0.0s</div>
+  <button id="btn-play-opening" class="play-range"><span>▶ Opening · F1→F4 (60s)</span><kbd>O</kbd></button>
+  <button id="btn-play-full" class="play-range"><span>▶ Full · F1→F11 (180s)</span><kbd>F</kbd></button>
+  <button id="btn-rec"><span>Recording mode</span><kbd>R</kbd></button>
+  <button id="btn-auto"><span>Auto-advance</span><kbd>A</kbd></button>
+  <button id="btn-replay"><span>Replay slide</span><kbd>P</kbd></button>
+  <button id="btn-overview"><span>Overview</span><kbd>Esc</kbd></button>
+</aside>
+
+<!-- OVERVIEW (Esc) -->
+<div class="overview" id="overview">
+  <h3>Glasshat — cinematic deck overview</h3>
+  <div class="ovsub">click any slide to jump · esc to close</div>
+  <div class="ov-grid" id="ov-grid"></div>
+</div>
+
+<script>
+(function(){
+  const deck = document.getElementById('deck');
+  const slides = Array.from(deck.querySelectorAll('.slide'));
+  const overview = document.getElementById('overview');
+  const ovGrid = document.getElementById('ov-grid');
+  const autoind = document.getElementById('autoind');
+  const timer = document.getElementById('timer');
+  const btnRec = document.getElementById('btn-rec');
+  const btnAuto = document.getElementById('btn-auto');
+  const btnReplay = document.getElementById('btn-replay');
+  const btnOverview = document.getElementById('btn-overview');
+  let current = 0;
+  let recMode = false;
+  let autoMode = false;
+  let autoTimer = null;
+  let timerInterval = null;
+  let slideStart = 0;
+  let slideTimers = [];
+  let playEndIdx = null;       // when set, range-bounded auto-advance stops here
+  let countdownActive = false;
+  let countdownTimers = [];
+
+  const countdown = document.getElementById('countdown');
+  const countdownNum = document.getElementById('countdown-num');
+  const countdownRange = document.getElementById('countdown-range');
+  const doneOverlay = document.getElementById('done-overlay');
+  const doneRange = document.getElementById('done-range');
+
+  // Per-slide duration budget (seconds). Drives auto-advance + auto-ind animation.
+  // Recorded video = F1→F11 = 180s. Cover (8) + close (12) bookend the recording.
+  // order: cover, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, close
+  const SLIDE_DURATION = [
+    8,   // 01 · Cover
+    10,  // 02 · F1  0:00–0:10
+    15,  // 03 · F2  0:10–0:25
+    10,  // 04 · F3  0:25–0:35
+    25,  // 05 · F4  0:35–1:00  (HERO — 25s hold)
+    6,   // 06 · F5  1:00–1:06
+    24,  // 07 · F6  1:06–1:30
+    24,  // 08 · F7  1:30–1:54
+    26,  // 09 · F8  1:54–2:20
+    26,  // 10 · F9  2:20–2:46
+    9,   // 11 · F10 2:46–2:55
+    5,   // 12 · F11 2:55–3:00
+    12   // 13 · Closing
+  ];
+
+  // Overview tiles — order matches DOM (cover, F1, F2, …)
+  const summaries = [
+    ["Cover", "Trace it. Trust it."],
+    ["F1 · The Agro", "Nobody audits the score."],
+    ["F2 · The Indictment", "Worse than a human judge."],
+    ["F3 · The Pivot", "Audit the judgment itself."],
+    ["F4 · The Hero", "Trace it. Trust it."],
+    ["F5 · The Kick", "One nested Arize AX trace."],
+    ["F6 · Architecture", "A real agent. Not a notebook."],
+    ["F7 · Rubric Synthesis", "Grounded in retrieved evidence."],
+    ["F8 · Six Hats", "One runs hot."],
+    ["F9 · The Audit Moment", "Live. With the math shown."],
+    ["F10 · The Payoff", "The audit changes who wins."],
+    ["F11 · Outro", "Open source. Apache-2.0."],
+    ["End · Record it", "Trace it. Trust it."]
+  ];
+  slides.forEach((s, i) => {
+    const time = s.querySelector('.topbar .time')?.textContent || '';
+    const tile = document.createElement('div');
+    tile.className = 'ov-tile';
+    tile.innerHTML = `
+      <div class="ov-num">${String(i+1).padStart(2,'0')} / ${slides.length}</div>
+      <div class="ov-time">${time}</div>
+      <div class="ov-title">${summaries[i][0]}</div>
+      <div class="ov-line">"${summaries[i][1]}"</div>
+    `;
+    tile.addEventListener('click', () => { go(i); closeOverview(); });
+    ovGrid.appendChild(tile);
+  });
+
+  // ==========================================
+  // ANIMATION DRIVERS (per-slide JS)
+  // ==========================================
+
+  // Stagger tile spawn-in for the F4 hero constellation
+  function staggerTiles(slide){
+    const heroTiles = slide.querySelectorAll('.hero-canvas-full .tile');
+    heroTiles.forEach((t, i) => {
+      t.style.opacity = '0';
+      t.style.transform = 'scale(.5)';
+      const d = 50 + i * 22;
+      slideTimers.push(setTimeout(() => {
+        t.style.transition = 'opacity .42s ease-out, transform .42s cubic-bezier(.34,1.56,.64,1)';
+        t.style.opacity = '1';
+        t.style.transform = 'scale(1)';
+      }, d));
+    });
+  }
+
+  // Counter rolling. Supports integer roll (F5: 0→104) and a decimal
+  // descending roll (F9 score: 9.0→7.6 via data-from + data-decimal).
+  function runCounters(slide){
+    slide.querySelectorAll('[data-counter]').forEach(el => {
+      const target = parseInt(el.dataset.target, 10);                 // tenths if decimal
+      const from = el.dataset.from !== undefined ? parseInt(el.dataset.from, 10) : 0;
+      const decimal = el.dataset.decimal ? parseInt(el.dataset.decimal, 10) : 0;
+      const dur = parseInt(el.dataset.dur, 10) || 1500;
+      const delay = parseInt(el.dataset.delay, 10) || 0;
+      const fmt = (v) => decimal ? (v / Math.pow(10, decimal)).toFixed(decimal) : String(Math.round(v));
+      el.textContent = fmt(from);
+      const t0 = performance.now() + delay;
+      function tick(now){
+        if(!slide.classList.contains('active')) return;  // stop stale ticks after navigation
+        if(now < t0){ requestAnimationFrame(tick); return; }
+        const elapsed = now - t0;
+        const p = Math.min(elapsed / dur, 1);
+        const eased = 1 - Math.pow(1 - p, 3); // ease-out cubic
+        const v = from + (target - from) * eased;
+        el.textContent = fmt(v);
+        if(p < 1) requestAnimationFrame(tick);
+        else el.textContent = fmt(target);
+      }
+      requestAnimationFrame(tick);
+    });
+  }
+
+  // Typewriter for F7 rubric line + F11 install snippet
+  function runTypewriters(slide){
+    slide.querySelectorAll('[data-typewriter]').forEach(el => {
+      const text = el.dataset.typewriter || '';
+      const dur = parseInt(el.dataset.twDur, 10) || 1500;
+      const delay = parseInt(el.dataset.twDelay, 10) || 0;
+      el.textContent = '';
+      el.classList.remove('done');
+      const perChar = Math.max(8, dur / Math.max(text.length, 1));
+      let i = 0;
+      const startAt = performance.now() + delay;
+      function tick(now){
+        if(!slide.classList.contains('active')) return;  // stop stale ticks after navigation
+        if(now < startAt){ requestAnimationFrame(tick); return; }
+        if(i < text.length){
+          el.textContent += text[i] === '\\n' ? '\n' : text[i];
+          i++;
+          slideTimers.push(setTimeout(() => requestAnimationFrame(tick), perChar));
+        } else {
+          el.classList.add('done');
+        }
+      }
+      requestAnimationFrame(tick);
+    });
+  }
+
+  // Clear all in-flight timers from previous slide
+  function clearSlideTimers(){
+    slideTimers.forEach(t => { clearTimeout(t); clearInterval(t); });
+    slideTimers = [];
+  }
+
+  // Run all drivers for the active slide
+  function runDrivers(slide){
+    staggerTiles(slide);
+    runCounters(slide);
+    runTypewriters(slide);
+  }
+
+  // Main slide change function
+  function go(i){
+    if(i < 0) i = 0;
+    if(i >= slides.length) i = slides.length - 1;
+    clearSlideTimers();
+    cancelAuto();
+    slides[current].classList.remove('active');
+    void slides[i].offsetWidth; // force reflow so animations re-trigger
+    slides[i].classList.add('active');
+    current = i;
+    history.replaceState(null, '', '#' + (i+1));
+    slideStart = performance.now();
+    runDrivers(slides[i]);
+    if(autoMode) scheduleAuto();
+    updateAutoInd();
+  }
+
+  function replay(){
+    const s = slides[current];
+    s.classList.remove('active');
+    void s.offsetWidth;
+    s.classList.add('active');
+    slideStart = performance.now();
+    clearSlideTimers();
+    runDrivers(s);
+    updateAutoInd();
+    if(autoMode){ cancelAuto(); scheduleAuto(); }
+  }
+
+  function next(){ go(current + 1); }
+  function prev(){ go(current - 1); }
+  function first(){ go(0); }
+  function openOverview(){ overview.classList.add('show'); }
+  function closeOverview(){ overview.classList.remove('show'); }
+
+  // Auto-advance — respects playEndIdx for range-bounded playback
+  function scheduleAuto(){
+    cancelAuto();
+    const dur = (SLIDE_DURATION[current] || 8) * 1000;
+    autoTimer = setTimeout(() => {
+      if(!autoMode) return;
+      const atRangeEnd = (playEndIdx !== null && current >= playEndIdx);
+      if(atRangeEnd){
+        finishRangePlayback();
+      } else if(current < slides.length - 1){
+        next();
+      } else {
+        autoMode = false; btnAuto.classList.remove('on'); document.body.classList.remove('auto');
+      }
+    }, dur);
+  }
+
+  // ==========================================
+  // CINEMATIC RANGE PLAYBACK (F1→F4 opening, F1→F11 full)
+  // ==========================================
+  function clearCountdownTimers(){
+    countdownTimers.forEach(t => clearTimeout(t));
+    countdownTimers = [];
+  }
+
+  function playRange(startIdx, endIdx, label){
+    clearCountdownTimers();
+    cancelAuto();
+    autoMode = false;
+    document.body.classList.remove('auto');
+    btnAuto.classList.remove('on');
+    autoind.style.display = 'none';
+    doneOverlay.classList.remove('show');
+
+    // Enter rec + cinematic
+    document.body.classList.add('rec', 'cinematic');
+    recMode = true;
+    btnRec.classList.add('on');
+    closeOverview();
+
+    go(startIdx);
+
+    countdownRange.textContent = label || `F${startIdx} → F${endIdx}`;
+    doneRange.textContent = label || `F${startIdx}→F${endIdx}`;
+    playEndIdx = endIdx;
+
+    // 3 → 2 → 1 → GO
+    countdownActive = true;
+    countdown.classList.add('show');
+    const seq = ['3', '2', '1', 'GO'];
+    seq.forEach((lab, i) => {
+      countdownTimers.push(setTimeout(() => {
+        countdownNum.textContent = lab;
+        countdownNum.classList.toggle('go', lab === 'GO');
+        countdownNum.style.animation = 'none';
+        void countdownNum.offsetWidth;
+        countdownNum.style.animation = '';
+      }, i * 1000));
+    });
+    countdownTimers.push(setTimeout(() => {
+      countdown.classList.remove('show');
+      countdownActive = false;
+      // Re-trigger the start slide's animations (they ran during the countdown)
+      const s = slides[startIdx];
+      s.classList.remove('active');
+      void s.offsetWidth;
+      s.classList.add('active');
+      slideStart = performance.now();
+      runDrivers(s);
+      // Begin auto-advance
+      autoMode = true;
+      document.body.classList.add('auto');
+      btnAuto.classList.add('on');
+      scheduleAuto();
+      updateAutoInd();
+    }, seq.length * 1000));
+  }
+
+  function finishRangePlayback(){
+    autoMode = false;
+    document.body.classList.remove('auto');
+    btnAuto.classList.remove('on');
+    cancelAuto();
+    autoind.style.display = 'none';
+    playEndIdx = null;
+    doneOverlay.classList.add('show');
+    countdownTimers.push(setTimeout(() => {
+      doneOverlay.classList.remove('show');
+    }, 2400));
+  }
+
+  function abortPlayback(){
+    clearCountdownTimers();
+    countdown.classList.remove('show');
+    doneOverlay.classList.remove('show');
+    countdownActive = false;
+    playEndIdx = null;
+  }
+  function cancelAuto(){
+    if(autoTimer){ clearTimeout(autoTimer); autoTimer = null; }
+  }
+  function updateAutoInd(){
+    if(!autoMode){ autoind.style.display = 'none'; return; }
+    const dur = SLIDE_DURATION[current] || 8;
+    autoind.style.display = 'block';
+    autoind.style.animation = 'none';
+    void autoind.offsetWidth;
+    autoind.style.animation = `aAuto ${dur}s linear forwards`;
+  }
+  function toggleAuto(){
+    autoMode = !autoMode;
+    document.body.classList.toggle('auto', autoMode);
+    btnAuto.classList.toggle('on', autoMode);
+    if(autoMode){ scheduleAuto(); updateAutoInd(); } else { cancelAuto(); autoind.style.display = 'none'; }
+  }
+  function toggleRec(){
+    recMode = !recMode;
+    document.body.classList.toggle('rec', recMode);
+    btnRec.classList.toggle('on', recMode);
+  }
+
+  // Timer (clock since slide became active)
+  const recTimerText = document.getElementById('rec-timer-text');
+  const recTimerFrame = document.getElementById('rec-timer-frame');
+  function startTimer(){
+    if(timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      if(slideStart){
+        const t = (performance.now() - slideStart) / 1000;
+        const txt = t.toFixed(1) + 's';
+        timer.textContent = txt;
+        if(recTimerText) recTimerText.textContent = txt;
+        if(recTimerFrame) recTimerFrame.textContent = current + 1;
+      }
+    }, 100);
+  }
+  startTimer();
+
+  // Keyboard
+  document.addEventListener('keydown', e => {
+    if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    // CRITICAL: never intercept browser shortcuts (Cmd+R reload, Cmd+F find, Cmd+O open,
+    // Ctrl+R, Alt+arrow, etc.). Only handle plain key presses (Shift is fine for capitals).
+    if(e.metaKey || e.ctrlKey || e.altKey) return;
+    switch(e.key){
+      case 'ArrowRight': case 'ArrowDown': case ' ': case 'PageDown': case 'Enter':
+        e.preventDefault(); next(); break;
+      case 'ArrowLeft': case 'ArrowUp': case 'PageUp':
+        e.preventDefault(); prev(); break;
+      case 'Home': e.preventDefault(); first(); break;
+      case 'End': e.preventDefault(); go(slides.length - 1); break;
+      case 'Escape':
+        e.preventDefault();
+        overview.classList.contains('show') ? closeOverview() : openOverview();
+        break;
+      case 'r': case 'R': e.preventDefault(); toggleRec(); break;
+      case 'a': case 'A': e.preventDefault(); toggleAuto(); break;
+      case 'p': case 'P': e.preventDefault(); replay(); break;
+      case 'o': case 'O': e.preventDefault(); playRange(1, 4, 'opening · F1 → F4 · 60s'); break;
+      case 'f': case 'F': e.preventDefault(); playRange(1, 11, 'full · F1 → F11 · 180s'); break;
+      default:
+        if(/^[0-9]$/.test(e.key)){
+          const n = e.key === '0' ? 9 : (parseInt(e.key, 10) - 1);
+          if(n >= 0 && n < slides.length){ go(n); closeOverview(); }
+        }
+    }
+  });
+
+  // Click navigation buttons
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      const a = b.dataset.act;
+      if(a === 'next') next();
+      else if(a === 'prev') prev();
+      else if(a === 'first') first();
+    });
+  });
+
+  // Control panel buttons
+  btnRec.addEventListener('click', toggleRec);
+  btnAuto.addEventListener('click', toggleAuto);
+  btnReplay.addEventListener('click', replay);
+  btnOverview.addEventListener('click', () => {
+    overview.classList.contains('show') ? closeOverview() : openOverview();
+  });
+  document.getElementById('btn-play-opening').addEventListener('click', () => playRange(1, 4, 'opening · F1 → F4 · 60s'));
+  document.getElementById('btn-play-full').addEventListener('click', () => playRange(1, 11, 'full · F1 → F11 · 180s'));
+
+  // Touch swipe
+  let tStartX = 0, tStartY = 0;
+  document.addEventListener('touchstart', e => {
+    if(e.touches.length !== 1) return;
+    tStartX = e.touches[0].clientX; tStartY = e.touches[0].clientY;
+  }, {passive:true});
+  document.addEventListener('touchend', e => {
+    if(e.changedTouches.length !== 1) return;
+    const dx = e.changedTouches[0].clientX - tStartX;
+    const dy = e.changedTouches[0].clientY - tStartY;
+    if(Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)){
+      dx < 0 ? next() : prev();
+    }
+  }, {passive:true});
+
+  // Overview click-out
+  overview.addEventListener('click', e => {
+    if(e.target === overview) closeOverview();
+  });
+
+  // Hash routing on load
+  const hash = location.hash.replace('#','');
+  let initialSlide = 0;
+  if(hash){
+    const i = parseInt(hash, 10) - 1;
+    if(!isNaN(i) && i >= 0 && i < slides.length) initialSlide = i;
+  }
+  slideStart = performance.now();
+  if(initialSlide !== 0){ go(initialSlide); }
+  else { runDrivers(slides[0]); }
+})();
+</script>
+</body>
+</html>

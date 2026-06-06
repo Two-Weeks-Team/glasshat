@@ -52,8 +52,8 @@ function ArizeBand() {
               Glasshat doesn&apos;t hide the judgment — it traces it. Every agent, every one of the
               six hats, and the self-correction itself opens its own{" "}
               <strong className="font-medium text-[var(--color-ink)]">trace span in Arize&nbsp;AX</strong>.
-              So you don&apos;t take the score on faith — you open the trace of how it was judged, and
-              audited, and check it. <strong className="font-medium text-[var(--color-ink)]">Trace it; trust it.</strong>
+              So you don&apos;t take the score on faith — you open the trace of how it was judged and
+              audited, and check it. <strong className="font-medium text-[var(--color-ink)]">Trace it. Trust it.</strong>
             </p>
             <p className="max-w-xl text-[0.98rem] leading-relaxed text-[var(--color-muted)]">
               The calibration consultant reads a{" "}
