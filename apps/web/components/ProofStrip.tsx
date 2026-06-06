@@ -2,9 +2,9 @@ import { PROOF_CHIPS, PROOF_STATE_UI, type ProofChip } from "@/lib/deployment";
 
 /**
  * First-screen Rapid Agent stack proof: five chips a judge can read in a single
- * video frame. Four pillars are live on every request; Phoenix MCP is amber
- * (wired / E2E) so the claim stays honest. No network calls — deterministic and
- * stable for recording.
+ * video frame. All five pillars are live on every request — including the
+ * Phoenix-MCP calibration loop (reads + writes the dataset over MCP per request,
+ * verified against prod). No network calls — deterministic and stable for recording.
  */
 export function ProofStrip({ className = "" }: { className?: string }) {
   return (

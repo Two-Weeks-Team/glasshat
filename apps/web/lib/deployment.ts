@@ -2,11 +2,11 @@
  * Single source of truth for the Rapid Agent / Arize-track stack proof.
  *
  * These describe the *deployed* configuration (infra/deploy.sh real mode) and
- * are intentionally honest about state: four pillars run on every live request;
- * the Phoenix MCP calibration path is real and E2E-verified but is NOT the
- * default deployed audit path (the deployed audit uses the spike-D calibrated
- * table prior). Consumed by ProofStrip (first-screen chips) and ProofReceipt
- * (post-run receipt) so the two never drift.
+ * are intentionally honest about state: all five pillars run on every live
+ * request. The Phoenix MCP calibration loop reads the live glasshat-calibration
+ * dataset and writes each correction back per request, against a Cloud-SQL-backed
+ * Phoenix on Cloud Run. Consumed by ProofStrip (first-screen chips) and
+ * ProofReceipt (post-run receipt) so the two never drift.
  */
 
 export type ProofState = "live" | "wired" | "muted";
@@ -55,11 +55,12 @@ export const PROOF_CHIPS: ProofChip[] = [
   {
     id: "phoenixmcp",
     label: "Phoenix MCP",
-    detail: "calibration path",
-    state: "wired",
+    detail: "calibration loop",
+    state: "live",
     title:
-      "ADK MCPToolset over stdio (npx @arizeai/phoenix-mcp); E2E-verified. " +
-      "The deployed audit uses the calibrated table prior, not a live MCP call per request.",
+      "MCPToolset over stdio (npx @arizeai/phoenix-mcp) reads the live " +
+      "glasshat-calibration dataset and writes each correction back, per request, " +
+      "against a Cloud-SQL-backed Phoenix on Cloud Run.",
   },
 ];
 
@@ -83,8 +84,9 @@ export const DEPLOYMENT_META = {
   modelTier: "flash-lite · Vertex global endpoint",
   tracerBackend: "Arize AX · otlp.arize.com",
   deploymentTarget: "Cloud Run · panelyst-hackathon · us-central1",
-  /** Deployed default. The Phoenix MCP consultant is the E2E-only variant. */
-  consultantMode: "table-prior",
+  /** Deployed default: the live Phoenix-MCP consultant (reads + writes the
+   * glasshat-calibration dataset over MCP per request). */
+  consultantMode: "phoenix-mcp · live",
 } as const;
 
 /**

@@ -63,11 +63,11 @@ monitor — **not a chatbot**.
   code Evaluator: **hit@13 = 0.6154** on real Gemini (8 of 13 historical winners
   ranked into the top-13) vs 0.3846 mock / 0.26 chance — a binary Winner-label
   hit@13, not a rank curve.
-- A **Phoenix-MCP calibration consultant + Phoenix-Dataset write-back loop** is
-  implemented and E2E-verified; the credential-free live image runs the
-  deterministic spike-D prior, and the MCP path activates by config flag when a
-  Phoenix endpoint is set — so we state exactly which path is live rather than
-  overclaim.
+- A **Phoenix-MCP calibration consultant + Phoenix-Dataset write-back loop** runs
+  **live on the deployed demo**: each evaluation reads the `glasshat-calibration`
+  dataset and writes its corrections back over MCP **per request**, against a
+  Cloud-SQL-backed **Phoenix on Cloud Run** — so the "agents improve over time"
+  loop is genuinely closed (every run grows the dataset).
 - **In-code hybrid retrieval** (Vertex embeddings + cosine + BM25 + RRF) — **no
   vector database**. A GitHub-REST **metadata-only** code grader (no clone) folds
   repo evidence into retrieval.
@@ -94,9 +94,10 @@ monitor — **not a chatbot**.
   quantity.
 
 ## Challenges we ran into
-- **Honest MCP claims.** The Phoenix-MCP learning loop is deployed and wired, but
-  the credential-free demo image runs on the deterministic spike-D prior; we made
-  the UI and docs state exactly which path is live rather than overclaim.
+- **Standing up the live MCP loop.** Wiring a real Phoenix (Cloud Run + Cloud SQL)
+  surfaced three latent bugs in a path that had never run live (p25/p75 score-bound
+  semantics, the `dataset_name` tool arg, and the `{"data": …}` response wrapper);
+  fixing them made the consultant + write-back genuinely round-trip per request.
 - **Calibration without fabrication.** With only one measured corpus, we shipped
   the weight-aware anchor *mechanism* honestly (it fills with genuinely per-rubric
   deltas as the live dataset grows) instead of faking cross-rubric differences.
@@ -106,9 +107,10 @@ monitor — **not a chatbot**.
 ## Accomplishments / What's next
 - Live, reproducible, Apache-2.0, with a self-correction that's real math —
   **genuinely deployed on Agent Engine, traced in Arize AX, and measured (hit@13)**.
-- Next: flip the live demo to the hardened `structured` scoring mode + judge auth,
-  activate the live Phoenix-MCP consultant by default, and accumulate per-rubric
-  calibration so the audit sharpens with every evaluation.
+- The live Phoenix-MCP consultant is now on by default (the demo reads + writes the
+  calibration dataset over MCP per request), so the audit already sharpens with every
+  evaluation. Next: flip the live demo to the hardened `structured` scoring mode +
+  judge auth, and accumulate genuinely per-rubric calibration as the dataset grows.
 
 ## Built with
 `google-cloud` · `vertex-ai` · `gemini` · `google-adk` · `arize` · `arize-ax` ·

@@ -192,10 +192,10 @@ export function ProofTimeline({
         <span aria-hidden className="text-[var(--color-warn)]">
           ↑
         </span>
-        <span className="font-medium text-[var(--color-warn)]">Phoenix MCP</span>
+        <span className="font-medium text-[var(--color-good)]">Phoenix MCP</span>
         <span className="text-[var(--color-muted)]">
-          calibration lookup → Audit{" "}
-          <span className="italic">(E2E-verified; deployed audit uses the table prior)</span>
+          calibration read + write-back → Audit{" "}
+          <span className="italic">(live MCP per request · Cloud-SQL-backed Phoenix)</span>
         </span>
       </div>
 
