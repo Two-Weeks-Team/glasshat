@@ -185,11 +185,11 @@ export function ProofTimeline({
         className={
           "flex flex-wrap items-center gap-2 rounded-lg border px-3 py-1.5 text-xs " +
           (mcpActive
-            ? "border-[var(--color-warn)] bg-[color-mix(in_oklch,var(--color-warn)_10%,transparent)]"
-            : "border-[var(--color-warn)]/40")
+            ? "border-[var(--color-good)] bg-[color-mix(in_oklch,var(--color-good)_10%,transparent)]"
+            : "border-[var(--color-good)]/40")
         }
       >
-        <span aria-hidden className="text-[var(--color-warn)]">
+        <span aria-hidden className="text-[var(--color-good)]">
           ↑
         </span>
         <span className="font-medium text-[var(--color-good)]">Phoenix MCP</span>

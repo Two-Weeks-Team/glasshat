@@ -23,8 +23,13 @@ COPY --from=builder /app /app
 # endpoint configured, the audit gracefully falls back to the spike-D table.
 COPY --from=node:20-bookworm-slim /usr/local/bin/node /usr/local/bin/node
 COPY --from=node:20-bookworm-slim /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/npm
+# Pre-install the pinned phoenix-mcp globally so the per-request `npx ...@4.0.13`
+# resolves from the image (no network fetch / version resolution on each audit) —
+# cuts the live MCP round-trip latency. Keep the version in sync with
+# adk_runtime._PHOENIX_MCP_PACKAGE.
 RUN ln -sf /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
     && ln -sf /usr/local/lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx \
+    && npm install -g @arizeai/phoenix-mcp@4.0.13 \
     && node --version && npx --version
 ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONPATH="/app/packages/shared/src:/app/packages/rubric/src:/app/agents/src:/app/services/ingest/src:/app/services/code-grader/src:/app/services/pipeline-orchestrator/src:/app/apps/api/src" \
