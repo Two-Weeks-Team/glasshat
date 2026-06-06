@@ -241,96 +241,124 @@
   .c-f5 .breakdown{position:absolute;left:0;right:0;bottom:14%;text-align:center;color:#9aa;font-size:14.5px;font-family:ui-monospace,monospace;letter-spacing:.06em}
 
   /* F6 — architecture (cyan/violet) */
-  .c-f6{background:linear-gradient(180deg,#06080f,#000)}
-  .c-f6 svg{width:100%;height:100%;display:block}
-  .c-f6 .lbl{position:absolute;top:5.5%;left:0;right:0;text-align:center;color:var(--cool);font-size:15px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;z-index:5}
-  .c-f6 .foot{position:absolute;bottom:5%;left:0;right:0;text-align:center;color:var(--green);font-size:12.5px;font-family:ui-monospace,monospace;letter-spacing:.04em;z-index:5}
+  .c-f6{background:radial-gradient(ellipse 90% 80% at 50% 46%,oklch(0.16 0.05 250),#04060c 78%)}
+  .c-f6 svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+  .c-f6 .node{transform-box:fill-box;transform-origin:center}
+  .slide.active .c-f6 .node{opacity:0;animation:aNodePop .5s var(--d,0s) cubic-bezier(.34,1.56,.64,1) forwards}
+  @keyframes aNodePop{0%{opacity:0;transform:scale(.55)}70%{transform:scale(1.06)}100%{opacity:1;transform:scale(1)}}
+  .slide.active .c-f6 .glow{opacity:0;animation:aFade .6s var(--d,0s) forwards}
+  .c-f6 .link{stroke-dasharray:var(--len,60);stroke-dashoffset:var(--len,60)}
+  .slide.active .c-f6 .link{animation:aDraw .5s var(--d,0s) ease forwards}
+  @keyframes aDraw{to{stroke-dashoffset:0}}
+  .c-f6 .cap{opacity:0}
+  .slide.active .c-f6 .cap{animation:aUp .6s var(--d,0s) forwards}
+  /* Yellow hat pulses "hot" once the panel lands (foreshadows the F9 audit) */
+  .slide.active .c-f6 .hot{animation:aNodePop .5s var(--d,0s) cubic-bezier(.34,1.56,.64,1) forwards, aF6Hot 1.6s calc(var(--d,0s) + 1s) ease-in-out infinite}
+  @keyframes aF6Hot{0%,100%{filter:drop-shadow(0 0 3px oklch(0.85 0.16 95 / .4))}50%{filter:drop-shadow(0 0 16px oklch(0.85 0.16 95 / .9))}}
 
-  /* F7 — socratic (green pivot) */
-  .c-f7{background:#0a0f0c}
-  .c-f7 .editor{position:absolute;inset:6% 4%;display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .c-f7 .left{padding:18px;background:#0f1512;border-radius:10px;border:1px solid #1a241c;display:flex;flex-direction:column;gap:8px}
-  .c-f7 .left .pf{font-family:ui-monospace,monospace;font-size:13.5px;color:#9ad2a6}
-  .c-f7 .left .modal{background:#152019;border:1px solid #243a2c;border-radius:10px;padding:14px;color:#cfe6d6;font-size:13.5px;margin-top:4px}
-  .c-f7 .left .modal h4{font-size:12.5px;color:var(--cool);margin-bottom:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:700}
-  .c-f7 .left .modal .opt{padding:8px 12px;border:1px solid #243a2c;border-radius:6px;margin:5px 0;background:#1a2820;font-family:ui-monospace,monospace;font-size:12.5px}
-  .c-f7 .left .modal .opt.sel{background:oklch(0.30 0.10 155 / .4);border-color:var(--green);color:#cfeed8;font-weight:700}
-  .c-f7 .right{padding:18px;background:#080c0a;border:1px solid #1a241c;border-radius:10px;font-family:ui-monospace,monospace;font-size:13px;color:#bdd;line-height:1.65}
-  .c-f7 .right h5{color:var(--muted);font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-family:ui-sans-serif,sans-serif;margin-bottom:10px}
+  /* F7 — rubric synth + live RunRecord (green pivot) · full-bleed */
+  .c-f7{background:radial-gradient(ellipse 90% 80% at 50% 42%,oklch(0.15 0.045 165),#070b08 80%)}
+  .c-f7 .editor{position:absolute;inset:3.2% 3%;display:grid;grid-template-columns:1fr 1.06fr;grid-template-rows:auto 1fr;gap:1.6%}
+  .c-f7 .hdr{grid-column:1 / -1;display:flex;align-items:center;gap:14px;font-family:ui-monospace,monospace;color:#9ad2a6;font-size:clamp(15px,1.55vw,24px);font-weight:700;letter-spacing:.02em}
+  .c-f7 .hdr .pf{flex:1}
+  .c-f7 .hdr .tag{font-size:.62em;letter-spacing:.18em;text-transform:uppercase;color:var(--green);border:1px solid oklch(0.45 0.12 155);border-radius:99px;padding:4px 12px;background:oklch(0.30 0.10 155 / .18)}
+  .c-f7 .left{padding:clamp(16px,1.6vw,28px);background:#0f1512;border-radius:14px;border:1px solid #1f2c24;display:flex;flex-direction:column;gap:clamp(8px,1vw,16px);box-shadow:inset 0 0 0 1px oklch(0.30 0.08 155 / .12)}
+  .c-f7 .left .modal{background:#152019;border:1px solid #2a4434;border-radius:12px;padding:clamp(14px,1.5vw,24px);color:#cfe6d6;display:flex;flex-direction:column;gap:clamp(7px,.9vw,13px);flex:1}
+  .c-f7 .left .modal h4{font-size:clamp(12px,1.2vw,18px);color:var(--cool);letter-spacing:.1em;text-transform:uppercase;font-weight:700}
+  .c-f7 .left .modal .opt{display:flex;justify-content:space-between;align-items:center;padding:clamp(11px,1.25vw,20px) clamp(14px,1.4vw,22px);border:1px solid #2a4434;border-radius:9px;background:#1a2820;font-family:ui-monospace,monospace;font-size:clamp(15px,1.55vw,24px);color:#cfe6d6}
+  .c-f7 .left .modal .opt .w{color:#8fb89a;font-size:.82em}
+  .c-f7 .left .modal .opt.sel{background:oklch(0.30 0.12 155 / .42);border-color:var(--green);color:#dffbe7;font-weight:700;box-shadow:0 0 28px oklch(0.55 0.15 155 / .28)}
+  .c-f7 .left .modal .opt.sel .w{color:oklch(0.86 0.14 155)}
+  .c-f7 .right{padding:clamp(16px,1.6vw,28px);background:#070b09;border:1px solid #1f2c24;border-radius:14px;font-family:ui-monospace,monospace;font-size:clamp(14px,1.5vw,23px);color:#bdd6cf;line-height:1.72;display:flex;flex-direction:column;overflow:hidden}
+  .c-f7 .right h5{color:var(--muted);font-size:clamp(11px,1.1vw,16px);letter-spacing:.14em;text-transform:uppercase;font-family:ui-sans-serif,sans-serif;margin-bottom:clamp(8px,1vw,16px);font-weight:700}
+  .c-f7 .right .jl{white-space:nowrap}
   .c-f7 .right .k{color:var(--cool)}
-  .c-f7 .right .s{color:#9c6}
-  .c-f7 .right .ratio{margin-top:12px;color:var(--green);font-weight:700;font-size:13px}
+  .c-f7 .right .s{color:#9bd66f}
+  .c-f7 .right .au{color:var(--green);font-weight:800;text-shadow:0 0 22px oklch(0.78 0.16 155 / .5)}
+  .c-f7 .right .ratio{margin-top:auto;padding-top:clamp(10px,1.2vw,18px);color:var(--green);font-weight:700;font-size:clamp(14px,1.45vw,22px);text-shadow:0 0 20px oklch(0.78 0.16 155 / .35)}
 
-  /* F8 — six-hat panel (violet) */
-  .c-f8{background:#0c0a12}
-  .c-f8 .hats{position:absolute;inset:9% 5%;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:14px}
-  .c-f8 .hat{border-radius:12px;border:1px solid var(--line);background:var(--surface);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:6px;position:relative;overflow:hidden}
-  .c-f8 .hat .dot{width:30px;height:30px;border-radius:50%;border:2px solid #fff3}
-  .c-f8 .hat .nm{font-family:ui-sans-serif,sans-serif;font-size:15px;font-weight:700;color:#fff;letter-spacing:.02em}
-  .c-f8 .hat .role{font-family:ui-monospace,monospace;font-size:10.5px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
-  .c-f8 .hat .sc{font-family:ui-monospace,monospace;font-size:30px;font-weight:800;color:var(--cool);line-height:1}
+  /* F8 — six-hat panel (violet) · full-bleed */
+  .c-f8{background:radial-gradient(ellipse 92% 80% at 50% 46%,oklch(0.17 0.06 290),#08060e 80%)}
+  .c-f8 .htitle{position:absolute;left:5%;right:5%;top:3.4%;text-align:center;font-family:ui-monospace,monospace;font-size:clamp(15px,1.6vw,26px);letter-spacing:.16em;text-transform:uppercase;color:oklch(0.78 0.12 290);font-weight:700}
+  .c-f8 .hats{position:absolute;inset:13% 4% 5%;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:clamp(12px,1.5vw,26px)}
+  .c-f8 .hat{border-radius:16px;border:1px solid var(--line);background:linear-gradient(160deg,oklch(0.24 0.03 285),oklch(0.18 0.025 285));display:flex;flex-direction:column;justify-content:center;align-items:center;gap:clamp(6px,.8vw,12px);position:relative;overflow:hidden;padding:clamp(10px,1.4vw,24px)}
+  .c-f8 .hat .dot{width:clamp(34px,3.4vw,58px);height:clamp(34px,3.4vw,58px);border-radius:50%;border:2px solid #fff3;box-shadow:0 0 0 6px rgba(255,255,255,.04)}
+  .c-f8 .hat .nm{font-family:ui-sans-serif,sans-serif;font-size:clamp(18px,2vw,34px);font-weight:800;color:#fff;letter-spacing:.01em}
+  .c-f8 .hat .role{font-family:ui-monospace,monospace;font-size:clamp(11px,1.15vw,18px);color:var(--muted);letter-spacing:.12em;text-transform:uppercase}
+  .c-f8 .hat .sc{font-family:ui-monospace,monospace;font-size:clamp(38px,4.4vw,76px);font-weight:800;color:var(--cool);line-height:1;letter-spacing:-.02em}
+  .c-f8 .hat .bar{width:74%;height:clamp(5px,.55vw,9px);background:#ffffff14;border-radius:99px;overflow:hidden;margin-top:2px}
+  .c-f8 .hat .bar i{display:block;height:100%;border-radius:99px;background:var(--cool);transform-origin:left;transform:scaleX(0)}
+  .slide.active .c-f8 .hat .bar i{animation:aBar .9s var(--bd,1.6s) cubic-bezier(.22,.7,.32,1) forwards}
+  @keyframes aBar{to{transform:scaleX(var(--bw,.76))}}
   .c-f8 .hat.w .dot{background:#f4f4f6}
   .c-f8 .hat.r .dot{background:var(--red)}
   .c-f8 .hat.y .dot{background:oklch(0.85 0.16 95)}
   .c-f8 .hat.k .dot{background:#22242c;border-color:#555}
   .c-f8 .hat.g .dot{background:var(--green)}
   .c-f8 .hat.b .dot{background:var(--cool)}
-  .c-f8 .hat.hot{border-color:oklch(0.85 0.16 95);box-shadow:0 0 0 2px oklch(0.85 0.16 95 / .35),0 0 36px oklch(0.85 0.16 95 / .45)}
-  .c-f8 .hat.hot .sc{color:oklch(0.88 0.16 95)}
-  .c-f8 .hat.hot::after{content:"running hot";position:absolute;top:8px;right:10px;font-family:ui-monospace,monospace;font-size:9.5px;letter-spacing:.1em;color:oklch(0.88 0.16 95);text-transform:uppercase}
+  .c-f8 .hat.y .bar i{background:oklch(0.85 0.16 95)}
+  .c-f8 .hat.hot{border-color:oklch(0.85 0.16 95);box-shadow:0 0 0 2px oklch(0.85 0.16 95 / .35),0 0 48px oklch(0.85 0.16 95 / .5)}
+  .c-f8 .hat.hot .sc{color:oklch(0.88 0.16 95);text-shadow:0 0 26px oklch(0.85 0.16 95 / .55)}
+  .c-f8 .hat.hot::after{content:"running hot";position:absolute;top:clamp(8px,1vw,16px);right:clamp(10px,1.2vw,20px);font-family:ui-monospace,monospace;font-size:clamp(10px,1.05vw,16px);letter-spacing:.12em;color:oklch(0.88 0.16 95);text-transform:uppercase;font-weight:700}
 
-  /* F9 — triple-pane audit (green payoff) */
-  .c-f9{background:#06080f}
-  .c-f9 .triple{position:absolute;inset:6% 4%;display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:12px}
-  .c-f9 .pane{background:#0d1018;border:1px solid #1a1d28;border-radius:10px;padding:14px;font-family:ui-monospace,monospace;font-size:13.5px;color:#9ab;overflow:hidden;position:relative;line-height:1.55}
-  .c-f9 .pane h5{color:var(--cool);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;font-family:ui-sans-serif,sans-serif;font-weight:700}
-  .c-f9 .pane.panel{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
-  .c-f9 .pane.panel .raw{font-size:78px;color:var(--violet);font-weight:800;line-height:1;font-family:ui-monospace,monospace;text-shadow:0 0 36px oklch(0.72 0.18 290 / .45)}
-  .c-f9 .pane.panel .sub{color:#778;font-size:12.5px;margin-top:8px;font-family:ui-sans-serif,sans-serif}
-  .c-f9 .pane.audit .ln{padding:6px 0;border-bottom:1px solid #1a1d28;color:#bcd}
-  .c-f9 .pane.audit .ln.math{color:var(--cool);font-size:12.5px}
-  .c-f9 .pane.audit .yel{color:oklch(0.88 0.16 95)}
-  .c-f9 .pane.score{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
-  .c-f9 .pane.score .num{font-size:86px;color:var(--green);font-weight:800;line-height:1;letter-spacing:-.02em;text-shadow:0 0 40px oklch(0.78 0.16 155 / .55);font-family:ui-monospace,monospace}
-  .c-f9 .pane.score .max{color:#666;font-size:18px;margin-top:4px;font-family:ui-sans-serif,sans-serif}
-  .c-f9 .pane.score .gauge{margin-top:14px;width:90%;height:7px;background:#1a1d28;border-radius:99px;overflow:hidden}
-  .c-f9 .pane.score .gauge i{display:block;height:100%;width:76%;background:linear-gradient(90deg,var(--violet),var(--green))}
-  .c-f9 .pane.score .delta{margin-top:12px;color:var(--cool);font-size:12.5px;letter-spacing:.04em}
+  /* F9 — triple-pane audit · THE WOW (green payoff) · full-bleed */
+  .c-f9{background:radial-gradient(ellipse 95% 85% at 50% 48%,oklch(0.13 0.04 260),#04060d 82%)}
+  .c-f9 .triple{position:absolute;inset:3.4% 3%;display:grid;grid-template-columns:1fr 1.18fr 1fr;gap:clamp(12px,1.6vw,30px);align-items:stretch}
+  .c-f9 .pane{background:#0d1018;border:1px solid #1d212e;border-radius:16px;padding:clamp(16px,1.9vw,34px);font-family:ui-monospace,monospace;font-size:clamp(14px,1.5vw,23px);color:#9ab;overflow:hidden;position:relative;line-height:1.6}
+  .c-f9 .pane h5{color:var(--cool);font-size:clamp(12px,1.2vw,19px);letter-spacing:.14em;text-transform:uppercase;margin-bottom:clamp(10px,1.2vw,18px);font-family:ui-sans-serif,sans-serif;font-weight:700}
+  .c-f9 .pane.panel{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;border-color:oklch(0.40 0.12 290 / .5)}
+  .c-f9 .pane.panel .raw{font-size:clamp(96px,11vw,200px);color:var(--violet);font-weight:800;line-height:1;font-family:ui-monospace,monospace;letter-spacing:-.03em;text-shadow:0 0 56px oklch(0.72 0.18 290 / .55)}
+  .c-f9 .pane.panel .sub{color:#8a8fa6;font-size:clamp(13px,1.3vw,20px);margin-top:clamp(8px,1vw,16px);font-family:ui-sans-serif,sans-serif}
+  /* arrow between panes — audit applies */
+  .c-f9 .arr{position:absolute;top:50%;transform:translateY(-50%);font-size:clamp(26px,3vw,52px);color:#445;z-index:6;opacity:0}
+  .slide.active .c-f9 .arr{animation:aFade .5s var(--ad,2.4s) forwards}
+  .c-f9 .arr.a1{left:calc(33.3% - .9vw)}
+  .c-f9 .arr.a2{right:calc(33.3% - .9vw);color:var(--green)}
+  .c-f9 .pane.audit .ln{padding:clamp(6px,.8vw,12px) 0;border-bottom:1px solid #1a1d28;color:#c4cee0}
+  .c-f9 .pane.audit .ln.math{color:var(--cool);font-size:clamp(13px,1.35vw,21px)}
+  .c-f9 .pane.audit .yel{color:oklch(0.88 0.16 95);font-weight:700}
+  .c-f9 .pane.score{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;border-color:oklch(0.45 0.14 155 / .55);box-shadow:inset 0 0 0 1px oklch(0.40 0.12 155 / .14)}
+  .c-f9 .pane.score .num{font-size:clamp(104px,12vw,224px);color:var(--green);font-weight:800;line-height:1;letter-spacing:-.03em;text-shadow:0 0 56px oklch(0.78 0.16 155 / .6);font-family:ui-monospace,monospace}
+  .c-f9 .pane.score .max{color:#7a7f8c;font-size:clamp(15px,1.5vw,24px);margin-top:clamp(2px,.4vw,8px);font-family:ui-sans-serif,sans-serif}
+  .c-f9 .pane.score .gauge{margin-top:clamp(16px,1.8vw,30px);width:88%;height:clamp(10px,1.1vw,18px);background:#1a1d28;border-radius:99px;overflow:hidden}
+  .c-f9 .pane.score .gauge i{display:block;height:100%;width:76%;background:linear-gradient(90deg,var(--violet),var(--green));box-shadow:0 0 22px oklch(0.78 0.16 155 / .45)}
+  .c-f9 .pane.score .delta{margin-top:clamp(12px,1.4vw,22px);color:var(--cool);font-size:clamp(13px,1.35vw,21px);letter-spacing:.04em;font-weight:700}
 
-  /* F10 — terminal + rank-flip browser (cyan payoff) */
-  .c-f10{background:#0a0d12}
-  .c-f10 .term{position:absolute;left:5%;right:53%;top:9%;bottom:9%;background:#070a08;border-radius:8px;padding:16px;font-family:ui-monospace,monospace;font-size:12.5px;color:#a8d8c0;border:1px solid #16201a;line-height:1.7;overflow:hidden}
-  .c-f10 .term .cmd{color:var(--cool)}
+  /* F10 — terminal + rank-flip browser (cyan payoff) · full-bleed */
+  .c-f10{background:radial-gradient(ellipse 92% 85% at 50% 45%,oklch(0.15 0.04 220),#070a10 82%)}
+  .c-f10 .term{position:absolute;left:3.2%;right:52%;top:4.5%;bottom:11%;background:#070a08;border-radius:12px;padding:clamp(16px,1.9vw,32px);font-family:ui-monospace,monospace;font-size:clamp(14px,1.5vw,24px);color:#a8d8c0;border:1px solid #16201a;line-height:1.85;overflow:hidden}
+  .c-f10 .term .cmd{color:var(--cool);font-weight:700}
   .c-f10 .term .tree{color:#9bc}
-  .c-f10 .term .tot{color:var(--green);font-weight:700;margin-top:8px}
-  .c-f10 .browser2{position:absolute;left:50%;right:5%;top:9%;bottom:9%;background:#fff;border-radius:8px;overflow:hidden;border:1px solid #ddd;box-shadow:0 24px 80px rgba(0,0,0,.6)}
-  .c-f10 .browser2 .bar{background:#e9e9ed;padding:9px 12px;font-size:12.5px;color:#444;display:flex;align-items:center;gap:8px}
+  .c-f10 .term .tot{color:var(--green);font-weight:700;margin-top:clamp(8px,1vw,16px);font-size:1.04em}
+  .c-f10 .browser2{position:absolute;left:49%;right:3.2%;top:4.5%;bottom:11%;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #ddd;box-shadow:0 24px 90px rgba(0,0,0,.65);display:flex;flex-direction:column}
+  .c-f10 .browser2 .bar{background:#e9e9ed;padding:clamp(9px,1.1vw,16px) clamp(12px,1.3vw,20px);font-size:clamp(12px,1.25vw,19px);color:#444;display:flex;align-items:center;gap:8px;flex:0 0 auto}
   .c-f10 .browser2 .bar::before{content:"● ● ●";letter-spacing:4px;color:#bbb;margin-right:8px}
-  .c-f10 .browser2 .url{background:#fff;border:1px solid #d0d0d4;border-radius:5px;padding:4px 9px;color:#222;flex:1;font-family:ui-monospace,monospace;font-size:11.5px}
-  .c-f10 .browser2 .body{padding:14px;background:#f7f8fa;height:100%;color:#111}
-  .c-f10 .browser2 h4{font-size:14px;margin-bottom:10px;color:#111}
-  .c-f10 .flip{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px}
-  .c-f10 .flip .col h6{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#888;margin-bottom:6px}
-  .c-f10 .flip .rk{background:#fff;border:1px solid #e2e2e6;border-radius:5px;padding:8px 10px;margin:5px 0;color:#333;display:flex;justify-content:space-between}
-  .c-f10 .flip .rk.win{border-color:oklch(0.62 0.16 155);background:oklch(0.92 0.06 155);color:#0d3a22;font-weight:700}
-  .c-f10 .chip{position:absolute;left:50%;bottom:3%;transform:translateX(-50%);background:#000;border:1px solid var(--cool);color:var(--cool);font-family:ui-monospace,monospace;font-size:12px;padding:6px 14px;border-radius:99px;z-index:5;white-space:nowrap}
-  .c-f10 .honest{position:absolute;left:50%;bottom:-1px;transform:translateX(-50%);color:var(--muted);font-family:ui-monospace,monospace;font-size:9.5px;letter-spacing:.02em}
+  .c-f10 .browser2 .url{background:#fff;border:1px solid #d0d0d4;border-radius:6px;padding:clamp(4px,.5vw,9px) clamp(9px,1vw,16px);color:#222;flex:1;font-family:ui-monospace,monospace;font-size:clamp(11px,1.15vw,18px)}
+  .c-f10 .browser2 .body{padding:clamp(16px,1.9vw,32px);background:#f7f8fa;flex:1;color:#111;display:flex;flex-direction:column}
+  .c-f10 .browser2 h4{font-size:clamp(15px,1.6vw,26px);margin-bottom:clamp(12px,1.5vw,24px);color:#111;font-weight:700}
+  .c-f10 .flip{display:grid;grid-template-columns:1fr 1fr;gap:clamp(10px,1.4vw,26px);font-size:clamp(13px,1.4vw,22px);flex:1;align-content:start}
+  .c-f10 .flip .col h6{font-size:clamp(11px,1.1vw,17px);letter-spacing:.1em;text-transform:uppercase;color:#888;margin-bottom:clamp(7px,.9vw,14px)}
+  .c-f10 .flip .rk{background:#fff;border:1px solid #e2e2e6;border-radius:8px;padding:clamp(10px,1.25vw,20px) clamp(11px,1.3vw,20px);margin:clamp(6px,.8vw,14px) 0;color:#333;display:flex;justify-content:space-between;align-items:center}
+  .c-f10 .flip .rk.win{border-color:oklch(0.62 0.16 155);background:oklch(0.92 0.06 155);color:#0d3a22;font-weight:800;box-shadow:0 0 26px oklch(0.62 0.16 155 / .3)}
+  .c-f10 .chip{position:absolute;left:50%;bottom:5.4%;transform:translateX(-50%);background:#000;border:1px solid var(--cool);color:var(--cool);font-family:ui-monospace,monospace;font-size:clamp(13px,1.4vw,22px);font-weight:700;padding:clamp(7px,.85vw,15px) clamp(15px,1.6vw,28px);border-radius:99px;z-index:5;white-space:nowrap;box-shadow:0 0 30px oklch(0.80 0.12 220 / .3)}
+  .c-f10 .honest{position:absolute;left:50%;bottom:1.4%;transform:translateX(-50%);color:var(--muted);font-family:ui-monospace,monospace;font-size:clamp(10px,1.05vw,16px);letter-spacing:.02em;text-align:center;white-space:nowrap}
 
-  /* F11 — outro (hero cyan) */
-  .c-f11{background:radial-gradient(circle at 50% 60%,oklch(0.20 0.06 205),#000 80%)}
-  .c-f11 .repo{position:absolute;left:6%;right:6%;top:7%;background:#0d1418;border-radius:10px;border:1px solid #1a242a;padding:13px 18px;font-size:14px;color:#aab;font-family:ui-monospace,monospace}
+  /* F11 — outro (hero cyan) · full-bleed */
+  .c-f11{background:radial-gradient(ellipse 90% 90% at 50% 58%,oklch(0.21 0.07 205),#000 80%)}
+  .c-f11 .wrap{position:absolute;inset:4.5% 5%;display:flex;flex-direction:column;justify-content:center;gap:clamp(12px,1.8vw,30px)}
+  .c-f11 .repo{background:#0d1418;border-radius:12px;border:1px solid #1a242a;padding:clamp(13px,1.5vw,26px) clamp(18px,2vw,34px);font-size:clamp(15px,1.6vw,26px);color:#aab;font-family:ui-monospace,monospace}
   .c-f11 .repo b{color:#fff}
-  .c-f11 .badges{position:absolute;left:6%;right:6%;top:22%;display:flex;flex-wrap:wrap;gap:7px}
-  .c-f11 .b{background:#1a2024;border:1px solid #2a3236;color:#cde;padding:5px 10px;border-radius:5px;font-size:12px;font-family:ui-monospace,monospace}
+  .c-f11 .badges{display:flex;flex-wrap:wrap;gap:clamp(7px,.9vw,14px)}
+  .c-f11 .b{background:#1a2024;border:1px solid #2a3236;color:#cde;padding:clamp(6px,.75vw,13px) clamp(11px,1.3vw,22px);border-radius:7px;font-size:clamp(13px,1.4vw,22px);font-family:ui-monospace,monospace}
   .c-f11 .b.warm{background:oklch(0.28 0.10 205);border-color:var(--cool);color:var(--cool)}
   .c-f11 .b.cool{background:oklch(0.28 0.10 220);border-color:var(--cool);color:var(--cool)}
   .c-f11 .b.green{background:oklch(0.28 0.10 155);border-color:var(--green);color:var(--green)}
   .c-f11 .b.violet{background:oklch(0.28 0.12 290);border-color:var(--violet);color:var(--violet)}
-  .c-f11 .install{position:absolute;left:6%;right:6%;top:44%;background:#000;border:1px solid var(--cool);border-radius:10px;padding:16px;font-family:ui-monospace,monospace;color:var(--green);font-size:14px;line-height:1.8}
+  .c-f11 .install{background:#000;border:1px solid var(--cool);border-radius:12px;padding:clamp(16px,1.9vw,32px);font-family:ui-monospace,monospace;color:var(--green);font-size:clamp(15px,1.6vw,26px);line-height:1.9;box-shadow:0 0 36px oklch(0.80 0.12 220 / .18)}
   .c-f11 .install .pr{color:#667}
-  .c-f11 .lockup{position:absolute;left:0;right:0;bottom:6%;text-align:center;color:#fff;font-size:20px;font-weight:600;line-height:1.5}
+  .c-f11 .lockup{text-align:center;color:#fff;font-size:clamp(18px,2vw,32px);font-weight:600;line-height:1.5;margin-top:clamp(6px,1vw,18px)}
   .c-f11 .lockup b{color:var(--cool)}
-  .c-f11 .lockup-echo{display:inline-block;margin-top:8px;font-family:ui-serif,Georgia,serif;font-size:26px;font-weight:700;letter-spacing:-.01em;color:var(--gold);text-shadow:0 0 28px oklch(0.85 0.13 200 / .5)}
+  .c-f11 .lockup-echo{display:inline-block;margin-top:clamp(8px,1vw,16px);font-family:ui-serif,Georgia,serif;font-size:clamp(30px,3.6vw,68px);font-weight:800;letter-spacing:-.015em;color:var(--gold);text-shadow:0 0 36px oklch(0.85 0.13 200 / .55)}
   .c-f11 .lockup-echo i{font-style:italic;color:var(--gold)}
 
   /* responsive */
@@ -420,21 +448,24 @@
   }
 
   /* F8 YELLOW glow-hot */
+  /* Yellow must BOTH spawn (opacity/scale, like the other hats) AND pulse "hot".
+     A bare animation: would override the data-anim spawn and strand it at opacity 0. */
   .slide.active .c-f8 .hat.hot{
-    animation:aHatHot .7s 1.8s cubic-bezier(.34,1.56,.64,1) forwards
+    animation: aSpawn .42s var(--d,.8s) cubic-bezier(.34,1.56,.64,1) both,
+               aHatHot 1.7s calc(var(--d,.8s) + 1.2s) ease-in-out infinite
   }
   @keyframes aHatHot{
-    0%{box-shadow:0 0 0 0 oklch(0.85 0.16 95 / 0)}
-    100%{box-shadow:0 0 0 2px oklch(0.85 0.16 95 / .35),0 0 36px oklch(0.85 0.16 95 / .45)}
+    0%,100%{box-shadow:0 0 0 2px oklch(0.85 0.16 95 / .3),0 0 34px oklch(0.85 0.16 95 / .4)}
+    50%{box-shadow:0 0 0 3px oklch(0.85 0.16 95 / .6),0 0 74px oklch(0.85 0.16 95 / .8)}
   }
 
   /* F6 svg fade-in */
   .slide.active .c-f6 svg{opacity:0;animation:aFade .8s .2s forwards}
 
-  /* F10 browser slide-in */
+  /* F10 browser slide-in — quick (9s frame) */
   .slide.active .c-f10 .browser2{
     transform:translateX(120%);opacity:0;
-    animation:aBrowserSlide .9s 2.2s cubic-bezier(.22,.7,.32,1) forwards
+    animation:aBrowserSlide .7s 1.6s cubic-bezier(.22,.7,.32,1) forwards
   }
   @keyframes aBrowserSlide{0%{transform:translateX(120%);opacity:0}100%{transform:translateX(0);opacity:1}}
 
@@ -485,6 +516,10 @@
     background:radial-gradient(ellipse at center, oklch(0.24 0.08 290 / .35), #000 75%) !important
   }
   body.rec .hero-canvas-full{position:absolute;inset:0}
+  /* Recording: hide the cover's keyboard hint + the deck-nav stat chips (they're
+     navigator instrumentation, not video content). Keep the proof stats. */
+  body.rec .cover-cta,
+  body.rec .cover-meta .deck-meta{display:none !important}
   /* Floating recording timer (re-shown since .ctrl is hidden) */
   body.rec #rec-timer{
     display:flex !important;
@@ -589,9 +624,9 @@
             <span>Apache-2.0</span>
           </div>
           <div class="cover-meta">
-            <div><b>180 s</b> · runtime</div>
-            <div><b>11</b> · frames</div>
-            <div><b>0:35–1:00</b> · F4 hero</div>
+            <div class="deck-meta"><b>180 s</b> · runtime</div>
+            <div class="deck-meta"><b>11</b> · frames</div>
+            <div class="deck-meta"><b>0:35–1:00</b> · F4 hero</div>
             <div><b>104</b> · AX spans</div>
             <div><b>hit@13 0.6154</b></div>
           </div>
@@ -835,55 +870,44 @@
     <div class="body">
       <div class="canvas-wrap">
         <div class="canvas-frame c-f6">
-          <div class="lbl">one ADK 2.0 Workflow graph</div>
-          <svg viewBox="0 0 560 290">
-            <g font-family="ui-sans-serif" font-size="10" fill="oklch(0.88 0.02 285)">
-              <!-- sequential spine -->
-              <rect x="24" y="36" width="78" height="30" rx="6" fill="oklch(0.26 0.10 220)" stroke="oklch(0.80 0.12 220)"/>
-              <text x="63" y="55" text-anchor="middle" fill="oklch(0.92 0.06 220)" font-weight="700">Ingest</text>
-              <line x1="102" y1="51" x2="120" y2="51" stroke="oklch(0.40 0.04 285)" stroke-width="1.2"/>
-              <rect x="120" y="36" width="100" height="30" rx="6" fill="oklch(0.26 0.10 220)" stroke="oklch(0.80 0.12 220)"/>
-              <text x="170" y="55" text-anchor="middle" fill="oklch(0.92 0.06 220)" font-weight="700">RubricSynth</text>
-              <line x1="220" y1="51" x2="238" y2="51" stroke="oklch(0.40 0.04 285)" stroke-width="1.2"/>
-              <rect x="238" y="36" width="84" height="30" rx="6" fill="oklch(0.26 0.10 220)" stroke="oklch(0.80 0.12 220)"/>
-              <text x="280" y="55" text-anchor="middle" fill="oklch(0.92 0.06 220)" font-weight="700">Planner</text>
-              <!-- fan out to 6 hats -->
-              <line x1="280" y1="66" x2="280" y2="86" stroke="oklch(0.40 0.04 285)" stroke-width="1"/>
-              <text x="280" y="100" text-anchor="middle" fill="oklch(0.72 0.18 290)" font-size="9.5" font-weight="700">6-hat ParallelAgent</text>
-              <g font-size="9">
-                <rect x="40"  y="112" width="70" height="30" rx="6" fill="#f1f1f4" stroke="#ccd"/>
-                <text x="75"  y="131" text-anchor="middle" fill="#1a1a22" font-weight="700">White</text>
-                <rect x="118" y="112" width="70" height="30" rx="6" fill="oklch(0.30 0.16 25)" stroke="var(--red)"/>
-                <text x="153" y="131" text-anchor="middle" fill="oklch(0.92 0.10 25)" font-weight="700">Red</text>
-                <rect x="196" y="112" width="70" height="30" rx="6" fill="oklch(0.32 0.14 95)" stroke="oklch(0.85 0.16 95)"/>
-                <text x="231" y="131" text-anchor="middle" fill="oklch(0.95 0.10 95)" font-weight="700">Yellow</text>
-                <rect x="274" y="112" width="70" height="30" rx="6" fill="oklch(0.22 0.02 285)" stroke="#667"/>
-                <text x="309" y="131" text-anchor="middle" fill="#cdd" font-weight="700">Black</text>
-                <rect x="352" y="112" width="70" height="30" rx="6" fill="oklch(0.30 0.12 155)" stroke="var(--green)"/>
-                <text x="387" y="131" text-anchor="middle" fill="oklch(0.94 0.08 155)" font-weight="700">Green</text>
-                <rect x="430" y="112" width="70" height="30" rx="6" fill="oklch(0.30 0.10 220)" stroke="var(--cool)"/>
-                <text x="465" y="131" text-anchor="middle" fill="oklch(0.94 0.06 220)" font-weight="700">Blue</text>
-              </g>
-              <!-- join -->
-              <line x1="270" y1="142" x2="270" y2="162" stroke="oklch(0.40 0.04 285)" stroke-width="1"/>
-              <rect x="222" y="162" width="96" height="28" rx="6" fill="oklch(0.24 0.06 285)" stroke="oklch(0.66 0.06 285)"/>
-              <text x="270" y="180" text-anchor="middle" fill="oklch(0.90 0.02 285)" font-weight="700">Join (six_hat)</text>
-              <!-- tail spine -->
-              <line x1="270" y1="190" x2="270" y2="206" stroke="oklch(0.40 0.04 285)" stroke-width="1"/>
-              <g font-size="9.5">
-                <rect x="120" y="206" width="84" height="28" rx="6" fill="oklch(0.28 0.12 290)" stroke="var(--violet)"/>
-                <text x="162" y="224" text-anchor="middle" fill="oklch(0.94 0.08 290)" font-weight="700">Audit (loop)</text>
-                <line x1="204" y1="220" x2="222" y2="220" stroke="oklch(0.40 0.04 285)" stroke-width="1.2"/>
-                <rect x="222" y="206" width="64" height="28" rx="6" fill="oklch(0.30 0.12 155)" stroke="var(--green)"/>
-                <text x="254" y="224" text-anchor="middle" fill="oklch(0.94 0.08 155)" font-weight="700">Score</text>
-                <line x1="286" y1="220" x2="304" y2="220" stroke="oklch(0.40 0.04 285)" stroke-width="1.2"/>
-                <rect x="304" y="206" width="72" height="28" rx="6" fill="oklch(0.30 0.10 220)" stroke="var(--cool)"/>
-                <text x="340" y="224" text-anchor="middle" fill="oklch(0.94 0.06 220)" font-weight="700">Report</text>
-              </g>
-              <text x="280" y="260" text-anchor="middle" fill="oklch(0.66 0.02 285)" font-size="9">every node opens its own Arize AX span · the full tree, not a flat list</text>
-            </g>
+          <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid meet" font-family="ui-sans-serif,system-ui">
+            <text class="cap" style="--d:.1s" x="800" y="56" text-anchor="middle" fill="oklch(0.82 0.12 220)" font-family="ui-monospace,monospace" font-size="25" letter-spacing="5" font-weight="700">ONE ADK 2.0 WORKFLOW GRAPH</text>
+            <!-- sequential spine: Ingest → RubricSynth → Planner -->
+            <line class="link" style="--len:160;--d:.65s" x1="490" y1="150" x2="650" y2="150" stroke="oklch(0.52 0.05 250)" stroke-width="2.5"/>
+            <line class="link" style="--len:160;--d:.95s" x1="950" y1="150" x2="1110" y2="150" stroke="oklch(0.52 0.05 250)" stroke-width="2.5"/>
+            <g class="node" style="--d:.5s"><rect x="190" y="104" width="300" height="92" rx="16" fill="oklch(0.24 0.10 220)" stroke="oklch(0.80 0.12 220)" stroke-width="2.5"/><text x="340" y="163" text-anchor="middle" fill="oklch(0.96 0.05 220)" font-size="37" font-weight="700">Ingest</text></g>
+            <g class="node" style="--d:.8s"><rect x="650" y="104" width="300" height="92" rx="16" fill="oklch(0.24 0.10 220)" stroke="oklch(0.80 0.12 220)" stroke-width="2.5"/><text x="800" y="163" text-anchor="middle" fill="oklch(0.96 0.05 220)" font-size="36" font-weight="700">RubricSynth</text></g>
+            <g class="node" style="--d:1.1s"><rect x="1110" y="104" width="300" height="92" rx="16" fill="oklch(0.24 0.10 220)" stroke="oklch(0.80 0.12 220)" stroke-width="2.5"/><text x="1260" y="163" text-anchor="middle" fill="oklch(0.96 0.05 220)" font-size="37" font-weight="700">Planner</text></g>
+            <!-- fan-out to the 6-hat parallel row -->
+            <line class="link" style="--len:54;--d:1.3s" x1="800" y1="196" x2="800" y2="250" stroke="oklch(0.52 0.05 250)" stroke-width="2.5"/>
+            <text class="cap" style="--d:1.4s" x="800" y="284" text-anchor="middle" fill="oklch(0.74 0.18 290)" font-size="27" font-weight="800" letter-spacing="1">6-hat ParallelAgent</text>
+            <line class="link" style="--len:1245;--d:1.55s" x1="177" y1="314" x2="1422" y2="314" stroke="oklch(0.46 0.05 250)" stroke-width="2"/>
+            <line class="link" style="--len:24;--d:1.66s" x1="177" y1="314" x2="177" y2="338" stroke="oklch(0.46 0.05 250)" stroke-width="2"/>
+            <line class="link" style="--len:24;--d:1.78s" x1="426" y1="314" x2="426" y2="338" stroke="oklch(0.46 0.05 250)" stroke-width="2"/>
+            <line class="link" style="--len:24;--d:1.90s" x1="675" y1="314" x2="675" y2="338" stroke="oklch(0.46 0.05 250)" stroke-width="2"/>
+            <line class="link" style="--len:24;--d:2.02s" x1="924" y1="314" x2="924" y2="338" stroke="oklch(0.46 0.05 250)" stroke-width="2"/>
+            <line class="link" style="--len:24;--d:2.14s" x1="1173" y1="314" x2="1173" y2="338" stroke="oklch(0.46 0.05 250)" stroke-width="2"/>
+            <line class="link" style="--len:24;--d:2.26s" x1="1422" y1="314" x2="1422" y2="338" stroke="oklch(0.46 0.05 250)" stroke-width="2"/>
+            <g class="node" style="--d:1.7s"><rect x="70" y="338" width="214" height="120" rx="16" fill="#eef0f4" stroke="#ffffff" stroke-width="2.5"/><text x="177" y="409" text-anchor="middle" fill="#15151c" font-size="35" font-weight="700">White</text></g>
+            <g class="node" style="--d:1.82s"><rect x="319" y="338" width="214" height="120" rx="16" fill="oklch(0.30 0.16 25)" stroke="var(--red)" stroke-width="2.5"/><text x="426" y="409" text-anchor="middle" fill="oklch(0.94 0.10 25)" font-size="35" font-weight="700">Red</text></g>
+            <g class="node hot" style="--d:1.94s"><rect x="568" y="338" width="214" height="120" rx="16" fill="oklch(0.34 0.14 95)" stroke="oklch(0.85 0.16 95)" stroke-width="3"/><text x="675" y="402" text-anchor="middle" fill="oklch(0.96 0.12 95)" font-size="35" font-weight="700">Yellow</text><text x="675" y="436" text-anchor="middle" fill="oklch(0.88 0.16 95)" font-family="ui-monospace,monospace" font-size="16" letter-spacing="1">running hot</text></g>
+            <g class="node" style="--d:2.06s"><rect x="817" y="338" width="214" height="120" rx="16" fill="oklch(0.22 0.02 285)" stroke="#6a6f80" stroke-width="2.5"/><text x="924" y="409" text-anchor="middle" fill="#d4d8e2" font-size="35" font-weight="700">Black</text></g>
+            <g class="node" style="--d:2.18s"><rect x="1066" y="338" width="214" height="120" rx="16" fill="oklch(0.30 0.12 155)" stroke="var(--green)" stroke-width="2.5"/><text x="1173" y="409" text-anchor="middle" fill="oklch(0.95 0.08 155)" font-size="35" font-weight="700">Green</text></g>
+            <g class="node" style="--d:2.30s"><rect x="1315" y="338" width="214" height="120" rx="16" fill="oklch(0.30 0.10 220)" stroke="var(--cool)" stroke-width="2.5"/><text x="1422" y="409" text-anchor="middle" fill="oklch(0.95 0.06 220)" font-size="35" font-weight="700">Blue</text></g>
+            <!-- join -->
+            <line class="link" style="--len:54;--d:2.55s" x1="800" y1="458" x2="800" y2="512" stroke="oklch(0.52 0.05 250)" stroke-width="2.5"/>
+            <g class="node" style="--d:2.7s"><rect x="650" y="512" width="300" height="80" rx="16" fill="oklch(0.26 0.07 285)" stroke="oklch(0.68 0.08 285)" stroke-width="2.5"/><text x="800" y="563" text-anchor="middle" fill="oklch(0.93 0.03 285)" font-size="31" font-weight="700">Join (six_hat)</text></g>
+            <!-- tail: Audit (loop) ← Score → Report -->
+            <line class="link" style="--len:54;--d:2.95s" x1="800" y1="592" x2="800" y2="646" stroke="oklch(0.52 0.05 250)" stroke-width="2.5"/>
+            <line class="link" style="--len:60;--d:3.12s" x1="610" y1="688" x2="670" y2="688" stroke="oklch(0.52 0.05 250)" stroke-width="2.5"/>
+            <line class="link" style="--len:60;--d:3.12s" x1="930" y1="688" x2="990" y2="688" stroke="oklch(0.52 0.05 250)" stroke-width="2.5"/>
+            <path class="link" style="--len:150;--d:3.3s" d="M 410 648 C 360 600 470 588 500 636" fill="none" stroke="var(--violet)" stroke-width="2.5"/>
+            <g class="node" style="--d:3.05s"><rect x="350" y="648" width="260" height="80" rx="16" fill="oklch(0.28 0.12 290)" stroke="var(--violet)" stroke-width="2.5"/><text x="480" y="699" text-anchor="middle" fill="oklch(0.95 0.08 290)" font-size="29" font-weight="700">Audit (loop)</text></g>
+            <g class="node" style="--d:3.05s"><rect x="670" y="648" width="260" height="80" rx="16" fill="oklch(0.32 0.13 155)" stroke="var(--green)" stroke-width="3" filter="drop-shadow(0 0 14px oklch(0.78 0.16 155 / .5))"/><text x="800" y="699" text-anchor="middle" fill="oklch(0.96 0.08 155)" font-size="30" font-weight="700">Score</text></g>
+            <g class="node" style="--d:3.2s"><rect x="990" y="648" width="260" height="80" rx="16" fill="oklch(0.30 0.10 220)" stroke="var(--cool)" stroke-width="2.5"/><text x="1120" y="699" text-anchor="middle" fill="oklch(0.95 0.06 220)" font-size="30" font-weight="700">Report</text></g>
+            <text class="cap" style="--d:3.55s" x="800" y="800" text-anchor="middle" fill="oklch(0.70 0.02 285)" font-size="23">every node opens its own Arize&nbsp;AX span — the full tree, not a flat list</text>
+            <text class="cap" style="--d:3.85s" x="800" y="846" text-anchor="middle" fill="oklch(0.74 0.14 155)" font-family="ui-monospace,monospace" font-size="17" letter-spacing="1">deployed on the Gemini Enterprise Agent Platform · Agent Engine · reasoningEngines/7480191458771730432</text>
           </svg>
-          <div class="foot">deployed on the Gemini Enterprise Agent Platform · Agent Engine · reasoningEngines/7480191458771730432</div>
         </div>
       </div>
       <div class="script-wrap">
@@ -916,26 +940,29 @@
       <div class="canvas-wrap">
         <div class="canvas-frame c-f7">
           <div class="editor">
-            <div class="left">
-              <div class="pf tw" data-typewriter="$ rubric_synthesizer ← evaluator's own rules" data-tw-dur="1400" data-tw-delay="200"></div>
-              <div class="modal" data-anim="up" style="--d:1.9s">
-                <h4>synthesized rubric · 4 criteria</h4>
-                <div class="opt"     data-anim="fade" style="--d:2.3s">technical (0.30)</div>
-                <div class="opt"     data-anim="fade" style="--d:2.5s">innovation (0.25)</div>
-                <div class="opt sel" data-anim="pop"  style="--d:2.7s">arize integration (0.25)</div>
-                <div class="opt"     data-anim="fade" style="--d:2.5s">impact (0.20)</div>
+            <div class="hdr" data-anim="fade" style="--d:.15s">
+              <span class="pf tw" data-typewriter="$ rubric_synthesizer ← evaluator's own rules" data-tw-dur="1600" data-tw-delay="300"></span>
+              <span class="tag" data-anim="pop" style="--d:2.2s">live · grounded</span>
+            </div>
+            <div class="left" data-anim="up" style="--d:2.4s">
+              <div class="modal">
+                <h4 data-anim="fade" style="--d:2.7s">synthesized rubric · 4 criteria</h4>
+                <div class="opt"     data-anim="pop" style="--d:3.2s">technical<span class="w">0.30</span></div>
+                <div class="opt"     data-anim="pop" style="--d:3.7s">innovation<span class="w">0.25</span></div>
+                <div class="opt sel" data-anim="pop" style="--d:4.2s">arize integration<span class="w">0.25</span></div>
+                <div class="opt"     data-anim="pop" style="--d:4.7s">impact<span class="w">0.20</span></div>
               </div>
             </div>
-            <div class="right">
-              <h5 data-anim="fade" style="--d:.4s">runs/&lt;id&gt;/RunRecord.json</h5>
-              <div data-anim="fade" style="--d:3.3s">{</div>
-              <div data-anim="right" style="--d:3.6s">&nbsp;&nbsp;<span class="k">"criterion"</span>: <span class="s">"arize-integration"</span>,</div>
-              <div data-anim="right" style="--d:4.0s">&nbsp;&nbsp;<span class="k">"hat_scores"</span>: { white <span class="s">8.1</span>, yellow <span class="s">9.4</span> },</div>
-              <div data-anim="right" style="--d:4.4s">&nbsp;&nbsp;<span class="k">"evidence"</span>: [<span class="s">"trace#104"</span>, <span class="s">"exp:hit@13"</span>],</div>
-              <div data-anim="right" style="--d:4.8s">&nbsp;&nbsp;<span class="k">"final_score"</span>: <span class="s">7.6</span>,</div>
-              <div data-anim="right" style="--d:5.2s">&nbsp;&nbsp;<span class="k">"audited"</span>: <span class="s">true</span></div>
-              <div data-anim="fade" style="--d:5.6s">}</div>
-              <div class="ratio" data-anim="bloom" style="--d:6.2s">▣ grounded in retrieved evidence</div>
+            <div class="right" data-anim="up" style="--d:5.4s">
+              <h5 data-anim="fade" style="--d:5.7s">runs/&lt;id&gt;/RunRecord.json</h5>
+              <div class="jl" data-anim="fade"  style="--d:6.2s">{</div>
+              <div class="jl" data-anim="right" style="--d:6.7s">&nbsp;&nbsp;<span class="k">"criterion"</span>: <span class="s">"arize-integration"</span>,</div>
+              <div class="jl" data-anim="right" style="--d:7.4s">&nbsp;&nbsp;<span class="k">"hat_scores"</span>: { white <span class="s">8.1</span>, yellow <span class="s">9.4</span> },</div>
+              <div class="jl" data-anim="right" style="--d:8.1s">&nbsp;&nbsp;<span class="k">"evidence"</span>: [<span class="s">"trace#104"</span>, <span class="s">"exp:hit@13"</span>],</div>
+              <div class="jl" data-anim="right" style="--d:8.8s">&nbsp;&nbsp;<span class="k">"final_score"</span>: <span class="s">7.6</span>,</div>
+              <div class="jl" data-anim="pop"   style="--d:10.4s">&nbsp;&nbsp;<span class="k">"audited"</span>: <span class="au">true</span></div>
+              <div class="jl" data-anim="fade"  style="--d:11.2s">}</div>
+              <div class="ratio" data-anim="bloom" style="--d:12.2s">▣ grounded in retrieved evidence</div>
             </div>
           </div>
         </div>
@@ -969,13 +996,14 @@
     <div class="body">
       <div class="canvas-wrap">
         <div class="canvas-frame c-f8">
+          <div class="htitle" data-anim="fade" style="--d:.1s">six-hat ParallelAgent · scoring in parallel</div>
           <div class="hats">
-            <div class="hat w" data-anim="spawn" style="--d:.2s"><span class="dot"></span><span class="nm">White</span><span class="role">facts</span><span class="sc">7.8</span></div>
-            <div class="hat r" data-anim="spawn" style="--d:.4s"><span class="dot"></span><span class="nm">Red</span><span class="role">instinct</span><span class="sc">7.1</span></div>
-            <div class="hat y hot" data-anim="spawn" style="--d:.6s"><span class="dot"></span><span class="nm">Yellow</span><span class="role">optimism</span><span class="sc">9.4</span></div>
-            <div class="hat k" data-anim="spawn" style="--d:.8s"><span class="dot"></span><span class="nm">Black</span><span class="role">caution</span><span class="sc">6.5</span></div>
-            <div class="hat g" data-anim="spawn" style="--d:1.0s"><span class="dot"></span><span class="nm">Green</span><span class="role">creativity</span><span class="sc">8.0</span></div>
-            <div class="hat b" data-anim="spawn" style="--d:1.2s"><span class="dot"></span><span class="nm">Blue</span><span class="role">process</span><span class="sc">7.6</span></div>
+            <div class="hat w" data-anim="spawn" style="--d:.4s"><span class="dot"></span><span class="nm">White</span><span class="role">facts</span><span class="sc num-roll" data-counter data-target="78" data-decimal="1" data-dur="1100" data-delay="700">0.0</span><span class="bar" style="--bw:.78"><i style="--bd:1.5s"></i></span></div>
+            <div class="hat r" data-anim="spawn" style="--d:.6s"><span class="dot"></span><span class="nm">Red</span><span class="role">instinct</span><span class="sc num-roll" data-counter data-target="71" data-decimal="1" data-dur="1100" data-delay="900">0.0</span><span class="bar" style="--bw:.71"><i style="--bd:1.7s"></i></span></div>
+            <div class="hat y hot" data-anim="spawn" style="--d:.8s"><span class="dot"></span><span class="nm">Yellow</span><span class="role">optimism</span><span class="sc num-roll" data-counter data-target="94" data-decimal="1" data-dur="1400" data-delay="1100">0.0</span><span class="bar" style="--bw:.94"><i style="--bd:1.9s"></i></span></div>
+            <div class="hat k" data-anim="spawn" style="--d:1.0s"><span class="dot"></span><span class="nm">Black</span><span class="role">caution</span><span class="sc num-roll" data-counter data-target="65" data-decimal="1" data-dur="1100" data-delay="1300">0.0</span><span class="bar" style="--bw:.65"><i style="--bd:2.1s"></i></span></div>
+            <div class="hat g" data-anim="spawn" style="--d:1.2s"><span class="dot"></span><span class="nm">Green</span><span class="role">creativity</span><span class="sc num-roll" data-counter data-target="80" data-decimal="1" data-dur="1100" data-delay="1500">0.0</span><span class="bar" style="--bw:.80"><i style="--bd:2.3s"></i></span></div>
+            <div class="hat b" data-anim="spawn" style="--d:1.4s"><span class="dot"></span><span class="nm">Blue</span><span class="role">process</span><span class="sc num-roll" data-counter data-target="76" data-decimal="1" data-dur="1100" data-delay="1700">0.0</span><span class="bar" style="--bw:.76"><i style="--bd:2.5s"></i></span></div>
           </div>
         </div>
       </div>
@@ -1010,12 +1038,14 @@
         <div class="canvas-frame c-f9">
           <span class="speed">live · math shown</span>
           <div class="triple">
+            <span class="arr a1" style="--ad:2.4s">→</span>
+            <span class="arr a2" style="--ad:3.0s">→</span>
             <div class="pane panel" data-anim="fade" style="--d:.2s">
               <h5>panel · raw consensus</h5>
               <div class="raw">9.0</div>
               <div class="sub">/ 10 · six-hat median</div>
             </div>
-            <div class="pane audit" data-anim="fade" style="--d:.4s">
+            <div class="pane audit" data-anim="up" style="--d:.5s">
               <h5>audit · calibration prior</h5>
               <div class="ln" data-anim="right" style="--d:1.0s"><span class="yel">YELLOW</span> over-scored</div>
               <div class="ln" data-anim="right" style="--d:1.4s">delta = <span class="yel">+1.453</span> (low-evidence)</div>
@@ -1024,7 +1054,7 @@
               <div class="ln" data-anim="right" style="--d:2.4s">±2.0 cap · bidirectional</div>
               <div class="ln" data-anim="fade" style="--d:3.0s;color:var(--green)">strongest where evidence is thin</div>
             </div>
-            <div class="pane score" data-anim="fade" style="--d:.6s">
+            <div class="pane score" data-anim="fade" style="--d:.8s">
               <h5>score · corrected</h5>
               <div class="num num-roll" data-counter data-target="76" data-from="90" data-decimal="1" data-dur="2000" data-delay="3400">9.0</div>
               <div class="max">/ 10</div>
@@ -1064,34 +1094,34 @@
       <div class="canvas-wrap">
         <div class="canvas-frame c-f10">
           <div class="term">
-            <div class="cmd" data-anim="right" style="--d:.2s">$ client.spans.list(project="glasshat")</div>
-            <div class="tree" data-anim="right" style="--d:.6s">agent · glasshat_pipeline</div>
-            <div class="tree" data-anim="right" style="--d:.9s">&nbsp;└ Workflow · ingest→synth→plan</div>
-            <div class="tree" data-anim="right" style="--d:1.2s">&nbsp;&nbsp;&nbsp;&nbsp;├ hat_white  · gemini + embed</div>
-            <div class="tree" data-anim="right" style="--d:1.5s">&nbsp;&nbsp;&nbsp;&nbsp;├ hat_yellow · gemini + embed</div>
-            <div class="tree" data-anim="right" style="--d:1.8s">&nbsp;&nbsp;&nbsp;&nbsp;└ … 6 hats · join · audit · score</div>
-            <div class="tot" data-anim="fade" style="--d:2.2s">104 spans · 1 trace</div>
+            <div class="cmd" data-anim="right" style="--d:.15s">$ client.spans.list(project="glasshat")</div>
+            <div class="tree" data-anim="right" style="--d:.45s">agent · glasshat_pipeline</div>
+            <div class="tree" data-anim="right" style="--d:.65s">&nbsp;└ Workflow · ingest→synth→plan</div>
+            <div class="tree" data-anim="right" style="--d:.85s">&nbsp;&nbsp;&nbsp;&nbsp;├ hat_white  · gemini + embed</div>
+            <div class="tree" data-anim="right" style="--d:1.05s">&nbsp;&nbsp;&nbsp;&nbsp;├ hat_yellow · gemini + embed</div>
+            <div class="tree" data-anim="right" style="--d:1.25s">&nbsp;&nbsp;&nbsp;&nbsp;└ … 6 hats · join · audit · score</div>
+            <div class="tot" data-anim="fade" style="--d:1.55s">104 spans · 1 trace</div>
           </div>
           <div class="browser2">
             <div class="bar"><span class="url">glasshat.app/judge · rank-flip board</span></div>
             <div class="body">
-              <h4 data-anim="up" style="--d:3.0s">without audit&nbsp;&nbsp;vs&nbsp;&nbsp;with Glasshat audit</h4>
+              <h4 data-anim="up" style="--d:2.4s">without audit&nbsp;&nbsp;vs&nbsp;&nbsp;with Glasshat audit</h4>
               <div class="flip">
                 <div class="col">
                   <h6>without audit</h6>
-                  <div class="rk" data-anim="right" style="--d:3.4s"><span>Project B</span><span>#1</span></div>
-                  <div class="rk" data-anim="right" style="--d:3.7s"><span>Project A</span><span>#2</span></div>
+                  <div class="rk" data-anim="pop" style="--d:2.8s"><span>Project B</span><span>#1</span></div>
+                  <div class="rk" data-anim="pop" style="--d:3.0s"><span>Project A</span><span>#2</span></div>
                 </div>
                 <div class="col">
                   <h6>with Glasshat audit</h6>
-                  <div class="rk win" data-anim="right" style="--d:4.2s"><span>Project A</span><span>#1</span></div>
-                  <div class="rk" data-anim="right" style="--d:4.5s"><span>Project B</span><span>#2</span></div>
+                  <div class="rk win" data-anim="land" style="--d:3.5s"><span>Project A</span><span>#1</span></div>
+                  <div class="rk" data-anim="pop" style="--d:3.8s"><span>Project B</span><span>#2</span></div>
                 </div>
               </div>
             </div>
           </div>
-          <div class="chip" data-anim="fade" style="--d:5.0s">hit@13 0.6154 · Arize AX experiment</div>
-          <div class="honest">binary Winner-label · not a rank curve · public demo runs the spike-D prior</div>
+          <div class="chip" data-anim="pop" style="--d:4.4s">hit@13 0.6154 · Arize AX experiment</div>
+          <div class="honest" data-anim="fade" style="--d:5.0s">binary Winner-label · not a rank curve · public demo runs the spike-D prior</div>
         </div>
       </div>
       <div class="script-wrap">
@@ -1123,21 +1153,23 @@
     <div class="body">
       <div class="canvas-wrap">
         <div class="canvas-frame c-f11">
-          <div class="repo" data-anim="up" style="--d:.1s"><b>github.com/Two-Weeks-Team/glasshat</b> · Apache-2.0</div>
-          <div class="badges">
-            <span class="b cool"   data-anim="pop" style="--d:.5s">Gemini 3.1 Flash-Lite</span>
-            <span class="b violet" data-anim="pop" style="--d:.6s">ADK 2.0 Workflow</span>
-            <span class="b cool"   data-anim="pop" style="--d:.7s">Arize AX</span>
-            <span class="b violet" data-anim="pop" style="--d:.75s">Phoenix MCP · calibration</span>
-            <span class="b green"  data-anim="pop" style="--d:.8s">Agent Engine · live</span>
-            <span class="b"        data-anim="pop" style="--d:.9s">License Apache-2.0</span>
-            <span class="b cool"   data-anim="pop" style="--d:1.0s">104-span trace</span>
-            <span class="b green"  data-anim="pop" style="--d:1.1s">hit@13 0.6154</span>
-            <span class="b violet" data-anim="pop" style="--d:1.2s">Datasets + Experiment</span>
-            <span class="b"        data-anim="pop" style="--d:1.3s">code Evaluator</span>
+          <div class="wrap">
+            <div class="repo" data-anim="up" style="--d:.1s"><b>github.com/Two-Weeks-Team/glasshat</b> · Apache-2.0</div>
+            <div class="badges">
+              <span class="b cool"   data-anim="pop" style="--d:.35s">Gemini 3.1 Flash-Lite</span>
+              <span class="b violet" data-anim="pop" style="--d:.42s">ADK 2.0 Workflow</span>
+              <span class="b cool"   data-anim="pop" style="--d:.49s">Arize AX</span>
+              <span class="b violet" data-anim="pop" style="--d:.56s">Phoenix MCP · calibration</span>
+              <span class="b green"  data-anim="pop" style="--d:.63s">Agent Engine · live</span>
+              <span class="b"        data-anim="pop" style="--d:.70s">License Apache-2.0</span>
+              <span class="b cool"   data-anim="pop" style="--d:.77s">104-span trace</span>
+              <span class="b green"  data-anim="pop" style="--d:.84s">hit@13 0.6154</span>
+              <span class="b violet" data-anim="pop" style="--d:.91s">Datasets + Experiment</span>
+              <span class="b"        data-anim="pop" style="--d:.98s">code Evaluator</span>
+            </div>
+            <div class="install tw" data-typewriter="$ git clone github.com/Two-Weeks-Team/glasshat&#10;$ uv run experiments/run_arize_experiment.py   # live hit@13" data-tw-dur="1500" data-tw-delay="1100"></div>
+            <div class="lockup" data-anim="bloom" style="--d:2.8s">Open source · <b>Apache-2.0</b><br><span class="lockup-echo">Trace it. <i>Trust it.</i></span></div>
           </div>
-          <div class="install tw" data-typewriter="$ git clone github.com/Two-Weeks-Team/glasshat&#10;$ uv run experiments/run_arize_experiment.py   # live hit@13" data-tw-dur="2200" data-tw-delay="1900"></div>
-          <div class="lockup" data-anim="bloom" style="--d:3.6s">Open source · <b>Apache-2.0</b><br><span class="lockup-echo">Trace it. <i>Trust it.</i></span></div>
         </div>
       </div>
       <div class="script-wrap">
@@ -1203,13 +1235,13 @@
 <!-- COUNTDOWN BEFORE CINEMATIC PLAYBACK -->
 <div class="countdown" id="countdown">
   <div class="num" id="countdown-num">3</div>
-  <div class="label">CINEMATIC PLAYBACK STARTS IN… <b id="countdown-range">F1 → F11</b></div>
+  <div class="label">CINEMATIC PLAYBACK STARTS IN… <b id="countdown-range">cover → F11</b></div>
 </div>
 
 <!-- DONE OVERLAY -->
 <div class="done-overlay" id="done-overlay">
   <div>
-    <div class="big">END · <span id="done-range">F1→F11</span></div>
+    <div class="big">END · <span id="done-range">cover → F11</span></div>
     <div class="small">press R to exit recording mode · press F to replay</div>
   </div>
 </div>
@@ -1219,7 +1251,7 @@
   <b>RECORDING</b>
   <div class="timer" id="timer">0.0s</div>
   <button id="btn-play-opening" class="play-range"><span>▶ Opening · F1→F4 (60s)</span><kbd>O</kbd></button>
-  <button id="btn-play-full" class="play-range"><span>▶ Full · F1→F11 (180s)</span><kbd>F</kbd></button>
+  <button id="btn-play-full" class="play-range"><span>▶ Full · cover→F11 (188s)</span><kbd>F</kbd></button>
   <button id="btn-rec"><span>Recording mode</span><kbd>R</kbd></button>
   <button id="btn-auto"><span>Auto-advance</span><kbd>A</kbd></button>
   <button id="btn-replay"><span>Replay slide</span><kbd>P</kbd></button>
@@ -1590,7 +1622,7 @@
       case 'a': case 'A': e.preventDefault(); toggleAuto(); break;
       case 'p': case 'P': e.preventDefault(); replay(); break;
       case 'o': case 'O': e.preventDefault(); playRange(1, 4, 'opening · F1 → F4 · 60s'); break;
-      case 'f': case 'F': e.preventDefault(); playRange(1, 11, 'full · F1 → F11 · 180s'); break;
+      case 'f': case 'F': e.preventDefault(); playRange(0, 11, 'full · cover → F11 · 188s'); break;
       default:
         if(/^[0-9]$/.test(e.key)){
           const n = e.key === '0' ? 9 : (parseInt(e.key, 10) - 1);
@@ -1617,7 +1649,7 @@
     overview.classList.contains('show') ? closeOverview() : openOverview();
   });
   document.getElementById('btn-play-opening').addEventListener('click', () => playRange(1, 4, 'opening · F1 → F4 · 60s'));
-  document.getElementById('btn-play-full').addEventListener('click', () => playRange(1, 11, 'full · F1 → F11 · 180s'));
+  document.getElementById('btn-play-full').addEventListener('click', () => playRange(0, 11, 'full · cover → F11 · 188s'));
 
   // Touch swipe
   let tStartX = 0, tStartY = 0;
