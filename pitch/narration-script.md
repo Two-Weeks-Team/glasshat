@@ -53,10 +53,14 @@ Six perspectives, in parallel. <#0.3#> Watch Yellow. Optimism. <#0.3#> Run hot.
 ```
 Now watch. Yellow over-scored. <#0.3#> Against a held-out calibration prior, strongest where the evidence is thin, <#0.4#> the audit catches its own over-confidence. And pulls the score back. <#0.55#> Live. With the math shown.
 ```
-`F10` · the payoff · speed 1.0
+`F10` · the payoff · honest recalibration · speed 1.0
 ```
-Open Arize. Every span is there. <#0.35#> And on a whole cohort, the audit changes who wins.
+Open Arize. <#0.3#> Every span is there — six hats, forty-eight evidence spans under one judgment. <#0.4#> Nothing hidden. <#0.6#> Now run the whole cohort. <#0.3#> Every score, recalibrated against the evidence. <#0.5#> Here, the ranking holds — and we show it: delta, zero. <#0.4#> The audit doesn't fake a flip. <#0.3#> It earns the score.
 ```
+<!-- Honesty: the live /judge cohort shows "no rank change · ±0 pts · Δ=0", so the
+narration matches the footage (recalibration, not a flip). Never claim "the audit
+changes who wins" over that footage — it contradicts the on-screen "no rank change". -->
+
 `F11` · outro · **speed 0.92** (the last words)
 ```
 Open source. Apache 2.0. <#0.5#> Trace it. <#0.45#> Trust it.
@@ -66,7 +70,7 @@ Open source. Apache 2.0. <#0.5#> Trace it. <#0.45#> Trust it.
 
 ## Full continuous take — paste as ONE (≈1,050 chars, under the 5,000 limit) · speed 0.97
 ```
-AI writes the submissions now. By the thousands. Every hackathon, every grant, drowning in them. <#0.35#> But the judging didn't change. Still a score nobody audits. <#0.6#> An AI judge is worse. Confident. Fast. Wrong. <#0.45#> With no way to check it. <#0.6#> So we flipped it. Don't only judge the work. <#0.3#> Audit the judgment itself. <#0.8#> Trace it. <#0.6#> Trust it. <#1.0#> How? <#0.3#> Every hat. Every retrieval. Every score. <#0.35#> A span in Arize AX. A hundred and four of them. One evaluation. <#0.6#> One ADK 2.0 Workflow. Six hats in parallel. Deployed as a real agent on Agent Engine. <#0.4#> Not a notebook. <#0.6#> It reads the evaluator's own rules. Synthesizes the rubric. <#0.3#> Then every hat grounds its score in retrieved evidence. <#0.6#> Six perspectives, in parallel. <#0.3#> Watch Yellow. Optimism. <#0.3#> Run hot. <#0.6#> Now watch. Yellow over-scored. <#0.3#> Against a held-out calibration prior, strongest where the evidence is thin, <#0.4#> the audit catches its own over-confidence. And pulls the score back. <#0.55#> Live. With the math shown. <#0.6#> Open Arize. Every span is there. <#0.35#> And on a whole cohort, the audit changes who wins. <#0.8#> Open source. Apache 2.0. <#0.5#> Trace it. <#0.45#> Trust it.
+AI writes the submissions now. By the thousands. Every hackathon, every grant, drowning in them. <#0.35#> But the judging didn't change. Still a score nobody audits. <#0.6#> An AI judge is worse. Confident. Fast. Wrong. <#0.45#> With no way to check it. <#0.6#> So we flipped it. Don't only judge the work. <#0.3#> Audit the judgment itself. <#0.8#> Trace it. <#0.6#> Trust it. <#1.0#> How? <#0.3#> Every hat. Every retrieval. Every score. <#0.35#> A span in Arize AX. A hundred and four of them. One evaluation. <#0.6#> One ADK 2.0 Workflow. Six hats in parallel. Deployed as a real agent on Agent Engine. <#0.4#> Not a notebook. <#0.6#> It reads the evaluator's own rules. Synthesizes the rubric. <#0.3#> Then every hat grounds its score in retrieved evidence. <#0.6#> Six perspectives, in parallel. <#0.3#> Watch Yellow. Optimism. <#0.3#> Run hot. <#0.6#> Now watch. Yellow over-scored. <#0.3#> Against a held-out calibration prior, strongest where the evidence is thin, <#0.4#> the audit catches its own over-confidence. And pulls the score back. <#0.55#> Live. With the math shown. <#0.6#> Open Arize. Every span is there — six hats, forty-eight evidence spans under one judgment. Nothing hidden. <#0.5#> Now run the whole cohort. Every score, recalibrated against the evidence. <#0.4#> Here, the ranking holds — and we show it: delta, zero. The audit doesn't fake a flip. It earns the score. <#0.8#> Open source. Apache 2.0. <#0.5#> Trace it. <#0.45#> Trust it.
 ```
 
 ## Sync the 3 anchors (when laying audio over the 188s screen-grab)
