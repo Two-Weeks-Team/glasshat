@@ -493,16 +493,17 @@ export default function ConstellationHero() {
 
         {/* Hero block — sits low-left so the constellation breathes. */}
         <div className="flex flex-col justify-end self-end pb-[2vh]">
-          <h1 className="font-display max-w-[17ch] text-[clamp(2.8rem,7.5vw,6.5rem)] font-bold leading-[1.02] tracking-[-0.03em]">
-            Glasshat doesn&apos;t just judge.{" "}
+          <h1 className="font-display max-w-[15ch] text-[clamp(2.8rem,7.5vw,6.5rem)] font-bold leading-[1.02] tracking-[-0.03em]">
+            Trace it.{" "}
             <em className="font-serif-italic text-gradient text-[1.04em] font-medium">
-              It audits the judge.
+              Trust it.
             </em>
           </h1>
-          <p className="mt-6 max-w-[48ch] text-[clamp(1.05rem,1.9vw,1.32rem)] leading-[1.6] text-[var(--color-muted)]">
-            Rubric-aware evaluation that mirrors the official rules, grounds every
-            sub-score in retrieved evidence, then catches its own over-confidence
-            and self-corrects &mdash; live. Not a chatbot.
+          <p className="mt-6 max-w-[50ch] text-[clamp(1.05rem,1.9vw,1.32rem)] leading-[1.6] text-[var(--color-muted)]">
+            Glasshat doesn&apos;t just judge &mdash; it audits the judge. Every hat,
+            every sub-score opens its own trace span in Arize&nbsp;AX; the panel
+            catches its own over-confidence and self-corrects, live. So the score
+            isn&apos;t a black box &mdash; it&apos;s one you can check. Not a chatbot.
           </p>
 
           {/* Primary CTAs */}

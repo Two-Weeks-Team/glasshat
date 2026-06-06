@@ -32,9 +32,9 @@ const serif = Newsreader({
 });
 
 export const metadata: Metadata = {
-  title: "Glasshat — evaluation that audits its own scores",
+  title: "Glasshat — Trace it. Trust it. | the audit layer for AI evaluation",
   description:
-    "Rubric-aware AI evaluation that mirrors the official rules, grounds every sub-score in retrieved evidence, and self-corrects its own over-confidence live.",
+    "Glasshat doesn't just judge — it audits the judge. Every hat and sub-score is a trace span in Arize AX; the panel catches its own over-confidence and self-corrects, live. So the score is one you can check. Trace it. Trust it.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
