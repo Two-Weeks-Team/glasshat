@@ -14,10 +14,16 @@
 Glasshat doesn't just judge projects — it audits the judge. A rubric-aware, six-perspective evaluator that catches its own over-confidence and self-corrects the score, live, on Gemini + Arize.
 
 ## Inspiration
-Every hackathon, grant review, and promotion committee runs on judgment that no
-one audits. AI judges make it worse: confident, fast, and unaccountable. We asked
-the uncomfortable question — *who audits the judge?* — and built the missing layer:
-an evaluator that measures and corrects its **own** bias in the open.
+AI writes the submissions now. Vibe-coding multiplied hackathon, grant, and review
+entries — ~72% of developers use AI coding tools daily and a large share of new code is
+AI-generated ([daily.dev](https://daily.dev/blog/vibe-coding-how-ai-changing-developers-code/)).
+But the judging didn't change. Judging is still "the biggest pain point" for organizers,
+and the tooling still lacks variance detection and audit trails
+([DoraHacks](https://dorahacks.io/blog/guides/hackathon-judging-plan)). And the fix
+everyone reaches for — an AI judge — makes it worse: confident, fast, unaccountable.
+We asked the uncomfortable question — *who audits the judge?* — and built the missing
+layer: an evaluator that measures and corrects its **own** bias in the open, and traces
+every judgment so anyone can verify it.
 
 ## What it does
 Glasshat ingests three things — a pitch deck, a GitHub repo, and **the evaluator's
