@@ -105,7 +105,7 @@ function ArizeBand() {
               ))}
             </ul>
             <p className="mt-6 font-mono text-[0.72rem] leading-relaxed text-[var(--color-muted)]">
-              Illustrative span waterfall · real span names from the live ADK runtime.
+              Illustrative widths · real span names from the ADK runtime.
             </p>
           </div>
         </div>
@@ -124,13 +124,13 @@ function AgentPlatformProof() {
     {
       big: ap.runtime,
       label: "Deployed on " + ap.platform,
-      sub: ap.surface + " · serving live stream_query · managed Sessions + AGENT_IDENTITY",
+      sub: ap.surface + " · serving live stream_query · managed Sessions + a stable agent identity",
       tone: "var(--color-accent)",
     },
     {
       big: ap.traceSpans + " spans",
-      label: "Full nested Arize AX trace",
-      sub: ap.traceShape + " · verified via client.spans.list(project=glasshat)",
+      label: "Nested Arize AX trace · 2-query snapshot",
+      sub: ap.traceShape + " · verified via the Arize spans API (project=glasshat)",
       tone: "var(--color-accent-2)",
     },
     {

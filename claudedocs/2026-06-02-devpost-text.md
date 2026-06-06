@@ -31,12 +31,13 @@ own official rules** — and:
 1. **Synthesizes a rubric** that mirrors those rules (no one-size-fits-all scoring).
 2. Runs a **six-hat panel** (White/Red/Yellow/Black/Green/Blue), each perspective
    retrieving evidence and scoring every criterion.
-3. **Audits itself.** Using a calibration prior recovered from **held-out spike-D
-   anchors** — an evidence-bucketed YELLOW over-confidence delta (strongest where
-   evidence is thin), the measured prior the runtime actually applies — it detects
-   per-cell over-confidence and applies a transparent correction —
-   `clip(score − 0.8·mean_delta, p25, p75)` with a ±2.0 cap — live on screen, with
-   the 3D evaluation graph reshaping as it happens.
+3. **Audits itself.** It reads a live **Phoenix calibration dataset over MCP** (per
+   request) — an evidence-bucketed YELLOW over-confidence delta, strongest where the
+   evidence is thin — detects per-cell over-confidence, applies a transparent correction
+   (`clip(score − 0.8·mean_delta, p25, p75)` with a ±2.0 cap) live on screen as the 3D
+   graph reshapes, and **writes the correction back** so the prior sharpens every run.
+   The dataset is seeded from the held-out spike-D anchors; with no Phoenix endpoint the
+   audit falls back to that same deterministic prior.
 4. Shows **the audit changing who wins**: a rank-flip board puts the
    better-evidenced project on top once calibration is applied.
 

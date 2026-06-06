@@ -38,8 +38,7 @@ project `panelyst-hackathon`, us-central1.
 | 5 | **Cloud Run deployment** (Google Cloud hosting) | API + web both on Cloud Run, project `panelyst-hackathon`, us-central1, `min-instances=0`; API URL baked into the web bundle at build time | `infra/deploy.sh`, `infra/cloudbuild-api.yaml`, `infra/cloudbuild-web.yaml`, `infra/Dockerfile.api`, `infra/Dockerfile.web` | `curl -fsS https://glasshat-api-o366v7tl2q-uc.a.run.app/health` → 200; web `/`,`/judge`,`/participate` → 200 | ✅ Live |
 | 6 | **CI / tests / Lighthouse / live API** (engineering quality evidence) | GitHub Actions: `ruff` + `ruff format` + `mypy --strict` + `pytest` (coverage gate ≥ 90%); web `eslint` + `tsc` + `vitest` + `next build`; Docker build (api + web) | `.github/workflows/ci.yml` | `uv run pytest` → **323 passed**; `cd apps/web && pnpm test` → **74 passed**; Lighthouse ≥ 90 all pages | ✅ Green |
 
-Status legend: **✅ Live** = running in the deployed Cloud Run service; **✅ Wired** = real
-integration, code path + e2e proven, with the deployment caveat stated in §3;
+Status legend: **✅ Live** = running in the deployed Cloud Run service;
 **✅ Green / Resolved** = verified by CI / documented interpretation.
 
 ---
@@ -111,21 +110,24 @@ EvaluationInput (deck_text + rubric_source [+ repo_url])
          /judge batch rank + lock. RunRecord persisted (Firestore/SQLite/memory).
 ```
 
-**Honest deployment note (no overclaim).** Two consultants implement the same
+**Honest deployment note.** Two consultants implement the same
 `glasshat.agents.audit.Consultant` protocol:
 
-- The **deployed Cloud Run audit** uses **`TableConsultant`** — a calibrated prior recovered
-  from the spike-D held-out anchors (`docs/spike-results.md §4`), so the live demo
-  self-corrects deterministically with **zero external dependency**.
-- The **`PhoenixMcpConsultant`** is the **live-trace variant**: it performs the real
-  partner-MCP round trip (ADK → Phoenix MCP over stdio → `get-dataset-examples`) and is
-  **exercised end-to-end** by `scripts/real_e2e.py` and `scripts/real_phoenix_cloud_e2e.py`.
-  Wiring it into the live API hot path is a tracked follow-up (see the session handoff "deferred"
-  list); it is **not** silently claimed to run on every production request.
+- The **deployed Cloud Run audit** uses **`PhoenixMcpConsultant`** — it performs a real
+  partner-MCP round trip **per request** (ADK `MCPToolset` → Phoenix MCP over stdio →
+  `get-dataset-examples`), parses per-cell drift from the live `glasshat-calibration`
+  dataset, and writes each correction back (`add-dataset-examples`), against a
+  Cloud-SQL-backed Phoenix on Cloud Run (`PHOENIX_COLLECTOR_ENDPOINT` set; seed via
+  `scripts/seed_phoenix_calibration.py`). The MCP loop runs on every production evaluation.
+- **`TableConsultant`** — a calibrated prior recovered from the spike-D held-out anchors
+  (`docs/spike-results.md §4`) — is the zero-dependency **fallback** the audit uses when
+  no `PHOENIX_COLLECTOR_ENDPOINT` is configured (local / CI / mock), so the engine always
+  self-corrects deterministically even with zero credentials.
 
-This separation is the partner-MCP proof: the MCP integration is real code, validated by
-a real stdio round trip (spike-C pattern, `adk_runtime.py:31-44`), and the calibration math
-it returns is the same math the deployed audit applies.
+This is the partner-MCP proof: the MCP integration is real code that runs on every
+production request, validated by a real stdio round trip (`adk_runtime.py` →
+`build_phoenix_mcp_toolset` / `PhoenixMcpConsultant`), and the calibration math is the
+same whether it comes from the live Phoenix dataset or the fallback table.
 
 **Evidence to look at:**
 - Code: `services/pipeline-orchestrator/src/glasshat/pipeline/adk_runtime.py`
