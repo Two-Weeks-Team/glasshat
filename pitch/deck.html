@@ -220,6 +220,10 @@
   .c-f1 .blk.q{border-color:var(--red);color:var(--red);background:oklch(0.30 0.18 25 / .25);font-size:48px;flex:0 0 16%}
   @keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
   .c-f1 .arr{color:oklch(0.55 0.06 290);font-size:24px}
+  .c-f1 .why{position:absolute;top:25%;left:8%;right:8%;text-align:center;font-family:ui-sans-serif,system-ui;font-size:clamp(15px,2vw,32px);line-height:1.35;color:oklch(0.72 0.03 285);z-index:8}
+  .c-f1 .why b{color:#fff;font-weight:800}
+  .c-f1 .why .x{color:var(--red);font-weight:800}
+  .c-f1 .arrow{top:54%}
 
   /* F2 — failure pattern (red strikethrough) */
   .c-f2{background:#0c0810}
@@ -654,6 +658,7 @@
       <div class="canvas-wrap">
         <div class="canvas-frame c-f1">
           <div class="h" data-anim="up" style="--d:.15s">who audits the <span class="accent">judge?</span></div>
+          <div class="why" data-anim="up" style="--d:.6s">AI writes the submissions now — by the thousands.<br><b>The judging <span class="x">didn&apos;t change.</span></b></div>
           <div class="arrow">
             <div class="blk" data-anim="pop" style="--d:1.0s">submission</div>
             <div class="arr" data-anim="fade" style="--d:1.35s">→</div>
@@ -666,11 +671,11 @@
         </div>
       </div>
       <div class="script-wrap">
-        <div class="meta-tag">act i · the agro</div>
-        <h2>Nobody audits the score.</h2>
-        <div class="vo">"Every hackathon. Every grant. Every model-as-judge pipeline. Runs on a score <b>nobody audits.</b>"</div>
+        <div class="meta-tag">act i · the agro · why now</div>
+        <h2>AI writes them. Nobody audits the score.</h2>
+        <div class="vo">"AI writes the submissions now. By the thousands. Every hackathon, every grant, drowning in them. <b>But the judging didn't change.</b> Still a score <b>nobody audits.</b>"</div>
         <div class="stage">
-          <b>Delivery:</b> prosecutor opening. No smile. Land each fragment — hackathon · grant · pipeline. Pause before "nobody audits." Point at the pulsing ?.
+          <b>Delivery:</b> prosecutor opening. No smile. "By the thousands" lands the flood. Beat on "didn't change." Pause before "nobody audits." Point at the pulsing ?.
           <span class="tone">tone: prosecutor opening</span>
         </div>
       </div>
