@@ -62,7 +62,9 @@ class _ToolResult:
 
 
 def _result(examples: list[dict[str, Any]]) -> _ToolResult:
-    return _ToolResult([_Item(json.dumps({"examples": examples}))])
+    # Mirror phoenix-mcp@4.0.13's get-dataset-examples shape: rows are wrapped
+    # under "data" (regression guard for _parse_examples' unwrap).
+    return _ToolResult([_Item(json.dumps({"data": {"examples": examples}}))])
 
 
 @contextmanager
@@ -196,7 +198,7 @@ def test_consultant_fetches_dataset_once_and_filters_locally() -> None:
     # Fetched ONCE despite three consults (the cache), and asked the right tool.
     fetches = [c for c in recorder if c[0] == "get-dataset-examples"]
     assert len(fetches) == 1
-    assert fetches[0][1] == {"dataset": "glasshat-calibration"}
+    assert fetches[0][1] == {"dataset_name": "glasshat-calibration"}
 
 
 def test_writer_calls_add_dataset_examples_with_rows() -> None:
@@ -214,7 +216,7 @@ def test_writer_calls_add_dataset_examples_with_rows() -> None:
     writes = [c for c in recorder if c[0] == "add-dataset-examples"]
     assert len(writes) == 1
     payload = writes[0][1]
-    assert payload["dataset"] == "glasshat-calibration"
+    assert payload["dataset_name"] == "glasshat-calibration"
     row = payload["examples"][0]
     assert row["input"] == {"hat": "yellow", "criterion": "tech", "bucket": "low"}
     assert row["output"] == {"delta": 1.2}
