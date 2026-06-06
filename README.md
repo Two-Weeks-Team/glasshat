@@ -1,11 +1,12 @@
 # Glasshat
 
-> # Trace it. Trust it.
+### Trace it. Trust it.
+
 > **Glasshat doesn't just judge projects — it audits the judge.**
 
 Glasshat ingests a pitch deck + a GitHub repo + **the evaluator's official rules**, synthesizes a per-evaluation rubric that mirrors those rules, runs a six-perspective AI panel that grounds every sub-score in retrieved evidence, and then — live, on screen — **catches its own over-confidence and self-corrects the score**, with the 3D evaluation graph reshaping as it happens. It is an *artifact-ingesting evaluation pipeline + a transparent fairness monitor*, **not a chatbot**.
 
-Every agent, every one of the six hats, and the self-correction itself opens its own **trace span in Arize AX** — so the score isn't a black box you take on faith. You open the trace of how it was judged, and audited, and check it. **Trace it. Trust it.**
+Every agent, every one of the six hats, and the self-correction itself opens its own **trace span in Arize AX** — so the score isn't a black box you take on faith. You open the trace of how it was judged and audited, and check it. **Trace it. Trust it.**
 
 **Track**: Google Cloud Rapid Agent Hackathon — **Arize track**. Built on **Gemini (Vertex AI) + Google ADK** with **Arize AX** observability (OpenInference/OTLP → `otlp.arize.com`), and the **Phoenix MCP server** available for the live-trace-driven calibration consultant. **Live model: `gemini-3.1-flash-lite`** (Vertex, served on the `global` endpoint).
 

@@ -1,0 +1,427 @@
+{
+  "_schema_version": "0.1.0",
+  "_brief_run_id": "glasshat-arize-180s-problem-first",
+  "project_name": "Glasshat",
+  "subtitle": "the audit layer for AI evaluation",
+  "runtime_seconds": 180,
+  "narrative_arc": "problem-first",
+  "color_palette": "dark-oklch-cinematic (purple->cyan->green; bright-cyan hero accent)",
+  "tone_profile": "agro-drop-thrill",
+  "hero": {
+    "copy": "Trace it. Trust it.",
+    "pattern": "stop-start",
+    "primary_frame": "F4",
+    "echo_frame": "F11",
+    "split_words": ["Trace", "it.", "Trust", "it."],
+    "accent_word_index": 2
+  },
+  "judging_criteria_coverage": [
+    { "axis": "technical-implementation", "frames": ["F6", "F7", "F9"] },
+    { "axis": "innovation-creativity", "frames": ["F3", "F8", "F9"] },
+    { "axis": "arize-partner-integration", "frames": ["F4", "F5", "F10"] },
+    { "axis": "impact-completeness", "frames": ["F10", "F11", "close"] }
+  ],
+  "frames": [
+    {
+      "frame_id": "cover",
+      "position": 1,
+      "shape": "cover",
+      "time_start_seconds": 0,
+      "duration_seconds": 8,
+      "act": "cover",
+      "heading": "Glasshat",
+      "meta_tag": "Google Cloud Rapid Agent Hackathon · Arize track",
+      "voiceover": "",
+      "delivery_note": "Title-card calm. Let the hero chip sit before you speak.",
+      "tone_note": "title-card calm",
+      "show_echo_ribbon": false,
+      "shape_props": {
+        "eyebrow": "★ A 180-second narrative in 13 slides",
+        "title": "Glasshat",
+        "sub": "the audit layer for AI evaluation",
+        "hero_chip": "Trace it. <i>Trust it.</i>",
+        "tag": "ARIZE TRACK · ADK 2.0 WORKFLOW · AGENT ENGINE",
+        "meta": ["<b>180 s</b> · runtime", "<b>11</b> · frames", "<b>0:35–1:00</b> · F4 hero", "<b>104</b> · AX spans", "<b>hit@13 0.6154</b>"],
+        "chips": ["Gemini 3.1 Flash-Lite", "Google ADK 2.0", "Arize AX", "Apache-2.0"]
+      }
+    },
+    {
+      "frame_id": "F1",
+      "position": 2,
+      "shape": "chain",
+      "time_start_seconds": 0,
+      "duration_seconds": 10,
+      "act": "agro",
+      "heading": "who audits the judge?",
+      "heading_accent_word": "judge?",
+      "meta_tag": "act i · the agro",
+      "script_h2": "Nobody audits the score.",
+      "voiceover": "Every hackathon. Every grant. Every model-as-judge pipeline. Runs on a score <b>nobody audits.</b>",
+      "delivery_note": "Prosecutor opening. No smile. Land each fragment. Pause before 'nobody audits'. Point at the pulsing ?.",
+      "tone_note": "prosecutor opening",
+      "show_echo_ribbon": false,
+      "shape_props": {
+        "blocks": ["submission", "AI judge", "score"],
+        "terminal": "?",
+        "terminal_kind": "pulse-red",
+        "direction": "forward"
+      },
+      "animation_timeline": [
+        { "selector": ".h", "anim": "up", "delay": 0.15 },
+        { "selector": "block-0", "anim": "pop", "delay": 1.0 },
+        { "selector": "block-1", "anim": "pop", "delay": 1.6 },
+        { "selector": "block-2", "anim": "pop", "delay": 2.2 },
+        { "selector": "terminal-?", "anim": "pop+pulse", "delay": 2.8 }
+      ]
+    },
+    {
+      "frame_id": "F2",
+      "position": 3,
+      "shape": "stack-strikethrough",
+      "time_start_seconds": 10,
+      "duration_seconds": 15,
+      "act": "agro",
+      "heading": "confident. fast. unaccountable.",
+      "heading_accent_word": "unaccountable.",
+      "meta_tag": "act i · the indictment",
+      "script_h2": "Worse than a human judge.",
+      "voiceover": "An AI judge is worse. Confident. Fast. Wrong — <b>with no way to check it.</b>",
+      "delivery_note": "Indictment. Drop pitch on each strikethrough beat. The em-dash before 'with no way to check it' is a held breath.",
+      "tone_note": "indictment",
+      "show_echo_ribbon": false,
+      "shape_props": {
+        "rows": [
+          { "text": "no evidence for the score", "tag": "why 9.0?" },
+          { "text": "no calibration", "tag": "vs what?" },
+          { "text": "no audit trail", "tag": "no spans" },
+          { "text": "can't reproduce it", "tag": "run twice ≠" },
+          { "text": "can't trust it", "tag": "black box" }
+        ]
+      },
+      "animation_timeline": [
+        { "selector": ".h", "anim": "up", "delay": 0.15 },
+        { "selector": "row-0", "anim": "strike", "delay": 1.0 },
+        { "selector": "row-1", "anim": "strike", "delay": 2.0 },
+        { "selector": "row-2", "anim": "strike", "delay": 3.0 },
+        { "selector": "row-3", "anim": "strike", "delay": 4.0 },
+        { "selector": "row-4", "anim": "strike", "delay": 5.0 }
+      ]
+    },
+    {
+      "frame_id": "F3",
+      "position": 4,
+      "shape": "chain",
+      "time_start_seconds": 25,
+      "duration_seconds": 10,
+      "act": "drop",
+      "heading": "audit the judge.",
+      "heading_accent_word": "audit",
+      "meta_tag": "act ii · the pivot",
+      "script_h2": "Audit the judgment itself.",
+      "voiceover": "So we flipped it. Don't just judge the work. <b>Audit the judgment itself.</b>",
+      "delivery_note": "Say 'So we flipped it' like you've solved something. Then go quiet. The closer lands as fact, not a sales line.",
+      "tone_note": "maker who figured it out",
+      "show_echo_ribbon": false,
+      "shape_props": {
+        "blocks": ["score", "audit", "corrected score"],
+        "terminal": null,
+        "direction": "reverse-green"
+      },
+      "animation_timeline": [
+        { "selector": ".h", "anim": "up", "delay": 0.15 },
+        { "selector": "block-0", "anim": "pop", "delay": 1.1 },
+        { "selector": "block-1", "anim": "bloom", "delay": 1.9 },
+        { "selector": "block-2", "anim": "bloom", "delay": 2.7 }
+      ]
+    },
+    {
+      "frame_id": "F4",
+      "position": 5,
+      "shape": "gallery-hero",
+      "time_start_seconds": 35,
+      "duration_seconds": 25,
+      "act": "drop",
+      "heading": "Trace it. Trust it.",
+      "meta_tag": "act ii · the hero",
+      "voiceover": "Every judgment becomes a trace you can open. And audit. <b>Trace it. Trust it.</b>",
+      "delivery_note": "★ Read the hero slowly: Trace · it · · Trust · it. Half-beat silence after. Hold 25s.",
+      "tone_note": "keynote reveal",
+      "navbar_keys_label": "★ DELAYED HERO · 25s hold · half-beat silence after the hero line",
+      "show_echo_ribbon": false,
+      "shape_props": {
+        "tile_kind": "trace-span-constellation",
+        "tile_hue_base": 200,
+        "hero_html": "Trace it. <i>Trust it.</i>",
+        "hero_word_reveal_delay": 1.5,
+        "echo_mini": "the audit layer for AI evaluation",
+        "vo_overlay": "\"Every judgment becomes a trace you can open. And audit. <b>Trace it. Trust it.</b>\""
+      },
+      "animation_timeline": [
+        { "selector": "tiles", "anim": "stagger-spawn", "delay": 0.05 },
+        { "selector": "::before darken", "anim": "fade", "delay": 1.0 },
+        { "selector": "hero-words", "anim": "word-reveal", "delay": 1.5 },
+        { "selector": ".echo-mini", "anim": "fade", "delay": 3.4 },
+        { "selector": ".vo-overlay", "anim": "up", "delay": 4.0 }
+      ]
+    },
+    {
+      "frame_id": "F5",
+      "position": 6,
+      "shape": "counter-roll",
+      "time_start_seconds": 60,
+      "duration_seconds": 6,
+      "act": "thrill",
+      "heading": "104 spans. one evaluation.",
+      "meta_tag": "act iii · the kick",
+      "script_h2": "One nested Arize AX trace.",
+      "voiceover": "How? Every hat. Every retrieval. Every score — a span in Arize AX. <b>A hundred and four of them. One evaluation.</b>",
+      "delivery_note": "'How?' is a question to the room. Rule-of-three rhythm. Land 104 on the rolled number.",
+      "tone_note": "rule-of-three confidence",
+      "show_echo_ribbon": true,
+      "shape_props": {
+        "label": "SPANS IN ONE EVALUATION",
+        "counter_target": 104,
+        "counter_dur_ms": 1400,
+        "breakdown": "6 hats · every Gemini generate + embed · one nested Arize AX trace"
+      },
+      "animation_timeline": [
+        { "selector": ".lbl", "anim": "up", "delay": 0.2 },
+        { "selector": "[data-counter]", "anim": "count-0-104", "delay": 0.4 },
+        { "selector": ".breakdown", "anim": "fade", "delay": 2.6 }
+      ]
+    },
+    {
+      "frame_id": "F6",
+      "position": 7,
+      "shape": "hierarchy-diagram",
+      "time_start_seconds": 66,
+      "duration_seconds": 24,
+      "act": "thrill",
+      "heading": "one ADK 2.0 Workflow.",
+      "meta_tag": "act iii · architecture",
+      "script_h2": "A real agent. Not a notebook.",
+      "voiceover": "One ADK 2.0 Workflow. Six hats in parallel. Deployed as a real agent on Agent Engine — <b>not a notebook.</b>",
+      "delivery_note": "Builder explaining their workshop. Trace the spine with your eyes. 'Not a notebook' is the line judges remember.",
+      "tone_note": "builder explaining",
+      "show_echo_ribbon": true,
+      "shape_props": {
+        "label": "ADK 2.0 WORKFLOW GRAPH",
+        "spine": ["Ingest", "RubricSynth", "Planner"],
+        "parallel_group": { "name": "6-hat ParallelAgent", "nodes": ["White", "Red", "Yellow", "Black", "Green", "Blue"] },
+        "join": "Join",
+        "tail": ["Audit (loop)", "Score", "Report"],
+        "footer_chip": "deployed on the Gemini Enterprise Agent Platform · Agent Engine",
+        "resource_hint": "reasoningEngines/7480191458771730432"
+      },
+      "animation_timeline": [
+        { "selector": "svg-nodes", "anim": "fade-in-order", "delay": 0.2 }
+      ]
+    },
+    {
+      "frame_id": "F7",
+      "position": 8,
+      "shape": "modal-live-json",
+      "time_start_seconds": 90,
+      "duration_seconds": 24,
+      "act": "thrill",
+      "heading": "the rubric is synthesized, not assumed.",
+      "meta_tag": "act iii · socratic",
+      "script_h2": "Grounded in retrieved evidence.",
+      "voiceover": "It reads the evaluator's own rules. Synthesizes the rubric. Then <b>every hat grounds its score in retrieved evidence.</b>",
+      "delivery_note": "Confident craftsman. 'Synthesizes the rubric' is the pivot. The closer lands as a quiet payoff.",
+      "tone_note": "confident craftsman",
+      "show_echo_ribbon": true,
+      "shape_props": {
+        "left_title": "rubric synthesis · from the evaluator's own rules",
+        "left_modal_h": "synthesized rubric · 4 criteria",
+        "left_opts": ["technical (0.30)", "innovation (0.25)", "arize integration (0.25)", "impact (0.20)"],
+        "left_sel_index": 2,
+        "right_title": "runs/<id>/RunRecord.json",
+        "right_json": [
+          "{",
+          "  \"criterion\": \"arize-integration\",",
+          "  \"hat_scores\": { \"white\": 8.1, \"yellow\": 9.4 },",
+          "  \"evidence\": [\"trace#104\", \"experiment:hit@13\"],",
+          "  \"final_score\": 7.6,",
+          "  \"audited\": true",
+          "}"
+        ],
+        "right_badge": "▣ grounded in retrieved evidence"
+      },
+      "animation_timeline": [
+        { "selector": "left-typewriter", "anim": "typewriter", "delay": 0.2, "dur_ms": 1500 },
+        { "selector": "left-modal", "anim": "up", "delay": 1.9 },
+        { "selector": "right-json", "anim": "fade-then-right-rows", "delay": 3.3 },
+        { "selector": "right-badge", "anim": "bloom", "delay": 6.2 }
+      ]
+    },
+    {
+      "frame_id": "F8",
+      "position": 9,
+      "shape": "gallery-hero",
+      "time_start_seconds": 114,
+      "duration_seconds": 26,
+      "act": "thrill",
+      "heading": "six perspectives. one runs hot.",
+      "heading_accent_word": "one runs hot.",
+      "meta_tag": "act iv · the six hats",
+      "voiceover": "Six perspectives score in parallel. <b>Watch Yellow</b> — optimism — run hot.",
+      "delivery_note": "Showman + invitation. 'Watch Yellow' is a finger on the screen. Let the over-confident YELLOW card glow.",
+      "tone_note": "showman + invitation",
+      "show_echo_ribbon": true,
+      "shape_props": {
+        "variant": "six-hat-panel",
+        "cards": [
+          { "hat": "White", "role": "facts", "score": 7.8, "hot": false },
+          { "hat": "Red", "role": "instinct", "score": 7.1, "hot": false },
+          { "hat": "Yellow", "role": "optimism", "score": 9.4, "hot": true },
+          { "hat": "Black", "role": "caution", "score": 6.5, "hot": false },
+          { "hat": "Green", "role": "creativity", "score": 8.0, "hot": false },
+          { "hat": "Blue", "role": "process", "score": 7.6, "hot": false }
+        ]
+      },
+      "animation_timeline": [
+        { "selector": "hat-cards", "anim": "stagger-spawn", "delay": 0.1 },
+        { "selector": "yellow-card", "anim": "glow-hot", "delay": 1.8 }
+      ]
+    },
+    {
+      "frame_id": "F9",
+      "position": 10,
+      "shape": "triple-pane",
+      "time_start_seconds": 140,
+      "duration_seconds": 26,
+      "act": "thrill",
+      "heading": "the audit catches its own over-confidence.",
+      "meta_tag": "act iv · the audit moment",
+      "script_h2": "Live. With the math shown.",
+      "voiceover": "Now watch. Yellow over-scored. Against a held-out calibration prior — strongest where the evidence is thin — the audit catches its own over-confidence. And pulls the score back. <b>Live. With the math shown.</b>",
+      "delivery_note": "Live narration. 'Now watch' = pointing at the screen. Em-dashes are held breaths. Land 'Live. With the math shown.' as two beats.",
+      "tone_note": "live narration",
+      "navbar_keys_label": "★ THE WOW · the audit self-corrects 9.0 → 7.6 · math on screen",
+      "show_echo_ribbon": true,
+      "shape_props": {
+        "pane1": { "title": "panel · raw consensus", "value": "9.0", "sub": "/ 10 · six-hat median" },
+        "pane2": {
+          "title": "audit · calibration prior",
+          "lines": [
+            "YELLOW delta = +1.453 (low-evidence)",
+            "clip(score − 0.8·mean_delta, p25, p75)",
+            "±2.0 cap · bidirectional"
+          ]
+        },
+        "pane3": { "title": "score · corrected", "from": 9.0, "to": 7.6, "max": "/ 10", "gauge_pct": 76 }
+      },
+      "animation_timeline": [
+        { "selector": "pane1", "anim": "fade", "delay": 0.2 },
+        { "selector": "pane2-lines", "anim": "right-rows", "delay": 1.0 },
+        { "selector": "pane3-number", "anim": "count-9.0-to-7.6", "delay": 3.4, "dur_ms": 2200 },
+        { "selector": "pane3-gauge", "anim": "gauge-recede", "delay": 3.4 }
+      ]
+    },
+    {
+      "frame_id": "F10",
+      "position": 11,
+      "shape": "terminal-browser",
+      "time_start_seconds": 166,
+      "duration_seconds": 9,
+      "act": "thrill",
+      "heading": "every span is there.",
+      "meta_tag": "act v · the payoff",
+      "script_h2": "The audit changes who wins.",
+      "voiceover": "Open Arize. Every span is there. And on a whole cohort — <b>the audit changes who wins.</b>",
+      "delivery_note": "Maker exhaling. 'Every span is there' while the tree prints. Em-dash before the closer is the gut-punch. Honesty: cohort-level statement; hit@13 0.6154 is binary Winner-label; do not claim a rank flip on this golden set (Δ=0).",
+      "tone_note": "maker exhaling",
+      "navbar_keys_label": "★ THE EMOTIONAL PAYOFF · hold the span tree + rank-flip board",
+      "show_echo_ribbon": true,
+      "shape_props": {
+        "terminal_cmd": "client.spans.list(project=\"glasshat\")",
+        "terminal_lines": [
+          "agent · glasshat_pipeline",
+          " └ Workflow · ingest→synth→plan",
+          "    ├ hat_white  · gemini + embed",
+          "    ├ hat_yellow · gemini + embed",
+          "    └ … 6 hats · join · audit · score",
+          "104 spans · 1 trace"
+        ],
+        "browser_title": "rank-flip board · without audit vs with Glasshat audit",
+        "browser_rows": [
+          { "left": "Project B  #1", "right": "Project A  #1  (better-evidenced)" },
+          { "left": "Project A  #2", "right": "Project B  #2" }
+        ],
+        "chip": "hit@13 0.6154 · Arize AX experiment",
+        "honest_chip": "binary Winner-label · not a rank curve · demo runs spike-D prior"
+      },
+      "animation_timeline": [
+        { "selector": "terminal-lines", "anim": "right-rows", "delay": 0.2 },
+        { "selector": "browser2", "anim": "slide-in", "delay": 2.2 },
+        { "selector": "rank-row", "anim": "move-to-top", "delay": 3.3 }
+      ]
+    },
+    {
+      "frame_id": "F11",
+      "position": 12,
+      "shape": "repo-install",
+      "time_start_seconds": 175,
+      "duration_seconds": 5,
+      "act": "outro",
+      "heading": "Apache-2.0. Open. Reproducible.",
+      "meta_tag": "act v · outro",
+      "script_h2": "Open source. Apache-2.0.",
+      "voiceover": "Open source. Apache 2.0. <b>Trace it. Trust it.</b>",
+      "delivery_note": "Arrival. The hero echo is the last thing said. Slow it down: Trace · it · · Trust · it. Then silence.",
+      "tone_note": "arrival",
+      "show_echo_ribbon": true,
+      "shape_props": {
+        "repo": "github.com/Two-Weeks-Team/glasshat",
+        "badges": ["Gemini 3.1 Flash-Lite", "ADK 2.0", "Arize AX", "Agent Engine", "Apache-2.0", "104-span trace", "hit@13 0.6154"],
+        "install": "$ git clone github.com/Two-Weeks-Team/glasshat\n$ uv run --with-requirements deploy/requirements-cloud.txt experiments/run_arize_experiment.py",
+        "lockup_echo": "Trace it. <i>Trust it.</i>"
+      },
+      "animation_timeline": [
+        { "selector": "repo", "anim": "up", "delay": 0.1 },
+        { "selector": "badges", "anim": "pop-stagger", "delay": 0.5 },
+        { "selector": "install-typewriter", "anim": "typewriter", "delay": 1.9, "dur_ms": 2200 },
+        { "selector": "lockup-echo", "anim": "bloom", "delay": 4.5 }
+      ]
+    },
+    {
+      "frame_id": "close",
+      "position": 13,
+      "shape": "close",
+      "time_start_seconds": 180,
+      "duration_seconds": 12,
+      "act": "close",
+      "heading": "Trace it. Trust it.",
+      "voiceover": "",
+      "delivery_note": "Title-card close. Hero is the last words on screen. Hold 12s while the recorder cuts.",
+      "tone_note": "title-card close",
+      "show_echo_ribbon": false,
+      "shape_props": {
+        "stat": "<b>180 seconds.</b>  <b>11 frames.</b>  <b>One audited score.</b>",
+        "close_h": "Trace it. <i>Trust it.</i>",
+        "checks": [
+          "ADK 2.0 Workflow on Agent Engine",
+          "full nested Arize AX trace · 104 spans",
+          "Datasets + Experiment (hit@13 0.6154) + code Evaluator",
+          "six-hat audit self-corrects · 9.0 → 7.6 · ±2.0 bounded",
+          "live + reproducible",
+          "Apache-2.0"
+        ],
+        "call": "github.com/Two-Weeks-Team/glasshat",
+        "honest_note": "hit@13 = binary Winner-label, not a rank curve · public demo runs the spike-D prior (SCORING_MODE=legacy); live AX results = credentialed Agent Engine run."
+      }
+    }
+  ],
+  "delivery_notes": {
+    "global": {
+      "delivery": "Doumont staccato — every period is a breath. Every em-dash is a held breath (0.4–0.6s). Hero read at half-speed, half-beat silence after.",
+      "tone": "agro (F1–F2) → drop (F3–F4) → thrill (F5–F11)"
+    }
+  },
+  "ranges": {
+    "opening": { "start_position": 2, "end_position": 5, "label": "opening · F1 → F4 · 60s", "button_label": "▶ Opening · F1→F4 (60s)", "key": "o" },
+    "full": { "start_position": 2, "end_position": 12, "label": "full · F1 → F11 · 180s", "button_label": "▶ Full · F1→F11 (180s)", "key": "f" }
+  },
+  "slide_duration": [8, 10, 15, 10, 25, 6, 24, 24, 26, 26, 9, 5, 12]
+}
