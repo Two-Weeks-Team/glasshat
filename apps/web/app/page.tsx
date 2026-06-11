@@ -194,6 +194,92 @@ function AgentPlatformProof() {
   );
 }
 
+/** Plain-language primer (sits right after the hero). The cinematic scenes each
+ *  show ONE part of the mechanism; a first-timer still needs the whole flow stated
+ *  plainly — reads the rules → six hats on evidence → audits itself before it locks.
+ *  Telling, where the rest of the page is showing. */
+function HowItWorks() {
+  const steps = [
+    {
+      n: "1",
+      h: "It reads the rules",
+      p: (
+        <>
+          Glasshat ingests the deck, the repo, and the{" "}
+          <strong className="font-medium text-[var(--color-ink)]">evaluator&apos;s own rubric</strong>,
+          then synthesizes the exact criteria and weights to score against. A human approves that plan
+          at a gate before anything is scored.
+        </>
+      ),
+    },
+    {
+      n: "2",
+      h: "Six perspectives score it — on evidence",
+      p: (
+        <>
+          Six de&nbsp;Bono hats — facts, instinct, optimism, risk, novelty, process — score in
+          parallel. Each sub-score is{" "}
+          <strong className="font-medium text-[var(--color-ink)]">grounded in passages it retrieved</strong>,
+          not a vibe.
+        </>
+      ),
+    },
+    {
+      n: "3",
+      h: "It audits itself, then locks",
+      p: (
+        <>
+          The audit compares the panel&apos;s confidence to past evaluations, finds where it ran hot,
+          and corrects within a hard cap —{" "}
+          <span className="font-mono text-[0.92em] text-[var(--color-accent)]">
+            clip(score &minus; 0.8&middot;mean_delta, p25, p75)
+          </span>{" "}
+          — before the score is final. Every step is an Arize&nbsp;AX span.
+        </>
+      ),
+    },
+  ];
+  return (
+    <section
+      aria-label="How Glasshat works, in three plain steps"
+      className="relative flex min-h-[100svh] w-full items-center justify-center overflow-hidden px-6 py-24"
+    >
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10"
+        style={{
+          background:
+            "linear-gradient(var(--color-bg), transparent 14%, transparent 86%, var(--color-bg))",
+        }}
+      />
+      <Reveal className="mx-auto w-full max-w-6xl">
+        <p className="font-mono text-sm uppercase tracking-[0.32em] text-[var(--color-accent-2)]">
+          In plain terms
+        </p>
+        <h2 className="mt-5 max-w-[22ch] font-display text-[clamp(2.2rem,5.4vw,4.4rem)] font-bold leading-[1.04] tracking-[-0.03em]">
+          What happens when{" "}
+          <span className="text-gradient font-serif-italic font-medium">you run it.</span>
+        </h2>
+        <p className="mt-5 max-w-[56ch] text-[clamp(1.02rem,1.7vw,1.28rem)] leading-relaxed text-[var(--color-muted)]">
+          No prompt-wrangling, no chatbot. You give it a submission and a rubric; it gives you a
+          scored, self-audited verdict you can open up.
+        </p>
+        <ol className="mt-10 grid gap-5 md:grid-cols-3">
+          {steps.map((s) => (
+            <li key={s.n} className="elevate flex flex-col gap-3 rounded-3xl p-7">
+              <span className="grid h-10 w-10 place-items-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] font-mono text-[1.05rem] font-bold text-[var(--color-accent)]">
+                {s.n}
+              </span>
+              <h3 className="font-display text-[1.25rem] font-semibold leading-snug">{s.h}</h3>
+              <p className="text-[0.98rem] leading-relaxed text-[var(--color-muted)]">{s.p}</p>
+            </li>
+          ))}
+        </ol>
+      </Reveal>
+    </section>
+  );
+}
+
 export default function Home() {
   return (
     <main className="flex flex-col">
@@ -205,6 +291,10 @@ export default function Home() {
       {/* F · 히어로 — the evaluation constellation + the H1 and primary CTAs */}
       <div data-cine-scene>
         <ConstellationHero />
+      </div>
+      {/* 평문 — orient a first-timer: the whole mechanism in three plain steps */}
+      <div data-cine-scene>
+        <HowItWorks />
       </div>
       {/* E · 서사 — the audit changes who wins (rank-flip) */}
       <div data-cine-scene>

@@ -510,20 +510,30 @@ export default function ConstellationHero() {
             isn&apos;t a black box &mdash; it&apos;s one you can check. Not a chatbot.
           </p>
 
-          {/* Primary CTAs */}
-          <div className="mt-8 flex flex-wrap items-center gap-3">
-            <Link
-              href="/participate"
-              className="hover-lift inline-flex items-center justify-center rounded-full bg-[var(--color-accent-strong)] px-7 py-3.5 text-[1.05rem] font-medium text-white shadow-[0_12px_36px_-12px_oklch(0.55_0.17_290/0.7)]"
-            >
-              Score a submission &rarr;
-            </Link>
-            <Link
-              href="/judge"
-              className="hover-lift inline-flex items-center justify-center rounded-full border border-[var(--color-border)] px-7 py-3.5 text-[1.05rem] font-medium text-[var(--color-ink)] hover:border-[var(--color-accent)]"
-            >
-              Judge a cohort
-            </Link>
+          {/* Primary CTAs — labelled by who you are, so each visitor finds their door. */}
+          <div className="mt-8 flex flex-wrap items-start gap-3">
+            <div className="flex flex-col gap-1.5">
+              <span className="pl-1 text-[0.7rem] uppercase tracking-[0.14em] text-[var(--color-accent-2)]">
+                Submitting something
+              </span>
+              <Link
+                href="/participate"
+                className="hover-lift inline-flex items-center justify-center rounded-full bg-[var(--color-accent-strong)] px-7 py-3.5 text-[1.05rem] font-medium text-white shadow-[0_12px_36px_-12px_oklch(0.55_0.17_290/0.7)]"
+              >
+                Score a submission &rarr;
+              </Link>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <span className="pl-1 text-[0.7rem] uppercase tracking-[0.14em] text-[var(--color-muted)]">
+                Doing the scoring
+              </span>
+              <Link
+                href="/judge"
+                className="hover-lift inline-flex items-center justify-center rounded-full border border-[var(--color-border)] px-7 py-3.5 text-[1.05rem] font-medium text-[var(--color-ink)] hover:border-[var(--color-accent)]"
+              >
+                Judge a cohort
+              </Link>
+            </div>
           </div>
 
           {/* Badge row */}
