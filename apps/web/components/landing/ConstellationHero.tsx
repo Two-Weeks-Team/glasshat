@@ -536,6 +536,16 @@ export default function ConstellationHero() {
             </div>
           </div>
 
+          {/* Tertiary — watch the demo (the 2:52 walkthrough) */}
+          <a
+            href="https://youtu.be/A9diFeRDybo"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 inline-flex w-fit items-center gap-2 text-[0.95rem] text-[var(--color-muted)] transition-colors hover:text-[var(--color-ink)]"
+          >
+            <span aria-hidden>&#9654;</span> Watch the 2:52 demo
+          </a>
+
           {/* Badge row */}
           <ul className="mt-6 flex flex-wrap gap-2 text-[0.74rem] text-[var(--color-muted)]">
             {["Arize track", "Gemini · Vertex AI", "Google ADK", "Phoenix + MCP"].map((b) => (
