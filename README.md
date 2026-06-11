@@ -19,7 +19,7 @@ Every agent, every one of the six hats, and the self-correction itself opens its
 **Live deployment** (Cloud Run, `panelyst-hackathon`, us-central1, min-instances=1 — a warm instance so the first judge click is fast):
 - Web: **https://glasshat-web-o366v7tl2q-uc.a.run.app** (`/judge` · `/participate`)
 - API: **https://glasshat-api-o366v7tl2q-uc.a.run.app** (`/health` · `/api/evaluate`)
-- **▶ Demo video** (3 min): _link added before the submission deadline_ — or try the live demo above right now.
+- **▶ Demo video** (~3 min): https://youtu.be/A9diFeRDybo — or try the live demo above right now.
 
 > **Security posture (honest):** the public demo runs `SCORING_MODE=legacy` (a planted `SCORE: 10` can steer it) with open judge endpoints (`JUDGE_API_TOKEN` unset); the hardened path (`SCORING_MODE=structured` + `JUDGE_API_TOKEN` + an always-on injection guard) ships and is opt-in — full scope below.
 

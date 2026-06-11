@@ -125,7 +125,7 @@ monitor — **not a chatbot**.
 - **Live web:** https://glasshat-web-o366v7tl2q-uc.a.run.app  (`/judge` · `/participate`)
 - **Live API health:** https://glasshat-api-o366v7tl2q-uc.a.run.app/health → `{"status":"ok"}`
 - **License:** Apache-2.0
-- **Demo video:** _(teammate inserts link)_
+- **Demo video:** https://youtu.be/A9diFeRDybo
 - **Repo:** https://github.com/Two-Weeks-Team/glasshat
 
 ## Honest disclosures (keep — they raise credibility)
