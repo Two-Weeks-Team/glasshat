@@ -287,7 +287,7 @@ export default function RankFlipStory() {
         <h2 className="font-display mt-5 max-w-[20ch] text-[clamp(2.4rem,6vw,5rem)] font-bold leading-[1.02] tracking-[-0.03em]">
           Same cohort.{" "}
           <em className="font-serif-italic text-[1.08em] font-medium text-gradient">Two truths.</em>{" "}
-          The audit decides who wins.
+          The audit can change who wins.
         </h2>
         <p className="mt-5 max-w-[56ch] text-[clamp(1.05rem,2.1vw,1.32rem)] leading-relaxed text-[var(--color-muted)]">
           A raw AI panel hands the loudest, least-evidenced project the crown. Watch the board{" "}
@@ -419,7 +419,9 @@ export default function RankFlipStory() {
               <span>
                 Projects, scores, ranks and deltas are{" "}
                 <b className="font-semibold text-[var(--color-muted)]">illustrative</b> &mdash; a
-                depiction of the re-ranking mechanism, not live results.
+                depiction of the re-ranking mechanism, not live results. On the golden set the audit{" "}
+                <b className="font-semibold text-[var(--color-ink)]">held the top-13 (&Delta;=0)</b>;
+                it re-ranks only where the evidence demands, and shows it either way.
               </span>
             </p>
           </div>
