@@ -323,3 +323,14 @@ a {
     scroll-behavior: auto;
   }
 }
+/* The final full-height beat must not trap the scroll. Without this, proximity
+   snap re-aligns the last scene to the top on release — pulling the viewport back
+   up so the trailing HomeStats card + the page footer can never rest in view
+   ("shows while dragging, vanishes on release"). Drop the last scene's snap, and
+   make the footer an end-aligned snap point so the bottom is always reachable. */
+.cine-snap [data-cine-scene]:last-of-type {
+  scroll-snap-align: none;
+}
+.cine-snap footer {
+  scroll-snap-align: end;
+}

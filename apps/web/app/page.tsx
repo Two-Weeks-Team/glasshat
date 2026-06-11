@@ -280,6 +280,61 @@ function HowItWorks() {
   );
 }
 
+/** The engine, in motion — the dynamic companion to the plain HowItWorks steps:
+ *  the whole pipeline is ONE Google ADK 2.0 graph-Workflow, and every node opens
+ *  its own Arize AX span. An autoplay-muted-loop of the rendered architecture motion
+ *  (the same diagram shown in the README + the demo video). */
+function ArchitectureBand() {
+  return (
+    <section
+      aria-label="The architecture — one ADK 2.0 Workflow, every node traced in Arize AX"
+      className="relative flex min-h-[100svh] w-full items-center justify-center overflow-hidden px-6 py-24"
+    >
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10"
+        style={{
+          background:
+            "radial-gradient(58rem 40rem at 50% 16%, color-mix(in oklch, var(--color-accent) 13%, transparent), transparent 60%), linear-gradient(var(--color-bg), transparent 14%, transparent 86%, var(--color-bg))",
+        }}
+      />
+      <Reveal className="mx-auto w-full max-w-6xl">
+        <p className="font-mono text-sm uppercase tracking-[0.32em] text-[var(--color-accent)]">
+          The engine
+        </p>
+        <div className="mt-5 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <h2 className="max-w-[20ch] font-display text-[clamp(2.2rem,5.4vw,4.4rem)] font-bold leading-[1.04] tracking-[-0.03em]">
+            One <span className="text-gradient font-serif-italic font-medium">Workflow.</span>
+            <br />
+            Every node, a span.
+          </h2>
+          <p className="max-w-[42ch] text-[clamp(1rem,1.6vw,1.18rem)] leading-relaxed text-[var(--color-muted)]">
+            Artifacts in, an audited score out — a single Google ADK&nbsp;2.0 graph-Workflow on Agent
+            Engine. Each node opens its own trace span in Arize&nbsp;AX as it runs.
+          </p>
+        </div>
+        <figure className="elevate mt-9 overflow-hidden rounded-3xl p-2 shadow-[0_30px_90px_-44px_oklch(0.72_0.17_290/0.5)]">
+          <video
+            className="aspect-video w-full rounded-2xl"
+            src="/architecture-loop.mp4"
+            poster="/architecture-poster.jpg"
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="metadata"
+            aria-label="Animated diagram: a deck, a repo and the evaluator's rules flow through ingest, rubric synthesis, a human-gated plan, six parallel hats, the self-correcting audit, scoring, and persistence — every node emitting an Arize AX span."
+          />
+          <figcaption className="px-3 py-3 font-mono text-[0.72rem] leading-relaxed text-[var(--color-muted)]">
+            ingest → rubric&nbsp;synth → plan&nbsp;·&nbsp;human&nbsp;gate → 6-hat&nbsp;panel → join → audit&nbsp;↻ →
+            score → persist&nbsp;&nbsp;·&nbsp;&nbsp;104 spans · 2 live queries
+          </figcaption>
+        </figure>
+      </Reveal>
+    </section>
+  );
+}
+
 export default function Home() {
   return (
     <main className="flex flex-col">
@@ -295,6 +350,10 @@ export default function Home() {
       {/* 평문 — orient a first-timer: the whole mechanism in three plain steps */}
       <div data-cine-scene>
         <HowItWorks />
+      </div>
+      {/* 엔진 — show what HowItWorks just told: the full pipeline in motion */}
+      <div data-cine-scene>
+        <ArchitectureBand />
       </div>
       {/* E · 서사 — the audit changes who wins (rank-flip) */}
       <div data-cine-scene>
